@@ -145,6 +145,37 @@ test('a goal marked done or let go comes back with Undo', async ({ page }) => {
   }
 });
 
+test('the Mind line checks in on Today in one tap, and Today keeps the answer to itself', async ({
+  page,
+}) => {
+  await startAsGuest(page);
+  const tools = page.getByRole('complementary', { name: 'Tools' });
+  const all = tools.getByRole('button', { name: 'All modules' });
+  if (await all.isVisible()) await all.click();
+  // The way into Mind is still there, and "Check in" opens the moods beside it.
+  await expect(tools.locator('a[href="/mind"]')).toBeVisible();
+  const open = tools.getByRole('button', { name: 'Check in' });
+  await expect(open).toHaveAttribute('aria-expanded', 'false');
+  await open.click();
+  await expect(open).toHaveAttribute('aria-expanded', 'true');
+  const moods = tools.getByRole('group', { name: 'How are you today?' });
+  await expect(moods.getByRole('button')).toHaveCount(5);
+  await moods.getByRole('button', { name: 'Okay' }).click();
+
+  await expect(
+    page.getByRole('alertdialog').filter({ hasText: 'Checked in. Thank you for taking a moment.' }),
+  ).toBeVisible();
+  // Closed again, and nothing on Today says how the person felt.
+  await expect(moods).toBeHidden();
+  await expect(open).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.getByRole('main').getByText('Okay', { exact: true })).toBeHidden();
+
+  // It is kept in Mind.
+  await page.goto('/mind');
+  await expect(page.getByRole('heading', { level: 1, name: 'Mind' })).toBeVisible();
+  await expect(page.getByText('Your check-ins will show here.')).toHaveCount(0);
+});
+
 test('someone caring for another person is asked how they are, not sent to plan a career', async ({
   page,
 }) => {

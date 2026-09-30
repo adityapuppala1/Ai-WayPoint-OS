@@ -4,6 +4,7 @@ import { Icon, List, type ModuleKey, ModuleMark } from '@waypoint/ui';
 import { useTranslations } from 'next-intl';
 import { useId, useState } from 'react';
 import { LinkRow } from '@/components/LinkRow';
+import { MindLine } from './MindLine';
 import styles from './ModuleLines.module.css';
 import { SurroundingsGlance } from './SurroundingsGlance';
 
@@ -41,6 +42,9 @@ export function ModuleLines({
   const row = (line: ModuleLine) =>
     line.module === 'surroundings' ? (
       <SurroundingsGlance key={line.module} imperialDefault={imperialDefault} />
+    ) : line.module === 'mind' ? (
+      // Ten seconds, as it says: the check-in opens right here.
+      <MindLine key={line.module} title={line.title} description={line.description} />
     ) : (
       <LinkRow
         key={line.module}

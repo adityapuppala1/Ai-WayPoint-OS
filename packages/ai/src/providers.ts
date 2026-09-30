@@ -12,6 +12,7 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { getEnv } from '@waypoint/core/env';
 import type { EmbeddingModel, LanguageModel } from 'ai';
+import type { JUDGE_PROVIDER } from './judge-client';
 
 export type ProviderId = 'anthropic' | 'openai' | 'google' | 'ollama';
 export type Tier = 'small' | 'large';
@@ -30,21 +31,29 @@ interface ProviderEntry {
   model: (tier: Tier) => { model: LanguageModel; modelId: string };
 }
 
-const breaker = new Map<ProviderId, { failures: number; openUntil: number }>();
+/**
+ * Whose failures are counted. The judge (see judge.ts) has an entry of its own here, but is
+ * deliberately not a ProviderId: that list is the models that can write an answer, and it
+ * decides what Ask uses, whether "AI YES" is offered by text and what the privacy notice says.
+ */
+type BreakerId = ProviderId | typeof JUDGE_PROVIDER;
+
+const breaker = new Map<BreakerId, { failures: number; openUntil: number }>();
 const OPEN_MS = 60_000;
 
-export function reportProviderFailure(id: ProviderId): void {
+export function reportProviderFailure(id: BreakerId): void {
   const s = breaker.get(id) ?? { failures: 0, openUntil: 0 };
   s.failures += 1;
   if (s.failures >= 3) s.openUntil = Date.now() + OPEN_MS * Math.min(10, s.failures - 2);
   breaker.set(id, s);
 }
 
-export function reportProviderSuccess(id: ProviderId): void {
+export function reportProviderSuccess(id: BreakerId): void {
   breaker.delete(id);
 }
 
-function healthy(id: ProviderId): boolean {
+/** False while a provider is being left alone after failing three times or more in a row. */
+export function providerHealthy(id: BreakerId): boolean {
   const s = breaker.get(id);
   return !s || s.openUntil < Date.now();
 }
@@ -128,7 +137,10 @@ export function overrideModelsForTests(models: ModelChoice[] | null): void {
 export function modelCandidates(tier: Tier, opts: { localOnly?: boolean } = {}): ModelChoice[] {
   if (testModels) return testModels.filter((m) => !opts.localOnly || m.local);
   const all = configuredProviders().filter((p) => !opts.localOnly || p.local);
-  const ordered = [...all.filter((p) => healthy(p.id)), ...all.filter((p) => !healthy(p.id))];
+  const ordered = [
+    ...all.filter((p) => providerHealthy(p.id)),
+    ...all.filter((p) => !providerHealthy(p.id)),
+  ];
   return ordered.map((p) => ({ provider: p.id, local: p.local, ...p.model(tier) }));
 }
 

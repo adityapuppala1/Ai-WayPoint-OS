@@ -4,7 +4,8 @@
  * Shield, template plans and guided answers — rather than failing.
  */
 import { getEnv } from '@waypoint/core/env';
-import { aiUsage, and, type Database, eq, gte, sql } from '@waypoint/db';
+import { aiUsage, and, type Database, eq, gte, notInArray, sql } from '@waypoint/db';
+import { JUDGE_PROVIDER } from './judge-client';
 
 /** Estimated USD per million tokens (input, output). Override with AI_PRICING_JSON. */
 const DEFAULT_PRICING: Record<string, [number, number]> = {
@@ -17,6 +18,13 @@ const DEFAULT_PRICING: Record<string, [number, number]> = {
   'text-embedding-3-small': [0.02, 0],
   'gemini-embedding-001': [0.15, 0],
 };
+
+/**
+ * TypeSafe's Jev, whichever version is pinned: $0.042 per million tokens sent, answers free.
+ * Priced by provider, not by model name, so a newer pinned version is never costed as an
+ * unknown model ($3 and $15 per million: about seventy times too much).
+ */
+const JUDGE_PRICING: [number, number] = [0.042, 0];
 
 let pricing: Record<string, [number, number]> | undefined;
 
@@ -41,19 +49,28 @@ export function estimateCostUsd(
   outputTokens: number,
 ): number {
   if (provider === 'ollama') return 0;
-  const [inP, outP] = priceTable()[modelId] ?? [3, 15];
+  const [inP, outP] =
+    priceTable()[modelId] ?? (provider === JUDGE_PROVIDER ? JUDGE_PRICING : [3, 15]);
   return (inputTokens * inP + outputTokens * outP) / 1_000_000;
 }
+
+/**
+ * What the judge's calls are recorded under, one name for each thing it checks: a message in
+ * Scam Shield, the wording of a rewritten plan, an answer about to be sent by text. They are
+ * checks, not answers, so they never count towards a person's daily allowance (checkBudget).
+ */
+export const JUDGE_FEATURES = ['judge-shield', 'judge-plan', 'judge-reply'] as const;
+export type JudgeFeature = (typeof JUDGE_FEATURES)[number];
 
 export type AiFeature =
   | 'ask'
   | 'shield'
   | 'plan'
   | 'signal-summary'
-  | 'forecast'
   | 'moderation'
   | 'embedding'
-  | 'eval';
+  | 'eval'
+  | JudgeFeature;
 export type AiStatus =
   | 'ok'
   | 'error'
@@ -261,23 +278,33 @@ export interface BudgetDecision {
   reason?: 'monthly-budget' | 'daily-limit';
 }
 
-/** Daily AI calls allowed per person. Guests get fewer to discourage abuse. */
+/** Daily AI answers allowed per person. Guests get fewer to discourage abuse. */
 export const DAILY_LIMITS = { guest: 20, member: 200 } as const;
+
+/** True when this month's budget (a guest's share of it, for a guest) is already spent. */
+export async function monthlyBudgetSpent(db: Database, isGuest?: boolean): Promise<boolean> {
+  return getEnv().AI_MONTHLY_BUDGET_USD > 0 && (await monthSpendUsd(db)) >= monthlyLimit(isGuest);
+}
 
 export async function checkBudget(
   db: Database,
   who: { userId?: string | null; isGuest?: boolean },
 ): Promise<BudgetDecision> {
-  const env = getEnv();
-  if (env.AI_MONTHLY_BUDGET_USD > 0 && (await monthSpendUsd(db)) >= monthlyLimit(who.isGuest)) {
-    return { ok: false, reason: 'monthly-budget' };
-  }
+  if (await monthlyBudgetSpent(db, who.isGuest)) return { ok: false, reason: 'monthly-budget' };
   if (who.userId) {
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const [row] = await db
       .select({ n: sql<number>`count(*)::int` })
       .from(aiUsage)
-      .where(and(eq(aiUsage.userId, who.userId), gte(aiUsage.createdAt, since)));
+      .where(
+        and(
+          eq(aiUsage.userId, who.userId),
+          gte(aiUsage.createdAt, since),
+          // The allowance is of answers. A check by the judge is not one: counting it would
+          // quietly halve what a person can ask in a day.
+          notInArray(aiUsage.feature, [...JUDGE_FEATURES]),
+        ),
+      );
     const limit = who.isGuest ? DAILY_LIMITS.guest : DAILY_LIMITS.member;
     if ((row?.n ?? 0) >= limit) return { ok: false, reason: 'daily-limit' };
   }

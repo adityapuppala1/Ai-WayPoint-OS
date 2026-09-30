@@ -19,6 +19,28 @@ export {
   type SignalDigest,
   shieldOpinion,
 } from './features';
+export {
+  type JudgeContext,
+  type JudgeOutcome,
+  type JudgeRefusal,
+  type JudgeStandIn,
+  judgeAvailable,
+  judgeConfigured,
+  judgeLanguageEnabled,
+  overrideJudgeForTests,
+  runJudge,
+} from './judge';
+export { JUDGE_LIMITS, JUDGE_PACE, JUDGE_PROVIDER, JudgeError } from './judge-client';
+export {
+  type AnswerOf,
+  choice,
+  defineQuestions,
+  type JudgeAnswers,
+  type JudgeState,
+  noul,
+  type QuestionSet,
+  score,
+} from './judge-questions';
 export { detectIntent, offlineReply } from './offline';
 export { companionInstructions, LANGUAGE_NAMES } from './prompts';
 export {
@@ -30,6 +52,9 @@ export {
   overrideModelsForTests,
   type ProviderId,
   pickModel,
+  providerHealthy,
+  reportProviderFailure,
+  reportProviderSuccess,
   resetProvidersForTests,
   type Tier,
 } from './providers';
@@ -41,6 +66,8 @@ export {
   DAILY_LIMITS,
   estimateCostUsd,
   GUEST_BUDGET_SHARE,
+  JUDGE_FEATURES,
+  type JudgeFeature,
   monthSpendUsd,
   recordUsage,
   reserveUsage,

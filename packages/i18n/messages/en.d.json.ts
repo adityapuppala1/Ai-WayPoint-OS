@@ -159,7 +159,8 @@ declare const messages: {
     "home": "Waypoint home",
     "offline": "You’re offline. Help lines and your saved plan still work.",
     "organisations": "Organisations",
-    "admin": "Admin"
+    "admin": "Admin",
+    "oldBrowser": "This browser is too old to show Waypoint properly. Update it, or open Waypoint in a newer one. The help numbers still work here."
   },
   "welcome": {
     "title": "See what’s coming. Know your next step. Never take it alone.",

@@ -12,6 +12,20 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+}
+
+/*
+ * Safari alone hangs an opening quote or bracket outside the text box. That suits a paragraph
+ * of running text and nothing else: in a field it moves what was typed, and in a line cut
+ * short with an ellipsis the mark itself is cut off. So nothing inherits it, and only plain
+ * paragraphs, quotations and list items ask for it. "Plain" is no class of their own: text
+ * that is cut short always has one.
+ */
+* {
+  hanging-punctuation: none;
+}
+
+:where(p, li, dd, blockquote):not([class]) {
   hanging-punctuation: first last;
 }
 
@@ -74,4 +88,14 @@ table {
 
 [hidden]:where(:not([hidden="until-found"])) {
   display: none !important;
+}
+
+/*
+ * The notice for a browser too old for this stylesheet (the first thing in the page, see the
+ * web app's root layout). Every style here sits inside a cascade layer: a browser that knows
+ * layers reads this rule and hides the notice; one that does not skips the whole block with
+ * everything else in it, and the notice stays in view.
+ */
+.wp-old-browser {
+  display: none;
 }

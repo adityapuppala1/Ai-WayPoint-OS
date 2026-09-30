@@ -152,7 +152,8 @@
     "home": "Ukurasa wa mwanzo wa Waypoint",
     "offline": "Huko mtandaoni. Nambari za msaada na mpango wako uliohifadhiwa bado zinafanya kazi.",
     "organisations": "Mashirika",
-    "admin": "Usimamizi"
+    "admin": "Usimamizi",
+    "oldBrowser": "Kivinjari hiki ni cha zamani mno kuonyesha Waypoint ipasavyo. Kisasishe, au fungua Waypoint katika kivinjari kipya zaidi. Nambari za msaada bado zinafanya kazi hapa."
   },
   "welcome": {
     "title": "Ona kinachokuja. Jua hatua yako inayofuata. Hutaipiga peke yako.",

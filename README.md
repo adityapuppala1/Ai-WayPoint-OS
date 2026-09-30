@@ -108,6 +108,33 @@ API documentation: http://localhost:3000/api/openapi.json (auth endpoints: `/api
 
 ---
 
+## Browsers
+
+Waypoint is built for Chrome and Edge 111, Firefox 111 and Safari 16.4 or newer: browsers
+from spring 2023 on, including every browser on an iPhone or iPad with iOS 16.4. That list is
+the `browserslist` in the root `package.json`: the one Next.js 16 builds for by itself, with
+iOS Safari named too, so the build keeps the few prefixed rules only an iPhone reads.
+(Firefox 111 and 112 miss a few borders and hover fills, because they do not know
+`color-mix()`; nothing stops working.) An older browser shows the page as plain text with a
+notice that says so, in the reader's language, and a link to Get help now, which stays
+readable without the stylesheet.
+
+**Tested** on every change, in five Playwright projects against the built app: Chrome at a
+desktop and a phone size (`desktop`, `phone`), Firefox (`firefox`), and WebKit, the engine
+of Safari and of every browser on an iPhone, at a desktop and an iPhone size (`safari`,
+`iphone`).
+
+**Not tested**, so check by hand before a release:
+
+- **Real iPhones and Macs.** Playwright's WebKit is Safari's engine, not Safari: no on-screen
+  keyboard or toolbars, no real safe-area insets, no native date and time pickers, no
+  installed (home-screen) app, and not Safari's rule that a cookie written by a page's script
+  is forgotten after seven days. Language, theme and time zone are cookies the server sets
+  for that reason (`POST /api/preferences`).
+- **Samsung Internet**, which Playwright cannot drive.
+
+---
+
 ## How it is built
 
 ```

@@ -1,9 +1,9 @@
 /*
- * Waypoint design system entry. Import once, from the root layout.
- * Cascade order is fixed here so component styles never fight the base.
+ * Waypoint design system entry. Import once, from the root layout, before any other style.
+ * Cascade order is fixed in layers.css, which must stay the first import: layers are ordered
+ * by where each is first named, and the build writes a file's imports before its own rules.
  */
-@layer reset, tokens, base, components, utilities;
-
+@import "./layers.css";
 @import "@waypoint/tokens/tokens.css";
 @import "@fontsource-variable/overpass/index.css";
 @import "@fontsource-variable/noto-sans-devanagari/index.css";
@@ -13,3 +13,17 @@
 @import "./reset.css" layer(reset);
 @import "./base.css" layer(base);
 @import "./utilities.css" layer(utilities);
+
+/*
+ * A browser too old for cascade layers (Chrome before 99, Firefox before 97, Safari before
+ * 15.4) skips every style above and keeps only the page styles outside a layer, without their
+ * sizes and colours: a header, rail or tab bar pinned in place would then lie over the text
+ * and the help numbers. So it gets the page as plain text, one thing after another, under the
+ * notice that says why (.wp-old-browser, reset.css). `revert-layer` came with layers: no
+ * browser that knows them enters this block.
+ */
+@supports not (color: revert-layer) {
+  body * {
+    position: static !important;
+  }
+}

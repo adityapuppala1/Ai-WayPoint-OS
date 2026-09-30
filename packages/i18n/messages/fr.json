@@ -152,7 +152,8 @@
     "home": "Accueil de Waypoint",
     "offline": "Vous êtes hors ligne. Les lignes d’écoute et votre plan enregistré fonctionnent toujours.",
     "organisations": "Organisations",
-    "admin": "Administration"
+    "admin": "Administration",
+    "oldBrowser": "Ce navigateur est trop ancien pour afficher Waypoint correctement. Mettez-le à jour ou ouvrez Waypoint dans un navigateur plus récent. Les numéros d’aide fonctionnent toujours ici."
   },
   "welcome": {
     "title": "Voyez ce qui arrive. Connaissez votre prochaine étape. Ne soyez jamais seul.",

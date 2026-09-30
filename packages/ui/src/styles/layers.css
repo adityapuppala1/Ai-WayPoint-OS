@@ -1,0 +1,6 @@
+/*
+ * The cascade order, lowest first, so component styles never fight the base and a utility
+ * always wins over a component. This has to be the first CSS the browser reads: a layer named
+ * in a block before this line would take its place in the order from that block instead.
+ */
+@layer reset, tokens, base, components, utilities;

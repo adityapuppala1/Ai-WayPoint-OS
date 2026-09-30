@@ -41,6 +41,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const { theme, lite, restore } = await savedPreferences();
   const t = await getTranslations('a11y');
   const common = await getTranslations('common');
+  const shell = await getTranslations('shell');
   // The per-request CSP nonce (src/proxy.ts). React Aria reads it from this meta tag for the
   // few style rules it adds at run time; without it the browser blocks them.
   const nonce = (await headers()).get('x-nonce') ?? undefined;
@@ -67,6 +68,13 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         </script>
       </head>
       <body>
+        {/* Shown only by a browser too old for the stylesheet, which then shows the page as
+            plain text: the stylesheet hides this, and such a browser skips the stylesheet
+            (.wp-old-browser in packages/ui/src/styles/reset.css; the plain layout it gets
+            instead is at the end of index.css there). */}
+        <p className="wp-old-browser">
+          {shell('oldBrowser')} <a href="/support">{shell('help')}</a>
+        </p>
         <a className="wp-skip-link" href="#main">
           {t('skipToContent')}
         </a>

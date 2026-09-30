@@ -83,6 +83,7 @@ describe('states, the same in every component', () => {
       ['Field.module.css', '.choice[data-focus-visible] .box'],
       ['Field.module.css', '.switch[data-focus-visible] .track'],
       ['Field.module.css', '.sliderThumb[data-focus-visible]'],
+      ['CommandPalette.module.css', '.item[data-focus-visible]'],
     ];
     const missing = focusable
       .filter(
@@ -128,6 +129,7 @@ describe('states, the same in every component', () => {
       ['Toast.module.css', '.close[data-pressed]', '.close'],
       ['Toast.module.css', '.action[data-pressed]', '.action'],
       ['Stepper.module.css', '.button[data-pressed]', '.button'],
+      ['CommandPalette.module.css', '.item[data-pressed]', '.item'],
     ];
     const problems: string[] = [];
     for (const [file, pressed, base] of pressable) {

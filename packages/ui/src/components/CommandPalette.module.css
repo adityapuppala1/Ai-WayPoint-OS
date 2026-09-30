@@ -1,0 +1,106 @@
+@layer components {
+  .palette {
+    display: grid;
+    gap: var(--wp-space-3);
+    min-inline-size: 0;
+    color: var(--wp-text);
+  }
+
+  /*
+   * The list scrolls by itself, so the field above it never leaves the screen. Its height
+   * follows what is visible: on a phone that is the space above the keyboard (React Aria
+   * gives the dialog that height as --visual-viewport-height), less the heading and the field.
+   */
+  .list {
+    max-block-size: max(6rem, min(22rem, calc(var(--visual-viewport-height, 100vh) - 13rem)));
+    /* Rows reach a little past the text, so their words line up with the heading and the field. */
+    margin-inline: calc(-1 * var(--wp-space-3));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    outline: none;
+  }
+
+  .section + .section {
+    margin-block-start: var(--wp-space-2);
+    padding-block-start: var(--wp-space-2);
+    border-block-start: 1px solid var(--wp-border-subtle);
+  }
+
+  .heading {
+    padding: var(--wp-space-2) var(--wp-space-3) var(--wp-space-1);
+    font-size: var(--wp-text-small);
+    font-weight: var(--wp-weight-medium);
+    color: var(--wp-text-secondary);
+  }
+
+  .item {
+    display: flex;
+    align-items: center;
+    gap: var(--wp-space-3);
+    min-block-size: 3rem;
+    padding: var(--wp-space-2) var(--wp-space-3);
+    border-radius: var(--wp-radius-sm);
+    color: var(--wp-text);
+    text-decoration: none;
+    cursor: pointer;
+    outline: 2px solid transparent; /* shows in Windows forced-colours mode */
+    outline-offset: -2px;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      background-color var(--wp-duration-fast) var(--wp-ease-out),
+      box-shadow var(--wp-duration-fast) var(--wp-ease-out);
+  }
+
+  /*
+   * The row that Enter will choose. The caret stays in the field, so this row is where the
+   * keyboard "is": it takes the signal tint, and the focus ring when the keyboard is in use.
+   */
+  .item[data-focused] {
+    background: var(--wp-signal-tint);
+  }
+
+  .item[data-focus-visible] {
+    box-shadow: var(--wp-focus-shadow-inset);
+  }
+
+  .item[data-pressed] {
+    background: var(--wp-fill-pressed);
+  }
+
+  .mark {
+    display: grid;
+    place-items: center;
+    flex: none;
+    inline-size: 1.75rem;
+    color: var(--wp-text-secondary);
+  }
+
+  .text {
+    flex: 1;
+    min-inline-size: 0;
+  }
+
+  .label {
+    display: block;
+    font-weight: var(--wp-weight-medium);
+    line-height: var(--wp-leading-snug);
+  }
+
+  .description {
+    display: block;
+    margin-block-start: 0.125rem;
+    font-size: var(--wp-text-small);
+    color: var(--wp-text-secondary);
+  }
+
+  .empty {
+    padding: var(--wp-space-6) var(--wp-space-3);
+    color: var(--wp-text-secondary);
+  }
+
+  @media (forced-colors: active) {
+    .item[data-focused] {
+      outline-color: Highlight;
+    }
+  }
+}

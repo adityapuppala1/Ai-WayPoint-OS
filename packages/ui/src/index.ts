@@ -4,6 +4,12 @@
  */
 
 export { cn } from './cn';
+export {
+  commandMatches,
+  commandShortcutHint,
+  isCommandShortcut,
+  type ShortcutEvent,
+} from './command';
 export { AnimatedNumber, type AnimatedNumberProps } from './components/AnimatedNumber';
 export {
   Button,
@@ -20,6 +26,13 @@ export {
   Sparkline,
   type SparklineProps,
 } from './components/Chart';
+export {
+  type CommandItem,
+  CommandPalette,
+  type CommandPaletteProps,
+  type CommandSection,
+  useCommandShortcut,
+} from './components/CommandPalette';
 export { Disclosure } from './components/Disclosure';
 export {
   Avatar,

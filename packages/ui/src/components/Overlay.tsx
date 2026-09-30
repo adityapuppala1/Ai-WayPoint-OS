@@ -14,8 +14,12 @@ export interface DialogProps {
   title: ReactNode;
   children?: ReactNode;
   footer?: ReactNode;
-  /** `sheet` slides from the bottom (phones) or end edge (desktop). */
-  variant?: 'modal' | 'sheet';
+  /**
+   * `sheet` slides from the bottom (phones) or end edge (desktop). `palette` is for a field
+   * with a list that grows and shrinks under it: a sheet resting on the keyboard on phones,
+   * a box near the top of the screen on larger ones, so it stays put while the list changes.
+   */
+  variant?: 'modal' | 'sheet' | 'palette';
   /** Destructive or blocking dialogs should not close on outside click. */
   isDismissable?: boolean;
   role?: 'dialog' | 'alertdialog';
@@ -38,9 +42,19 @@ export function Dialog({
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       isDismissable={isDismissable}
-      className={cn(styles.overlay, variant === 'sheet' && styles.sheetOverlay)}
+      className={cn(
+        styles.overlay,
+        variant === 'sheet' && styles.sheetOverlay,
+        variant === 'palette' && styles.paletteOverlay,
+      )}
     >
-      <Modal className={cn(styles.modal, variant === 'sheet' && styles.sheet)}>
+      <Modal
+        className={cn(
+          styles.modal,
+          variant === 'sheet' && styles.sheet,
+          variant === 'palette' && styles.palette,
+        )}
+      >
         <AriaDialog className={styles.dialog} role={role}>
           {({ close }) => (
             <>

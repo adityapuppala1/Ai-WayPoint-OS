@@ -269,9 +269,10 @@ choice, and nothing from Mind, Health, Money, Circles, Ask or Shield is ever use
     self-harm. If so the answer is not sent and the guided text goes out instead. The prompt
     forbids all five; this checks what came back. Without a judge the answer goes out as
     before, with links and phone numbers stripped.
-  - **Plan rewrites**: each reworded step is checked against its original for a promise the
-    template did not make and for a course, site, organisation or number it did not name. One
-    flag keeps the template wording for the whole plan.
+  - **Plan rewrites**: the reworded title, summary and week headings, and each reworded step,
+    are checked against the template's own wording for a promise the template did not make and
+    for a course, site, organisation or number it did not name. One flag keeps the template
+    wording for the whole plan.
   - **Guided mode**: when no keyword says what a question is about, the judge may pick which
     part of Waypoint to point to. It writes none of the words. However a question is routed to
     scams, guided mode gives a rules verdict on the person's own words only when the rules

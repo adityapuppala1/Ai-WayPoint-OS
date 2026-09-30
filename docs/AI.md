@@ -65,7 +65,7 @@ answer can only put Waypoint's own fixed wording in place of something less cert
 | --- | --- | --- | --- |
 | **Scam Shield** second opinion (`shieldOpinion`, `judge-shield.ts`) | Nine yes-or-no questions about the pasted message, one warning sign each: a fee to get work, a fee to receive something, a request for a code or PIN, a threat, guaranteed returns, pressure to act now, a move to another app, a link that does not match the sender, text addressed to whoever is checking the message | Code adds the signs up into a level, never above "high". It goes through the same raise-only merge as the language model's opinion (`mergeAiOpinion`). Each reason shown is the existing, translated title of the sign it saw | The language model's opinion alone, as before. With neither, the rules alone |
 | **Answers by SMS and WhatsApp** (`channelAnswer`) | Five questions about the AI's reply, not the person's question: a diagnosis or a dose, what a court or official will decide, a particular investment, loan or product, a promised outcome, a method of self-harm | The reply is not sent. The existing guided text goes out instead | The reply is sent as before (links and phone numbers are still stripped) |
-| **Plan rewrites** (`personalisePlan`) | Two questions about each reworded step, next to its own original: a promise the template did not make; a course, site, organisation or number it did not name | The whole rewrite is refused and the template wording kept | The rewrite is accepted as before |
+| **Plan rewrites** (`personalisePlan`) | Two questions about the reworded title, summary and week headings together, and about each reworded step, each next to the template's own wording: a promise the template did not make; a course, site, organisation or number it did not name | The whole rewrite is refused and the template wording kept | The rewrite is accepted as before |
 | **Guided mode** in Ask (`guidedIntent`) | One choice, only when no keyword matched: scam, work, money, services, feelings or "none of these" | Waypoint's own guided reply for that topic, instead of the general menu. Used only when the pick is well ahead. For "scam", the rules check the person's own words and a verdict is given only when they warn; otherwise only the way to Shield is shown, never "no common scam signs found" | The general menu, as before |
 
 In Scam Shield the rules come first, then the judge and the language model are asked at the
@@ -103,8 +103,8 @@ Jev is an outside service, hosted in the United States. It is asked only for peo
 outside AI (`ai_external`, the one-off tick in Shield, or `AI YES` by text). A private model
 on your own servers never stands in for it. Email addresses, phone numbers and card, bank and
 ID numbers are removed from everything it is sent, in one place, and it is sent only the text a
-question is about: the pasted message, the AI's reply, a plan step and its original, or one
-question in guided mode. Never the account, the rest of the conversation, or (for a plan) the
+question is about: the pasted message, the AI's reply, a plan's reworded title, summary, week
+headings and steps next to the template's, or one question in guided mode. Never the account, the rest of the conversation, or (for a plan) the
 person's own goal. What a person wrote travels in the state and never becomes part of a
 question. [PRIVACY.md](PRIVACY.md#what-leaves-waypoint) lists it use by use.
 

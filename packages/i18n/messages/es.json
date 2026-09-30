@@ -150,7 +150,7 @@
     "more": "Más",
     "allModules": "Todos los módulos",
     "home": "Inicio de Waypoint",
-    "offline": "No tienes conexión. Las líneas de ayuda y tu plan guardado siguen funcionando.",
+    "offline": "No tienes conexión. Las líneas de ayuda siguen funcionando.",
     "organisations": "Organizaciones",
     "admin": "Administración"
   },
@@ -439,7 +439,7 @@
     "nudgeDismiss": "Descartar",
     "toolWeather": "El tiempo y el aire hoy",
     "toolWeatherHint": "Elige tu lugar en Entorno",
-    "weatherNow": "{temp} · {kind}",
+    "weatherNow": "{temp}, {kind}",
     "weatherAir": "Aire: {level}",
     "why": {
       "start": "Para que los pasos que Waypoint sugiere se ajusten a tu situación.",
@@ -553,13 +553,14 @@
       "deepfake-voice": "Voz clonada",
       "other": "Otra cosa"
     },
-    "reportedTitle": "Denunciado hace poco · {country}",
+    "reportedTitle": "Denunciado hace poco: {country}",
     "reportedTitleAnywhere": "Denunciado hace poco",
     "reportedLead": "Estafas que la gente denunció en los últimos 90 días. Nuestro equipo revisa cada denuncia antes de que aparezca aquí.",
     "reportedCount": "{count, plural, one {# denuncia} other {# denuncias}}",
     "reportedLatest": "la última el {date}",
     "reportedHosts": "Sitios web citados",
-    "reportLinks": "Sitios web del mensaje: {hosts}. Se incluirán en tu denuncia para avisar a otras personas."
+    "reportLinks": "Sitios web del mensaje: {hosts}. Se incluirán en tu denuncia para avisar a otras personas.",
+    "paste": "Pegar"
   },
   "ask": {
     "title": "Pregunta",
@@ -1370,7 +1371,8 @@
     "mindBody": "Eso también es salud. Puedes hablar con alguien hoy mismo.",
     "mindAction": "Pedir ayuda ahora",
     "sourcesTitle": "De dónde sale esta información",
-    "checked": "Comprobado el {date}"
+    "checked": "Comprobado el {date}",
+    "logToday": "Registrar hoy"
   },
   "surroundings": {
     "title": "Entorno",

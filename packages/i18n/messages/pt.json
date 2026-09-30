@@ -150,7 +150,7 @@
     "more": "Mais",
     "allModules": "Todos os módulos",
     "home": "Início do Waypoint",
-    "offline": "Você está sem conexão. As linhas de apoio e seu plano salvo continuam funcionando.",
+    "offline": "Você está sem conexão. As linhas de apoio continuam funcionando.",
     "organisations": "Organizações",
     "admin": "Administração"
   },
@@ -439,7 +439,7 @@
     "nudgeDismiss": "Dispensar",
     "toolWeather": "Tempo e ar hoje",
     "toolWeatherHint": "Escolha seu local em Arredores",
-    "weatherNow": "{temp} · {kind}",
+    "weatherNow": "{temp}, {kind}",
     "weatherAir": "Ar: {level}",
     "why": {
       "start": "Para que os passos que o Waypoint sugere combinem com a sua situação.",
@@ -553,13 +553,14 @@
       "deepfake-voice": "Voz clonada",
       "other": "Outra coisa"
     },
-    "reportedTitle": "Denunciado recentemente · {country}",
+    "reportedTitle": "Denunciado recentemente: {country}",
     "reportedTitleAnywhere": "Denunciado recentemente",
     "reportedLead": "Golpes que as pessoas denunciaram nos últimos 90 dias. Nossa equipe confere cada denúncia antes de ela aparecer aqui.",
     "reportedCount": "{count, plural, one {# denúncia} other {# denúncias}}",
     "reportedLatest": "a última em {date}",
     "reportedHosts": "Sites citados",
-    "reportLinks": "Sites na mensagem: {hosts}. Eles vão junto com a sua denúncia para alertar outras pessoas."
+    "reportLinks": "Sites na mensagem: {hosts}. Eles vão junto com a sua denúncia para alertar outras pessoas.",
+    "paste": "Colar"
   },
   "ask": {
     "title": "Conversar",
@@ -1370,7 +1371,8 @@
     "mindBody": "Isso também é saúde. Você pode conversar com alguém hoje mesmo.",
     "mindAction": "Pedir ajuda agora",
     "sourcesTitle": "De onde vêm estas informações",
-    "checked": "Verificado em {date}"
+    "checked": "Verificado em {date}",
+    "logToday": "Registrar hoje"
   },
   "surroundings": {
     "title": "Arredores",

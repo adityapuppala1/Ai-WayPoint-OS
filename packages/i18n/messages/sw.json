@@ -150,7 +150,7 @@
     "more": "Zaidi",
     "allModules": "Sehemu zote",
     "home": "Ukurasa wa mwanzo wa Waypoint",
-    "offline": "Huko mtandaoni. Nambari za msaada na mpango wako uliohifadhiwa bado zinafanya kazi.",
+    "offline": "Huko mtandaoni. Nambari za msaada bado zinafanya kazi.",
     "organisations": "Mashirika",
     "admin": "Usimamizi"
   },
@@ -439,7 +439,7 @@
     "nudgeDismiss": "Ondoa",
     "toolWeather": "Hali ya hewa leo",
     "toolWeatherHint": "Chagua mahali pako kwenye Mazingira",
-    "weatherNow": "{temp} · {kind}",
+    "weatherNow": "{temp}, {kind}",
     "weatherAir": "Hewa: {level}",
     "why": {
       "start": "Ili hatua ambazo Waypoint inapendekeza zilingane na hali yako.",
@@ -553,13 +553,14 @@
       "deepfake-voice": "Sauti iliyoigwa",
       "other": "Kitu kingine"
     },
-    "reportedTitle": "Zilizoripotiwa hivi karibuni · {country}",
+    "reportedTitle": "Zilizoripotiwa hivi karibuni: {country}",
     "reportedTitleAnywhere": "Zilizoripotiwa hivi karibuni",
     "reportedLead": "Utapeli ulioripotiwa na watu katika siku 90 zilizopita. Timu yetu hukagua kila ripoti kabla haijaonekana hapa.",
     "reportedCount": "{count, plural, one {ripoti #} other {ripoti #}}",
     "reportedLatest": "ya mwisho {date}",
     "reportedHosts": "Tovuti zilizotajwa",
-    "reportLinks": "Tovuti zilizo kwenye ujumbe: {hosts}. Zitaongezwa kwenye ripoti yako ili wengine waonywe."
+    "reportLinks": "Tovuti zilizo kwenye ujumbe: {hosts}. Zitaongezwa kwenye ripoti yako ili wengine waonywe.",
+    "paste": "Bandika"
   },
   "ask": {
     "title": "Uliza",
@@ -1370,7 +1371,8 @@
     "mindBody": "Hiyo pia ni afya. Unaweza kuzungumza na mtu leo hii.",
     "mindAction": "Pata msaada sasa",
     "sourcesTitle": "Taarifa hizi zinatoka wapi",
-    "checked": "Imekaguliwa {date}"
+    "checked": "Imekaguliwa {date}",
+    "logToday": "Andika siku ya leo"
   },
   "surroundings": {
     "title": "Mazingira",

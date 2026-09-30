@@ -150,7 +150,7 @@
     "more": "और",
     "allModules": "सभी मॉड्यूल",
     "home": "Waypoint होम",
-    "offline": "आप ऑफ़लाइन हैं। हेल्पलाइन और आपकी सहेजी योजना अब भी काम करती हैं।",
+    "offline": "आप ऑफ़लाइन हैं। हेल्पलाइन अब भी काम करती हैं।",
     "organisations": "संगठन",
     "admin": "एडमिन"
   },
@@ -439,7 +439,7 @@
     "nudgeDismiss": "हटाएँ",
     "toolWeather": "आज का मौसम और हवा",
     "toolWeatherHint": "‘आसपास’ में अपनी जगह चुनें",
-    "weatherNow": "{temp} · {kind}",
+    "weatherNow": "{temp}, {kind}",
     "weatherAir": "हवा: {level}",
     "why": {
       "start": "ताकि Waypoint के सुझाए कदम आपकी स्थिति के अनुकूल हों।",
@@ -553,13 +553,14 @@
       "deepfake-voice": "नकली (क्लोन) आवाज़",
       "other": "कुछ और"
     },
-    "reportedTitle": "हाल में रिपोर्ट किए गए · {country}",
+    "reportedTitle": "हाल में रिपोर्ट किए गए: {country}",
     "reportedTitleAnywhere": "हाल में रिपोर्ट किए गए",
     "reportedLead": "पिछले 90 दिनों में लोगों ने जिन ठगियों की रिपोर्ट की। यहाँ दिखने से पहले हमारी टीम हर रिपोर्ट की जाँच करती है।",
     "reportedCount": "{count, plural, one {# रिपोर्ट} other {# रिपोर्ट}}",
     "reportedLatest": "आख़िरी {date}",
     "reportedHosts": "बताई गई वेबसाइटें",
-    "reportLinks": "संदेश में वेबसाइटें: {hosts}। ये आपकी रिपोर्ट में शामिल होंगी, ताकि दूसरों को चेतावनी दी जा सके।"
+    "reportLinks": "संदेश में वेबसाइटें: {hosts}। ये आपकी रिपोर्ट में शामिल होंगी, ताकि दूसरों को चेतावनी दी जा सके।",
+    "paste": "पेस्ट करें"
   },
   "ask": {
     "title": "पूछें",
@@ -1370,7 +1371,8 @@
     "mindBody": "यह भी सेहत का हिस्सा है। आप आज ही किसी से बात कर सकते हैं।",
     "mindAction": "अभी मदद पाएँ",
     "sourcesTitle": "यह जानकारी कहाँ से है",
-    "checked": "{date} को जाँचा गया"
+    "checked": "{date} को जाँचा गया",
+    "logToday": "आज का दिन दर्ज करें"
   },
   "surroundings": {
     "title": "आसपास",

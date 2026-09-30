@@ -151,7 +151,7 @@
     "more": "المزيد",
     "allModules": "كل الوحدات",
     "home": "الصفحة الرئيسية لـ Waypoint",
-    "offline": "أنت غير متصل. خطوط المساعدة وخطتك المحفوظة ما زالت تعمل.",
+    "offline": "أنت غير متصل. خطوط المساعدة ما زالت تعمل.",
     "organisations": "المؤسسات",
     "admin": "الإدارة"
   },
@@ -440,7 +440,7 @@
     "nudgeDismiss": "تجاهل",
     "toolWeather": "الطقس والهواء اليوم",
     "toolWeatherHint": "اختر مكانك في «المحيط»",
-    "weatherNow": "{temp} · {kind}",
+    "weatherNow": "{temp}، {kind}",
     "weatherAir": "الهواء: {level}",
     "why": {
       "start": "لكي تناسب الخطوات التي يقترحها Waypoint وضعك.",
@@ -554,13 +554,14 @@
       "deepfake-voice": "صوت مستنسخ",
       "other": "شيء آخر"
     },
-    "reportedTitle": "بلاغات حديثة · {country}",
+    "reportedTitle": "بلاغات حديثة: {country}",
     "reportedTitleAnywhere": "بلاغات حديثة",
     "reportedLead": "عمليات احتيال أبلغ عنها الناس خلال آخر 90 يومًا. يراجع فريقنا كل بلاغ قبل ظهوره هنا.",
     "reportedCount": "{count, plural, zero {لا بلاغات} one {بلاغ واحد} two {بلاغان} few {# بلاغات} many {# بلاغًا} other {# بلاغ}}",
     "reportedLatest": "آخرها في {date}",
     "reportedHosts": "مواقع ورد ذكرها",
-    "reportLinks": "المواقع الواردة في الرسالة: {hosts}. ستُضاف إلى بلاغك لتحذير الآخرين."
+    "reportLinks": "المواقع الواردة في الرسالة: {hosts}. ستُضاف إلى بلاغك لتحذير الآخرين.",
+    "paste": "لصق"
   },
   "ask": {
     "title": "اسأل",
@@ -1371,7 +1372,8 @@
     "mindBody": "هذا أيضًا من الصحة. يمكنك التحدث مع أحد اليوم.",
     "mindAction": "احصل على المساعدة الآن",
     "sourcesTitle": "من أين تأتي هذه المعلومات",
-    "checked": "تم التحقق في {date}"
+    "checked": "تم التحقق في {date}",
+    "logToday": "سجّل اليوم"
   },
   "surroundings": {
     "title": "المحيط",

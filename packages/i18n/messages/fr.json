@@ -150,7 +150,7 @@
     "more": "Plus",
     "allModules": "Tous les modules",
     "home": "Accueil de Waypoint",
-    "offline": "Vous êtes hors ligne. Les lignes d’écoute et votre plan enregistré fonctionnent toujours.",
+    "offline": "Vous êtes hors ligne. Les lignes d’écoute fonctionnent toujours.",
     "organisations": "Organisations",
     "admin": "Administration"
   },
@@ -439,7 +439,7 @@
     "nudgeDismiss": "Ignorer",
     "toolWeather": "Météo et air aujourd’hui",
     "toolWeatherHint": "Choisissez votre lieu dans Alentours",
-    "weatherNow": "{temp} · {kind}",
+    "weatherNow": "{temp}, {kind}",
     "weatherAir": "Air : {level}",
     "why": {
       "start": "Pour que les étapes proposées par Waypoint correspondent à votre situation.",
@@ -553,13 +553,14 @@
       "deepfake-voice": "Voix clonée",
       "other": "Autre chose"
     },
-    "reportedTitle": "Signalé récemment · {country}",
+    "reportedTitle": "Signalé récemment : {country}",
     "reportedTitleAnywhere": "Signalé récemment",
     "reportedLead": "Arnaques signalées ces 90 derniers jours. Notre équipe vérifie chaque signalement avant qu’il n’apparaisse ici.",
     "reportedCount": "{count, plural, one {# signalement} other {# signalements}}",
     "reportedLatest": "dernier le {date}",
     "reportedHosts": "Sites cités",
-    "reportLinks": "Sites présents dans le message : {hosts}. Ils seront ajoutés à votre signalement pour prévenir les autres."
+    "reportLinks": "Sites présents dans le message : {hosts}. Ils seront ajoutés à votre signalement pour prévenir les autres.",
+    "paste": "Coller"
   },
   "ask": {
     "title": "Parler",
@@ -1370,7 +1371,8 @@
     "mindBody": "C’est aussi de la santé. Vous pouvez parler à quelqu’un dès aujourd’hui.",
     "mindAction": "Obtenir de l’aide",
     "sourcesTitle": "D’où viennent ces informations",
-    "checked": "Vérifié le {date}"
+    "checked": "Vérifié le {date}",
+    "logToday": "Renseigner la journée"
   },
   "surroundings": {
     "title": "Alentours",

@@ -157,7 +157,7 @@ declare const messages: {
     "more": "More",
     "allModules": "All modules",
     "home": "Waypoint home",
-    "offline": "You’re offline. Help lines and your saved plan still work.",
+    "offline": "You’re offline. Help lines still work.",
     "organisations": "Organisations",
     "admin": "Admin"
   },
@@ -446,7 +446,7 @@ declare const messages: {
     "nudgeDismiss": "Dismiss",
     "toolWeather": "Weather and air today",
     "toolWeatherHint": "Choose your place in Surroundings",
-    "weatherNow": "{temp} · {kind}",
+    "weatherNow": "{temp}, {kind}",
     "weatherAir": "Air: {level}",
     "why": {
       "start": "So the steps Waypoint suggests fit where you are.",
@@ -560,13 +560,14 @@ declare const messages: {
       "deepfake-voice": "Cloned voice",
       "other": "Something else"
     },
-    "reportedTitle": "Reported recently · {country}",
+    "reportedTitle": "Reported recently: {country}",
     "reportedTitleAnywhere": "Reported recently",
     "reportedLead": "Scams people reported in the last 90 days. Our team checks each report before it appears here.",
     "reportedCount": "{count, plural, one {# report} other {# reports}}",
     "reportedLatest": "latest {date}",
     "reportedHosts": "Websites named",
-    "reportLinks": "Websites in the message: {hosts}. They’ll be included in your report so others can be warned."
+    "reportLinks": "Websites in the message: {hosts}. They’ll be included in your report so others can be warned.",
+    "paste": "Paste"
   },
   "ask": {
     "title": "Ask",
@@ -1377,7 +1378,8 @@ declare const messages: {
     "mindBody": "That’s health too. You can talk to someone today.",
     "mindAction": "Get help now",
     "sourcesTitle": "Where this guidance comes from",
-    "checked": "Checked {date}"
+    "checked": "Checked {date}",
+    "logToday": "Log today"
   },
   "surroundings": {
     "title": "Surroundings",

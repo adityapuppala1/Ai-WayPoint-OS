@@ -64,6 +64,7 @@ test('a language chosen as a visitor is a cookie the server set, and survives a 
 test('a theme chosen in Settings is a cookie the server set, and survives a reload', async ({
   page,
   context,
+  problems,
 }) => {
   await startAsGuest(page);
   await page.goto('/settings');
@@ -92,6 +93,12 @@ test('a theme chosen in Settings is a cookie the server set, and survives a relo
   await expect(theme.getByRole('radio', { name: 'Device' })).toBeChecked();
   await page.reload();
   await expect(page.locator('html')).not.toHaveAttribute('data-theme');
+  // Saving a choice redraws the page from the server (router.refresh), and here the reload
+  // comes straight after it. WebKit cuts that answer off as soon as a reload starts, while the
+  // page's script still runs, and Next reports the cut-off answer in WebKit's words before the
+  // page goes. Chrome and Firefox stop the page's script first. Only that line, only here.
+  for (let i = problems.length - 1; i >= 0; i--)
+    if (problems[i] === 'console: TypeError: Load failed') problems.splice(i, 1);
 });
 
 test('the device time zone is a cookie the server set on the first page', async ({

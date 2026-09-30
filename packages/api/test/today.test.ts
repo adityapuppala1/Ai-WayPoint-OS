@@ -70,6 +70,7 @@ interface View {
   nextStep: Step;
   goals: { active: number; reviewedThisWeek: boolean };
   nudges: Array<{ id: string; title: string }>;
+  hasSaved: boolean;
 }
 
 /** A guest, optionally through getting started with a situation. */
@@ -425,5 +426,43 @@ describe('Today’s next step', () => {
       titleLang: null,
     });
     expect(view.nextStep.why).toContain('Le dijiste a Waypoint: «');
+  });
+});
+
+describe('what Today knows about a guest’s own things', () => {
+  it('nothing is saved until the person saves a goal, a check-in or a plan', async () => {
+    // Getting started alone is not "something saved": there is nothing of theirs to lose yet.
+    const goal = await person('steady');
+    expect((await today(goal)).hasSaved).toBe(false);
+    const created = await req('/api/goals', {
+      method: 'POST',
+      cookie: goal,
+      json: { title: 'Walk every morning', area: 'health' },
+    });
+    expect(created.status).toBe(201);
+    expect((await today(goal)).hasSaved).toBe(true);
+
+    const checkin = await person('caring');
+    expect((await today(checkin)).hasSaved).toBe(false);
+    const checked = await req('/api/mind/checkins', {
+      method: 'POST',
+      cookie: checkin,
+      json: { mood: 3 },
+    });
+    expect(checked.ok).toBe(true);
+    expect((await today(checkin)).hasSaved).toBe(true);
+
+    const plan = await person('first-job');
+    const overview = (await (await req('/api/path', { cookie: plan })).json()) as {
+      suggestions: Array<{ roleId: string }>;
+    };
+    expect((await today(plan)).hasSaved).toBe(false);
+    const made = await req('/api/path/plans', {
+      method: 'POST',
+      cookie: plan,
+      json: { roleId: overview.suggestions[0]!.roleId, hoursPerWeek: 5, horizonWeeks: 4 },
+    });
+    expect(made.status).toBe(201);
+    expect((await today(plan)).hasSaved).toBe(true);
   });
 });

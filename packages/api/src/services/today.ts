@@ -121,6 +121,11 @@ export const TodaySchema = z
       .nullable(),
     /** Goals at a glance: how many are active, and whether this week's review is written. */
     goals: z.object({ active: z.number().int(), reviewedThisWeek: z.boolean() }),
+    /**
+     * Whether the person has saved something of their own yet: a plan, a goal or a check-in.
+     * A guest is told where that lives only once there is something to keep.
+     */
+    hasSaved: z.boolean(),
   })
   .openapi('Today');
 
@@ -225,9 +230,10 @@ export async function today(
         : null,
       // Only counts and dates: a goal's words stay encrypted and are not read here.
       db
-        .select({ n: count() })
+        .select({ status: goals.status, n: count() })
         .from(goals)
-        .where(and(eq(goals.userId, userId), eq(goals.status, 'active'))),
+        .where(eq(goals.userId, userId))
+        .groupBy(goals.status),
       db
         .select({ id: weeklyReviews.id })
         .from(weeklyReviews)
@@ -261,7 +267,7 @@ export async function today(
   }));
 
   const goalState = {
-    active: Number(goalRows[0]?.n ?? 0),
+    active: Number(goalRows.find((g) => g.status === 'active')?.n ?? 0),
     reviewedThisWeek: reviewRows.length > 0,
   };
 
@@ -336,6 +342,7 @@ export async function today(
     emergencyNumber: supportDirectory(helpCountry(profile)).emergency?.general ?? null,
     money,
     goals: goalState,
+    hasSaved: Boolean(active) || goalRows.length > 0 || lastCheckin.length > 0,
   };
 }
 

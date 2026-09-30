@@ -10,6 +10,8 @@ import { getFormatter, getLocale, getMessages, getTranslations } from 'next-intl
 import { contentLang } from '@/components/EnglishContentNote';
 import { ForecastCard } from '@/components/forecasts/ForecastCard';
 import { SignalItem } from '@/components/SignalItem';
+import { GuestNote } from '@/components/today/GuestNote';
+import { GUEST_NOTE_COOKIE } from '@/components/today/guest-note';
 import { type ModuleLine, ModuleLines } from '@/components/today/ModuleLines';
 import { NextStepSign } from '@/components/today/NextStepSign';
 import { NudgeNotice } from '@/components/today/NudgeNotice';
@@ -55,15 +57,20 @@ export default async function TodayPage() {
       contentLang(),
     ]);
 
+  const store = await cookies();
   const view = await today.today(viewer.db, viewer.user.id, viewer.profile, {
     matching: viewer.consents.foresight_matching,
     locale,
     // Every word on the sign is a message that already exists in this language.
     copy: today.todayCopy((await getMessages()) as unknown as Messages),
     // Steps set aside with "Not now" today. The cookie holds only the day and opaque keys.
-    notNow: (await cookies()).get(NOT_NOW_COOKIE)?.value,
+    notNow: store.get(NOT_NOW_COOKIE)?.value,
   });
   const step = view.nextStep;
+  // A guest with something saved is told, once, where it lives. Not before there is anything
+  // to keep, and never again after "Not now".
+  const guestNote =
+    viewer.user.isGuest && view.hasSaved && store.get(GUEST_NOTE_COOKIE)?.value !== 'off';
 
   // Forecasts that are about this person's country or sector, or about everywhere. Only ones
   // staff have published: with none, Today says nothing about the future.
@@ -186,6 +193,8 @@ export default async function TodayPage() {
                 : undefined
             }
           />
+
+          {guestNote ? <GuestNote /> : null}
 
           {notes.length ? (
             <section className="wp-section" aria-labelledby="nudges">

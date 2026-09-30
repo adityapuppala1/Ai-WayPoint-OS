@@ -86,7 +86,8 @@
 
 /* ───────────── Go to (the palette's button) ───────────── */
 .railSearch {
-  margin-block-start: var(--wp-space-4);
+  flex: none;
+  margin-block-start: var(--wp-space-3);
 }
 
 /* Shaped like a search field, so it reads as "type to find" before it is pressed. */
@@ -164,12 +165,21 @@
   display: none;
 }
 
+/* On a short screen the list of places scrolls by itself, so "Get help now" and the account
+   below it never leave the screen. It reaches the rail's edges, so the marker at the edge
+   stays in view. */
 .railList {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: 2px;
-  margin-block-start: var(--wp-space-4);
-  padding: 0;
+  min-block-size: 0;
+  margin-block: var(--wp-space-3) 0;
+  margin-inline: calc(-1 * var(--wp-space-3));
+  padding: var(--wp-space-1) var(--wp-space-3);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
   list-style: none;
 }
 
@@ -208,10 +218,11 @@
   color: var(--wp-text);
 }
 
+/* The list scrolls, so the ring is drawn inside the link, where nothing clips it. */
 .railLink:focus-visible {
   background: var(--wp-signal-tint);
   color: var(--wp-text);
-  box-shadow: var(--wp-focus-shadow);
+  box-shadow: var(--wp-focus-shadow-inset);
 }
 
 /* The active marker, like the "you are here" arrow on a sign: --wp-marker, which stands out
@@ -242,10 +253,11 @@
 
 .railFoot {
   display: flex;
+  flex: none;
   flex-direction: column;
   gap: var(--wp-space-2);
   margin-block-start: auto;
-  padding-block-start: var(--wp-space-4);
+  padding-block-start: var(--wp-space-3);
   border-block-start: 1px solid var(--wp-border-subtle);
 }
 

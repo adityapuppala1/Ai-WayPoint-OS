@@ -148,7 +148,7 @@ More: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/SAFETY.md](docs/SAFE
 [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) · [docs/LOCALIZATION.md](docs/LOCALIZATION.md) ·
 [docs/CHANNELS.md](docs/CHANNELS.md) · [docs/MOBILE.md](docs/MOBILE.md) ·
 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) · [SECURITY.md](SECURITY.md) ·
-[docs/ROADMAP.md](docs/ROADMAP.md)
+[docs/COVERAGE.md](docs/COVERAGE.md) · [docs/ROADMAP.md](docs/ROADMAP.md)
 
 ---
 

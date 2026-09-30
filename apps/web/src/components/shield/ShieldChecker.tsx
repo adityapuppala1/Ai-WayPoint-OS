@@ -165,11 +165,15 @@ export function ShieldChecker({
       }[check.result.level]
     : '';
 
+  // "Found more" only when the second opinion raised the level. One that saw less than the
+  // rules changed nothing, and there is nothing to say about it.
   const aiLine = check
     ? check.ai.used
-      ? check.result.engine.ai?.agreed
-        ? t('aiAgreed')
-        : t('aiRaised')
+      ? check.ai.raised
+        ? t('aiRaised')
+        : check.result.engine.ai?.agreed
+          ? t('aiAgreed')
+          : null
       : check.ai.reason === 'skipped-certain'
         ? t('aiSkipped')
         : null

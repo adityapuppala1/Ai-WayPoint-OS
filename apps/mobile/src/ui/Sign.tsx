@@ -13,11 +13,14 @@ import { Text } from './Text';
 export interface SignDetail {
   label: string;
   value: string;
+  /** The language the value is written in, when it is not the reader's. */
+  lang?: string;
 }
 
 export function Sign({
   eyebrow,
   title,
+  lang,
   flipKey,
   module = 'today',
   context,
@@ -27,6 +30,8 @@ export function Sign({
 }: {
   eyebrow: string;
   title: string;
+  /** The language the title is written in, when it is not the reader's (for screen readers). */
+  lang?: string;
   flipKey?: string;
   module?: ModuleKey;
   context?: string;
@@ -92,7 +97,7 @@ export function Sign({
           ) : null}
         </View>
         <Animated.View style={{ opacity, transform: [{ perspective: 640 }, { rotateX }] }}>
-          <Text variant={titleVariant} tone="sign">
+          <Text variant={titleVariant} tone="sign" accessibilityLanguage={lang}>
             {title}
           </Text>
         </Animated.View>
@@ -104,7 +109,13 @@ export function Sign({
                 <Text variant="small" tone="signMuted">
                   {d.label}
                 </Text>
-                <Text variant="small" weight="medium" tone="sign" tabular>
+                <Text
+                  variant="small"
+                  weight="medium"
+                  tone="sign"
+                  tabular
+                  accessibilityLanguage={d.lang}
+                >
                   {d.value}
                 </Text>
               </View>

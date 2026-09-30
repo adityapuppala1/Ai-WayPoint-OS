@@ -12,6 +12,7 @@ import { ActivityIndicator, View } from 'react-native';
 import { useFormatter, useTranslations } from 'use-intl';
 import { api } from '../../src/api';
 import { authClient } from '../../src/auth';
+import { todaySign } from '../../src/features/today-sign';
 import { deviceTimeZone, useAppLocale } from '../../src/i18n';
 import { openLink, openPath, telHref } from '../../src/links';
 import { useCountry } from '../../src/place';
@@ -203,6 +204,8 @@ export default function TodayScreen() {
   ];
 
   const step = view?.nextStep;
+  const sign = view ? todaySign(view) : null;
+  const lang = sign?.lang ?? undefined;
   const stations: Station[] =
     view?.week.map((s) => ({
       id: s.id,
@@ -211,7 +214,7 @@ export default function TodayScreen() {
       state:
         s.status === 'done' || s.status === 'skipped'
           ? 'done'
-          : s.id === view.nextStep.stepId
+          : s.id === sign?.currentStepId
             ? 'current'
             : 'upcoming',
     })) ?? [];
@@ -267,22 +270,16 @@ export default function TodayScreen() {
         <Sign
           eyebrow={t('eyebrow')}
           title={step.title}
-          flipKey={step.stepId ?? step.kind}
+          lang={lang}
+          flipKey={step.key}
           module={step.module as ModuleKey}
-          context={
-            view?.plan
-              ? t('planContext', {
-                  plan: view.plan.title,
-                  week: view.plan.currentWeek,
-                  weeks: view.plan.horizonWeeks,
-                })
-              : undefined
-          }
+          context={sign?.planContext ? t('planContext', sign.planContext) : undefined}
           details={[
             ...(step.minutes
               ? [{ label: t('time'), value: t('minutes', { count: step.minutes }) }]
               : []),
-            ...(view?.plan ? [{ label: t('from'), value: view.plan.title }] : []),
+            ...(sign?.from ? [{ label: t('from'), value: sign.from, lang }] : []),
+            ...(sign?.why ? [{ label: t('whySeeing'), value: sign.why }] : []),
           ]}
           actions={
             step.kind === 'plan-step' ? (
@@ -307,7 +304,11 @@ export default function TodayScreen() {
             )
           }
         >
-          {step.detail ? <Text tone="signMuted">{step.detail}</Text> : null}
+          {step.detail ? (
+            <Text tone="signMuted" accessibilityLanguage={lang}>
+              {step.detail}
+            </Text>
+          ) : null}
         </Sign>
       )}
 
@@ -325,7 +326,7 @@ export default function TodayScreen() {
         </Notice>
       ) : null}
 
-      {view?.nudges.map((n) => {
+      {sign?.notes.map((n) => {
         const support = n.href === '/support';
         return (
           <Notice

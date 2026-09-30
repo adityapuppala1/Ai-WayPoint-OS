@@ -12,6 +12,8 @@ const PAGES = [
   '/welcome',
   '/support?country=IN',
   '/shield',
+  '/signals/forecasts',
+  '/signals/forecasts/record',
   '/sign-in',
   '/sign-up',
   '/start',

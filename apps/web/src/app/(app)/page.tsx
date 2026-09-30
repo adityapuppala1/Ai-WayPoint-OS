@@ -1,10 +1,11 @@
-import { today } from '@waypoint/api';
+import { forecasts, today } from '@waypoint/api';
 import { usesFahrenheit } from '@waypoint/core';
 import { Icon, List, ModuleMark, Panel, Route as RouteLine, type Station } from '@waypoint/ui';
 import type { Metadata, Route } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getFormatter, getLocale, getTranslations } from 'next-intl/server';
+import { ForecastCard } from '@/components/forecasts/ForecastCard';
 import { LinkRow } from '@/components/LinkRow';
 import { SignalItem } from '@/components/SignalItem';
 import { NextStepSign } from '@/components/today/NextStepSign';
@@ -41,10 +42,11 @@ export default async function TodayPage() {
   const kinds = await getTranslations('stepKinds');
   const a11y = await getTranslations('a11y');
   const format = await getFormatter();
+  const locale = await getLocale();
 
   const view = await today.today(viewer.db, viewer.user.id, viewer.profile, {
     matching: viewer.consents.foresight_matching,
-    locale: await getLocale(),
+    locale,
     copy: {
       onboardTitle: t('onboardTitle'),
       onboardDetail: t('onboardDetail'),
@@ -54,6 +56,19 @@ export default async function TodayPage() {
       exploreDetail: t('exploreDetail'),
     },
   });
+
+  // Forecasts that are about this person's country or sector, or about everywhere. Only ones
+  // staff have published: with none, Today says nothing about the future.
+  const ahead = (
+    await forecasts.listForecasts(
+      viewer.db,
+      { profile: viewer.profile, matching: viewer.consents.foresight_matching },
+      { locale },
+    )
+  ).open
+    .filter((f) => f.reasons.length > 0 || f.regions.length === 0)
+    .slice(0, 2);
+  const next = ahead.length ? await getTranslations('forecasts') : null;
 
   const greeting = t(partOfDay(viewer.profile.timezone));
   const heading = view.name ? t('greetingName', { greeting, name: view.name }) : greeting;
@@ -157,6 +172,22 @@ export default async function TodayPage() {
           <p className={styles.empty}>{t('changedEmpty')}</p>
         )}
       </Panel>
+
+      {next ? (
+        <Panel
+          title={next('todayTitle')}
+          flush
+          actions={
+            <Link href={'/signals/forecasts' as Route} className={styles.panelLink}>
+              {next('seeAll')}
+            </Link>
+          }
+        >
+          {ahead.map((f) => (
+            <ForecastCard key={f.id} forecast={f} />
+          ))}
+        </Panel>
+      ) : null}
 
       <Panel title={t('toolsTitle')} flush>
         <List>

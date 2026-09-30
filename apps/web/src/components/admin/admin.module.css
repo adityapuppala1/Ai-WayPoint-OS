@@ -467,3 +467,69 @@
 .table tbody th {
   font-weight: var(--wp-weight-regular);
 }
+
+/* ───────────── Forecasts: publish, change the chance, judge ───────────── */
+.itemTitle {
+  font-size: var(--wp-text-body);
+  font-weight: var(--wp-weight-semibold);
+  line-height: var(--wp-leading-snug);
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-5);
+  max-inline-size: 44rem;
+}
+
+.pair {
+  display: grid;
+  gap: var(--wp-space-4);
+}
+
+@media (min-width: 36rem) {
+  .pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
+.dateField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+}
+
+.dateField label {
+  font-weight: var(--wp-weight-medium);
+}
+
+.dateField input {
+  max-inline-size: 16rem;
+  min-block-size: var(--wp-touch-min);
+  padding-inline: var(--wp-space-3);
+  border: 1px solid var(--wp-border-strong);
+  border-radius: var(--wp-radius-sm);
+  background: var(--wp-raised);
+  color: var(--wp-text);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.dateField input:focus-visible {
+  outline: 2px solid var(--wp-focus-ring);
+  outline-offset: 1px;
+}
+
+.translations {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+}

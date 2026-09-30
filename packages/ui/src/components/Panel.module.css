@@ -40,7 +40,13 @@
     padding: 0 var(--wp-space-4) var(--wp-space-4);
   }
 
-  .flush {
+  /* No header: the body supplies the space above that the header would have given. */
+  .body:first-child {
+    padding-block-start: var(--wp-space-4);
+  }
+
+  .flush,
+  .flush:first-child {
     padding: 0;
   }
 
@@ -62,7 +68,12 @@
       padding: 0 var(--wp-space-6) var(--wp-space-6);
     }
 
-    .flush {
+    .body:first-child {
+      padding-block-start: var(--wp-space-6);
+    }
+
+    .flush,
+    .flush:first-child {
       padding: 0;
     }
   }

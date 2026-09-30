@@ -60,6 +60,7 @@ import { channelsReady } from '../channels/providers';
 import { emailReady } from '../email/send';
 import { type Actor, audit } from '../lib/audit';
 import { ApiError, notFound } from '../lib/problem';
+import { forecastsToJudge } from './forecasts';
 import { SCAM_CATEGORIES } from './shield';
 
 // ─────────────────────────────── Overview ───────────────────────────────
@@ -555,16 +556,20 @@ export async function adminOverview(db: Database, now = new Date()): Promise<Adm
 }
 
 /** What is waiting for staff: shown as counts in the admin navigation. */
-export async function adminCounts(db: Database): Promise<{ moderation: number; reports: number }> {
-  const [posts, [reports]] = await Promise.all([
+export async function adminCounts(
+  db: Database,
+): Promise<{ moderation: number; reports: number; forecasts: number }> {
+  const [posts, [reports], forecasts] = await Promise.all([
     db.execute<{ n: number }>(sql`
       select count(*)::int as n from circle_posts p
       where p.hidden_reason in ('scam', 'reports')
         or (p.hidden_reason is distinct from 'crisis' and exists (
           select 1 from circle_reports r where r.post_id = p.id and r.resolved_at is null))`),
     db.select({ n: count() }).from(scamReports).where(eq(scamReports.status, 'new')),
+    // Forecasts whose date has passed and that nobody has judged yet.
+    forecastsToJudge(db),
   ]);
-  return { moderation: num(posts.rows[0]?.n), reports: num(reports?.n) };
+  return { moderation: num(posts.rows[0]?.n), reports: num(reports?.n), forecasts };
 }
 
 // ─────────────────────────────── Moderation ───────────────────────────────
@@ -1053,7 +1058,7 @@ export async function auditTrail(
       and(
         // Staff and organisation actions only: what people do for themselves (such as
         // downloading their data) stays out of the admin view.
-        sql`(${auditLog.action} like 'org.%' or ${auditLog.action} like 'moderation.%' or ${auditLog.action} like 'scam-report.%')`,
+        sql`(${auditLog.action} like 'org.%' or ${auditLog.action} like 'moderation.%' or ${auditLog.action} like 'scam-report.%' or ${auditLog.action} like 'forecast.%')`,
         before && !Number.isNaN(before.getTime()) ? lt(auditLog.createdAt, before) : sql`true`,
       ),
     )

@@ -1,0 +1,235 @@
+/* "What's next?": forecasts, and the record of how they turned out. */
+
+/* Section links under the page title: Signals, What's next?, Our record. */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-1) var(--wp-space-5);
+  margin: 0;
+  padding: 0;
+  border-block-end: 1px solid var(--wp-border-subtle);
+  list-style: none;
+}
+
+.tabs a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--wp-touch-min);
+  /* The marker sits on the rule underneath; the text does not move when it appears. */
+  border-block-end: 3px solid transparent;
+  margin-block-end: -1px;
+  color: var(--wp-text-secondary);
+  font-weight: var(--wp-weight-medium);
+  text-decoration: none;
+}
+
+.tabs a:hover {
+  color: var(--wp-text);
+}
+
+.tabs a[aria-current="page"] {
+  border-block-end-color: var(--wp-signal);
+  color: var(--wp-text);
+}
+
+.honest {
+  max-inline-size: var(--wp-reading-max);
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+}
+
+/* One forecast. Several sit in a panel, separated by hairlines. */
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-4);
+  padding: var(--wp-space-5);
+}
+
+.item + .item {
+  border-block-start: 1px solid var(--wp-border-subtle);
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+}
+
+.topic {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--wp-space-1) var(--wp-space-3);
+  color: var(--wp-text-muted);
+  font-size: var(--wp-text-meta);
+  line-height: var(--wp-leading-meta);
+}
+
+/* A short rule instead of a middle dot between two pieces of metadata. */
+.sep {
+  inline-size: 1px;
+  block-size: 0.9em;
+  background: var(--wp-border-strong);
+}
+
+.question {
+  font-size: var(--wp-text-lead);
+  font-weight: var(--wp-weight-semibold);
+  line-height: var(--wp-leading-snug);
+  overflow-wrap: anywhere;
+}
+
+.description {
+  color: var(--wp-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.chance {
+  max-inline-size: 28rem;
+}
+
+/* What to do: the part people came for, so it is set apart without shouting. */
+.advice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+  padding-inline-start: var(--wp-space-4);
+  border-inline-start: 3px solid var(--wp-line-signals);
+}
+
+.factName {
+  color: var(--wp-text-muted);
+  font-size: var(--wp-text-meta);
+  font-weight: var(--wp-weight-medium);
+  line-height: var(--wp-leading-meta);
+}
+
+.advice p {
+  overflow-wrap: anywhere;
+}
+
+/* The day it will be judged: always in view, never behind a disclosure. */
+.when {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+}
+
+.fact {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+  font-size: var(--wp-text-small);
+}
+
+.sources {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sources a {
+  overflow-wrap: anywhere;
+}
+
+.more {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+  font-size: var(--wp-text-small);
+}
+
+.more p {
+  overflow-wrap: anywhere;
+}
+
+.reasons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+  margin: 0;
+  padding-inline-start: var(--wp-space-5);
+}
+
+/* How it turned out. */
+.outcome {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+}
+
+.verdict {
+  font-weight: var(--wp-weight-semibold);
+}
+
+.said {
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The record page. */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+  gap: var(--wp-space-5);
+}
+
+.score {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-3);
+  max-inline-size: var(--wp-reading-max);
+}
+
+.note {
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--wp-text-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.table th,
+.table td {
+  padding: var(--wp-space-3) var(--wp-space-4);
+  border-block-end: 1px solid var(--wp-border-subtle);
+  text-align: start;
+}
+
+.table thead th {
+  color: var(--wp-text-muted);
+  font-size: var(--wp-text-meta);
+  font-weight: var(--wp-weight-medium);
+}
+
+.table tbody th {
+  font-weight: var(--wp-weight-regular);
+}
+
+.table .num {
+  text-align: end;
+}
+
+.how {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+  max-inline-size: var(--wp-reading-max);
+  margin: 0;
+  padding-inline-start: var(--wp-space-5);
+}

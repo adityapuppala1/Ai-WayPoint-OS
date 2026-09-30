@@ -65,6 +65,7 @@ export const SERVER_ONLY_NAMESPACES = [
   'supportKinds',
   'planTemplates',
   'signals',
+  'forecasts',
   'explore',
   'byText',
   'legal',

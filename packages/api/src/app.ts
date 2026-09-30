@@ -32,6 +32,7 @@ import ask from './routes/ask';
 import channels from './routes/channels';
 import circles from './routes/circles';
 import civic from './routes/civic';
+import forecasts from './routes/forecasts';
 import goals from './routes/goals';
 import health from './routes/health';
 import me from './routes/me';
@@ -390,6 +391,7 @@ export function createApp() {
   app.route('/', circles);
   app.route('/', health);
   app.route('/', org);
+  app.route('/', forecasts);
   app.route('/', admin);
   app.route('/', channels);
 

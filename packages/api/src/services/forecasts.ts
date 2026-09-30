@@ -1,0 +1,673 @@
+/**
+ * "What's next?" — forecasts people can check us on.
+ *
+ * A forecast is a yes-or-no question about the near future with a date on which it will be
+ * judged, the chance Waypoint gives it (a number and words, never 0 % or 100 %), where that
+ * chance comes from, and what someone can do about it either way. Staff publish them and
+ * judge them; nothing here is generated or invented, so until staff publish one there is
+ * nothing to show. Every forecast that is judged goes on the public record, right or wrong.
+ */
+import { z } from '@hono/zod-openapi';
+import {
+  FORECAST_BOUNDS,
+  forecastScore,
+  type JudgedForecast,
+  LOCALES,
+  type Locale,
+  type ProbabilityWord,
+  probabilityWords,
+  type RelevanceReason,
+  relevance,
+  SCOREBOARD,
+  scoreboard,
+} from '@waypoint/core';
+import { safeExternalHref } from '@waypoint/core/paths';
+import {
+  and,
+  asc,
+  type Database,
+  desc,
+  eq,
+  type ForecastSource,
+  type ForecastTranslation,
+  forecastPredictions,
+  forecasts,
+  inArray,
+  sql,
+} from '@waypoint/db';
+import { type Actor, audit } from '../lib/audit';
+import { ApiError, notFound } from '../lib/problem';
+import type { Profile } from './me';
+
+export const FORECAST_CATEGORIES = [
+  'jobs',
+  'prices',
+  'money',
+  'safety',
+  'health',
+  'climate',
+  'technology',
+  'rules',
+  'other',
+] as const;
+
+/** open: still ahead · awaiting: the date has passed, not judged yet · resolved · annulled */
+export const FORECAST_STATES = ['open', 'awaiting', 'resolved', 'annulled'] as const;
+export type ForecastState = (typeof FORECAST_STATES)[number];
+
+const PREDICTOR = 'waypoint';
+const DAY = 86_400_000;
+
+// ─────────────────────────────── What people see ───────────────────────────────
+
+const SourceSchema = z.object({ name: z.string(), url: z.string() });
+
+export const ForecastSchema = z
+  .object({
+    id: z.string(),
+    question: z.string(),
+    /** Why it matters, in a few sentences (may be empty). */
+    description: z.string(),
+    whatToDo: z.string(),
+    resolutionCriteria: z.string(),
+    /** The language these words are in, and whether that is a translation by staff. */
+    language: z.enum(LOCALES),
+    translated: z.boolean(),
+    category: z.string(),
+    regions: z.array(z.string()),
+    /** The chance shown now (or when it closed): 0.01 to 0.99. */
+    probability: z.number(),
+    words: z.string(),
+    /** How often this kind of thing usually happens, when staff gave it. */
+    baseRate: z.number().nullable(),
+    rationale: z.string().nullable(),
+    sources: z.array(SourceSchema),
+    publishedAt: z.string(),
+    /** When the chance was last changed. */
+    updatedAt: z.string(),
+    /** Every chance it has shown, oldest first. */
+    history: z.array(z.object({ probability: z.number(), at: z.string() })),
+    /** The date it will be judged. */
+    resolvesAt: z.string(),
+    state: z.enum(FORECAST_STATES),
+    outcome: z.enum(['yes', 'no']).nullable(),
+    resolvedAt: z.string().nullable(),
+    resolutionNote: z.string().nullable(),
+    resolutionSourceUrl: z.string().nullable(),
+    /** Its score once judged: 0 is perfect, 0.25 is what saying 50 % would score. */
+    score: z.number().nullable(),
+    isDemo: z.boolean(),
+    /** Why it is shown to this person (their country, their sector…); empty when it is not. */
+    reasons: z.array(z.string()),
+  })
+  .openapi('Forecast');
+
+export type ForecastView = z.infer<typeof ForecastSchema>;
+
+export const ForecastListSchema = z
+  .object({
+    /** Still ahead, the most relevant and the soonest first. */
+    open: z.array(ForecastSchema),
+    /** The date has passed and staff have not judged it yet. */
+    awaiting: z.array(ForecastSchema),
+    /** Judged or withdrawn lately, newest first. */
+    judged: z.array(ForecastSchema),
+  })
+  .openapi('ForecastList');
+
+export const ForecastRecordSchema = z
+  .object({
+    open: z.number().int(),
+    awaiting: z.number().int(),
+    judged: z.number().int(),
+    annulled: z.number().int(),
+    /** How many came true, of those judged. */
+    happened: z.number().int(),
+    /** Mean score, or null until `minForScore` forecasts have been judged. */
+    brier: z.number().nullable(),
+    /** What always giving the overall rate would have scored. */
+    reference: z.number().nullable(),
+    /** Per band of chance: how often things really happened. Null until `minForCalibration`. */
+    calibration: z
+      .array(
+        z.object({
+          from: z.number(),
+          to: z.number(),
+          n: z.number().int(),
+          meanPredicted: z.number(),
+          observed: z.number(),
+        }),
+      )
+      .nullable(),
+    minForScore: z.number().int(),
+    minForCalibration: z.number().int(),
+    /** When the first forecast on the record was judged. */
+    since: z.string().nullable(),
+  })
+  .openapi('ForecastRecord');
+
+export type ForecastRecord = z.infer<typeof ForecastRecordSchema>;
+
+type Row = typeof forecasts.$inferSelect;
+type Chance = { probability: number; rationale: string | null; createdAt: Date };
+
+const isLocale = (v: string): v is Locale => (LOCALES as readonly string[]).includes(v);
+
+function stateOf(row: Row, now: Date): ForecastState {
+  if (row.status === 'resolved' || row.status === 'annulled') return row.status;
+  return row.resolvesAt.getTime() <= now.getTime() ? 'awaiting' : 'open';
+}
+
+/** The words in the reader's language when staff wrote them; otherwise as first written. */
+function wordsFor(row: Row, locale: string) {
+  const original = isLocale(row.language) ? row.language : 'en';
+  const t: ForecastTranslation | undefined =
+    locale !== original ? row.translations?.[locale] : undefined;
+  if (t && isLocale(locale))
+    return {
+      question: t.question,
+      description: t.description ?? row.description,
+      whatToDo: t.whatToDo,
+      resolutionCriteria: t.resolutionCriteria,
+      language: locale,
+      translated: true,
+    };
+  return {
+    question: row.question,
+    description: row.description,
+    whatToDo: row.whatToDo,
+    resolutionCriteria: row.resolutionCriteria,
+    language: original,
+    translated: false,
+  };
+}
+
+/** When a forecast stops being open to changes: its date, or the moment it was judged early. */
+function closedAt(row: Row): Date {
+  const judged = row.resolvedAt?.getTime() ?? Number.POSITIVE_INFINITY;
+  return new Date(Math.min(row.closesAt.getTime(), judged));
+}
+
+function scoreOf(row: Row, chances: Chance[]) {
+  if (row.status !== 'resolved' || (row.outcome !== 0 && row.outcome !== 1)) return null;
+  return forecastScore(
+    chances.map((c) => ({ p: c.probability, at: c.createdAt })),
+    row.opensAt,
+    closedAt(row),
+    row.outcome,
+  );
+}
+
+function view(
+  row: Row,
+  chances: Chance[],
+  locale: string,
+  reasons: RelevanceReason[],
+  now: Date,
+): ForecastView | null {
+  // The chance shown is the last one published before it closed.
+  const close = closedAt(row).getTime();
+  const shown = chances.filter((c) => c.createdAt.getTime() <= close);
+  const current = shown.at(-1) ?? chances[0];
+  if (!current) return null; // never published with a chance: not a forecast
+  const score = scoreOf(row, chances);
+  return {
+    id: row.id,
+    ...wordsFor(row, locale),
+    category: row.category,
+    regions: row.regions,
+    probability: current.probability,
+    words: probabilityWords(current.probability) satisfies ProbabilityWord,
+    baseRate: row.baseRate ?? null,
+    rationale: current.rationale,
+    sources: row.sources.filter((s) => safeExternalHref(s.url)),
+    publishedAt: row.opensAt.toISOString(),
+    updatedAt: current.createdAt.toISOString(),
+    history: shown.map((c) => ({ probability: c.probability, at: c.createdAt.toISOString() })),
+    resolvesAt: row.resolvesAt.toISOString(),
+    state: stateOf(row, now),
+    outcome: row.status === 'resolved' ? (row.outcome === 1 ? 'yes' : 'no') : null,
+    resolvedAt: row.resolvedAt?.toISOString() ?? null,
+    resolutionNote: row.resolutionNote,
+    resolutionSourceUrl: safeExternalHref(row.resolutionSourceUrl),
+    score: score?.brier ?? null,
+    isDemo: row.isDemo,
+    reasons,
+  };
+}
+
+async function chancesFor(db: Database, ids: string[]): Promise<Map<string, Chance[]>> {
+  const out = new Map<string, Chance[]>();
+  if (!ids.length) return out;
+  const rows = await db
+    .select({
+      forecastId: forecastPredictions.forecastId,
+      probability: forecastPredictions.probability,
+      rationale: forecastPredictions.rationale,
+      createdAt: forecastPredictions.createdAt,
+    })
+    .from(forecastPredictions)
+    .where(
+      and(
+        inArray(forecastPredictions.forecastId, ids),
+        eq(forecastPredictions.predictor, PREDICTOR),
+      ),
+    )
+    .orderBy(asc(forecastPredictions.createdAt));
+  for (const r of rows) out.set(r.forecastId, [...(out.get(r.forecastId) ?? []), r]);
+  return out;
+}
+
+/** Example rows are shown only outside production, and always labelled. They are never scored. */
+const realOnly = eq(forecasts.isDemo, false);
+
+export async function listForecasts(
+  db: Database,
+  who: {
+    profile: Profile | null;
+    /** Consent `foresight_matching`: without it only the person's country is used. */
+    matching: boolean;
+  },
+  opts: { locale: string; includeExamples?: boolean; now?: Date } = { locale: 'en' },
+): Promise<z.infer<typeof ForecastListSchema>> {
+  const now = opts.now ?? new Date();
+  const rows = await db
+    .select()
+    .from(forecasts)
+    .where(opts.includeExamples ? undefined : realOnly)
+    .orderBy(asc(forecasts.resolvesAt))
+    .limit(300);
+  const chances = await chancesFor(
+    db,
+    rows.map((r) => r.id),
+  );
+  const p = who.profile;
+  const profile = {
+    country: p?.country ?? undefined,
+    region: who.matching ? (p?.region ?? undefined) : undefined,
+    lifeStage: undefined,
+    situation: undefined,
+    sectors: who.matching ? (p?.sectors ?? []) : [],
+    skills: [],
+    roles: [],
+  };
+  const items = rows
+    .map((row) => {
+      const rel = relevance(profile, {
+        regions: row.regions,
+        sectors: row.sectors,
+        skills: [],
+        lifeStages: [],
+        situations: [],
+      });
+      // "Global" is not a reason worth saying; a country or a sector is.
+      const reasons = rel.reasons.filter((r) => r !== 'global');
+      return {
+        row,
+        score: rel.score,
+        v: view(row, chances.get(row.id) ?? [], opts.locale, reasons, now),
+      };
+    })
+    .filter((x): x is typeof x & { v: ForecastView } => x.v !== null);
+  const by = (state: ForecastState) => items.filter((x) => x.v.state === state);
+  return {
+    open: by('open')
+      .sort((a, b) => b.score - a.score || a.row.resolvesAt.getTime() - b.row.resolvesAt.getTime())
+      .map((x) => x.v),
+    awaiting: by('awaiting').map((x) => x.v),
+    judged: [...by('resolved'), ...by('annulled')]
+      .sort((a, b) => (b.row.resolvedAt?.getTime() ?? 0) - (a.row.resolvedAt?.getTime() ?? 0))
+      .slice(0, 50)
+      .map((x) => x.v),
+  };
+}
+
+/** The public record of how forecasts turned out. Example rows never count. */
+export async function forecastRecord(db: Database, now = new Date()): Promise<ForecastRecord> {
+  const rows = await db.select().from(forecasts).where(realOnly).limit(5000);
+  const chances = await chancesFor(
+    db,
+    rows.filter((r) => r.status === 'resolved').map((r) => r.id),
+  );
+  const judged: JudgedForecast[] = [];
+  let since: Date | null = null;
+  for (const row of rows) {
+    const score = scoreOf(row, chances.get(row.id) ?? []);
+    if (!score || score.brier === null || score.meanP === null) continue;
+    judged.push({ brier: score.brier, meanP: score.meanP, outcome: row.outcome as 0 | 1 });
+    if (row.resolvedAt && (!since || row.resolvedAt < since)) since = row.resolvedAt;
+  }
+  const board = scoreboard(judged);
+  const count = (state: ForecastState) => rows.filter((r) => stateOf(r, now) === state).length;
+  return {
+    open: count('open'),
+    awaiting: count('awaiting'),
+    judged: board.judged,
+    annulled: count('annulled'),
+    happened: judged.filter((j) => j.outcome === 1).length,
+    brier: board.brier,
+    reference: board.reference,
+    calibration: board.calibration,
+    minForScore: SCOREBOARD.minForScore,
+    minForCalibration: SCOREBOARD.minForCalibration,
+    since: since?.toISOString() ?? null,
+  };
+}
+
+// ─────────────────────────────── Staff: publish and judge ───────────────────────────────
+
+const Probability = z
+  .number()
+  .min(FORECAST_BOUNDS.min, 'Nothing about the future is certain: use 1 % to 99 %.')
+  .max(FORECAST_BOUNDS.max, 'Nothing about the future is certain: use 1 % to 99 %.');
+
+const Region = z
+  .string()
+  .regex(/^[A-Za-z]{2}$/)
+  .transform((v) => v.toUpperCase());
+
+const Source = z.object({
+  name: z.string().trim().min(2).max(120),
+  url: z
+    .string()
+    .trim()
+    .max(500)
+    .refine((u) => safeExternalHref(u) !== null, 'Use a full https:// address.'),
+});
+
+const Words = {
+  question: z
+    .string()
+    .trim()
+    .min(12)
+    .max(240)
+    .refine((q) => /[?؟]$/.test(q), 'Write it as a question that ends with a question mark.'),
+  description: z.string().trim().max(1200),
+  whatToDo: z.string().trim().min(12).max(800),
+  resolutionCriteria: z.string().trim().min(12).max(800),
+};
+
+const Translation = z.object({
+  question: Words.question,
+  description: Words.description.optional(),
+  whatToDo: Words.whatToDo,
+  resolutionCriteria: Words.resolutionCriteria,
+});
+
+const Translations = z
+  .partialRecord(z.enum(LOCALES), Translation)
+  .openapi({ description: 'The same words in other languages, written by staff' });
+
+export const ForecastInputSchema = z
+  .object({
+    ...Words,
+    description: Words.description.default(''),
+    category: z.enum(FORECAST_CATEGORIES),
+    /** ISO country codes; leave empty for "everywhere". */
+    regions: z.array(Region).max(30).default([]),
+    sectors: z.array(z.string().trim().min(2).max(40)).max(10).default([]),
+    language: z.enum(LOCALES).default('en'),
+    translations: Translations.default({}),
+    probability: Probability,
+    baseRate: Probability.nullish(),
+    /** Why this chance: the reasoning, in plain words. */
+    rationale: z.string().trim().min(12).max(1200),
+    /** Where the evidence is. A forecast is never published without a source. */
+    sources: z.array(Source).min(1).max(8),
+    /** The day it will be judged (YYYY-MM-DD, in the future). */
+    resolvesOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  })
+  .openapi('ForecastInput');
+
+export const ForecastPatchSchema = z
+  .object({
+    description: Words.description.optional(),
+    whatToDo: Words.whatToDo.optional(),
+    regions: z.array(Region).max(30).optional(),
+    sectors: z.array(z.string().trim().min(2).max(40)).max(10).optional(),
+    sources: z.array(Source).min(1).max(8).optional(),
+    translations: Translations.optional(),
+    baseRate: Probability.nullish(),
+  })
+  .openapi('ForecastPatch');
+
+export const ChanceInputSchema = z
+  .object({ probability: Probability, rationale: z.string().trim().min(12).max(1200) })
+  .openapi('ForecastChanceInput');
+
+export const JudgeInputSchema = z
+  .object({
+    outcome: z.enum(['yes', 'no', 'annulled']),
+    /** What happened, or why the question could not be judged. */
+    note: z.string().trim().min(8).max(800),
+    /** Where anyone can check it (required for yes and no). */
+    sourceUrl: z
+      .string()
+      .trim()
+      .max(500)
+      .refine((u) => safeExternalHref(u) !== null, 'Use a full https:// address.')
+      .optional(),
+  })
+  .refine((v) => v.outcome === 'annulled' || Boolean(v.sourceUrl), {
+    message: 'Say where the outcome can be checked.',
+    path: ['sourceUrl'],
+  })
+  .openapi('ForecastJudgeInput');
+
+export const AdminForecastListSchema = z
+  .object({
+    items: z.array(ForecastSchema),
+    counts: z.record(z.enum(FORECAST_STATES), z.number().int()),
+  })
+  .openapi('AdminForecastList');
+
+async function forecastRow(db: Database, id: string): Promise<Row> {
+  const [row] = await db.select().from(forecasts).where(eq(forecasts.id, id)).limit(1);
+  if (!row || row.isDemo) throw notFound('Forecast');
+  return row;
+}
+
+/** Staff list: everything in one state, in the staff member's language where written. */
+export async function adminForecasts(
+  db: Database,
+  state: ForecastState = 'open',
+  locale = 'en',
+  now = new Date(),
+): Promise<z.infer<typeof AdminForecastListSchema>> {
+  const rows = await db
+    .select()
+    .from(forecasts)
+    .where(realOnly)
+    .orderBy(desc(forecasts.createdAt))
+    .limit(1000);
+  const counts = { open: 0, awaiting: 0, resolved: 0, annulled: 0 };
+  for (const r of rows) counts[stateOf(r, now)] += 1;
+  const wanted = rows.filter((r) => stateOf(r, now) === state).slice(0, 200);
+  const chances = await chancesFor(
+    db,
+    wanted.map((r) => r.id),
+  );
+  return {
+    items: wanted
+      .map((r) => view(r, chances.get(r.id) ?? [], locale, [], now))
+      .filter((v): v is ForecastView => v !== null),
+    counts,
+  };
+}
+
+/** How many forecasts are past their date and waiting for staff to judge them. */
+export async function forecastsToJudge(db: Database): Promise<number> {
+  const [row] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(forecasts)
+    .where(and(realOnly, eq(forecasts.status, 'open'), sql`${forecasts.resolvesAt} <= now()`));
+  return Number(row?.n ?? 0);
+}
+
+export async function publishForecast(
+  db: Database,
+  actor: Actor,
+  input: z.infer<typeof ForecastInputSchema>,
+  now = new Date(),
+): Promise<{ id: string }> {
+  const resolvesAt = new Date(`${input.resolvesOn}T00:00:00Z`);
+  if (Number.isNaN(resolvesAt.getTime()) || resolvesAt.getTime() < now.getTime() + DAY)
+    throw new ApiError(422, 'date-past', 'Choose a day at least one day ahead.');
+  if (resolvesAt.getTime() > now.getTime() + 3 * 366 * DAY)
+    throw new ApiError(422, 'date-far', 'Choose a day within the next three years.');
+  if (input.translations[input.language])
+    throw new ApiError(
+      422,
+      'translation-same',
+      'A translation must be in a different language from the forecast itself.',
+    );
+  return db.transaction(async (tx) => {
+    const [row] = await tx
+      .insert(forecasts)
+      .values({
+        question: input.question,
+        description: input.description,
+        resolutionCriteria: input.resolutionCriteria,
+        whatToDo: input.whatToDo,
+        sources: input.sources as ForecastSource[],
+        language: input.language,
+        translations: input.translations as Record<string, ForecastTranslation>,
+        baseRate: input.baseRate ?? null,
+        category: input.category,
+        regions: [...new Set(input.regions)],
+        sectors: [...new Set(input.sectors)],
+        createdBy: 'editor',
+        opensAt: now,
+        closesAt: resolvesAt,
+        resolvesAt,
+        status: 'open',
+      })
+      .returning({ id: forecasts.id });
+    if (!row) throw new Error('Could not publish the forecast');
+    await tx.insert(forecastPredictions).values({
+      forecastId: row.id,
+      predictor: PREDICTOR,
+      probability: input.probability,
+      rationale: input.rationale,
+      createdAt: now,
+    });
+    await audit(tx, actor, {
+      action: 'forecast.published',
+      targetType: 'forecast',
+      targetId: row.id,
+      meta: { category: input.category, probability: input.probability },
+    });
+    return { id: row.id };
+  });
+}
+
+/**
+ * Change what may change after publishing: the explanation, the advice, the sources, where
+ * it applies and the translations. The question, how it will be judged and the date are
+ * fixed once published — otherwise the record would mean nothing. A wrong question is
+ * withdrawn (annulled) and published again.
+ */
+export async function editForecast(
+  db: Database,
+  actor: Actor,
+  id: string,
+  patch: z.infer<typeof ForecastPatchSchema>,
+): Promise<void> {
+  const row = await forecastRow(db, id);
+  if (row.status !== 'open')
+    throw new ApiError(409, 'judged', 'A forecast that has been judged can no longer be changed.');
+  if (patch.translations?.[row.language as Locale])
+    throw new ApiError(
+      422,
+      'translation-same',
+      'A translation must be in a different language from the forecast itself.',
+    );
+  const set: Partial<typeof forecasts.$inferInsert> = {};
+  if (patch.description !== undefined) set.description = patch.description;
+  if (patch.whatToDo !== undefined) set.whatToDo = patch.whatToDo;
+  if (patch.regions !== undefined) set.regions = [...new Set(patch.regions)];
+  if (patch.sectors !== undefined) set.sectors = [...new Set(patch.sectors)];
+  if (patch.sources !== undefined) set.sources = patch.sources as ForecastSource[];
+  if (patch.translations !== undefined)
+    set.translations = patch.translations as Record<string, ForecastTranslation>;
+  if (patch.baseRate !== undefined) set.baseRate = patch.baseRate;
+  const fields = Object.keys(set);
+  if (!fields.length) return;
+  await db.transaction(async (tx) => {
+    await tx.update(forecasts).set(set).where(eq(forecasts.id, id));
+    await audit(tx, actor, {
+      action: 'forecast.edited',
+      targetType: 'forecast',
+      targetId: id,
+      meta: { fields },
+    });
+  });
+}
+
+/** Publish a new chance for an open forecast. Every chance it ever showed is kept and scored. */
+export async function updateChance(
+  db: Database,
+  actor: Actor,
+  id: string,
+  input: z.infer<typeof ChanceInputSchema>,
+  now = new Date(),
+): Promise<void> {
+  const row = await forecastRow(db, id);
+  if (stateOf(row, now) !== 'open')
+    throw new ApiError(
+      409,
+      'closed',
+      'The chance can only change while the forecast is open. After its date it waits to be judged.',
+    );
+  await db.transaction(async (tx) => {
+    await tx.insert(forecastPredictions).values({
+      forecastId: id,
+      predictor: PREDICTOR,
+      probability: input.probability,
+      rationale: input.rationale,
+      createdAt: now,
+    });
+    await audit(tx, actor, {
+      action: 'forecast.chance-updated',
+      targetType: 'forecast',
+      targetId: id,
+      meta: { probability: input.probability },
+    });
+  });
+}
+
+/**
+ * Judge a forecast: it happened, it did not, or it cannot be judged (annulled — left out of
+ * the score, but still listed with the reason). Done once; the record is not rewritten.
+ */
+export async function judgeForecast(
+  db: Database,
+  actor: Actor,
+  id: string,
+  input: z.infer<typeof JudgeInputSchema>,
+  now = new Date(),
+): Promise<void> {
+  await forecastRow(db, id);
+  const annulled = input.outcome === 'annulled';
+  await db.transaction(async (tx) => {
+    // Only a forecast that is still open is judged, once (two staff pressing at once).
+    const done = await tx
+      .update(forecasts)
+      .set({
+        status: annulled ? 'annulled' : 'resolved',
+        outcome: annulled ? null : input.outcome === 'yes' ? 1 : 0,
+        resolvedAt: now,
+        resolutionNote: input.note,
+        resolutionSourceUrl: input.sourceUrl ?? null,
+      })
+      .where(and(eq(forecasts.id, id), eq(forecasts.status, 'open')))
+      .returning({ id: forecasts.id });
+    if (!done.length) throw new ApiError(409, 'judged', 'This forecast has already been judged.');
+    await audit(tx, actor, {
+      action: annulled ? 'forecast.annulled' : 'forecast.resolved',
+      targetType: 'forecast',
+      targetId: id,
+      meta: annulled ? {} : { outcome: input.outcome },
+    });
+  });
+}

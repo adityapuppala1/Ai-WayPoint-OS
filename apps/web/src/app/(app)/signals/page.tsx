@@ -3,6 +3,7 @@ import { dbReady, getDb } from '@waypoint/db';
 import { EmptyState, Panel } from '@waypoint/ui';
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
+import { ForesightNav } from '@/components/forecasts/ForesightNav';
 import { SignalItem } from '@/components/SignalItem';
 import { getViewer } from '@/lib/server';
 import styles from './signals.module.css';
@@ -39,6 +40,7 @@ export default async function SignalsPage({
         <h1>{t('title')}</h1>
         <p className="wp-lead">{t('lead')}</p>
       </header>
+      <ForesightNav current="/signals" />
       <form className={styles.search} action="/signals" aria-label={t('search')}>
         <label htmlFor="signals-q" className="wp-visually-hidden">
           {t('search')}

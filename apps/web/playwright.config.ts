@@ -12,6 +12,7 @@
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { defineConfig, devices } from '@playwright/test';
+import { STAFF } from './e2e/staff';
 
 const PORT = Number(process.env.E2E_PORT ?? 3100);
 const external = process.env.E2E_BASE_URL;
@@ -85,7 +86,9 @@ export default defineConfig({
           TWILIO_ACCOUNT_SID: '',
           WHATSAPP_ACCESS_TOKEN: '',
           AFRICASTALKING_API_KEY: '',
-          WAYPOINT_ADMIN_EMAIL: '',
+          // A staff account for the admin console tests, created in the throwaway database.
+          WAYPOINT_ADMIN_EMAIL: STAFF.email,
+          WAYPOINT_ADMIN_PASSWORD: STAFF.password,
           WAYPOINT_SECURITY_CONTACT: 'security@waypoint.test',
           WEB_ORIGINS: '',
           LOG_LEVEL: 'warn',

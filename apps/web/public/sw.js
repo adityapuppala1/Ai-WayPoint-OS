@@ -40,7 +40,11 @@ self.addEventListener('fetch', (event) => {
         (hit) =>
           hit ||
           fetch(req).then((res) => {
-            if (res.ok) caches.open(STATIC).then((c) => c.put(req, res.clone()));
+            // Copy before handing the response over: afterwards its body is already in use.
+            if (res.ok) {
+              const copy = res.clone();
+              caches.open(STATIC).then((c) => c.put(req, copy));
+            }
             return res;
           }),
       ),
@@ -52,7 +56,10 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(req)
         .then((res) => {
-          if (res.ok) caches.open(PAGES).then((c) => c.put(req, res.clone()));
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(PAGES).then((c) => c.put(req, copy));
+          }
           return res;
         })
         .catch(() => caches.match(req).then((hit) => hit || Response.error())),

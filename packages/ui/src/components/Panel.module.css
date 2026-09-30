@@ -1,5 +1,8 @@
 @layer components {
   .panel {
+    /* The space at the panel's sides. Rows in a flush panel use it to line up with the title. */
+    --wp-panel-gutter: var(--wp-space-4);
+
     background: var(--wp-raised);
     border: 1px solid var(--wp-border-subtle);
     border-radius: var(--wp-radius-md);
@@ -10,7 +13,7 @@
     display: flex;
     align-items: flex-start;
     gap: var(--wp-space-3);
-    padding: var(--wp-space-4) var(--wp-space-4) var(--wp-space-3);
+    padding: var(--wp-space-4) var(--wp-panel-gutter) var(--wp-space-3);
   }
 
   .headerText {
@@ -37,12 +40,12 @@
   }
 
   .body {
-    padding: 0 var(--wp-space-4) var(--wp-space-4);
+    padding: 0 var(--wp-panel-gutter) var(--wp-panel-gutter);
   }
 
   /* No header: the body supplies the space above that the header would have given. */
   .body:first-child {
-    padding-block-start: var(--wp-space-4);
+    padding-block-start: var(--wp-panel-gutter);
   }
 
   .flush,
@@ -60,21 +63,12 @@
   }
 
   @media (min-width: 48rem) {
+    .panel {
+      --wp-panel-gutter: var(--wp-space-6);
+    }
+
     .header {
-      padding: var(--wp-space-5) var(--wp-space-6) var(--wp-space-4);
-    }
-
-    .body {
-      padding: 0 var(--wp-space-6) var(--wp-space-6);
-    }
-
-    .body:first-child {
-      padding-block-start: var(--wp-space-6);
-    }
-
-    .flush,
-    .flush:first-child {
-      padding: 0;
+      padding-block: var(--wp-space-5) var(--wp-space-4);
     }
   }
 }

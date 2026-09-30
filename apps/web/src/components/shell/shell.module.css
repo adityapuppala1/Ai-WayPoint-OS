@@ -372,8 +372,10 @@
     margin-block-start: var(--wp-space-4);
   }
 
+  /* The first line of a page starts below the quick-exit button, so a wide page (Ask, the
+     admin console) never begins underneath it. */
   .main {
-    padding-block: var(--wp-space-10) var(--wp-space-16);
+    padding-block: var(--wp-space-16) var(--wp-space-16);
     padding-inline: var(--wp-space-8);
   }
 }

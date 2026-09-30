@@ -179,6 +179,22 @@
       white-space: nowrap;
       overflow-wrap: normal;
     }
+
+    /* At either end the one label grows inwards, so it never leaves the container. */
+    .horizontal .station:first-child .content {
+      justify-self: start;
+      text-align: start;
+    }
+
+    .horizontal .station:last-child .content {
+      justify-self: end;
+      text-align: end;
+    }
+
+    .horizontal .station:first-child .label,
+    .horizontal .station:last-child .label {
+      padding-inline: 0;
+    }
   }
 
   .compact .label,

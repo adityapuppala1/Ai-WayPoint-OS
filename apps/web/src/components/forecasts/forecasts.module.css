@@ -1,14 +1,17 @@
 /* "What's next?": forecasts, and the record of how they turned out. */
 
 /* Section links under the page title: Signals, What's next?, Our record. */
+/* One row in every language: on a narrow phone it scrolls sideways rather than wrapping. */
 .tabs {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--wp-space-1) var(--wp-space-5);
+  gap: var(--wp-space-4);
   margin: 0;
   padding: 0;
   border-block-end: 1px solid var(--wp-border-subtle);
   list-style: none;
+  overflow-x: auto;
+  scrollbar-width: none;
+  white-space: nowrap;
 }
 
 .tabs a {
@@ -17,7 +20,6 @@
   min-block-size: var(--wp-touch-min);
   /* The marker sits on the rule underneath; the text does not move when it appears. */
   border-block-end: 3px solid transparent;
-  margin-block-end: -1px;
   color: var(--wp-text-secondary);
   font-weight: var(--wp-weight-medium);
   text-decoration: none;
@@ -32,6 +34,11 @@
   color: var(--wp-text);
 }
 
+.tabs a:focus-visible {
+  outline: 2px solid var(--wp-focus-ring);
+  outline-offset: -2px;
+}
+
 .honest {
   max-inline-size: var(--wp-reading-max);
   color: var(--wp-text-secondary);
@@ -43,7 +50,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--wp-space-4);
-  padding: var(--wp-space-5);
+  padding: var(--wp-space-5) var(--wp-panel-gutter, var(--wp-space-5));
 }
 
 .item + .item {

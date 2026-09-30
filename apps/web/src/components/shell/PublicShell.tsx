@@ -33,9 +33,10 @@ export async function PublicShell({
           </div>
           <Link href={'/support' as Route} className={styles.help}>
             <Icon name="support" size={18} weight="fill" />
-            <span>{t('help')}</span>
+            <span className={styles.full}>{t('help')}</span>
+            <span className={styles.short}>{t('helpShort')}</span>
           </Link>
-          <QuickExit />
+          <QuickExit compact="narrow" />
           {!hideSignIn && !viewer ? (
             <Link href={'/sign-in' as Route} className={styles.signIn}>
               {t('signIn')}

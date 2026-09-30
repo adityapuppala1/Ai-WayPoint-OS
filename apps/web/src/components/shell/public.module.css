@@ -91,6 +91,38 @@
   color: var(--wp-text-secondary);
 }
 
+/* Labels that have a shorter form for small screens ("Get help now" / "Help"). */
+.short {
+  display: none;
+}
+
+/*
+ * Phones: two rows in every language instead of three or four. The name and the language
+ * picker on the first; help, quick exit and sign-in on the second, with their short labels.
+ */
+@media (max-width: 30rem) {
+  .actions {
+    display: contents;
+  }
+
+  .brand {
+    margin-inline-end: auto;
+  }
+
+  .signIn {
+    margin-inline-start: auto;
+    padding-inline-end: 0;
+  }
+
+  .full {
+    display: none;
+  }
+
+  .short {
+    display: inline;
+  }
+}
+
 @media (min-width: 60rem) {
   .header {
     padding-inline: var(--wp-space-8);

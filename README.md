@@ -67,9 +67,9 @@ card, bank and ID numbers removed).
 | **Get help now** — verified emergency numbers for 48 countries, checked help lines for 47, and global directories | ✅ |
 | **Crisis protocol** — multilingual detection before any AI call, calm support card, gentle follow-up | ✅ |
 | **Services** — life-event checklists (job loss, moving country, new baby…) with official links | ✅ |
-| **Signals** — sourced changes ranked for you, with "Why am I seeing this?" | ✅ |
-| **What’s next?** — forecasts that staff publish and judge: each shows its chance as a number and in words (never 0% or 100%), its sources, what you can do either way and the day it will be judged. A public record shows how they turned out, with a score only once enough have been judged. Nothing is generated: with none published, the page says so | ✅ |
-| **Settings & Privacy** — consents, trusted contacts (encrypted; one tap from the support card, sent by your own phone), see and delete what the assistant was asked to remember, export all data, delete account | ✅ |
+| **Signals** — sourced changes ranked for you, with "Why am I seeing this?"; save one, or say it is not relevant (with Undo), and find what you saved again. Signals are typed in by staff with their source, never generated, so a country nobody covers yet sees none | ✅ |
+| **What’s next?** — forecasts that staff publish and judge: each shows its chance as a number and in words (never 0% or 100%), its sources, what you can do either way and the day it will be judged. A public record shows how they turned out, with a score only once enough have been judged, and marks any outcome a second member of staff has not confirmed yet. Nothing is generated: with none published, the page says so | ✅ |
+| **Settings & Privacy** — consents, trusted contacts (encrypted; one tap from the support card, sent by your own phone), see and delete what the assistant was asked to remember, tell us what worked or what didn't, export all data, delete account | ✅ |
 | **Accounts** — guest sessions, email sign-up (guest data moves across), passkeys ready | ✅ |
 | **Money** — runway on a cautious income, pressure level, the five most useful next steps, money-safety tips; numbers encrypted | ✅ |
 | **Goals** — a few private goals with progress, and a weekly review (encrypted) | ✅ |
@@ -78,7 +78,7 @@ card, bank and ID numbers removed).
 | **Health** — a quick daily log (sleep, movement, water, private note) with a calm weekly view, private reminders (encrypted) that appear on Today, and where to get care: emergency signs (stroke, heart attack, severe allergy, heatstroke) and checked non-emergency lines. Never diagnoses | ✅ |
 | **Surroundings** — weather, air quality and UV where you are, turned into plain advice (heat, cold, storms, wind, sun, air); fetched by your device, so your location never reaches Waypoint; works offline from the last forecast | ✅ |
 | **Organisations** — employers, schools, NGOs and public services run programmes with a join code, link, QR code and printable poster; people join in a minute (guests too) and choose, per programme, whether to be counted; the console shows only weekly, rounded, slightly noisy totals for groups of 50+ who chose it — never a person, never Mind, Health, Money, Circles, Ask or Shield. Teams with owner, admin and member roles (invitations need a confirmed email); every action audited | ✅ |
-| **Admin console** — moderation queue for Circles (safety holds are only counted, never shown; writers are told what happened), scam-report review that warns people in Shield, AI spend against the budget, message delivery, and when each crisis line and emergency number was last checked | ✅ |
+| **Admin console** — moderation queue for Circles (safety holds are only counted, never shown; writers are told what happened), scam-report review that warns people in Shield, forecasts (publish, edit, judge, second check), sourced signals (add, withdraw), feedback people sent, AI spend against the budget, message delivery, and when each crisis line and emergency number was last checked | ✅ |
 | **Texting** — SMS, WhatsApp and USSD for basic phones: help lines, scam checks in every language, short answers (AI only with consent), STOP respected; numbers sealed, nothing anyone writes kept ([setup](docs/CHANNELS.md)) | ✅ |
 | **Email** — confirmation links, password resets and invitations in the reader's language, through Resend or any SMTP server | ✅ |
 | **Phone app** (iOS and Android, Expo) — Today, Scam Shield that checks on the phone in every language, Ask with the support card, help lines that work offline, and settings; guest first, session in the phone's secure keystore ([details](docs/MOBILE.md)) | ✅ |
@@ -151,14 +151,26 @@ More: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/SAFETY.md](docs/SAFE
 - **Admin** — put `WAYPOINT_ADMIN_EMAIL` and `WAYPOINT_ADMIN_PASSWORD` (10+ characters) in
   `.env.local` before starting; that account is created on start (an existing account with that
   address is only promoted once its email is confirmed). Sign in with it and open **Admin** from
-  the account menu (`/admin`) for moderation, scam reports, forecasts, AI spend, message
-  delivery and the activity log. Everyone else gets a plain "not found" there.
+  the account menu (`/admin`) for moderation, scam reports, forecasts, signals, feedback, AI
+  spend, message delivery and the activity log. Everyone else gets a plain "not found" there.
 - **Forecasts** — staff publish them at `/admin/forecasts`: a yes-or-no question, the chance
   (1 to 99%), why, at least one source, what people can do, and the day it will be judged.
   The question, how it is judged and the date cannot change afterwards; the chance can, and
-  every chance it showed is scored. On the day, staff record what happened with a link anyone
-  can check. People read them at `/signals/forecasts`; the record is at
-  `/signals/forecasts/record` ([how it is scored](docs/SAFETY.md#forecasts)).
+  every chance it showed is scored. While a forecast is open, **Edit details** changes its
+  explanation, advice, sources, countries and usual rate and adds translations (a saved
+  translation's question is fixed too). On the day, staff record what happened with a link
+  anyone can check. The outcome counts straight away and is marked "not yet double-checked"
+  until a different member of staff confirms it under **Second check**; with one staff
+  account the mark simply stays. People read forecasts at `/signals/forecasts`; the record is
+  at `/signals/forecasts/record` ([how it is scored](docs/SAFETY.md#forecasts)).
+- **Signals** — staff add them at `/admin/signals`: what changed, a summary in their own
+  words, the source's name and `https://` address, the day the source published it, and the
+  countries it is about (none means everywhere). A signal cannot be published without a
+  source, and nothing writes one for staff. It is shown straight away to the people it is
+  about; **Withdraw** takes it down for everyone. Nothing fetches signals automatically yet.
+- **Feedback** — people send it from Settings → "Tell us what worked, or what didn't"; staff
+  read it at `/admin/feedback`. Personal details are removed before it is stored, and nobody
+  is named unless they asked for a reply.
 - **Confirming email addresses** — needed to invite colleagues and to answer an invitation.
   Set `EMAIL_FROM` and either `RESEND_API_KEY` or `SMTP_URL` to send real email. Without them,
   development prints the confirmation link (like password-reset links) in the terminal running

@@ -122,6 +122,17 @@ certain, or that nobody checks afterwards, does harm. So:
 - **Judged in public.** Staff record yes or no with a link anyone can open, **as soon as the
   outcome is known** and at the latest on the day. It is recorded once. Every publication,
   change of chance and judgement is in the audit log.
+- **Checked by a second person, and honest when it has not been.** A verdict (yes, no, or
+  withdrawn) stands from the moment one member of staff records it: it is public and it is
+  scored, so an installation with a single member of staff can still keep a record. Until a
+  *different* member of staff confirms it in the console, it is marked "not yet
+  double-checked" on its card, and the record page says how many verdicts are in that state.
+  The person who recorded a verdict cannot confirm it (the API refuses). Confirming changes
+  nothing about the verdict. Who recorded and who confirmed is read from the audit log, which
+  already records every staff action on a forecast. **What this does not do:** the second person cannot overturn a
+  verdict. If they disagree they leave it unconfirmed, the mark stays for everyone to see,
+  and what happens next is for the editorial policy. If the account that recorded a verdict
+  is deleted, the log no longer says who that was, and any member of staff can confirm it.
 - **Scored honestly.** Each forecast gets a Brier score weighted by how long each chance was
   shown, so moving the number on the last day counts for little. The record shows no score
   until 10 forecasts have been judged and no calibration table until 30 (5 per band): before
@@ -131,13 +142,27 @@ certain, or that nobody checks afterwards, does harm. So:
   known and delay the verdict, and the score would look better than the forecast was. No
   formula prevents that. What does: every chance a forecast ever showed is listed on its card
   with its date, the forecast's own score is shown next to it, judged forecasts are never
-  removed from the record, and each change names who made it in the audit log. Have a second
-  person check each verdict and its date.
+  removed from the record, each change names who made it in the audit log, and a verdict
+  nobody else has confirmed says so in public.
 - **Words are staff's own.** Forecasts are not machine-translated. Where staff have not
   written a translation, people see the original with its language named.
 
-Before launch, decide who may publish, how a second person checks each forecast and its
-outcome, and which topics are out of bounds (nothing about an individual's health, a court
+## Signals
+
+- **Written by staff, never generated.** A signal is something a member of staff read and
+  summarised in their own words. No model writes, tags or publishes one, and nothing is
+  fetched automatically: with none added for a country, people there see none.
+- **Always sourced.** A signal cannot be published without the source's name and a full
+  `https://` address, which is shown with it. It cannot be dated in the future, or so long
+  ago that the Signals page would never show it.
+- **Withdrawn for everyone.** A signal that turns out to be wrong is withdrawn: it disappears
+  for everyone, including people who saved it, and the audit log keeps its title and source.
+  Adding and withdrawing are both in the audit log.
+- **A person's own choices.** "Not relevant" hides a signal for that person only and can be
+  undone on the spot. Saving keeps it on their Saved list however old it gets.
+
+Before launch, decide who may publish, what the second person does when they disagree with a
+verdict, which sources are acceptable for signals, and which topics are out of bounds (nothing about an individual's health, a court
 case, an election result or a price someone could trade on).
 
 ## Circles (peer groups)

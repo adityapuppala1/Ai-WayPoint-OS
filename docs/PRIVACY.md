@@ -49,6 +49,12 @@ Purpose-specific and revocable (`consents` table, full history in `consent_event
   way. If something is flagged, the support card appears straight away and a safety record is
   kept — tier and rule ids only, never the words. Not screened, because they are labels
   rather than writing: a reminder's title, a trusted contact's details, money figures.
+- **Feedback** ("Tell us what worked, or what didn't", in Settings) stores the part of
+  Waypoint it is about, an optional 1 to 5, and the message with phone numbers, email
+  addresses and card or ID numbers removed before it is written. Staff read it in the admin
+  console, where nothing says who wrote it: an address is shown only for someone with an
+  account who ticked "I'd like a reply", and a guest cannot be identified at all. A guest
+  is never offered a reply. Feedback is part of the export and goes when the account does.
 - Deleting an account deletes the wrapped key first (crypto-shredding), then every row that
   belongs to the person, including feedback they wrote, scam reports nobody has published and
   messages still waiting to be sent to them. What stays, with nothing linking it to them:

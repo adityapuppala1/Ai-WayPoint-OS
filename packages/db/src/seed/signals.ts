@@ -1,6 +1,7 @@
 /**
- * Seed signals: real, recent developments with their original sources, so Signals is useful
- * on day one. The worker adds live signals from configured feeds.
+ * Seed signals: real developments with their original sources, so Signals is not blank on
+ * day one. Staff add more by hand in the admin console (/admin/signals); nothing fetches
+ * signals automatically, and these are not re-dated as they age.
  */
 import type { signals } from '../schema';
 

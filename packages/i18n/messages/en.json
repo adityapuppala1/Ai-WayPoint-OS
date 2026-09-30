@@ -2374,6 +2374,13 @@
     "recordEmpty": "No forecast has been judged yet.",
     "recordEmptyAction": "See the forecasts",
     "todayTitle": "What’s next for you",
-    "seeAll": "See all forecasts"
+    "seeAll": "See all forecasts",
+    "history": "Every chance it has shown",
+    "itsScore": "Score for this forecast: {score}. 0 is perfect; saying 50% scores 0.25.",
+    "older": "Older",
+    "newer": "Newer",
+    "pageOf": "Page {page, number} of {pages, number}",
+    "pagesLabel": "Pages of judged forecasts",
+    "how5": "Every chance a forecast showed stays listed with its date, and staff record the outcome as soon as it is known. A number changed after the fact is there for anyone to see."
   }
 }

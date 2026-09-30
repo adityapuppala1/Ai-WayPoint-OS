@@ -9,6 +9,7 @@
  */
 import { z } from '@hono/zod-openapi';
 import {
+  clampForecast,
   FORECAST_BOUNDS,
   forecastScore,
   type JudgedForecast,
@@ -33,6 +34,7 @@ import {
   forecastPredictions,
   forecasts,
   inArray,
+  notInArray,
   sql,
 } from '@waypoint/db';
 import { type Actor, audit } from '../lib/audit';
@@ -110,10 +112,19 @@ export const ForecastListSchema = z
     open: z.array(ForecastSchema),
     /** The date has passed and staff have not judged it yet. */
     awaiting: z.array(ForecastSchema),
-    /** Judged or withdrawn lately, newest first. */
+    /** Judged or withdrawn, newest first: one page of them. */
     judged: z.array(ForecastSchema),
+    /** How many have been judged or withdrawn in all, and how many are on a page. */
+    judgedTotal: z.number().int(),
+    judgedPerPage: z.number().int(),
   })
   .openapi('ForecastList');
+
+/** Judged forecasts are listed a page at a time; every one stays reachable. */
+export const JUDGED_PER_PAGE = 20;
+/** More open forecasts than this at once would be a wall nobody reads. */
+const OPEN_AT_ONCE = 200;
+const JUDGED = ['resolved', 'annulled'];
 
 export const ForecastRecordSchema = z
   .object({
@@ -216,14 +227,18 @@ function view(
     ...wordsFor(row, locale),
     category: row.category,
     regions: row.regions,
-    probability: current.probability,
-    words: probabilityWords(current.probability) satisfies ProbabilityWord,
+    // Shown between 1% and 99% whatever is stored: nothing about the future is certain.
+    probability: clampForecast(current.probability),
+    words: probabilityWords(clampForecast(current.probability)) satisfies ProbabilityWord,
     baseRate: row.baseRate ?? null,
     rationale: current.rationale,
     sources: row.sources.filter((s) => safeExternalHref(s.url)),
     publishedAt: row.opensAt.toISOString(),
     updatedAt: current.createdAt.toISOString(),
-    history: shown.map((c) => ({ probability: c.probability, at: c.createdAt.toISOString() })),
+    history: shown.map((c) => ({
+      probability: clampForecast(c.probability),
+      at: c.createdAt.toISOString(),
+    })),
     resolvesAt: row.resolvesAt.toISOString(),
     state: stateOf(row, now),
     outcome: row.status === 'resolved' ? (row.outcome === 1 ? 'yes' : 'no') : null,
@@ -268,18 +283,43 @@ export async function listForecasts(
     /** Consent `foresight_matching`: without it only the person's country is used. */
     matching: boolean;
   },
-  opts: { locale: string; includeExamples?: boolean; now?: Date } = { locale: 'en' },
+  opts: {
+    locale: string;
+    includeExamples?: boolean;
+    now?: Date;
+    /** Which page of judged forecasts (from 1), or `false` to leave them out (Today). */
+    judgedPage?: number | false;
+  } = { locale: 'en' },
 ): Promise<z.infer<typeof ForecastListSchema>> {
   const now = opts.now ?? new Date();
-  const rows = await db
+  const examples = opts.includeExamples ? undefined : realOnly;
+  // Forecasts still ahead (or waiting for their verdict) and judged ones are read separately,
+  // so years of judged forecasts can never push a new one off the list.
+  const ahead = await db
     .select()
     .from(forecasts)
-    .where(opts.includeExamples ? undefined : realOnly)
+    .where(and(examples, notInArray(forecasts.status, JUDGED)))
     .orderBy(asc(forecasts.resolvesAt))
-    .limit(300);
+    .limit(OPEN_AT_ONCE);
+  const page = opts.judgedPage === false ? null : Math.max(1, opts.judgedPage ?? 1);
+  const past = page
+    ? await db
+        .select()
+        .from(forecasts)
+        .where(and(examples, inArray(forecasts.status, JUDGED)))
+        .orderBy(sql`${forecasts.resolvedAt} desc nulls last`, desc(forecasts.id))
+        .limit(JUDGED_PER_PAGE)
+        .offset((page - 1) * JUDGED_PER_PAGE)
+    : [];
+  const [total] = page
+    ? await db
+        .select({ n: sql<number>`count(*)::int` })
+        .from(forecasts)
+        .where(and(examples, inArray(forecasts.status, JUDGED)))
+    : [{ n: 0 }];
   const chances = await chancesFor(
     db,
-    rows.map((r) => r.id),
+    [...ahead, ...past].map((r) => r.id),
   );
   const p = who.profile;
   const profile = {
@@ -291,34 +331,35 @@ export async function listForecasts(
     skills: [],
     roles: [],
   };
-  const items = rows
-    .map((row) => {
-      const rel = relevance(profile, {
-        regions: row.regions,
-        sectors: row.sectors,
-        skills: [],
-        lifeStages: [],
-        situations: [],
-      });
-      // "Global" is not a reason worth saying; a country or a sector is.
-      const reasons = rel.reasons.filter((r) => r !== 'global');
-      return {
-        row,
-        score: rel.score,
-        v: view(row, chances.get(row.id) ?? [], opts.locale, reasons, now),
-      };
-    })
-    .filter((x): x is typeof x & { v: ForecastView } => x.v !== null);
+  const shown = (rows: Row[]) =>
+    rows
+      .map((row) => {
+        const rel = relevance(profile, {
+          regions: row.regions,
+          sectors: row.sectors,
+          skills: [],
+          lifeStages: [],
+          situations: [],
+        });
+        // "Global" is not a reason worth saying; a country or a sector is.
+        const reasons = rel.reasons.filter((r) => r !== 'global');
+        return {
+          row,
+          score: rel.score,
+          v: view(row, chances.get(row.id) ?? [], opts.locale, reasons, now),
+        };
+      })
+      .filter((x): x is typeof x & { v: ForecastView } => x.v !== null);
+  const items = shown(ahead);
   const by = (state: ForecastState) => items.filter((x) => x.v.state === state);
   return {
     open: by('open')
       .sort((a, b) => b.score - a.score || a.row.resolvesAt.getTime() - b.row.resolvesAt.getTime())
       .map((x) => x.v),
     awaiting: by('awaiting').map((x) => x.v),
-    judged: [...by('resolved'), ...by('annulled')]
-      .sort((a, b) => (b.row.resolvedAt?.getTime() ?? 0) - (a.row.resolvedAt?.getTime() ?? 0))
-      .slice(0, 50)
-      .map((x) => x.v),
+    judged: shown(past).map((x) => x.v),
+    judgedTotal: Number(total?.n ?? 0),
+    judgedPerPage: JUDGED_PER_PAGE,
   };
 }
 
@@ -361,18 +402,25 @@ const Probability = z
   .min(FORECAST_BOUNDS.min, 'Nothing about the future is certain: use 1 % to 99 %.')
   .max(FORECAST_BOUNDS.max, 'Nothing about the future is certain: use 1 % to 99 %.');
 
+const regionNames = new Intl.DisplayNames(['en'], { type: 'region' });
+/** A country that exists, in its standard code: "uk" becomes GB; "QQ" and "ZZ" are refused. */
 const Region = z
   .string()
+  .trim()
   .regex(/^[A-Za-z]{2}$/)
-  .transform((v) => v.toUpperCase());
+  .transform((v) => new Intl.Locale(`und-${v}`).region ?? v.toUpperCase())
+  .refine((code) => code !== 'ZZ' && regionNames.of(code) !== code, 'Use a country code.');
 
 const Source = z.object({
   name: z.string().trim().min(2).max(120),
+  // Stored as the browser will read it: "https:example.org" typed without its slashes would
+  // otherwise become a link to a page on Waypoint itself.
   url: z
     .string()
     .trim()
     .max(500)
-    .refine((u) => safeExternalHref(u) !== null, 'Use a full https:// address.'),
+    .refine((u) => safeExternalHref(u) !== null, 'Use a full https:// address.')
+    .transform((u) => safeExternalHref(u) as string),
 });
 
 const Words = {
@@ -511,7 +559,13 @@ export async function publishForecast(
   now = new Date(),
 ): Promise<{ id: string }> {
   const resolvesAt = new Date(`${input.resolvesOn}T00:00:00Z`);
-  if (Number.isNaN(resolvesAt.getTime()) || resolvesAt.getTime() < now.getTime() + DAY)
+  // 30 February is not a day: refuse it rather than let it become 2 March.
+  if (
+    Number.isNaN(resolvesAt.getTime()) ||
+    resolvesAt.toISOString().slice(0, 10) !== input.resolvesOn
+  )
+    throw new ApiError(422, 'date-invalid', 'That day does not exist.');
+  if (resolvesAt.getTime() < now.getTime() + DAY)
     throw new ApiError(422, 'date-past', 'Choose a day at least one day ahead.');
   if (resolvesAt.getTime() > now.getTime() + 3 * 366 * DAY)
     throw new ApiError(422, 'date-far', 'Choose a day within the next three years.');
@@ -562,44 +616,82 @@ export async function publishForecast(
 }
 
 /**
- * Change what may change after publishing: the explanation, the advice, the sources, where
- * it applies and the translations. The question, how it will be judged and the date are
- * fixed once published — otherwise the record would mean nothing. A wrong question is
- * withdrawn (annulled) and published again.
+ * Change what may change after publishing, and only while the forecast is still ahead: the
+ * explanation, the advice, the sources, where it applies, and translations. The question, how
+ * it is judged and the date are fixed once published — in the original and in every
+ * translation, once that translation exists — otherwise the record would mean nothing. A wrong
+ * question is withdrawn (annulled) and published again. After its date nothing changes any
+ * more: by then the answer may be known.
  */
 export async function editForecast(
   db: Database,
   actor: Actor,
   id: string,
   patch: z.infer<typeof ForecastPatchSchema>,
+  now = new Date(),
 ): Promise<void> {
   const row = await forecastRow(db, id);
-  if (row.status !== 'open')
-    throw new ApiError(409, 'judged', 'A forecast that has been judged can no longer be changed.');
-  if (patch.translations?.[row.language as Locale])
+  if (stateOf(row, now) !== 'open')
     throw new ApiError(
-      422,
-      'translation-same',
-      'A translation must be in a different language from the forecast itself.',
+      409,
+      row.status === 'open' ? 'closed' : 'judged',
+      'A forecast can only be changed before its date. After that it waits to be judged, and a judged forecast is never changed.',
     );
   const set: Partial<typeof forecasts.$inferInsert> = {};
+  const meta: { fields: string[]; languagesAdded?: string[] } = { fields: [] };
   if (patch.description !== undefined) set.description = patch.description;
   if (patch.whatToDo !== undefined) set.whatToDo = patch.whatToDo;
   if (patch.regions !== undefined) set.regions = [...new Set(patch.regions)];
   if (patch.sectors !== undefined) set.sectors = [...new Set(patch.sectors)];
   if (patch.sources !== undefined) set.sources = patch.sources as ForecastSource[];
-  if (patch.translations !== undefined)
-    set.translations = patch.translations as Record<string, ForecastTranslation>;
+  if (patch.translations !== undefined) {
+    if (patch.translations[row.language as Locale])
+      throw new ApiError(
+        422,
+        'translation-same',
+        'A translation must be in a different language from the forecast itself.',
+      );
+    const next = patch.translations as Record<string, ForecastTranslation>;
+    for (const [language, was] of Object.entries(row.translations ?? {})) {
+      const now_ = next[language];
+      if (
+        !now_ ||
+        now_.question !== was.question ||
+        now_.resolutionCriteria !== was.resolutionCriteria
+      )
+        throw new ApiError(
+          422,
+          'translation-fixed',
+          'A translation’s question and how it is judged cannot change or be removed once saved, like the original’s. Its explanation and advice can.',
+        );
+    }
+    set.translations = next;
+    const added = Object.keys(next).filter((l) => !row.translations?.[l]);
+    if (added.length) meta.languagesAdded = added;
+  }
   if (patch.baseRate !== undefined) set.baseRate = patch.baseRate;
-  const fields = Object.keys(set);
-  if (!fields.length) return;
+  meta.fields = Object.keys(set);
+  if (!meta.fields.length) return;
   await db.transaction(async (tx) => {
-    await tx.update(forecasts).set(set).where(eq(forecasts.id, id));
+    // Still open and still before its date at the moment of writing (a judgement, or the
+    // date itself, may have arrived since the check above).
+    const done = await tx
+      .update(forecasts)
+      .set(set)
+      .where(
+        and(
+          eq(forecasts.id, id),
+          eq(forecasts.status, 'open'),
+          sql`${forecasts.resolvesAt} > ${now.toISOString()}`,
+        ),
+      )
+      .returning({ id: forecasts.id });
+    if (!done.length) throw new ApiError(409, 'closed', 'This forecast can no longer be changed.');
     await audit(tx, actor, {
       action: 'forecast.edited',
       targetType: 'forecast',
       targetId: id,
-      meta: { fields },
+      meta,
     });
   });
 }

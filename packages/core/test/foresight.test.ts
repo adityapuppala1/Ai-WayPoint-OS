@@ -243,8 +243,25 @@ describe('words for a chance', () => {
     expect(clampForecast(0.42)).toBe(0.42);
     expect(formatPercent(clampForecast(1))).toBe('99%');
     expect(formatPercent(clampForecast(0))).toBe('1%');
-    // Every word is a degree of likelihood; none of them is "certain" or "impossible".
-    for (let p = 0.01; p <= 0.99; p += 0.01)
-      expect(['certain', 'impossible']).not.toContain(probabilityWords(p));
+    // The words at the two ends are the strongest there are, and both still leave room.
+    expect(probabilityWords(FORECAST_BOUNDS.min)).toBe('remote');
+    expect(probabilityWords(FORECAST_BOUNDS.max)).toBe('almost-certain');
+    // In between, a higher chance never gets a weaker word.
+    const order = [
+      'remote',
+      'very-unlikely',
+      'unlikely',
+      'about-even',
+      'likely',
+      'very-likely',
+      'almost-certain',
+    ];
+    let rank = 0;
+    for (let percent = 1; percent <= 99; percent++) {
+      const next = order.indexOf(probabilityWords(percent / 100));
+      expect(next, `${percent}%`).toBeGreaterThanOrEqual(rank);
+      rank = next;
+    }
+    expect(rank).toBe(order.length - 1);
   });
 });

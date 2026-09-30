@@ -93,7 +93,8 @@ Nothing pasted is stored — only a hash, the verdict and the rule ids.
 certain, or that nobody checks afterwards, does harm. So:
 
 - **Published by staff, never generated.** No model writes, publishes or changes a forecast.
-  With none published the page says so and shows nothing else. Example rows (`pnpm db:seed
+  With none published the page says so and shows nothing else. A chance is shown between 1%
+  and 99% even if a row reached the database some other way. Example rows (`pnpm db:seed
   --demo`) are labelled, never scored, and not shown in production.
 - **Never certain.** A chance is between 1% and 99% — the API refuses anything else — and is
   always shown as a number and in words ("Likely"), with how often that kind of thing usually
@@ -104,12 +105,23 @@ certain, or that nobody checks afterwards, does harm. So:
 - **The question cannot move.** The question, how it is judged and the date are fixed once
   published. A wrong question is withdrawn — listed with the reason, not scored — and
   published again.
-- **Judged in public.** On the day, staff record yes or no with a link anyone can open.
-  It is recorded once. Every publication, change of chance and judgement is in the audit log.
+- **The question cannot move in any language.** A translation's question and how it is
+  judged are fixed once saved, like the original's, and nothing about a forecast changes
+  after its date.
+- **Judged in public.** Staff record yes or no with a link anyone can open, **as soon as the
+  outcome is known** and at the latest on the day. It is recorded once. Every publication,
+  change of chance and judgement is in the audit log.
 - **Scored honestly.** Each forecast gets a Brier score weighted by how long each chance was
   shown, so moving the number on the last day counts for little. The record shows no score
   until 10 forecasts have been judged and no calibration table until 30 (5 per band): before
   that the numbers say more about luck than about skill (`packages/core/src/foresight`).
+- **What the score cannot stop, and what does.** Time-weighting rewards a chance that was
+  right for a long time. So a dishonest editor could raise the chance once the outcome is
+  known and delay the verdict, and the score would look better than the forecast was. No
+  formula prevents that. What does: every chance a forecast ever showed is listed on its card
+  with its date, the forecast's own score is shown next to it, judged forecasts are never
+  removed from the record, and each change names who made it in the audit log. Have a second
+  person check each verdict and its date.
 - **Words are staff's own.** Forecasts are not machine-translated. Where staff have not
   written a translation, people see the original with its language named.
 

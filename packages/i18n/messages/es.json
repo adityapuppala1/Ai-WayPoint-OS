@@ -2370,6 +2370,13 @@
     "recordEmpty": "Todavía no se ha juzgado ningún pronóstico.",
     "recordEmptyAction": "Ver los pronósticos",
     "todayTitle": "Qué viene para ti",
-    "seeAll": "Ver todos los pronósticos"
+    "seeAll": "Ver todos los pronósticos",
+    "history": "Todas las probabilidades que ha mostrado",
+    "itsScore": "Puntuación de este pronóstico: {score}. 0 es perfecto; decir 50 % da 0,25.",
+    "older": "Anteriores",
+    "newer": "Más recientes",
+    "pageOf": "Página {page, number} de {pages, number}",
+    "pagesLabel": "Páginas de pronósticos juzgados",
+    "how5": "Cada probabilidad que mostró un pronóstico queda anotada con su fecha, y el equipo registra el resultado en cuanto se conoce. Un número cambiado después de los hechos queda a la vista de todos."
   }
 }

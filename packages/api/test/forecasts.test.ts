@@ -130,7 +130,7 @@ let staff: { cookie: string; id: string };
 
 describe('before anything is published', () => {
   it('shows nothing, and claims no record', async () => {
-    expect(await list()).toEqual({ open: [], awaiting: [], judged: [] });
+    expect(await list()).toMatchObject({ open: [], awaiting: [], judged: [], judgedTotal: 0 });
     expect(await record()).toMatchObject({
       open: 0,
       judged: 0,
@@ -197,7 +197,33 @@ describe('publishing', () => {
     expect(await refused({ resolvesOn: inDays(-1) })).toBe(422);
     expect(await refused({ resolvesOn: inDays(5 * 366) })).toBe(422);
     expect(await refused({ category: 'astrology' })).toBe(422);
+    // A day that does not exist is refused, not moved to the next month.
+    expect(await refused({ resolvesOn: `${new Date().getUTCFullYear() + 1}-02-30` })).toBe(422);
+    // Only real countries: a made-up code would match nobody and say nothing.
+    expect(await refused({ regions: ['QQ'] })).toBe(422);
+    expect(await refused({ regions: ['ZZ'] })).toBe(422);
     expect((await list()).open).toEqual([]);
+  });
+
+  it('stores addresses and countries in one form, whatever was typed', async () => {
+    const created = await req('/api/admin/forecasts', {
+      method: 'POST',
+      cookie: staff.cookie,
+      json: forecast({
+        // "UK" is how people write it; the country code is GB. And a web address without its
+        // slashes would be read by a browser as a page on Waypoint itself.
+        regions: ['uk'],
+        sources: [{ name: 'Office for National Statistics', url: 'https:www.ons.gov.uk' }],
+      }),
+    });
+    expect(created.status).toBe(201);
+    const { id } = (await created.json()) as { id: string };
+    const shown = (await list()).open.find((f) => f.id === id) as View & { regions: string[] };
+    expect(shown.regions).toEqual(['GB']);
+    expect(shown.sources).toEqual([
+      { name: 'Office for National Statistics', url: 'https://www.ons.gov.uk/' },
+    ]);
+    await db.getDb().delete(db.forecasts).where(db.eq(db.forecasts.id, id));
   });
 
   it('shows the chance in numbers and words, its sources, what to do and the day it is judged', async () => {
@@ -325,6 +351,75 @@ describe('changing and judging', () => {
     expect(after?.whatToDo).toContain('Fill up');
     expect(after?.question).toBe('Will fuel cost more at the pump next quarter than this one?');
     expect(after?.resolvesAt.slice(0, 10)).toBe(inDays(60));
+  });
+
+  it('fixes a translation’s question too, and lets nothing change after the date', async () => {
+    const french = {
+      question: 'Le carburant coûtera-t-il plus cher à la pompe au prochain trimestre ?',
+      whatToDo: 'Faites le plein avant la fin du mois si vous conduisez pour votre travail.',
+      resolutionCriteria: 'Oui si le prix moyen publié par le régulateur est plus élevé.',
+    };
+    const id = await publish({ question: 'Will fuel cost more at the pump next quarter?' });
+    const patch = (json: Record<string, unknown>) =>
+      req(`/api/admin/forecasts/${id}`, { method: 'PATCH', cookie: staff.cookie, json });
+    const inFrench = async () => (await list(undefined, 'fr')).open.find((f) => f.id === id);
+
+    // A language can be added while the forecast is open…
+    expect((await patch({ translations: { fr: french } })).status).toBe(200);
+    expect((await inFrench())?.question).toBe(french.question);
+    // …its advice can be improved…
+    const better = { ...french, whatToDo: 'Comparez les prix de deux stations avant le plein.' };
+    expect((await patch({ translations: { fr: better } })).status).toBe(200);
+    expect((await inFrench())?.whatToDo).toContain('Comparez');
+    // …but its question and how it is judged are as fixed as the original’s: otherwise the
+    // forecast could be turned into a different one for everyone who reads that language.
+    const opposite = { ...better, question: 'Le carburant coûtera-t-il moins cher ?' };
+    expect((await patch({ translations: { fr: opposite } })).status).toBe(422);
+    const looser = {
+      ...better,
+      resolutionCriteria: 'Oui si une personne le dit, peu importe qui.',
+    };
+    expect((await patch({ translations: { fr: looser } })).status).toBe(422);
+    // A translation cannot be quietly removed either.
+    expect((await patch({ translations: {} })).status).toBe(422);
+    expect((await inFrench())?.question).toBe(french.question);
+    // What was added is on the record of who did what.
+    const [entry] = await db
+      .getDb()
+      .select({ meta: db.auditLog.meta })
+      .from(db.auditLog)
+      .where(db.and(db.eq(db.auditLog.targetId, id), db.eq(db.auditLog.action, 'forecast.edited')))
+      .orderBy(db.asc(db.auditLog.createdAt))
+      .limit(1);
+    expect(entry?.meta).toMatchObject({ fields: ['translations'], languagesAdded: ['fr'] });
+
+    // Once the date has passed it waits for its verdict: nothing about it changes any more.
+    await db
+      .getDb()
+      .update(db.forecasts)
+      .set({
+        resolvesAt: new Date(Date.now() - 3_600_000),
+        closesAt: new Date(Date.now() - 3_600_000),
+      })
+      .where(db.eq(db.forecasts.id, id));
+    expect(
+      (await patch({ whatToDo: 'Now that we know how it went, do the other thing.' })).status,
+    ).toBe(409);
+    expect(
+      (await patch({ sources: [{ name: 'A later source', url: 'https://later.example/' }] }))
+        .status,
+    ).toBe(409);
+    expect(
+      (
+        await patch({
+          translations: {
+            fr: better,
+            es: { ...french, question: '¿Costará más el combustible el próximo trimestre?' },
+          },
+        })
+      ).status,
+    ).toBe(409);
+    await db.getDb().delete(db.forecasts).where(db.eq(db.forecasts.id, id));
   });
 
   it('judges once, with a source anyone can check, and scores it', async () => {
@@ -489,4 +584,62 @@ describe('the public record', () => {
     expect(res.status).toBe(200);
     expect(res.headers.get('cache-control')).toMatch(/^public/);
   });
+
+  it('never shows 0% or 100%, even for a row that did not come through the console', async () => {
+    const resolvesAt = new Date(Date.now() + 40 * 86_400_000);
+    const [row] = await db
+      .getDb()
+      .insert(db.forecasts)
+      .values({
+        question: 'Will a number written straight into the database be shown as certain?',
+        description: '',
+        resolutionCriteria: 'Judged from the page itself.',
+        whatToDo: 'Nothing to do in a test.',
+        sources: [{ name: 'Source', url: 'https://example.org/' }],
+        category: 'other',
+        closesAt: resolvesAt,
+        resolvesAt,
+      })
+      .returning({ id: db.forecasts.id });
+    await db
+      .getDb()
+      .insert(db.forecastPredictions)
+      .values({ forecastId: row!.id, predictor: 'waypoint', probability: 1 });
+    const shown = (await list()).open.find((f) => f.id === row!.id);
+    expect(shown?.probability).toBe(0.99);
+    expect(shown?.words).toBe('almost-certain');
+    expect(shown?.history.map((h) => h.probability)).toEqual([0.99]);
+    await db.getDb().delete(db.forecasts).where(db.eq(db.forecasts.id, row!.id));
+  });
+
+  it('keeps every judged forecast reachable, and never lets old ones hide a new one', async () => {
+    // Years of judged forecasts…
+    await history(280, 0.6, 170);
+    const counted = await record();
+    const total = counted.judged + counted.annulled;
+    expect(total).toBeGreaterThan(300);
+    // …and one published today. It is on the list (and so on Today).
+    const created = await req('/api/admin/forecasts', {
+      method: 'POST',
+      cookie: staff.cookie,
+      json: forecast({ question: 'Will the harvest report be published before the rains?' }),
+    });
+    const { id } = (await created.json()) as { id: string };
+    const first = (await list()) as List & { judgedTotal: number };
+    expect(first.open.map((f) => f.id)).toContain(id);
+
+    // The judged ones come a page at a time, newest first, all the way to the oldest.
+    expect(first.judgedTotal).toBe(total);
+    expect(first.judged).toHaveLength(20);
+    const page = async (n: number) =>
+      (await (await req(`/api/forecasts?page=${n}`)).json()) as List & { judgedTotal: number };
+    const second = await page(2);
+    expect(second.judged).toHaveLength(20);
+    const seen = new Set([...first.judged, ...second.judged].map((f) => f.id));
+    expect(seen.size).toBe(40);
+    const pages = Math.ceil(total / 20);
+    expect((await page(pages)).judged.length).toBeGreaterThan(0);
+    expect((await page(pages + 1)).judged).toEqual([]);
+    expect((await req('/api/forecasts?page=0')).status).toBe(422);
+  }, 120_000);
 });

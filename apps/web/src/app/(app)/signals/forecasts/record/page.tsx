@@ -18,7 +18,13 @@ export async function generateMetadata(): Promise<Metadata> {
  * given a 70% chance happen about 7 times in 10. It says nothing about accuracy until enough
  * forecasts have been judged for the numbers to mean something.
  */
-export default async function ForecastRecordPage() {
+export default async function ForecastRecordPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const asked = Number((await searchParams).page);
+  const page = Number.isInteger(asked) && asked >= 1 && asked <= 100_000 ? asked : 1;
   const [t, format, locale] = await Promise.all([
     getTranslations('forecasts'),
     getFormatter(),
@@ -32,9 +38,12 @@ export default async function ForecastRecordPage() {
     forecasts.listForecasts(
       db,
       { profile: null, matching: false },
-      { locale, includeExamples: !getEnv().isProd },
+      { locale, includeExamples: !getEnv().isProd, judgedPage: page },
     ),
   ]);
+  const pages = Math.max(1, Math.ceil(list.judgedTotal / list.judgedPerPage));
+  const to = (n: number) =>
+    (n === 1 ? '/signals/forecasts/record' : `/signals/forecasts/record?page=${n}`) as Route;
   const percent = (p: number) => format.number(p, { style: 'percent', maximumFractionDigits: 0 });
   const score = (v: number) =>
     format.number(v, { minimumFractionDigits: 2, maximumFractionDigits: 3 });
@@ -150,6 +159,7 @@ export default async function ForecastRecordPage() {
           <li>{t('how2')}</li>
           <li>{t('how3')}</li>
           <li>{t('how4')}</li>
+          <li>{t('how5')}</li>
         </ol>
       </Panel>
 
@@ -158,6 +168,27 @@ export default async function ForecastRecordPage() {
           {list.judged.map((f) => (
             <ForecastCard key={f.id} forecast={f} />
           ))}
+          {pages > 1 ? (
+            <nav className={styles.pager} aria-label={t('pagesLabel')}>
+              <p>{t('pageOf', { page, pages })}</p>
+              <ul>
+                {page > 1 ? (
+                  <li>
+                    <LinkButton href={to(page - 1)} variant="quiet" size="sm" icon="back">
+                      {t('newer')}
+                    </LinkButton>
+                  </li>
+                ) : null}
+                {page < pages ? (
+                  <li>
+                    <LinkButton href={to(page + 1)} variant="quiet" size="sm">
+                      {t('older')}
+                    </LinkButton>
+                  </li>
+                ) : null}
+              </ul>
+            </nav>
+          ) : null}
         </Panel>
       ) : null}
     </div>

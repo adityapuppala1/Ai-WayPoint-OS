@@ -40,8 +40,14 @@ export default async function AdminForecastsPage({
   const countries = new Intl.DisplayNames([locale], { type: 'region' });
   const places = new Intl.ListFormat(locale, { type: 'conjunction' });
   const percent = (p: number) => format.number(p, { style: 'percent', maximumFractionDigits: 0 });
-  const day = (iso: string) =>
-    format.dateTime(new Date(iso), { day: 'numeric', month: 'long', year: 'numeric' });
+  // The judgement day is a calendar day (stored as midnight UTC): shown as that day everywhere.
+  const day = (iso: string, chosen = false) =>
+    format.dateTime(new Date(iso), {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      ...(chosen ? { timeZone: 'UTC' } : {}),
+    });
   const category = (c: string) =>
     (forecasts.FORECAST_CATEGORIES as readonly string[]).includes(c)
       ? words(`categories.${c as Category}`)
@@ -86,7 +92,9 @@ export default async function AdminForecastsPage({
                         : words('everywhere')}
                     </span>
                     <time dateTime={f.resolvesAt}>
-                      {words('judgedOn', { date: day(f.resolvedAt ?? f.resolvesAt) })}
+                      {words('judgedOn', {
+                        date: f.resolvedAt ? day(f.resolvedAt) : day(f.resolvesAt, true),
+                      })}
                     </time>
                   </p>
                   <h3 className={styles.itemTitle} lang={f.language} dir="auto">

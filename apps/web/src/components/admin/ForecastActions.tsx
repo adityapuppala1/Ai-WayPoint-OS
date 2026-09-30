@@ -34,6 +34,7 @@ export function ForecastActions({
   percent: number;
 }) {
   const t = useTranslations('admin');
+  const common = useTranslations('common');
   const errors = useTranslations('errors');
   const router = useRouter();
   const [busy, setBusy] = useState<'chance' | 'judge' | null>(null);
@@ -120,7 +121,7 @@ export function ForecastActions({
                 isBusy={busy === 'chance'}
                 isDisabled={!chanceReady || busy !== null}
               >
-                {t('aChance')}
+                {common('save')}
               </Button>
             </div>
           </form>

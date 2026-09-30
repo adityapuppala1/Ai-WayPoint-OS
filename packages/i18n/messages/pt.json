@@ -2370,6 +2370,13 @@
     "recordEmpty": "Nenhuma previsão foi julgada ainda.",
     "recordEmptyAction": "Ver as previsões",
     "todayTitle": "O que vem aí para você",
-    "seeAll": "Ver todas as previsões"
+    "seeAll": "Ver todas as previsões",
+    "history": "Todas as chances que já mostrou",
+    "itsScore": "Pontuação desta previsão: {score}. 0 é perfeito; dizer 50% dá 0,25.",
+    "older": "Mais antigas",
+    "newer": "Mais recentes",
+    "pageOf": "Página {page, number} de {pages, number}",
+    "pagesLabel": "Páginas de previsões julgadas",
+    "how5": "Cada chance que uma previsão mostrou fica listada com a data, e a equipe registra o resultado assim que ele é conhecido. Um número alterado depois do fato fica à vista de todos."
   }
 }

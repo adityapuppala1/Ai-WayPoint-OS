@@ -31,8 +31,16 @@ export async function ForecastCard({
   const Heading = `h${headingLevel}` as 'h3';
   const below = (headingLevel + 1) as 3 | 4;
   const percent = (p: number) => format.number(p, { style: 'percent', maximumFractionDigits: 0 });
-  const day = (iso: string) =>
-    format.dateTime(new Date(iso), { day: 'numeric', month: 'long', year: 'numeric' });
+  const date = { day: 'numeric', month: 'long', year: 'numeric' } as const;
+  /** The moment something happened, in the reader's own time zone. */
+  const day = (iso: string) => format.dateTime(new Date(iso), date);
+  /**
+   * The day a forecast is judged is a calendar day staff chose, the same for everyone: it is
+   * never moved to the evening before for readers west of Greenwich.
+   */
+  const chosenDay = (iso: string) => format.dateTime(new Date(iso), { ...date, timeZone: 'UTC' });
+  const score = (v: number) =>
+    format.number(v, { minimumFractionDigits: 2, maximumFractionDigits: 3 });
   const words = t(`words.${wordKey(f.words)}`);
   const category = (forecasts.FORECAST_CATEGORIES as readonly string[]).includes(f.category)
     ? t(`categories.${f.category as Category}`)
@@ -53,6 +61,19 @@ export async function ForecastCard({
       : null;
   const judged = f.state === 'resolved' || f.state === 'annulled';
   const judgedOn = judged && f.resolvedAt ? f.resolvedAt : f.resolvesAt;
+  // More than one chance: list them all, so a number changed along the way is never hidden
+  // behind the last one.
+  const history =
+    f.history.length > 1 ? (
+      <ol className={styles.history} aria-label={t('history')}>
+        {f.history.map((h) => (
+          <li key={h.at}>
+            <time dateTime={h.at}>{day(h.at)}</time>
+            <span className="wp-num">{percent(h.probability)}</span>
+          </li>
+        ))}
+      </ol>
+    ) : null;
 
   return (
     <article className={styles.item} data-state={f.state}>
@@ -103,6 +124,15 @@ export async function ForecastCard({
               </a>
             </p>
           ) : null}
+          {f.score !== null ? (
+            <p className={styles.said}>{t('itsScore', { score: score(f.score) })}</p>
+          ) : null}
+          {history ? (
+            <div className={styles.fact}>
+              <p className={styles.factName}>{t('history')}</p>
+              {history}
+            </div>
+          ) : null}
         </div>
       ) : (
         <Probability
@@ -128,7 +158,9 @@ export async function ForecastCard({
 
       <p className={styles.when}>
         <Icon name="calendar" size={18} />
-        <time dateTime={judgedOn}>{t('judgedOn', { date: day(judgedOn) })}</time>
+        <time dateTime={judgedOn}>
+          {t('judgedOn', { date: judged && f.resolvedAt ? day(judgedOn) : chosenDay(judgedOn) })}
+        </time>
       </p>
 
       {f.sources.length ? (
@@ -136,7 +168,7 @@ export async function ForecastCard({
           <p className={styles.factName}>{common('sources')}</p>
           <ul className={styles.sources}>
             {f.sources.map((s) => (
-              <li key={s.url}>
+              <li key={`${s.name} ${s.url}`}>
                 <a href={s.url} target="_blank" rel="noopener noreferrer" dir="auto">
                   {s.name}
                 </a>
@@ -156,6 +188,11 @@ export async function ForecastCard({
           <Disclosure title={t('why')} headingLevel={below}>
             <p dir="auto">{f.rationale}</p>
             <p className={styles.note}>{t('updated', { date: day(f.updatedAt) })}</p>
+          </Disclosure>
+        ) : null}
+        {history && !judged ? (
+          <Disclosure title={t('history')} headingLevel={below}>
+            {history}
           </Disclosure>
         ) : null}
         {f.reasons.length ? (

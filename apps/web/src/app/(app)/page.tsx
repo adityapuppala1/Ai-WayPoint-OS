@@ -63,7 +63,8 @@ export default async function TodayPage() {
     await forecasts.listForecasts(
       viewer.db,
       { profile: viewer.profile, matching: viewer.consents.foresight_matching },
-      { locale },
+      // Today only needs what is still ahead; the judged ones are not read at all.
+      { locale, judgedPage: false },
     )
   ).open
     .filter((f) => f.reasons.length > 0 || f.regions.length === 0)

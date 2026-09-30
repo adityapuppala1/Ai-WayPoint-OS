@@ -38,8 +38,14 @@ app.openapi(
     tags: ['Forecasts'],
     summary: 'What may happen next: each forecast with its chance, sources and judgement date',
     description:
-      'Public. Forecasts are published by staff, never generated: the lists are empty until real ones exist. Signed in, the ones about your country (and, with consent, your sector) come first.',
-    responses: { 200: jsonContent(ForecastListSchema) },
+      'Public. Forecasts are published by staff, never generated: the lists are empty until real ones exist. Signed in, the ones about your country (and, with consent, your sector) come first. Judged forecasts come a page at a time, newest first; every one stays reachable.',
+    request: {
+      query: z.object({
+        page: z.coerce.number().int().min(1).max(100_000).optional(),
+        locale: z.string().optional(),
+      }),
+    },
+    responses: { 200: jsonContent(ForecastListSchema), 422: errors[422] },
   }),
   async (c) => {
     const db = c.get('db');
@@ -51,7 +57,11 @@ app.openapi(
       db,
       { profile, matching: consents?.foresight_matching ?? false },
       // Example rows exist only after `pnpm db:seed --demo`, which production refuses.
-      { locale: c.get('locale'), includeExamples: !getEnv().isProd },
+      {
+        locale: c.get('locale'),
+        includeExamples: !getEnv().isProd,
+        judgedPage: c.req.valid('query').page,
+      },
     );
     return c.json(list, 200, {
       'Cache-Control': user ? 'private, no-store' : 'public, max-age=120',

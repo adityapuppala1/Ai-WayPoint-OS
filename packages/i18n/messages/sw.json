@@ -2370,6 +2370,13 @@
     "recordEmpty": "Bado hakuna kadirio lililoamuliwa.",
     "recordEmptyAction": "Tazama makadirio",
     "todayTitle": "Nini kinafuata kwako",
-    "seeAll": "Tazama makadirio yote"
+    "seeAll": "Tazama makadirio yote",
+    "history": "Kila uwezekano uliowahi kuonyeshwa",
+    "itsScore": "Alama ya kadirio hili: {score}. 0 ni kamili; kusema 50% hupata 0.25.",
+    "older": "Za zamani",
+    "newer": "Za karibuni",
+    "pageOf": "Ukurasa {page, number} kati ya {pages, number}",
+    "pagesLabel": "Kurasa za makadirio yaliyoamuliwa",
+    "how5": "Kila uwezekano ambao kadirio lilionyesha hubaki umeorodheshwa na tarehe yake, na timu hurekodi matokeo mara yanapojulikana. Namba iliyobadilishwa baada ya tukio huonekana kwa kila mtu."
   }
 }

@@ -164,6 +164,52 @@
   padding-inline-start: var(--wp-space-5);
 }
 
+/* Every chance it has shown: the day, then the number. */
+.history {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--wp-text-small);
+}
+
+.history li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-1) var(--wp-space-4);
+}
+
+.history time {
+  min-inline-size: 11rem;
+  color: var(--wp-text-secondary);
+}
+
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wp-space-3);
+  padding: var(--wp-space-4) var(--wp-panel-gutter, var(--wp-space-4));
+  border-block-start: 1px solid var(--wp-border-subtle);
+  font-size: var(--wp-text-small);
+}
+
+.pager ul {
+  display: flex;
+  gap: var(--wp-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pager p {
+  color: var(--wp-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
 /* How it turned out. */
 .outcome {
   display: flex;

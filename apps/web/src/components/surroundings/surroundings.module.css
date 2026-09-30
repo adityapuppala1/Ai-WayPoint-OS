@@ -57,15 +57,24 @@
   font: inherit;
   text-align: start;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--wp-duration-fast) var(--wp-ease-out);
 }
 
-.result:hover {
-  background: var(--wp-tint-surroundings);
+@media (hover: hover) {
+  .result:hover {
+    background: var(--wp-tint-surroundings);
+  }
 }
 
+.result:active {
+  background: var(--wp-fill-pressed);
+}
+
+/* Rows sit flush in the list: the ring is drawn inside. */
 .result:focus-visible {
-  outline: 2px solid var(--wp-focus-ring);
-  outline-offset: -2px;
+  outline: 2px solid transparent;
+  box-shadow: var(--wp-focus-shadow-inset);
 }
 
 .result > span {

@@ -72,17 +72,27 @@
   border-radius: var(--wp-radius-md);
   background: var(--wp-raised);
   box-shadow: var(--wp-shadow-raised);
-  transition: border-color var(--wp-duration-fast) var(--wp-ease-out);
+  transition:
+    border-color var(--wp-duration-fast) var(--wp-ease-out),
+    box-shadow var(--wp-duration-fast) var(--wp-ease-out),
+    scale var(--wp-duration-fast) var(--wp-ease-out);
 }
 
-.card:hover {
-  border-color: var(--wp-border-strong);
-  border-inline-start-color: var(--wp-line-org);
+/* The whole card is a way in: it lifts one step under the pointer and gives when pressed. */
+@media (hover: hover) {
+  .card:hover {
+    border-color: var(--wp-border-strong);
+    border-inline-start-color: var(--wp-line-org);
+    box-shadow: var(--wp-shadow-2);
+  }
+}
+
+.card:active {
+  scale: var(--wp-press-scale);
 }
 
 .card:focus-within {
-  outline: 2px solid var(--wp-focus-ring);
-  outline-offset: 2px;
+  box-shadow: var(--wp-focus-shadow);
 }
 
 .card[data-closed="true"] {
@@ -477,8 +487,8 @@
 }
 
 .dateField input:focus-visible {
-  outline: 2px solid var(--wp-focus-ring);
-  outline-offset: 1px;
+  outline: 2px solid transparent;
+  box-shadow: var(--wp-focus-shadow);
 }
 
 .error {
@@ -532,14 +542,25 @@
   background: transparent;
   color: inherit;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--wp-duration-fast) var(--wp-ease-out),
+    scale var(--wp-duration-fast) var(--wp-ease-out);
 }
 
-.chip button:hover {
-  background: color-mix(in oklch, var(--wp-line-org) 15%, transparent);
+@media (hover: hover) {
+  .chip button:hover {
+    background: var(--wp-fill-hover);
+  }
+}
+
+.chip button:active {
+  background: var(--wp-fill-pressed);
+  scale: var(--wp-press-scale);
 }
 
 .chip button:focus-visible {
-  outline: 2px solid var(--wp-focus-ring);
+  box-shadow: var(--wp-focus-shadow);
 }
 
 .roleList {

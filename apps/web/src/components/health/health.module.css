@@ -200,15 +200,26 @@
   color: var(--wp-text);
   font-size: var(--wp-text-small);
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color var(--wp-duration-fast) var(--wp-ease-out),
+    background-color var(--wp-duration-fast) var(--wp-ease-out),
+    scale var(--wp-duration-fast) var(--wp-ease-out);
 }
 
-.idea:hover {
-  border-color: var(--wp-line-health);
+@media (hover: hover) {
+  .idea:hover {
+    border-color: var(--wp-line-health);
+  }
+}
+
+.idea:active {
+  background: var(--wp-tint-health);
+  scale: var(--wp-press-scale);
 }
 
 .idea:focus-visible {
-  outline: 2px solid var(--wp-focus-ring);
-  outline-offset: 2px;
+  box-shadow: var(--wp-focus-shadow);
 }
 
 .when {
@@ -246,10 +257,7 @@
 
 .nativeField input:focus-visible {
   outline: 2px solid transparent;
-  border-color: var(--wp-focus-ring);
-  box-shadow:
-    0 0 0 1px var(--wp-focus-ring),
-    0 0 0 4px var(--wp-signal);
+  box-shadow: var(--wp-focus-shadow);
 }
 
 /* ───────────── Care ───────────── */

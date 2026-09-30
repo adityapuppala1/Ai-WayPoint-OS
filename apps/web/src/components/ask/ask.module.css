@@ -257,6 +257,8 @@
   border-radius: var(--wp-radius-sm);
   font-size: var(--wp-text-small);
   text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--wp-duration-fast) var(--wp-ease-out);
 }
 
 .historyLink span {
@@ -265,7 +267,25 @@
   white-space: nowrap;
 }
 
-.historyLink:hover,
+@media (hover: hover) {
+  .historyLink:hover {
+    background: var(--wp-fill-hover);
+  }
+}
+
 .historyLink[aria-current="page"] {
-  background: var(--wp-sunken);
+  background: var(--wp-fill-hover);
+  color: var(--wp-text);
+  font-weight: var(--wp-weight-medium);
+}
+
+.historyLink:active {
+  background: var(--wp-fill-pressed);
+}
+
+/* A row in a list, not a link in a sentence: the ring drawn inside, on the signal tint. */
+.historyLink:focus-visible {
+  background: var(--wp-signal-tint);
+  color: var(--wp-text);
+  box-shadow: var(--wp-focus-shadow-inset);
 }

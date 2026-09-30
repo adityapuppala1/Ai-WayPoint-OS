@@ -15,6 +15,11 @@
   scrollbar-width: none;
 }
 
+/* Safari before 18.2 and older Chrome do not know scrollbar-width. */
+.nav::-webkit-scrollbar {
+  display: none;
+}
+
 .nav a {
   display: inline-flex;
   align-items: center;
@@ -27,23 +32,43 @@
   font-weight: var(--wp-weight-medium);
   text-decoration: none;
   white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--wp-duration-fast) var(--wp-ease-out),
+    color var(--wp-duration-fast) var(--wp-ease-out);
 }
 
-.nav a:hover {
-  background: var(--wp-sunken);
+@media (hover: hover) {
+  .nav a:hover {
+    background: var(--wp-fill-hover);
+    color: var(--wp-text);
+  }
+}
+
+.nav a:active {
+  background: var(--wp-fill-pressed);
   color: var(--wp-text);
 }
 
+/* The marker under the chosen section: --wp-marker, 3:1 on every surface. */
 .nav a[aria-current="page"] {
   color: var(--wp-text);
-  box-shadow: inset 0 -2px 0 var(--wp-text);
+  box-shadow: inset 0 -3px 0 var(--wp-marker);
   border-end-start-radius: 0;
   border-end-end-radius: 0;
 }
 
+/* Flush in the row of sections: the ring is drawn inside, the marker stays under it. */
 .nav a:focus-visible {
-  outline: 2px solid var(--wp-focus-ring);
-  outline-offset: -2px;
+  background: var(--wp-signal-tint);
+  color: var(--wp-text);
+  box-shadow: var(--wp-focus-shadow-inset);
+}
+
+.nav a[aria-current="page"]:focus-visible {
+  box-shadow:
+    var(--wp-focus-shadow-inset),
+    inset 0 -3px 0 var(--wp-marker);
 }
 
 .badge {
@@ -233,8 +258,11 @@
   transform: none;
 }
 
-.column:hover .tip {
-  display: block;
+/* Touch screens read the same numbers in the table below the chart. */
+@media (hover: hover) {
+  .column:hover .tip {
+    display: block;
+  }
 }
 
 .axis {
@@ -393,10 +421,37 @@
   color: var(--wp-text-secondary);
   font-size: var(--wp-text-small);
   text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--wp-duration-fast) var(--wp-ease-out),
+    color var(--wp-duration-fast) var(--wp-ease-out);
+}
+
+@media (hover: hover) {
+  .filters a:hover {
+    background: var(--wp-fill-hover);
+    color: var(--wp-text);
+  }
+}
+
+.filters a:active {
+  background: var(--wp-fill-pressed);
 }
 
 .filters a[aria-current="page"] {
   border-color: var(--wp-text);
+  background: var(--wp-text);
+  color: var(--wp-canvas);
+}
+
+/* A chip, not a link in a sentence: the ring, without the signal highlight behind it. */
+.filters a:focus-visible {
+  background: transparent;
+  color: var(--wp-text);
+  box-shadow: var(--wp-focus-shadow);
+}
+
+.filters a[aria-current="page"]:focus-visible {
   background: var(--wp-text);
   color: var(--wp-canvas);
 }
@@ -524,8 +579,8 @@
 }
 
 .dateField input:focus-visible {
-  outline: 2px solid var(--wp-focus-ring);
-  outline-offset: 1px;
+  outline: 2px solid transparent;
+  box-shadow: var(--wp-focus-shadow);
 }
 
 .translations {

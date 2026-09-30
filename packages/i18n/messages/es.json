@@ -2010,7 +2010,7 @@
         "scam": "Los mensajes que revisas con el Escudo antiestafas. Solo guardamos una huella del texto, el resultado, las señales de alerta que coincidieron y los nombres de las webs a las que enlaza: lo justo para detectar estafas que circulan.",
         "crisis": "Las palabras que hicieron que Waypoint mostrara ayuda en crisis. Solo guardamos que ocurrió, lo grave que parecía y qué regla coincidió.",
         "location": "Dónde estás. El tiempo y la calidad del aire llegan a tu navegador directamente del servicio de pronósticos, para un lugar redondeado a aproximadamente 1 km, y el lugar que eliges se queda en tu dispositivo.",
-        "tracking": "Cookies publicitarias o de rastreo, ni analíticas que te sigan. Nuestras únicas cookies mantienen tu sesión y recuerdan tu idioma, tu zona horaria y cómo prefieres ver la app."
+        "tracking": "Cookies publicitarias o de rastreo, ni analíticas que te sigan. Nuestras únicas cookies mantienen tu sesión, recuerdan que este dispositivo ya inició sesión antes (para que alguien que intente adivinar tu contraseña no pueda bloquearte) y recuerdan tu idioma, tu zona horaria y cómo prefieres ver la app."
       },
       "choices": {
         "title": "Lo que puedes elegir",
@@ -2020,7 +2020,7 @@
         "title": "La IA y Pregunta",
         "guide": "La guía de Waypoint es una IA, no una persona. Antes de que ninguna IA vea un mensaje, Waypoint comprueba si hay señales de crisis y, si podrías estar en peligro, primero te muestra números de emergencia y de apoyo.",
         "off": "Si no activas “Usar proveedores de IA”, nada de lo que escribes en Pregunta va a una IA externa: Pregunta contesta con respuestas guiadas, o con un modelo en los propios servidores de Waypoint si hay uno configurado.",
-        "on": "Si lo activas, un proveedor de IA recibe una copia de tu conversación para escribir cada respuesta (y tu meta y tu país cuando te prepara un plan), después de quitar correos, teléfonos y números de tarjeta, cuenta y documentos. Los nombres no se quitan, así que no los escribas.",
+        "on": "Si lo activas, un proveedor de IA recibe una copia de tu conversación para escribir cada respuesta —con tus metas, lo que le pediste recordar y tu plan actual, cuando has permitido que se usen— y tu meta y tu país cuando te prepara un plan. Antes se quitan correos, teléfonos y números de tarjeta, cuenta y documentos. Los nombres no se quitan, así que no los escribas.",
         "shield": "El Escudo antiestafas solo pide una segunda opinión a una IA si tienes esa opción activada o si la pides para un mensaje concreto, y la copia que envía se limpia de la misma forma.",
         "noProviders": "Este Waypoint no tiene configurado ningún proveedor de IA externo, así que no se envía nada a ninguno.",
         "training": "No usamos lo que escribes para entrenar IA.",

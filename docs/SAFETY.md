@@ -18,6 +18,16 @@ without AI, run before any AI call, and are covered by tests and release-gated e
 - **Records**: a crisis event stores the tier, categories and rule ids — never the words.
   A gentle follow-up check-in is scheduled (12–24 h) and delivered in-app.
 - **Trusted contacts** are only ever contacted when the person presses the button.
+- **By text message too, whatever the first word.** On SMS and WhatsApp the crisis check runs
+  on every message before anything else: "hi im suicidal" is not answered with the menu, and a
+  command word in front of a cry for help does not hide it. A message sent with CHECK is mostly
+  someone else's words, so there only clear danger (tier 2+) puts the support card first, with
+  the scam warning after it. A number over its hourly limit — or one somebody else flooded —
+  still gets the support card, from a small allowance of its own, and so does a number from a
+  country Waypoint does not otherwise serve. STOP never takes the place of help: "end my life"
+  is a sentence, not an opt-out.
+- **The check-in afterwards is safety-critical**: the daily limit on messages never holds it
+  back (someone who asked for no other messages still gets it). It waits for quiet hours to end.
 - **No connection, same help.** The phone app has the classifier, the response plans and the
   help-line data built in: if a message can't reach the server, the support card with local
   numbers still appears, and Get help now works fully offline.
@@ -93,7 +103,8 @@ for fake job offers. Every post and reply is checked on the server before anyone
 - **Identity**: people appear by a name they choose for that circle, or "Member 1234" (a number
   that differs in every circle, so people can't be followed between circles). Names with contact
   details are refused. Account names and emails are never shown.
-- **Reports** are anonymous. Three distinct reports hide a post until it is reviewed.
+- **Reports** are anonymous. Three reports from three different people hide a post until it is
+  reviewed (one person reporting three times counts once, however the reports arrive).
   "I'm worried about this person" sends the author a gentle, anonymous note pointing to support
   (at most one a day; it never says who asked or which post).
 - **Small by design**: 12 people per circle, up to five circles each; joining a full circle
@@ -110,7 +121,9 @@ Circles at **/admin/moderation**:
 - Posts **held because the writer may be in danger are never shown** to moderators — only
   counted. The writer already had the support card and a follow-up; a moderator reading their
   words would add exposure, not safety.
-- **Keep** makes the post visible and closes its reports; **Remove** deletes it with its replies.
+- **Keep** makes the post visible and closes its reports; **Remove** deletes it with its replies —
+  except a reply held because its writer may be in danger, which stays, visible to its writer
+  only.
   Either way the writer gets a short note in their language (removal says it broke the
   guidelines). "Worried about this person" reports are about the writer, not the post, and the
   queue says so.
@@ -147,7 +160,8 @@ choice, and nothing from Mind, Health, Money, Circles, Ask or Shield is ever use
 
 - System prompts forbid inventing phone numbers: the companion must use `find_support`.
 - Tools that save anything (goals, memories, plans) require the person's approval, and
-  approvals are HMAC-signed so a client cannot forge them.
+  approvals are HMAC-signed so a client cannot forge them. A yes is recorded once: the same
+  answer arriving twice (two taps, a retry) saves nothing twice.
 - The client sends only its newest message; the server owns conversation history, so earlier
   assistant turns cannot be rewritten.
 

@@ -2010,7 +2010,7 @@
         "scam": "Les messages que vous vérifiez avec le Bouclier anti-arnaque. Nous ne gardons qu’une empreinte du texte, le résultat, les signaux d’alerte repérés et le nom des sites vers lesquels il renvoie — de quoi repérer les arnaques qui circulent.",
         "crisis": "Les mots qui ont amené Waypoint à afficher une aide de crise. Nous gardons seulement le fait que c’est arrivé, le niveau de gravité apparent et la règle concernée.",
         "location": "L’endroit où vous êtes. La météo et la qualité de l’air arrivent dans votre navigateur directement depuis le service de prévisions, pour un lieu arrondi à environ 1 km, et le lieu choisi reste sur votre appareil.",
-        "tracking": "Cookies publicitaires, cookies de pistage ou mesures d’audience qui vous suivent. Nos seuls cookies vous gardent connecté et retiennent votre langue, votre fuseau horaire et vos choix d’affichage."
+        "tracking": "Cookies publicitaires, cookies de pistage ou mesures d’audience qui vous suivent. Nos seuls cookies vous gardent connecté, retiennent que cet appareil s’est déjà connecté (pour qu’une personne qui essaie de deviner votre mot de passe ne puisse pas vous bloquer) et retiennent votre langue, votre fuseau horaire et vos choix d’affichage."
       },
       "choices": {
         "title": "Vos choix",
@@ -2020,7 +2020,7 @@
         "title": "L’IA et Parler",
         "guide": "Le guide de Waypoint est une IA, pas une personne. Avant qu’une IA ne voie un message, Waypoint y cherche des signes de crise — et si vous pourriez être en danger, il affiche d’abord des numéros d’urgence et d’aide.",
         "off": "Tant que vous n’activez pas « Utiliser des fournisseurs d’IA », rien de ce que vous écrivez dans Parler ne va à une IA extérieure : Parler répond avec des réponses guidées, ou avec un modèle installé sur les propres serveurs de Waypoint s’il y en a un.",
-        "on": "Si vous l’activez, un fournisseur d’IA reçoit une copie de votre conversation pour rédiger chaque réponse (ainsi que votre objectif et votre pays quand il vous prépare un plan), après retrait des adresses e-mail, des numéros de téléphone et des numéros de carte, de compte et d’identité. Les noms ne sont pas retirés : ne les écrivez pas.",
+        "on": "Si vous l’activez, un fournisseur d’IA reçoit une copie de votre conversation pour rédiger chaque réponse — avec vos objectifs, ce que vous lui avez demandé de retenir et votre plan en cours, lorsque vous avez autorisé leur utilisation — ainsi que votre objectif et votre pays quand il vous prépare un plan. Les adresses e-mail, les numéros de téléphone et les numéros de carte, de compte et d’identité sont retirés avant. Les noms ne sont pas retirés : ne les écrivez pas.",
         "shield": "Le Bouclier anti-arnaque ne demande un second avis à une IA que si cette option est activée, ou si vous le demandez pour un seul message — et la copie envoyée est nettoyée de la même façon.",
         "noProviders": "Aucun fournisseur d’IA extérieur n’est configuré sur ce Waypoint : rien ne lui est donc envoyé.",
         "training": "Nous n’utilisons pas ce que vous écrivez pour entraîner une IA.",

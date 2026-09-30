@@ -86,6 +86,7 @@ export default defineConfig({
           WHATSAPP_ACCESS_TOKEN: '',
           AFRICASTALKING_API_KEY: '',
           WAYPOINT_ADMIN_EMAIL: '',
+          WAYPOINT_SECURITY_CONTACT: 'security@waypoint.test',
           WEB_ORIGINS: '',
           LOG_LEVEL: 'warn',
         },

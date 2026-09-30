@@ -18,6 +18,7 @@
     "./ids": "./src/ids.ts",
     "./paths": "./src/paths.ts",
     "./headers": "./src/headers.ts",
+    "./security-txt": "./src/security-txt.ts",
     "./text": "./src/text/index.ts",
     "./mind": "./src/mind/index.ts",
     "./community": "./src/community/index.ts",

@@ -2010,7 +2010,7 @@
         "scam": "As mensagens que você verifica com o Escudo contra golpes. Guardamos só uma impressão digital do texto, o resultado, os sinais de alerta encontrados e os nomes dos sites para os quais ele aponta — o suficiente para identificar golpes em circulação.",
         "crisis": "As palavras que fizeram o Waypoint mostrar apoio em crise. Guardamos só que isso aconteceu, a gravidade aparente e qual regra foi acionada.",
         "location": "Onde você está. O clima e a qualidade do ar chegam ao seu navegador direto do serviço de previsão, para um local arredondado para cerca de 1 km, e o local que você escolhe fica no seu aparelho.",
-        "tracking": "Cookies de publicidade, cookies de rastreamento ou análises que seguem você. Nossos únicos cookies mantêm você conectado e lembram seu idioma, fuso horário e preferências de exibição."
+        "tracking": "Cookies de publicidade, cookies de rastreamento ou análises que seguem você. Nossos únicos cookies mantêm você conectado, lembram que este aparelho já entrou antes (para que alguém tentando adivinhar sua senha não consiga bloquear você) e lembram seu idioma, fuso horário e preferências de exibição."
       },
       "choices": {
         "title": "Suas escolhas",
@@ -2020,7 +2020,7 @@
         "title": "A IA e o Conversar",
         "guide": "O guia do Waypoint é uma IA, não uma pessoa. Antes que qualquer IA veja uma mensagem, o Waypoint verifica se há sinais de crise — e, se você puder estar em perigo, mostra primeiro números de emergência e de apoio.",
         "off": "A menos que você ligue “Usar provedores de IA”, nada do que você escreve em Conversar vai para uma IA externa: o Conversar responde com respostas guiadas, ou com um modelo nos próprios servidores do Waypoint, se houver.",
-        "on": "Se você ligar, um provedor de IA recebe uma cópia da sua conversa para escrever cada resposta (e sua meta e seu país quando prepara um plano para você), depois de retirar e-mails, telefones e números de cartão, conta e documentos. Nomes não são retirados, então não os escreva.",
+        "on": "Se você ligar, um provedor de IA recebe uma cópia da sua conversa para escrever cada resposta — com suas metas, o que você pediu para lembrar e seu plano atual, quando você permitiu que fossem usados — e sua meta e seu país quando prepara um plano para você. Antes são retirados e-mails, telefones e números de cartão, conta e documentos. Nomes não são retirados, então não os escreva.",
         "shield": "O Escudo contra golpes só pede uma segunda opinião a uma IA com essa opção ligada, ou quando você pede isso para uma única mensagem — e a cópia enviada é limpa do mesmo jeito.",
         "noProviders": "Este Waypoint não tem nenhum provedor de IA externo configurado, então nada é enviado a um.",
         "training": "Não usamos o que você escreve para treinar IA.",

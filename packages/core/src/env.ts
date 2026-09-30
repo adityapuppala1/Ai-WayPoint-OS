@@ -98,6 +98,11 @@ const EnvSchema = z.object({
   WAYPOINT_OPERATOR: optionalString,
   /** Where people write about their information or the terms. */
   WAYPOINT_CONTACT_EMAIL: optionalString.pipe(z.string().email().optional()),
+  /**
+   * Where security problems with this installation are reported: an email address or an
+   * https address. Shown in /.well-known/security.txt; defaults to WAYPOINT_CONTACT_EMAIL.
+   */
+  WAYPOINT_SECURITY_CONTACT: optionalString,
   /** Where the servers and database are, e.g. "Frankfurt, Germany (Hetzner Online)". */
   WAYPOINT_DATA_LOCATION: optionalString,
   /** How many days backups are kept, if you keep them: the notice tells people. */

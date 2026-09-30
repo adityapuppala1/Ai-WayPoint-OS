@@ -2010,7 +2010,7 @@
         "scam": "Jumbe unazokagua kwa Ngao ya Ulaghai. Tunahifadhi tu alama ya maandishi, matokeo, ishara za tahadhari zilizoonekana na majina ya tovuti ambazo ujumbe unaelekeza — inatosha kutambua ulaghai unaosambaa.",
         "crisis": "Maneno yaliyoifanya Waypoint ionyeshe msaada wa dharura. Tunahifadhi tu kwamba ilitokea, ilionekana kuwa mbaya kiasi gani na kanuni ipi ililingana.",
         "location": "Mahali ulipo. Hali ya hewa na ubora wa hewa hufika kwenye kivinjari chako moja kwa moja kutoka kwa huduma ya utabiri, kwa mahali palipokadiriwa hadi takriban kilomita 1, na mahali unapochagua hubaki kwenye kifaa chako.",
-        "tracking": "Kuki za matangazo, kuki za kufuatilia au takwimu zinazokufuata. Kuki zetu pekee hukuweka ukiwa umeingia na kukumbuka lugha yako, saa za eneo na machaguo ya mwonekano."
+        "tracking": "Kuki za matangazo, kuki za kufuatilia au takwimu zinazokufuata. Kuki zetu pekee hukuweka ukiwa umeingia, hukumbuka kwamba kifaa hiki kimewahi kuingia (ili mtu anayejaribu kubahatisha nenosiri lako asiweze kukufungia nje), na hukumbuka lugha yako, saa za eneo na machaguo ya mwonekano."
       },
       "choices": {
         "title": "Machaguo yako",
@@ -2020,7 +2020,7 @@
         "title": "AI na Uliza",
         "guide": "Mwongozo wa Waypoint ni AI, si mtu. Kabla AI yoyote haijaona ujumbe, Waypoint huukagua kutafuta dalili za dharura — na ikiwa huenda uko hatarini, huonyesha kwanza namba za dharura na za msaada.",
         "off": "Usipowasha “Tumia watoa huduma wa AI”, hakuna unachoandika katika Uliza kinachokwenda kwa AI ya nje: Uliza hujibu kwa majibu ya mwongozo, au kwa modeli iliyo kwenye seva za Waypoint yenyewe ikiwa imewekwa.",
-        "on": "Ukiliwasha, mtoa huduma wa AI hupokea nakala ya mazungumzo yako ili aandike kila jibu (na lengo lako na nchi yako anapokuandalia mpango), baada ya kuondoa anwani za barua pepe, nambari za simu na nambari za kadi, benki na vitambulisho. Majina hayaondolewi, kwa hivyo usiyaandike.",
+        "on": "Ukiliwasha, mtoa huduma wa AI hupokea nakala ya mazungumzo yako ili aandike kila jibu — pamoja na malengo yako, ulichomwomba akumbuke na mpango wako wa sasa, ikiwa umeruhusu vitumike — na lengo lako na nchi yako anapokuandalia mpango. Kwanza huondolewa anwani za barua pepe, nambari za simu na nambari za kadi, benki na vitambulisho. Majina hayaondolewi, kwa hivyo usiyaandike.",
         "shield": "Ngao ya Ulaghai huomba maoni ya pili kutoka kwa AI tu chaguo hilo likiwa limewashwa, au ukiyaomba kwa ujumbe mmoja — na nakala inayotumwa husafishwa kwa njia ile ile.",
         "noProviders": "Waypoint hii haina mtoa huduma wa AI wa nje aliyewekwa, kwa hivyo hakuna kinachotumwa kwake.",
         "training": "Hatutumii unachoandika kufunza AI.",

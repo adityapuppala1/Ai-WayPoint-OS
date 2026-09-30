@@ -48,6 +48,27 @@ Questions are answered by the AI assistant only when one of these is true:
 - a **local** model is configured (`OLLAMA_BASE_URL`), which never leaves your servers.
 
 Otherwise the reply points to what texting can do (help lines, scam checks) and to the website.
+
+### What is answered, and what it can cost
+
+Replies cost money, so they are bounded — never at the expense of someone in danger:
+
+- **Countries.** Only numbers from countries Waypoint has help lines for get replies (or your
+  own list in `WAYPOINT_TEXT_COUNTRIES`, e.g. `KE,TZ,UG`). Other numbers are neither recorded
+  nor answered — except a message showing clear danger, which gets the support card. Set your
+  provider's geographic permissions to the same countries: that is the real limit on where
+  paid messages can go.
+- **A ceiling for the whole service**: `WAYPOINT_TEXT_REPLIES_PER_HOUR` (default 2000) and
+  `WAYPOINT_TEXT_REPLIES_PER_DAY` (default 20000). Beyond it nothing is sent until the hour or
+  day turns over (the log says so once an hour). Crisis replies have a separate allowance of
+  the same size, which ordinary messages cannot use up.
+- **Per number**: 30 messages an hour and 200 a day, then one "please slow down" and silence.
+  Someone in danger is still answered (5 support cards an hour past the limit).
+- **Once per message.** Providers redeliver when an answer is slow, and a signed request can be
+  replayed: a message id (`MessageSid`, WhatsApp's `wamid`, Africa's Talking's `id`) is
+  answered once. Only a keyed hash of the id is kept, for a day.
+- **Only what a person wrote.** WhatsApp reactions, "changed number" notices and delivery
+  reports get no reply; voice notes and pictures get "here is what I can read".
 AI answers are limited to 20 a day per number and are sent a moment after the reply, never
 instead of it.
 

@@ -23,7 +23,16 @@ person's `ai_external` consent, only local models (Ollama) are used.
 
 - `AI_MONTHLY_BUDGET_USD` is a hard cap across all features; daily per-person limits (guest 20,
   account 200 requests). Guided mode takes over when a limit is reached.
-- Every call is recorded in `ai_usage` with tokens, estimated cost and latency.
+- Every call is **counted before it is made**, at its estimated cost, and settled at the real
+  cost when it ends (`ai_usage`: tokens, cost, latency). Near the cap the check and the
+  reservation happen under one lock, so a burst of requests cannot overshoot it, and an answer
+  that is cut off part-way is still counted.
+- Guest sessions are free to create, so they are bounded three ways: guests together can use
+  at most 70 % of the monthly budget (the rest is kept for accounts); guests at one visitor
+  address share 40 AI answers a day; and an address can start at most 300 guest sessions a
+  day. The Scam Shield second opinion needs a session for the same reason.
+- Set a spending limit with each AI provider as well: the cap here is an estimate from
+  published prices, not a bill.
 
 ## The companion's tools
 

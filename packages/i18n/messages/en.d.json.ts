@@ -2017,7 +2017,7 @@ declare const messages: {
         "scam": "Messages you check with Scam Shield. We keep only a fingerprint of the text, the result, which warning signs matched and the names of any websites it links to — enough to spot scams going round.",
         "crisis": "The words that made Waypoint show crisis support. We keep only that it happened, how serious it looked and which rule matched.",
         "location": "Where you are. Weather and air quality come to your browser straight from the forecast service, for a place rounded to about 1 km, and the place you choose stays on your device.",
-        "tracking": "Advertising cookies, tracking cookies or analytics that follow you. Our only cookies keep you signed in and remember your language, time zone and display choices."
+        "tracking": "Advertising cookies, tracking cookies or analytics that follow you. Our only cookies keep you signed in, remember that this device has signed in before (so someone guessing your password can’t lock you out), and remember your language, time zone and display choices."
       },
       "choices": {
         "title": "Your choices",
@@ -2027,7 +2027,7 @@ declare const messages: {
         "title": "AI and Ask",
         "guide": "Waypoint’s guide is an AI, not a person. Before any AI sees a message, Waypoint checks it for signs of crisis — and if you might be in danger, it shows emergency and support numbers first.",
         "off": "Unless you turn on “Use AI providers”, nothing you write in Ask goes to an outside AI: Ask answers with guided replies, or with a model on Waypoint’s own servers if one is set up.",
-        "on": "If you turn it on, an AI provider gets a copy of your conversation to write each reply (and your goal and country when it writes you a plan), with email addresses, phone numbers and card, bank and ID numbers removed first. Names aren’t removed, so leave them out.",
+        "on": "If you turn it on, an AI provider gets a copy of your conversation to write each reply — with your goals, what you asked it to remember and your current plan, when you have allowed those to be used — and your goal and country when it writes you a plan. Email addresses, phone numbers and card, bank and ID numbers are removed first. Names aren’t removed, so leave them out.",
         "shield": "Scam Shield asks an AI for a second opinion only with that choice on, or when you ask for one on a single message — and the copy it sends is cleaned the same way.",
         "noProviders": "This Waypoint has no outside AI provider set up, so nothing is sent to one.",
         "training": "We don’t use what you write to train AI.",

@@ -114,6 +114,11 @@ export const signals = pgTable(
       sql`to_tsvector('simple', coalesce(title, '') || ' ' || coalesce(summary, ''))`,
     ),
     isDemo: boolean().notNull().default(false),
+    /**
+     * When staff took it down. The row is kept, so its content hash still stops the seed (or
+     * anyone) from quietly adding it again; every read leaves withdrawn signals out.
+     */
+    withdrawnAt: timestamp({ withTimezone: true }),
     createdAt: createdAt(),
   },
   (t) => [

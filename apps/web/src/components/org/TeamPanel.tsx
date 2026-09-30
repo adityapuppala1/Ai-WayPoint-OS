@@ -32,11 +32,14 @@ type Invitation = OrgView['invitations'][number];
 function InviteDialog({
   orgId,
   baseUrl,
+  canInviteAdmin,
   isOpen,
   onOpenChange,
 }: {
   orgId: string;
   baseUrl: string;
+  /** Only an owner decides who else may manage the organisation. */
+  canInviteAdmin: boolean;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -136,9 +139,11 @@ function InviteDialog({
             <Radio value="member" description={t('roleHints.member')}>
               {t('roles.member')}
             </Radio>
-            <Radio value="admin" description={t('roleHints.admin')}>
-              {t('roles.admin')}
-            </Radio>
+            {canInviteAdmin ? (
+              <Radio value="admin" description={t('roleHints.admin')}>
+                {t('roles.admin')}
+              </Radio>
+            ) : null}
           </RadioGroup>
           {error ? <Notice tone="danger" role="alert" title={error} /> : null}
           <div className="wp-row">
@@ -349,7 +354,13 @@ export function TeamPanel({
         />
       ) : null}
 
-      <InviteDialog orgId={orgId} baseUrl={baseUrl} isOpen={inviting} onOpenChange={setInviting} />
+      <InviteDialog
+        orgId={orgId}
+        baseUrl={baseUrl}
+        canInviteAdmin={myRole === 'owner'}
+        isOpen={inviting}
+        onOpenChange={setInviting}
+      />
 
       <ConfirmDialog
         isOpen={removing !== null}

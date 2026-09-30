@@ -509,14 +509,26 @@ async function managerContext(db: Database, orgId: string, userId: string) {
 type ProgrammeRow = typeof orgProgrammes.$inferSelect;
 
 /**
- * The people a programme's totals are made of: those who chose to be counted in this
- * programme at least COUNT_AFTER_DAYS ago and still allow organisations to count them at all.
+ * The people a week's totals are made of: those who chose to be counted in this programme at
+ * least COUNT_AFTER_DAYS before the week began, and still allow organisations to count them
+ * at all.
+ *
+ * - The cut-off is the start of the week, not the moment the totals happen to be taken: whether
+ *   someone who chose recently appears never depends on when staff look.
+ * - Only people with an account and a confirmed email address count. A guest session costs
+ *   nothing to create, so counting guests would let an organisation fill a group with made-up
+ *   people and then watch for the one real person who joins. A guest's choice is kept and
+ *   starts to count once they have an account.
  */
-function countedPeople(programmeId: string) {
-  const chosenBy = new Date(Date.now() - COUNT_AFTER_DAYS * 86_400_000).toISOString();
+function countedPeople(programmeId: string, week: string) {
+  const chosenBy = new Date(
+    new Date(`${week}T00:00:00Z`).getTime() - COUNT_AFTER_DAYS * 86_400_000,
+  ).toISOString();
   return sql`
     select e.user_id from org_enrolments e
     join consents c on c.user_id = e.user_id and c.purpose = 'org_aggregates' and c.granted = true
+    join users u on u.id = e.user_id
+      and coalesce(u.is_anonymous, false) = false and u.email_verified = true
     where e.programme_id = ${programmeId} and e.counted = true
       and e.counted_since <= ${chosenBy}::timestamptz`;
 }
@@ -535,9 +547,14 @@ const StoredCountsSchema = z.object({
   targets: z.array(z.string()).optional(),
 });
 
-/** Raw counts for one programme, as of now. */
-async function countsFor(db: Database, p: ProgrammeRow, k: number): Promise<ProgrammeCounts> {
-  const counted = countedPeople(p.id);
+/** Raw counts for one programme, for the week that starts on `week`. */
+async function countsFor(
+  db: Database,
+  p: ProgrammeRow,
+  k: number,
+  week: string,
+): Promise<ProgrammeCounts> {
+  const counted = countedPeople(p.id, week);
   const total = await db.execute<{ n: number }>(sql`select count(*)::int as n from (${counted}) x`);
   const n = Number(total.rows[0]?.n ?? 0);
   const targets = [...p.targetRoleIds];
@@ -647,7 +664,7 @@ async function weeklyCounts(
       await db
         .delete(orgInsightSnapshots)
         .where(and(eq(orgInsightSnapshots.programmeId, p.id), eq(orgInsightSnapshots.week, week)));
-    const counts = await countsFor(db, p, k);
+    const counts = await countsFor(db, p, k, week);
     // If someone else took this week's snapshot a moment ago, theirs stands.
     await db
       .insert(orgInsightSnapshots)
@@ -665,6 +682,30 @@ async function weeklyCounts(
     if (!out.has(p.id)) out.set(p.id, { counts: NOTHING, takenAt: new Date() });
   }
   return out;
+}
+
+/**
+ * Take this week's totals for every programme that has none yet. The worker runs this, so the
+ * totals are taken as each week begins rather than at a moment staff choose by opening the
+ * page: two looks a few minutes apart, either side of midnight on Sunday, can no longer be
+ * compared to see who joined or left in between. Returns how many were taken.
+ */
+export async function takeWeeklySnapshots(db: Database, limit = 200): Promise<number> {
+  const week = weekOf();
+  const due = await db
+    .select({ programme: orgProgrammes, kAnonMin: orgProfiles.kAnonMin })
+    .from(orgProgrammes)
+    .leftJoin(orgProfiles, eq(orgProfiles.organizationId, orgProgrammes.organizationId))
+    .where(
+      sql`not exists (select 1 from ${orgInsightSnapshots}
+            where ${orgInsightSnapshots.programmeId} = ${orgProgrammes.id}
+              and ${orgInsightSnapshots.week} = ${week})`,
+    )
+    .orderBy(orgProgrammes.createdAt)
+    .limit(limit);
+  for (const row of due)
+    await weeklyCounts(db, [row.programme], effectiveK(row.kAnonMin ?? 50, platformK()), week);
+  return due.length;
 }
 
 function programmeSummary(
@@ -1163,7 +1204,11 @@ export async function inviteMember(
   input: z.infer<typeof InviteInputSchema>,
   locale: Locale = 'en',
 ): Promise<{ id: string; path: string }> {
-  const { row } = await managerContext(db, orgId, actor.userId);
+  const { row, role } = await managerContext(db, orgId, actor.userId);
+  // Admins bring in members; only an owner decides who else may manage the organisation
+  // (as with changing someone's role).
+  if (input.role === 'admin' && role !== 'owner')
+    throw forbidden('Only an owner can invite an admin.');
   // An invitation is an email sent in someone's name: only from a confirmed address.
   if (!(await emailVerified(db, actor.userId)))
     throw verifyFirst('Confirm your email address before inviting people.');
@@ -1316,6 +1361,8 @@ export async function changeMemberRole(
     if (roleOf(m.role) === 'owner' && role !== 'owner' && (await ownerCount(tx, orgId)) <= 1)
       throw new ApiError(409, 'last-owner', 'An organisation needs at least one owner.');
     await tx.update(members).set({ role }).where(eq(members.id, memberId));
+    // Someone who can no longer invite people has their unanswered invitations withdrawn.
+    if (!canManage(role)) await withdrawInvitations(tx, orgId, m.userId);
     await audit(tx, actor, {
       action: 'org.member.role-changed',
       organizationId: orgId,
@@ -1324,6 +1371,20 @@ export async function changeMemberRole(
       meta: { from: roleOf(m.role), to: role },
     });
   });
+}
+
+/** Cancel the invitations someone sent that nobody has answered yet. */
+async function withdrawInvitations(tx: Tx, orgId: string, inviterId: string): Promise<void> {
+  await tx
+    .update(invitations)
+    .set({ status: 'canceled' })
+    .where(
+      and(
+        eq(invitations.organizationId, orgId),
+        eq(invitations.inviterId, inviterId),
+        eq(invitations.status, 'pending'),
+      ),
+    );
 }
 
 /** Remove someone from the team — or leave it yourself. */
@@ -1353,6 +1414,9 @@ export async function removeMember(
         'An organisation needs at least one owner. Make someone else an owner first, or delete the organisation.',
       );
     await tx.delete(members).where(eq(members.id, memberId));
+    // What they sent out goes with them: an invitation must not outlive its sender's place
+    // in the team (a removed admin's accomplice could otherwise still join as an admin).
+    await withdrawInvitations(tx, orgId, m.userId);
     await audit(tx, actor, {
       action: self ? 'org.member.left' : 'org.member.removed',
       organizationId: orgId,
@@ -1480,6 +1544,13 @@ export async function respondToInvitation(
       .returning({ id: invitations.id });
     if (!answered.length)
       throw new ApiError(409, 'answered', 'This invitation can no longer be answered.');
+    // Checked again as it is accepted: whoever sent it must still be allowed to bring people
+    // in (and only an owner's invitation can make an admin).
+    if (accept) {
+      const sender = i.inviterId ? await myRole(tx, i.organizationId, i.inviterId) : null;
+      if (!sender || !canManage(sender) || (roleOf(i.role) === 'admin' && sender !== 'owner'))
+        throw new ApiError(409, 'withdrawn', 'This invitation can no longer be answered.');
+    }
     if (accept)
       await tx
         .insert(members)

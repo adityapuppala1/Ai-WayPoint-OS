@@ -516,9 +516,12 @@ export async function createPlan(
   return getPlan(db, who.userId, planId, locale);
 }
 
-export const StepUpdateSchema = z
-  .object({ status: z.enum(STEP_STATUSES), note: z.string().trim().max(500).optional() })
-  .openapi('StepUpdate');
+/**
+ * A step takes a status and nothing else. It used to accept a free-text note that no screen
+ * showed, that was stored readable and that was never screened for signs of danger like other
+ * writing: words people type belong in the journal, where they are sealed and screened.
+ */
+export const StepUpdateSchema = z.object({ status: z.enum(STEP_STATUSES) }).openapi('StepUpdate');
 
 export async function updateStep(
   db: Database,
@@ -535,7 +538,6 @@ export async function updateStep(
     .set({
       status: input.status,
       doneAt: input.status === 'done' ? now : null,
-      ...(input.note !== undefined ? { note: input.note } : {}),
       updatedAt: now,
     })
     .where(and(eq(planSteps.id, stepId), eq(planSteps.planId, plan.id)))

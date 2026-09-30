@@ -1718,7 +1718,9 @@
     "posterOr": "Or go to <site></site> and enter this code:",
     "posterFree": "Free · works on any phone · in your language",
     "posterPrivacy": "{organisation} only ever sees totals for groups of {k, number} or more people — never you, and never what you write.",
-    "eyebrowJoined": "Your programme"
+    "eyebrowJoined": "Your programme",
+    "countMeHintGuest": "Optional, and only for this programme. Without an account you are not counted yet: your choice is kept and starts to count once you create an account and confirm your email address. You can change it any time in Privacy settings.",
+    "countedGuest": "You chose to be counted in its anonymous weekly totals. That starts once you create an account and confirm your email address."
   },
   "admin": {
     "title": "Admin",

@@ -51,6 +51,30 @@ describe('who runs this Waypoint (privacy notice and terms)', () => {
     expect(env.WAYPOINT_BACKUP_DAYS).toBeUndefined();
   });
 
+  it('takes the default for a number left empty, as every line in .env.example is', () => {
+    const before = {
+      hour: process.env.WAYPOINT_TEXT_REPLIES_PER_HOUR,
+      day: process.env.WAYPOINT_TEXT_REPLIES_PER_DAY,
+    };
+    try {
+      process.env.WAYPOINT_TEXT_REPLIES_PER_HOUR = '';
+      process.env.WAYPOINT_TEXT_REPLIES_PER_DAY = ' ';
+      const env = withEnv({});
+      expect(env.WAYPOINT_TEXT_REPLIES_PER_HOUR).toBe(2000);
+      expect(env.WAYPOINT_TEXT_REPLIES_PER_DAY).toBe(20_000);
+      process.env.WAYPOINT_TEXT_REPLIES_PER_HOUR = '50';
+      expect(withEnv({}).WAYPOINT_TEXT_REPLIES_PER_HOUR).toBe(50);
+    } finally {
+      for (const [key, value] of [
+        ['WAYPOINT_TEXT_REPLIES_PER_HOUR', before.hour],
+        ['WAYPOINT_TEXT_REPLIES_PER_DAY', before.day],
+      ] as const) {
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
+      }
+    }
+  });
+
   it('refuses a contact that is not an email address, or impossible backup days', () => {
     expect(() => withEnv({ WAYPOINT_CONTACT_EMAIL: 'write to us' })).toThrow(
       /WAYPOINT_CONTACT_EMAIL/,
@@ -91,8 +115,8 @@ describe('a production server', () => {
     Object.assign(process.env, {
       NODE_ENV: 'production',
       WAYPOINT_URL: 'https://waypoint.example',
-      BETTER_AUTH_SECRET: 'a-long-random-secret-of-at-least-32-characters',
-      WAYPOINT_KEK: 'MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=',
+      BETTER_AUTH_SECRET: 'ci-only-secret-not-for-production-use-000000',
+      WAYPOINT_KEK: 'MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=',
       ...values,
     });
     resetEnvForTests();

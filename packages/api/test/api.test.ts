@@ -1080,7 +1080,7 @@ async function participants(
     counted?: boolean;
     /** When they joined. */
     joinedDaysAgo?: number;
-    /** When they chose to be counted (defaults to when they joined): they count a week later. */
+    /** When they chose to be counted (defaults to when they joined): they count from the first week that begins 7 days or more later. */
     choseDaysAgo?: number;
     plan?: (i: number) => { role: string; skills: string[] } | null;
   },
@@ -1102,9 +1102,9 @@ async function participants(
       counted: opts.counted ?? opts.consent,
       countedSince:
         (opts.counted ?? opts.consent)
-          ? new Date(Date.now() - (opts.choseDaysAgo ?? opts.joinedDaysAgo ?? 8) * 86_400_000)
+          ? new Date(Date.now() - (opts.choseDaysAgo ?? opts.joinedDaysAgo ?? 15) * 86_400_000)
           : null,
-      enrolledAt: new Date(Date.now() - (opts.joinedDaysAgo ?? 8) * 86_400_000),
+      enrolledAt: new Date(Date.now() - (opts.joinedDaysAgo ?? 15) * 86_400_000),
     });
     if (opts.consent)
       await d

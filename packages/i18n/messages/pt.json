@@ -1714,7 +1714,9 @@
     "posterScan": "Escaneie para participar",
     "posterOr": "Ou acesse <site></site> e digite este código:",
     "posterFree": "Grátis · em qualquer celular · no seu idioma",
-    "posterPrivacy": "{organisation} só vê totais de grupos de {k, number} pessoas ou mais — nunca você, e nunca o que você escreve."
+    "posterPrivacy": "{organisation} só vê totais de grupos de {k, number} pessoas ou mais — nunca você, e nunca o que você escreve.",
+    "countMeHintGuest": "Opcional, e só para este programa. Sem uma conta você ainda não é contado: sua escolha fica guardada e começa a contar quando você cria uma conta e confirma seu e-mail. Você pode mudar isso quando quiser nas configurações de privacidade.",
+    "countedGuest": "Você escolheu ser contado nos totais semanais anônimos. Isso começa quando você criar uma conta e confirmar seu e-mail."
   },
   "admin": {
     "title": "Administração",

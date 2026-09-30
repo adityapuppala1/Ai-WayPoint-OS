@@ -66,6 +66,13 @@ const optionalString = z
   .optional()
   .transform((v) => (v && v.trim().length > 0 ? v.trim() : undefined));
 
+/** A whole number of at least 1; left empty (as in .env.example) it takes its default. */
+const numberOr = (fallback: number) =>
+  z.preprocess(
+    (v) => (typeof v === 'string' && v.trim() === '' ? undefined : v),
+    z.coerce.number().int().min(1).default(fallback),
+  );
+
 const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   WAYPOINT_URL: z.string().url().default('http://localhost:3000'),
@@ -160,8 +167,8 @@ const EnvSchema = z.object({
    * money, so this bounds what a flood of made-up senders can spend. People in danger have a
    * separate allowance of the same size.
    */
-  WAYPOINT_TEXT_REPLIES_PER_HOUR: z.coerce.number().int().min(1).default(2000),
-  WAYPOINT_TEXT_REPLIES_PER_DAY: z.coerce.number().int().min(1).default(20_000),
+  WAYPOINT_TEXT_REPLIES_PER_HOUR: numberOr(2000),
+  WAYPOINT_TEXT_REPLIES_PER_DAY: numberOr(20_000),
   /**
    * Countries whose numbers get replies, as ISO codes ("KE,TZ,UG"). Default: every country
    * Waypoint has help lines for. Set your providers' own geographic permissions to match.

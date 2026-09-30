@@ -929,6 +929,190 @@ describe('circles', () => {
   });
 });
 
+describe('organisations', () => {
+  async function programme(owner: { cookie: string }, name: string) {
+    const { id: orgId } = (await (
+      await req('/api/org', { method: 'POST', cookie: owner.cookie, json: { name, kind: 'ngo' } })
+    ).json()) as { id: string };
+    const { id: programmeId } = (await (
+      await req(`/api/org/${orgId}/programmes`, {
+        method: 'POST',
+        cookie: owner.cookie,
+        json: { name: 'New skills', targetRoleIds: [] },
+      })
+    ).json()) as { id: string };
+    return { orgId, programmeId };
+  }
+  /** People who joined a programme and chose to be counted, straight into the database. */
+  async function enrol(
+    programmeId: string,
+    n: number,
+    who: { chose: Date; guest?: boolean; confirmed?: boolean },
+  ) {
+    for (let i = 0; i < n; i++) {
+      const id = crypto.randomUUID();
+      await db
+        .getDb()
+        .insert(db.users)
+        .values({
+          id,
+          name: 'Person',
+          email: `${id}@people.example.org`,
+          emailVerified: who.confirmed ?? true,
+          isAnonymous: who.guest ?? false,
+        });
+      await db.getDb().insert(db.orgEnrolments).values({
+        programmeId,
+        userId: id,
+        counted: true,
+        countedSince: who.chose,
+        enrolledAt: who.chose,
+      });
+      await db
+        .getDb()
+        .insert(db.consents)
+        .values({ userId: id, purpose: 'org_aggregates', granted: true, policyVersion: 'test' });
+    }
+  }
+  const thisWeek = () => {
+    const now = new Date();
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+    return d;
+  };
+  const countedIn = async (programmeId: string) =>
+    (
+      await rows<{ counts: { counted: number } }>(
+        db.sql`select counts from org_insight_snapshots where programme_id = ${programmeId}`,
+      )
+    )[0]?.counts.counted;
+
+  it('count only people with a confirmed account, so free guest sessions cannot fill a group', async () => {
+    const owner = await account('Oksana');
+    const { orgId, programmeId } = await programme(owner, 'Sybil Test Trust');
+    const longAgo = new Date(Date.now() - 40 * 86_400_000);
+    await enrol(programmeId, 12, { chose: longAgo });
+    await enrol(programmeId, 30, { chose: longAgo, guest: true });
+    await enrol(programmeId, 30, { chose: longAgo, confirmed: false });
+    await req(`/api/org/${orgId}/programmes/${programmeId}`, { cookie: owner.cookie });
+    expect(await countedIn(programmeId)).toBe(12);
+  });
+
+  it('take each week’s totals as of the start of the week, whenever anyone first looks', async () => {
+    const owner = await account('Petra');
+    const { orgId, programmeId } = await programme(owner, 'Timing Test Trust');
+    const weekStart = thisWeek();
+    await enrol(programmeId, 10, { chose: new Date(weekStart.getTime() - 20 * 86_400_000) });
+    // Chose to be counted a little less than seven days before this week began: whether they
+    // appear must not depend on the moment staff choose to look during the week.
+    await enrol(programmeId, 3, {
+      chose: new Date(weekStart.getTime() - 7 * 86_400_000 + 60_000),
+    });
+    await req(`/api/org/${orgId}/programmes/${programmeId}`, { cookie: owner.cookie });
+    expect(await countedIn(programmeId)).toBe(10);
+  });
+
+  it('have their weekly totals taken by the worker, not at a moment staff choose', async () => {
+    const { jobs } = await import('../src');
+    const owner = await account('Quinn');
+    const { programmeId } = await programme(owner, 'Worker Test Trust');
+    await enrol(programmeId, 4, { chose: new Date(Date.now() - 40 * 86_400_000) });
+    expect(await countedIn(programmeId)).toBeUndefined();
+    expect(await jobs.orgSnapshots(db.getDb())).toBeGreaterThanOrEqual(1);
+    expect(await countedIn(programmeId)).toBe(4);
+    // Already taken for this week: nothing more to do.
+    expect(await jobs.orgSnapshots(db.getDb())).toBe(0);
+  });
+
+  it('cannot be joined through an invitation whose sender has since lost the right to invite', async () => {
+    const owner = await account('Ravi');
+    const rogue = await account('Rogue');
+    const friend = await account('Friend');
+    const { orgId } = await programme(owner, 'Invitation Test Trust');
+    const invite = (cookie: string, email: string, role: string) =>
+      req(`/api/org/${orgId}/invitations`, { method: 'POST', cookie, json: { email, role } });
+    const invitationFor = async (email: string) =>
+      (
+        await rows<{ id: string; status: string }>(
+          db.sql`select id, status from invitations where organization_id = ${orgId} and email = ${email}`,
+        )
+      )[0];
+    // The owner brings in an admin…
+    expect((await invite(owner.cookie, rogue.email, 'admin')).status).toBe(201);
+    const first = await invitationFor(rogue.email);
+    expect(
+      (
+        await req(`/api/invitations/${first!.id}/accept`, {
+          method: 'POST',
+          cookie: rogue.cookie,
+        })
+      ).status,
+    ).toBe(200);
+    // …who may invite members, but not make more admins.
+    expect((await invite(rogue.cookie, friend.email, 'admin')).status).toBe(403);
+    expect((await invite(rogue.cookie, friend.email, 'member')).status).toBe(201);
+    const pending = await invitationFor(friend.email);
+    // The owner removes the admin: what they sent out goes with them.
+    const team = (await (await req(`/api/org/${orgId}`, { cookie: owner.cookie })).json()) as {
+      members: Array<{ id: string; email: string }>;
+    };
+    const rogueMember = team.members.find((m) => m.email === rogue.email)!;
+    expect(
+      (
+        await req(`/api/org/${orgId}/members/${rogueMember.id}`, {
+          method: 'DELETE',
+          cookie: owner.cookie,
+        })
+      ).status,
+    ).toBe(200);
+    const answer = await req(`/api/invitations/${pending!.id}/accept`, {
+      method: 'POST',
+      cookie: friend.cookie,
+    });
+    expect(answer.status).toBeGreaterThanOrEqual(400);
+    const joined = await rows<{ n: number }>(
+      db.sql`select count(*)::int as n from members where organization_id = ${orgId} and user_id = ${friend.id}`,
+    );
+    expect(joined[0]?.n).toBe(0);
+  });
+});
+
+describe('plan steps', () => {
+  it('take a status only: no free-text note is stored where nothing reads or protects it', async () => {
+    const cookie = await guest();
+    await req('/api/me/onboarding', {
+      method: 'POST',
+      cookie,
+      json: {
+        profile: { locale: 'en', country: 'IN', timezone: 'Asia/Kolkata', situation: 'lost-job' },
+        consents: {},
+        skills: [],
+      },
+    });
+    const made = await req('/api/path/plans', {
+      method: 'POST',
+      cookie,
+      json: { hoursPerWeek: 5, horizonWeeks: 4 },
+    });
+    expect(made.status).toBeLessThan(300);
+    const plan = (await made.json()) as {
+      id: string;
+      weeks: Array<{ steps: Array<{ id: string }> }>;
+    };
+    const stepId = plan.weeks[0]!.steps[0]!.id;
+    const res = await req(`/api/path/plans/${plan.id}/steps/${stepId}`, {
+      method: 'PATCH',
+      cookie,
+      json: { status: 'done', note: 'My phone is +254 711 000 000 and I feel hopeless' },
+    });
+    expect(res.status).toBe(200);
+    const stored = await rows<{ note: string | null; status: string }>(
+      db.sql`select note, status from plan_steps where id = ${stepId}`,
+    );
+    expect(stored[0]).toEqual({ note: null, status: 'done' });
+  });
+});
+
 describe('limits on what one person can keep', () => {
   it('hold when many requests arrive at once', async () => {
     const me = await account('Burst');

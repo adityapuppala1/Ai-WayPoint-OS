@@ -1714,7 +1714,9 @@
     "posterScan": "Scannez pour rejoindre",
     "posterOr": "Ou allez sur <site></site> et saisissez ce code :",
     "posterFree": "Gratuit · sur tout téléphone · dans votre langue",
-    "posterPrivacy": "{organisation} ne voit que des totaux pour des groupes de {k, number} personnes ou plus — jamais vous, et jamais ce que vous écrivez."
+    "posterPrivacy": "{organisation} ne voit que des totaux pour des groupes de {k, number} personnes ou plus — jamais vous, et jamais ce que vous écrivez.",
+    "countMeHintGuest": "Facultatif, et uniquement pour ce programme. Sans compte, vous n’êtes pas encore compté : votre choix est conservé et commence à compter une fois votre compte créé et votre adresse e-mail confirmée. Vous pouvez le modifier à tout moment dans les paramètres de confidentialité.",
+    "countedGuest": "Vous avez choisi d’être compté dans ses totaux hebdomadaires anonymes. Cela commence une fois votre compte créé et votre adresse e-mail confirmée."
   },
   "admin": {
     "title": "Administration",

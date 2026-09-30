@@ -1714,7 +1714,9 @@
     "posterScan": "Skani ili kujiunga",
     "posterOr": "Au nenda <site></site> na uweke msimbo huu:",
     "posterFree": "Bure · kwenye simu yoyote · kwa lugha yako",
-    "posterPrivacy": "{organisation} huona jumla za makundi ya watu {k, number} au zaidi tu — kamwe si wewe, wala unachoandika."
+    "posterPrivacy": "{organisation} huona jumla za makundi ya watu {k, number} au zaidi tu — kamwe si wewe, wala unachoandika.",
+    "countMeHintGuest": "Si lazima, na ni kwa programu hii tu. Bila akaunti bado huhesabiwi: chaguo lako linahifadhiwa na linaanza kuhesabiwa ukishafungua akaunti na kuthibitisha barua pepe yako. Unaweza kulibadilisha wakati wowote katika mipangilio ya faragha.",
+    "countedGuest": "Umechagua kuhesabiwa katika jumla zake za kila wiki zisizo na majina. Hilo linaanza ukishafungua akaunti na kuthibitisha barua pepe yako."
   },
   "admin": {
     "title": "Usimamizi",

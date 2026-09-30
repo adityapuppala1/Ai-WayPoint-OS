@@ -49,6 +49,7 @@ import { countMessage, stoppedMessages } from '../channels/service';
 import { isEmailTemplate, renderEmail, toLocale } from '../email/render';
 import { emailReady, sendEmail } from '../email/send';
 import { errorFields, log } from '../lib/log';
+import { takeWeeklySnapshots } from '../services/org';
 
 const FOLLOW_UP: Record<Locale, { title: string; body: string }> = {
   en: {
@@ -544,6 +545,11 @@ export async function dispatchOutbox(
   }
 }
 
+/** This week's totals for every programme that has none yet (see takeWeeklySnapshots). */
+export async function orgSnapshots(db: Database): Promise<number> {
+  return takeWeeklySnapshots(db);
+}
+
 export async function runDueWork(db: Database, workerId: string): Promise<void> {
   const started = Date.now();
   const results: Record<string, unknown> = {};
@@ -551,6 +557,7 @@ export async function runDueWork(db: Database, workerId: string): Promise<void> 
     ['followUps', () => crisisFollowUps(db)],
     ['reminders', () => dueReminders(db)],
     ['nudges', () => deliverNudges(db)],
+    ['orgSnapshots', () => orgSnapshots(db)],
     ['outbox', () => dispatchOutbox(db)],
   ] as const) {
     try {

@@ -18,10 +18,13 @@ export function JoinProgramme({
   code,
   organisation,
   signedIn,
+  guest,
 }: {
   code: string;
   organisation: string;
   signedIn: boolean;
+  /** Joining without an account: the choice is kept, and counts once they have one. */
+  guest: boolean;
 }) {
   const t = useTranslations('join');
   const auth = useTranslations('shell');
@@ -54,7 +57,11 @@ export function JoinProgramme({
 
   return (
     <div className="wp-stack">
-      <Checkbox isSelected={countMe} onChange={setCountMe} description={t('countMeHint')}>
+      <Checkbox
+        isSelected={countMe}
+        onChange={setCountMe}
+        description={t(guest ? 'countMeHintGuest' : 'countMeHint')}
+      >
         {t('countMe', { organisation })}
       </Checkbox>
       {error ? <Notice tone="danger" role="alert" title={error} /> : null}

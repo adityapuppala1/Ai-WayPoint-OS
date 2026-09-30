@@ -355,7 +355,7 @@ declare const messages: {
     "haveAccount": "Already have an account?",
     "orGuest": "Continue without an account",
     "failed": "We couldn’t sign you in with that email and password.",
-    "failedHelp": "Just created your account? Please confirm your email address first. If the password is right, a new link is on its way to {email}; it works for 24 hours. Otherwise, check both and try again, or choose a new password.",
+    "failedHelp": "Just created your account? Please confirm your email address first: open the link we emailed to {email}. If the password is right, we send a new link (at most one every couple of minutes); each works for 24 hours. Otherwise, check both and try again, or choose a new password.",
     "signUpFailed": "We couldn’t create the account. Check your details and try again.",
     "signedOut": "You’re signed out.",
     "checkTitle": "Check your email",
@@ -1721,7 +1721,9 @@ declare const messages: {
     "posterOr": "Or go to <site></site> and enter this code:",
     "posterFree": "Free · works on any phone · in your language",
     "posterPrivacy": "{organisation} only ever sees totals for groups of {k, number} or more people — never you, and never what you write.",
-    "eyebrowJoined": "Your programme"
+    "eyebrowJoined": "Your programme",
+    "countMeHintGuest": "Optional, and only for this programme. Without an account you are not counted yet: your choice is kept and starts to count once you create an account and confirm your email address. You can change it any time in Privacy settings.",
+    "countedGuest": "You chose to be counted in its anonymous weekly totals. That starts once you create an account and confirm your email address."
   },
   "admin": {
     "title": "Admin",

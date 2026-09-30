@@ -125,7 +125,9 @@ export default async function JoinProgrammePage({ params }: Props) {
         >
           <p>
             {t('joinedBody', { programme: p.name })}{' '}
-            {preview.counted ? t('countedYes') : t('countedNo')}
+            {preview.counted
+              ? t(viewer?.user.isGuest ? 'countedGuest' : 'countedYes')
+              : t('countedNo')}
           </p>
         </Notice>
       ) : preview.open ? (
@@ -149,6 +151,7 @@ export default async function JoinProgrammePage({ params }: Props) {
               code={preview.code}
               organisation={organisation}
               signedIn={Boolean(viewer)}
+              guest={!viewer || viewer.user.isGuest}
             />
           </div>
         </Panel>

@@ -168,6 +168,22 @@
     text-decoration: underline;
   }
 
+  /*
+   * And the whole station presses it: the dot, the words and the line under them, at least a
+   * thumb tall. The link's own mark spreads over the station (the station's marks draw the
+   * track), and sits over the dot, which is lifted over the track. Focus stays on the words.
+   */
+  .link::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+
+  .station:has(.link) {
+    min-block-size: var(--wp-touch-min);
+  }
+
   /* Horizontal route: a compact progress line. */
   .horizontal {
     display: flex;

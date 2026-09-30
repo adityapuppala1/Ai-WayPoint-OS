@@ -5,11 +5,41 @@
  * typed to Ask without sending it and without putting it in an address. Escape closes the
  * palette, and three presses still leave Waypoint at once.
  */
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import type { Page } from '@playwright/test';
 import { expect, startAsGuest, test } from './fixtures';
+
+/*
+ * One guest for the whole file. New guests from one address are limited (40 a minute, with
+ * the count kept while they keep coming), and the whole suite shares that allowance.
+ */
+const GUEST = join(tmpdir(), `waypoint-e2e-goto-${process.env.E2E_PORT ?? 3100}.json`);
+
+let guestReady = false;
+
+// Made on first use in each worker, then every test here opens as that guest.
+test.use({
+  storageState: async ({ browser, baseURL }, use) => {
+    if (!guestReady) {
+      const context = await browser.newContext({ baseURL, locale: 'en-GB' });
+      await startAsGuest(await context.newPage());
+      await context.storageState({ path: GUEST });
+      await context.close();
+      guestReady = true;
+    }
+    await use(GUEST);
+  },
+});
+
+async function openToday(page: Page) {
+  await page.goto('/');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Amani');
+}
 
 test.describe('the go-to palette', () => {
   test('Ctrl+K opens it; part of a module name and Enter go there @desktop', async ({ page }) => {
-    await startAsGuest(page);
+    await openToday(page);
     await page.keyboard.press('Control+k');
     const palette = page.getByRole('dialog', { name: 'Go to' });
     await expect(palette).toBeVisible();
@@ -50,7 +80,7 @@ test.describe('the go-to palette', () => {
   });
 
   test('the rail has a button for it, and Escape closes it @desktop', async ({ page }) => {
-    await startAsGuest(page);
+    await openToday(page);
     const opener = page
       .getByRole('navigation', { name: 'Main' })
       .getByRole('button', { name: 'Search Waypoint' });
@@ -69,7 +99,7 @@ test.describe('the go-to palette', () => {
   });
 
   test('the shortcut leaves typing alone @desktop', async ({ page }) => {
-    await startAsGuest(page);
+    await openToday(page);
     await page.goto('/shield');
     const box = page.getByRole('main').getByRole('textbox').first();
     await box.click();
@@ -78,7 +108,7 @@ test.describe('the go-to palette', () => {
   });
 
   test('it matches in Arabic too @desktop', async ({ page, context, baseURL }) => {
-    await startAsGuest(page);
+    await openToday(page);
     await context.addCookies([{ name: 'NEXT_LOCALE', value: 'ar', url: baseURL ?? '' }]);
     await page.goto('/');
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
@@ -93,7 +123,7 @@ test.describe('the go-to palette', () => {
   });
 
   test('the last row takes what was typed to Ask, and sends nothing @desktop', async ({ page }) => {
-    await startAsGuest(page);
+    await openToday(page);
     let sent = 0;
     page.on('request', (request) => {
       if (request.method() === 'POST' && new URL(request.url()).pathname === '/api/ask') sent++;
@@ -136,7 +166,7 @@ test.describe('the go-to palette', () => {
     await context.route('https://www.bbc.com/**', (route) =>
       route.fulfill({ contentType: 'text/html', body: '<title>Weather</title><h1>Weather</h1>' }),
     );
-    await startAsGuest(page);
+    await openToday(page);
     await page.keyboard.press('Control+k');
     await page.getByRole('dialog', { name: 'Go to' }).getByRole('searchbox').fill('money');
     await page.keyboard.press('Escape');
@@ -147,7 +177,7 @@ test.describe('the go-to palette', () => {
 
   test('on a phone it opens from the top of More, as a sheet', async ({ page, isMobile }) => {
     test.skip(!isMobile, 'the More sheet is the phone layout');
-    await startAsGuest(page);
+    await openToday(page);
     await page.getByRole('button', { name: 'More' }).click();
     const sheet = page.getByRole('dialog', { name: 'All modules' });
     const opener = sheet.getByRole('button', { name: 'Search Waypoint' });

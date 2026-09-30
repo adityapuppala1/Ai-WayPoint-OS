@@ -4,8 +4,37 @@
  * takes the movement away and a request for less motion makes it instant. A browser without
  * the View Transitions API simply shows the next page.
  */
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import type { Page } from '@playwright/test';
 import { expect, startAsGuest, test } from './fixtures';
+
+/*
+ * One guest for the whole file. New guests from one address are limited (40 a minute, with
+ * the count kept while they keep coming), and the whole suite shares that allowance.
+ */
+const GUEST = join(tmpdir(), `waypoint-e2e-transitions-${process.env.E2E_PORT ?? 3100}.json`);
+
+let guestReady = false;
+
+// Made on first use in each worker, then every test here opens as that guest.
+test.use({
+  storageState: async ({ browser, baseURL }, use) => {
+    if (!guestReady) {
+      const context = await browser.newContext({ baseURL, locale: 'en-GB' });
+      await startAsGuest(await context.newPage());
+      await context.storageState({ path: GUEST });
+      await context.close();
+      guestReady = true;
+    }
+    await use(GUEST);
+  },
+});
+
+async function openToday(page: Page) {
+  await page.goto('/');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Amani');
+}
 
 /** Notes, for every page transition, what the browser animates and for how long. */
 async function watchTransitions(page: Page) {
@@ -56,7 +85,7 @@ async function goElsewhere(page: Page, isMobile: boolean, round = 0) {
 
 test('the page moves and the frame stays still', async ({ page, isMobile }) => {
   await watchTransitions(page);
-  await startAsGuest(page);
+  await openToday(page);
   // The frame's parts carry their names, so the browser draws them apart from the page.
   const frame = isMobile
     ? [
@@ -93,7 +122,7 @@ test('a page that keeps someone waiting still arrives with the transition', asyn
   isMobile,
 }) => {
   await watchTransitions(page);
-  await startAsGuest(page);
+  await openToday(page);
   const path = isMobile ? '/shield' : '/money';
   // Hold back the answer, as a slow connection would, so the placeholder stands in first.
   await page.route(
@@ -123,7 +152,7 @@ test('lite mode moves nothing, and less motion is instant', async ({
   isMobile,
 }) => {
   await watchTransitions(page);
-  await startAsGuest(page);
+  await openToday(page);
 
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');

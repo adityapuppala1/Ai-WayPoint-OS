@@ -180,9 +180,10 @@ export async function runShieldCheck(
     ai = { used: false, reason: 'unavailable' };
   } else {
     const allowExternal = input.aiExternalConsent || input.aiConsent === true;
-    // The judge (TypeSafe's Jev) when it may be asked, the language model when there is no
-    // judge or it is unsure: see shieldOpinion. Either way the opinion goes through the same
-    // merge, which can only raise the level, and a failure leaves the rules' result as it is.
+    // The judge (TypeSafe's Jev) when it may be asked, and the language model whenever one may
+    // answer, whatever the judge says: see shieldOpinion. A judge that finds nothing gives no
+    // opinion. Either way the opinion goes through the same merge, which can only raise the
+    // level, and a failure leaves the rules' result as it is.
     const opinion = await shieldOpinion(
       { db, userId: input.userId, isGuest: input.isGuest, allowExternal, gate: input.aiGate },
       { text: input.text, country: input.country, locale: input.locale ?? 'en', rules: result },

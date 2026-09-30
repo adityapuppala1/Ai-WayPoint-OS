@@ -213,13 +213,28 @@ describe('Scam Shield with the judge', () => {
     const asked = judge();
     const out = await check(RUSHED);
     expect(asked).toHaveLength(1);
-    // It was asked and it answered, but it raised nothing: the page must not say it did.
-    expect(out.ai).toEqual({ used: true, reason: 'used', model: 'jev-1.13.0', raised: false });
-    expect(out.result.level).toBe(rulesOnly.result.level);
-    expect(out.result.score).toBe(rulesOnly.result.score);
-    expect(out.result.signals).toEqual(rulesOnly.result.signals);
-    expect(out.result.advice).toEqual(rulesOnly.result.advice);
-    expect(await stored(out.id)).toMatchObject({ level: 'unclear', ai_level: 'low' });
+    // It was asked, but "nothing found" is not a second opinion: the page must neither say one
+    // raised the level nor that "the AI check agreed".
+    expect(out.ai).toEqual({ used: false, reason: 'unavailable' });
+    expect(out.result.engine.ai).toBeUndefined();
+    expect(out.result).toEqual(rulesOnly.result);
+    expect(await stored(out.id)).toMatchObject({
+      level: 'unclear',
+      ai_model: null,
+      ai_level: null,
+    });
+  });
+
+  it('does not stop the language model from being asked, whatever the judge says', async () => {
+    const model = await textModel(
+      JSON.stringify({ level: 'high', categories: ['job'], reasons: ['Asks for money up front'] }),
+    );
+    const asked = judge();
+    const out = await check(OFFER);
+    expect(asked).toHaveLength(1);
+    expect(model.doGenerateCalls).toHaveLength(1);
+    expect(out.result.level).toBe('high');
+    expect(out.ai).toEqual({ used: true, reason: 'used', model: 'mock-small', raised: true });
   });
 
   it('is not sent a message the rules already call high: it could add nothing', async () => {

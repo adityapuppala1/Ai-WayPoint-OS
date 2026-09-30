@@ -15,9 +15,9 @@
  *  - the judge (TypeSafe's Jev, played here by a scripted stand-in) is never asked about
  *    someone in immediate danger, without consent, in a language that is not switched on or
  *    when Scam Shield's rules already say as much as it could; it is sent only text with personal details
- *    removed, and only in the state; whatever it answers, a Shield verdict never goes down;
- *    when it fails the result is the rules' own; and an answer by text or a plan rewrite that
- *    it flags is replaced by Waypoint's own wording.
+ *    removed, and only in the state; whatever it answers, a Shield verdict never goes down and
+ *    the language model is still asked; when it fails the result is the rules' own; and an
+ *    answer by text or a plan rewrite that it flags is replaced by Waypoint's own wording.
  *
  * Cases live in evals/datasets/guardrails.jsonl. Every case must pass (release gate).
  */

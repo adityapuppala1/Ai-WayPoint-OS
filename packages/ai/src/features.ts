@@ -199,36 +199,38 @@ interface ShieldOpinionInput {
  * A second opinion on a message, for the raise-only merge (`mergeAiOpinion`). Text is
  * redacted before it leaves Waypoint.
  *
- * The judge is asked first when it may be (a key, consent, a language that is switched on)
- * and when it could raise the level: "high" is the most it says, so a message the rules
- * already rate high goes straight to the language model, as before. The language model is
- * asked when there is no judge, when the judge fails, and when the judge is unsure; with
+ * The judge is asked when it may be (a key, consent, a language that is switched on) and when
+ * it could raise the level: "high" is the most it says, so a message the rules already rate
+ * high is not sent to it. The language model is asked whenever one may answer, whatever the
+ * judge says: both are asked at once, and neither decides whether the other is heard. With
  * both, the higher level stands. Whoever answered is named in `model`.
  *
- * When the judge is sure (it found a clear scam, or every sign clearly absent) the language
- * model is not asked: that is the saving, and its cost is that a scam only the language
- * model would have caught is then rated by the rules alone.
+ * The judge's "nothing found" is not an opinion. Scam text can be written to talk it down, so
+ * it is dropped: it never stops the language model from being asked, and on its own it is not
+ * reported as a second opinion that agreed with the rules.
  */
 export async function shieldOpinion(
   ctx: CallerContext,
   input: ShieldOpinionInput,
 ): Promise<AiOpinion | null> {
   if (input.rules?.level === 'very-high') return null;
-  const judged = await shieldJudgeOpinion(ctx, input);
-  if (judged && !judged.unsure) return judged.opinion;
-  const written = await shieldModelOpinion(ctx, input);
-  if (!judged || !written) return judged?.opinion ?? written;
+  const [judged, written] = await Promise.all([
+    shieldJudgeOpinion(ctx, input),
+    shieldModelOpinion(ctx, input),
+  ]);
+  const saw = judged && judged.opinion.level !== 'low' ? judged.opinion : null;
+  if (!saw || !written) return saw ?? written;
   // Both answered. Neither can take away what the other saw: the higher level stands, and its
   // reasons come first.
   const [first, second] =
-    LEVEL_ORDER.indexOf(written.level) > LEVEL_ORDER.indexOf(judged.opinion.level)
-      ? [written, judged.opinion]
-      : [judged.opinion, written];
+    LEVEL_ORDER.indexOf(written.level) > LEVEL_ORDER.indexOf(saw.level)
+      ? [written, saw]
+      : [saw, written];
   return {
     level: first.level,
     categories: [...new Set([...first.categories, ...second.categories])].slice(0, 3),
     reasons: [...first.reasons, ...second.reasons],
-    model: `${judged.opinion.model}+${written.model}`,
+    model: `${saw.model}+${written.model}`,
   };
 }
 
@@ -243,7 +245,7 @@ export async function shieldJudgeOpinion(
   ctx: CallerContext,
   input: ShieldOpinionInput,
   pace: 'interactive' | 'background' = 'interactive',
-): Promise<{ opinion: AiOpinion; unsure: boolean; score: number } | null> {
+): Promise<{ opinion: AiOpinion; score: number } | null> {
   const text = input.text.slice(0, 4000);
   // Not when its answer could change nothing: the rules already say as much as it can.
   if (input.rules && !judgeCouldRaise(input.rules.level)) return null;
@@ -266,7 +268,6 @@ export async function shieldJudgeOpinion(
   const known = new Set(input.rules?.signals.map((s) => s.id));
   const locale = isLocale(input.locale) ? input.locale : 'en';
   return {
-    unsure: judged.unsure,
     score: judged.score,
     opinion: {
       level: judged.level,

@@ -7,7 +7,7 @@ AI makes Waypoint warmer and smarter; it is never required for safety.
 | Feature | Model tier | Without AI |
 | --- | --- | --- |
 | Ask — the companion (streaming, tools, approvals) | small, or large in sensitive moments | Guided mode: built-in guidance with links |
-| Scam Shield second opinion (structured output) | small, after the judge when there is one | Rules engine only |
+| Scam Shield second opinion (structured output) | small, alongside the judge when there is one | Rules engine only |
 | Plan wording in the person's language | large, then checked by the judge when there is one | Deterministic planner's templates |
 | Signal digests and tagging (worker) | small | Curated signals only |
 | Forecasts ("What’s next?") | none | Staff write, publish and judge every forecast. No model publishes or changes one ([SAFETY.md](SAFETY.md#forecasts)) |
@@ -63,29 +63,31 @@ answer can only put Waypoint's own fixed wording in place of something less cert
 
 | Where | What it is asked | What a "yes" does | With no answer |
 | --- | --- | --- | --- |
-| **Scam Shield** second opinion (`shieldOpinion`, `judge-shield.ts`) | Nine yes-or-no questions about the pasted message, one warning sign each: a fee to get work, a fee to receive something, a request for a code or PIN, a threat, guaranteed returns, pressure to act now, a move to another app, a link that does not match the sender, text addressed to whoever is checking the message | Code adds the signs up into a level, never above "high". It goes through the same raise-only merge as the language model's opinion (`mergeAiOpinion`). Each reason shown is the existing, translated title of the sign it saw | The language model is asked, as before. With neither, the rules alone |
+| **Scam Shield** second opinion (`shieldOpinion`, `judge-shield.ts`) | Nine yes-or-no questions about the pasted message, one warning sign each: a fee to get work, a fee to receive something, a request for a code or PIN, a threat, guaranteed returns, pressure to act now, a move to another app, a link that does not match the sender, text addressed to whoever is checking the message | Code adds the signs up into a level, never above "high". It goes through the same raise-only merge as the language model's opinion (`mergeAiOpinion`). Each reason shown is the existing, translated title of the sign it saw | The language model's opinion alone, as before. With neither, the rules alone |
 | **Answers by SMS and WhatsApp** (`channelAnswer`) | Five questions about the AI's reply, not the person's question: a diagnosis or a dose, what a court or official will decide, a particular investment, loan or product, a promised outcome, a method of self-harm | The reply is not sent. The existing guided text goes out instead | The reply is sent as before (links and phone numbers are still stripped) |
 | **Plan rewrites** (`personalisePlan`) | Two questions about each reworded step, next to its own original: a promise the template did not make; a course, site, organisation or number it did not name | The whole rewrite is refused and the template wording kept | The rewrite is accepted as before |
 | **Guided mode** in Ask (`guidedIntent`) | One choice, only when no keyword matched: scam, work, money, services, feelings or "none of these" | Waypoint's own guided reply for that topic, instead of the general menu. Used only when the pick is well ahead | The general menu, as before |
 
-In Scam Shield the order is: rules, then the judge, then the language model only when there is
-no judge, it fails, or it is unsure (some sign in the middle of its range, or the message
-talks to whoever is checking it). The judge is asked only about messages the rules rated low
-or unclear: "high" is the most it can say, so a message already rated high or very high is
-not sent to it (very high is sent to nobody; high goes to the language model, as before).
-With both, the higher level stands and both are recorded as the model that answered
-(`jev-1.13.0+claude-haiku-4-5`). When the judge is sure — a clear scam,
-or every sign clearly absent — the language model is not asked. That is the saving, and its
-price: a scam that only the language model would have caught is then rated by the rules alone.
-The rules are still never lowered.
+In Scam Shield the rules come first, then the judge and the language model are asked at the
+same time. The judge is asked only about messages the rules rated low or unclear: "high" is
+the most it can say, so a message already rated high or very high is not sent to it (very
+high is sent to nobody; high goes to the language model, as before). The language model is
+asked whenever one may answer, whatever the judge says: a judge's answer never stops it from
+being asked, so setting `TYPESAFE_API_KEY` can never cost a warning the language model would
+have given. The final level is the highest of the rules', the judge's and the language
+model's. With both, both are recorded as the model that answered
+(`jev-1.13.0+claude-haiku-4-5`). A judge that finds nothing gives no opinion at all: it is
+not recorded as the model that answered, and the page does not say "The AI check agreed"
+because of it.
 
 ### It can only add caution
 
 - **Never a lower verdict.** Nothing the judge says lowers a crisis tier or a Scam Shield
   level, cancels a rule that fired, or is believed when it says "this is fine". Scam text is
   written to deceive, and TypeSafe's own notes say text that argues for its own label "can
-  move the answer". So a "nothing found" means nothing, and a message that addresses the
-  checker is itself treated as a warning sign.
+  move the answer". So a "nothing found" means nothing: it is not reported as an opinion and
+  never stops the language model from being asked. And a message that addresses the checker
+  is itself treated as a warning sign.
 - **Never in immediate danger.** At crisis tier 3 nothing goes to the judge, as nothing goes to
   a model. The crisis check is Waypoint's own rules and runs first.
 - **Never the detector.** The crisis classifier and the Shield rules run first and without it.
@@ -140,7 +142,7 @@ a single real answer from Jev was seen. **They are not tuned.**
 
 | Use | Cut | Why there |
 | --- | --- | --- |
-| Shield: a sign counts as seen | probability ≥ 0.7 | The cut TypeSafe's examples use for a flag. Below 0.3 a sign is taken as absent; in between the judge is "unsure" and the language model is asked as well |
+| Shield: a sign counts as seen | probability ≥ 0.7 | The cut TypeSafe's examples use for a flag. Below it a sign adds nothing |
 | Shield: level from the signs | score ≥ 0.30 unclear, ≥ 0.60 high, never very high (so it is asked only when the rules say low or unclear) | Seen signs add up as the rules' signals do (weight × probability). Stricter than the rules ask of themselves (0.20, 0.45): one strong sign reaches "high" only when Jev is almost certain of it |
 | Reply by text | any check ≥ 0.7; a method of self-harm ≥ 0.5 | A wrongly withheld answer costs a fuller reply; a wrongly sent one could cost far more |
 | Plan rewrite | either check ≥ 0.5 | Accepting a model's wording is the act that needs confidence; refusing costs only plainer words |
@@ -342,7 +344,7 @@ Rules in a prompt are a request; these hold whatever a model does:
 | An outside model is never called without consent, and never sent phone numbers, emails, card, bank or ID numbers — in messages or in what Waypoint knows about the person | `ask.ts`, `core/privacy/redact.ts` |
 | Every call is counted before it is made; budgets and daily allowances cannot be overshot | `usage.ts` |
 | The judge is never asked without consent, in a language that is not switched on or about someone in immediate danger, never sent personal details, and never believed when its reply is not exactly what was asked for | `judge.ts`, `judge-questions.ts`, `judge-client.ts` |
-| Whatever the judge answers, a Scam Shield level never goes down, and when it fails the result is the rules' own | `features.ts`, `core/shield/engine.ts` |
+| Whatever the judge answers, a Scam Shield level never goes down and the language model is still asked; a judge that finds nothing gives no opinion, and when it fails the result is what it was without it | `features.ts`, `core/shield/engine.ts` |
 | An AI answer by text or a plan rewrite that the judge flags is replaced by Waypoint's own wording; when there is no judge, or it fails, both go out as before | `features.ts` |
 | Answers by text message are stripped of links and phone numbers | `features.ts` |
 | Forecasts come only from staff, with a source, between 1% and 99%; the question and its date cannot change once published | `services/forecasts.ts` |

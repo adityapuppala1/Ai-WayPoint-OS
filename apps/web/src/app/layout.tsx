@@ -7,6 +7,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages, getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { ServiceWorker } from '@/components/ServiceWorker';
+import { EARLY_INPUT_SCRIPT } from '@/lib/early-input';
 import { Providers } from './providers';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -60,6 +61,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       <head>
         {/* Browsers hide nonce values after parsing, so the client never sees the same value. */}
         <meta property="csp-nonce" nonce={nonce} suppressHydrationWarning />
+        {/* First thing in the page: notes what is typed before the rest of the script arrives
+            (src/lib/early-input.ts). */}
+        <script nonce={nonce} suppressHydrationWarning>
+          {EARLY_INPUT_SCRIPT}
+        </script>
       </head>
       <body>
         <a className="wp-skip-link" href="#main">

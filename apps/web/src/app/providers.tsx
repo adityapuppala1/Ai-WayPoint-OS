@@ -4,8 +4,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@waypoint/ui';
 import type { Route } from 'next';
 import { useRouter } from 'next/navigation';
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useLayoutEffect, useState } from 'react';
 import { I18nProvider, RouterProvider } from 'react-aria-components';
+import { keepEarlyInput } from '@/lib/early-input';
 
 declare module 'react-aria-components' {
   interface RouterConfig {
@@ -23,6 +24,13 @@ export function Providers({
   closeLabel: string;
 }) {
   const router = useRouter();
+  // Before the first paint after React takes over, so a field never flashes empty.
+  useLayoutEffect(() => keepEarlyInput(), []);
+  // After every component's own set-up has run: from here on a press does what it says. The
+  // browser tests wait for this mark before they press anything (e2e/fixtures.ts).
+  useEffect(() => {
+    document.documentElement.setAttribute('data-ready', 'true');
+  }, []);
   // Remember the device time zone so reminders and greetings use local time.
   useEffect(() => {
     try {

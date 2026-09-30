@@ -160,7 +160,7 @@ export async function channelAnswer(
  *
  * Only ever adds caution: with no judge, no consent, a language that is not switched on or a
  * failure, the answer goes out exactly as it did before. The judge sees the answer (with
- * personal details removed), never the question.
+ * personal details removed), never the question itself, though the answer can repeat it.
  */
 async function replyFlagged(
   ctx: CallerContext,
@@ -343,8 +343,9 @@ const PLAN_CHECKS_AT_ONCE = 6;
  *
  * Each step is asked about on its own, next to its own original, because Jev compares two
  * short texts far better than it searches a long one; the plan's title, summary and week
- * headings go together as one more piece. The person's goal is not sent: the questions are
- * about the wording, not about them.
+ * headings go together as one more piece. The person's goal is not sent as such, but the
+ * rewording is written for it and can repeat what it says: that is why the goal is checked
+ * for immediate danger before anything is asked.
  *
  * Only ever adds caution: with no judge, no consent, a language that is not switched on or a
  * failure, the rewrite is accepted exactly as it was before.

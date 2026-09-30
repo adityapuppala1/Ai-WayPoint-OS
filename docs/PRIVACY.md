@@ -91,9 +91,13 @@ Purpose-specific and revocable (`consents` table, full history in `consent_event
   nothing else:
   - in Scam Shield, the pasted message (up to 4,000 characters), redacted — and only when the
     rules rated it low or unclear, since the judge could not change a higher verdict;
-  - for an answer by SMS or WhatsApp, the AI's reply, redacted — not the person's question;
+  - for an answer by SMS or WhatsApp, the AI's reply, redacted — not the person's question,
+    though the reply can repeat what was asked;
   - for a plan, the reworded title, summary and week headings next to the template's, and
-    each reworded step next to the template step it came from — not the person's goal;
+    each reworded step next to the template step it came from, redacted. The person's goal
+    itself is not sent, but the rewording is written for it and can repeat what it says,
+    including health or other personal circumstances ("during chemotherapy"): only the
+    numbers and addresses above are removed;
   - in guided mode, the person's question (up to 1,500 characters), redacted, when no
     keyword matched it.
 

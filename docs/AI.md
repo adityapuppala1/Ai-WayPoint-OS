@@ -104,9 +104,13 @@ outside AI (`ai_external`, the one-off tick in Shield, or `AI YES` by text). A p
 on your own servers never stands in for it. Email addresses, phone numbers and card, bank and
 ID numbers are removed from everything it is sent, in one place, and it is sent only the text a
 question is about: the pasted message, the AI's reply, a plan's reworded title, summary, week
-headings and steps next to the template's, or one question in guided mode. Never the account, the rest of the conversation, or (for a plan) the
-person's own goal. What a person wrote travels in the state and never becomes part of a
-question. [PRIVACY.md](PRIVACY.md#what-leaves-waypoint) lists it use by use.
+headings and steps next to the template's, or one question in guided mode. Never the account
+or the rest of the conversation. A plan's goal and a texted question are not sent as such,
+but what is sent can repeat them: a plan is reworded to fit the goal ("part-time work during
+chemotherapy" can become steps about cancer treatment), and a reply by text can restate the
+question. Only the numbers and addresses above are removed, not what the words are about.
+What a person wrote travels in the state and never becomes part of a question.
+[PRIVACY.md](PRIVACY.md#what-leaves-waypoint) lists it use by use.
 
 ### Languages: measure, then switch on
 

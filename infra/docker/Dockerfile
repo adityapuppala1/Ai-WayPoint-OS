@@ -3,7 +3,7 @@
 #   docker build -f infra/docker/Dockerfile --target web -t waypoint-web .
 #   docker build -f infra/docker/Dockerfile --target worker -t waypoint-worker .
 
-FROM node:22-bookworm-slim AS base
+FROM node:26-bookworm-slim AS base
 ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH CI=true NEXT_TELEMETRY_DISABLED=1
 RUN corepack enable pnpm
 WORKDIR /app
@@ -19,7 +19,7 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --offline --froze
 RUN pnpm --filter @waypoint/web build
 
 # Web app + API (Next.js standalone output).
-FROM node:22-bookworm-slim AS web
+FROM node:26-bookworm-slim AS web
 WORKDIR /app
 ENV NODE_ENV=production PORT=3000 HOSTNAME=0.0.0.0 NEXT_TELEMETRY_DISABLED=1 \
     WAYPOINT_MIGRATIONS_DIR=/app/packages/db/drizzle WAYPOINT_INPROCESS_WORKER=false

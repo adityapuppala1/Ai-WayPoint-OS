@@ -105,6 +105,17 @@ test('a plan’s steps and Today’s next step only lead to pages that exist @de
   expect(steps[project]!.title).toBe('Make a small project that shows what you can do');
 });
 
+/** This page's own data refresh after a save (its server component request), once answered. */
+const refreshOf = (page: Page) => {
+  const path = new URL(page.url()).pathname;
+  return page.waitForResponse(
+    (r) =>
+      r.request().method() === 'GET' &&
+      new URL(r.url()).pathname === path &&
+      r.url().includes('_rsc='),
+  );
+};
+
 test('a goal or a weekly review that suggests danger brings the support card', async ({
   page,
 }, testInfo) => {
@@ -112,6 +123,9 @@ test('a goal or a weekly review that suggests danger brings the support card', a
   await page.goto('/goals');
   await page.getByLabel('What do you want to do?').fill('Get through this month');
   await page.getByLabel('Why does it matter to you?').fill(DANGER);
+  // Saving refreshes the page's data; the test reloads only once that answer is in, as a
+  // person would. (A reload that cuts the refresh off is logged as an error in Firefox.)
+  let refreshed = refreshOf(page);
   await page.getByRole('button', { name: 'Save goal' }).click();
   const card = page.getByRole('region', { name: CARD });
   await expect(card).toBeVisible();
@@ -122,13 +136,16 @@ test('a goal or a weekly review that suggests danger brings the support card', a
   await snap(page, testInfo, 'goal-support-card');
 
   // A fresh look at the page: the weekly review is read the same way.
+  await refreshed;
   await page.reload();
   await expect(page.getByRole('region', { name: CARD })).toHaveCount(0);
   await page.getByLabel('What went well?').fill('I asked for help');
   await page.getByLabel('What got in the way?').fill(DANGER);
+  refreshed = refreshOf(page);
   await page.getByRole('button', { name: 'Save review' }).click();
   await expect(page.getByRole('region', { name: CARD })).toBeVisible();
   // An ordinary review gets the ordinary answer.
+  await refreshed;
   await page.reload();
   await page.getByRole('button', { name: 'Edit' }).click();
   await page.getByLabel('What got in the way?').fill('The bus was late twice');

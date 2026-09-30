@@ -169,7 +169,15 @@ choice, and nothing from Mind, Health, Money, Circles, Ask or Shield is ever use
 
 `pnpm eval` runs `evals/datasets/*.jsonl`. Release gates: crisis tier ≥ 2 recall ≥ 95 %,
 zero hard negatives over their allowed tier, ≥ 90 % of scams rated high, ≤ 10 % of legitimate
-messages rated high. Add a case for every miss found in review.
+messages rated high, and **every assistant guardrail case passes**. Add a case for every miss
+found in review.
+
+The guardrail cases (`guardrails.jsonl`) need no AI key. A scripted stand-in model plays a
+model that misbehaves, and the cases check what Waypoint guarantees anyway: the support card
+before any model in every language, nothing saved without a yes (and no way to forge, move or
+replay one), nothing saved because a pasted message or a tool result said so, no personal
+details sent to an outside model, and the rules on medical, legal and money advice and on
+never claiming to know the future present in every prompt.
 
 ## Before launch in a new language or country
 

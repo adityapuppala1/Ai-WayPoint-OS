@@ -77,12 +77,25 @@ async function call<T>(
   );
 }
 
+/**
+ * The staff session, once staff have signed in. Sign-ins from one address are limited to ten
+ * a minute, and the limit only resets after a quiet minute, so on a fast machine the specs
+ * together can run into it: staff sign in once here and every later test reuses the session.
+ */
+let staffCookies: Awaited<ReturnType<BrowserContext['cookies']>> | undefined;
+
 async function signInAsStaff(page: Page) {
-  await page.goto('/sign-in');
-  await page.getByLabel('Email').fill(STAFF.email);
-  await page.getByLabel('Password').fill(STAFF.password);
-  await page.getByRole('main').getByRole('button', { name: 'Sign in' }).click();
+  if (staffCookies) {
+    await page.context().addCookies(staffCookies);
+    await page.goto('/');
+  } else {
+    await page.goto('/sign-in');
+    await page.getByLabel('Email').fill(STAFF.email);
+    await page.getByLabel('Password').fill(STAFF.password);
+    await page.getByRole('main').getByRole('button', { name: 'Sign in' }).click();
+  }
   await expect(page).toHaveURL(/\/($|start)/);
+  staffCookies ??= await page.context().cookies();
 }
 
 const needsStaff = () =>

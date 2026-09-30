@@ -19,6 +19,7 @@ const external = process.env.E2E_BASE_URL;
 const BASE = external ?? `http://localhost:${PORT}`;
 // A browser installed elsewhere (e.g. a system Chromium) instead of `playwright install`.
 const executablePath = process.env.PW_CHROMIUM || undefined;
+const chromium = executablePath ? { executablePath } : {};
 /** Where the test server's mail catcher writes the emails it receives (see e2e/mailbox.mjs). */
 const MAIL_FILE = join(tmpdir(), `waypoint-e2e-mail-${PORT}.jsonl`);
 // The test workers read the same file (see linkFromEmail in e2e/fixtures.ts).
@@ -41,17 +42,36 @@ export default defineConfig({
     timezoneId: 'Africa/Nairobi',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    launchOptions: executablePath ? { executablePath } : {},
   },
   projects: [
     {
       name: 'desktop',
-      use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 800 } },
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1280, height: 800 },
+        launchOptions: chromium,
+      },
     },
     {
-      // Long journeys run once, on the desktop; the phone checks the pages people reach first.
+      // Long journeys run once per engine, on a desktop; the phones check the pages people
+      // reach first.
       name: 'phone',
-      use: { ...devices['Pixel 7'] },
+      use: { ...devices['Pixel 7'], launchOptions: chromium },
+      grepInvert: /@desktop/,
+    },
+    // The same journeys in the other two browser engines: Firefox (Gecko) and Safari (WebKit,
+    // which is also every browser on an iPhone).
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'], viewport: { width: 1280, height: 800 } },
+    },
+    {
+      name: 'safari',
+      use: { ...devices['Desktop Safari'], viewport: { width: 1280, height: 800 } },
+    },
+    {
+      name: 'iphone',
+      use: { ...devices['iPhone 14'] },
       grepInvert: /@desktop/,
     },
   ],

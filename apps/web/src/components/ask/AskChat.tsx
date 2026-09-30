@@ -1,5 +1,7 @@
 'use client';
 
+// First: nothing in this module may try to compile code (see the file for why).
+import '@/lib/no-eval';
 import { useChat } from '@ai-sdk/react';
 import type { AskUIMessage } from '@waypoint/ai';
 import type { CrisisResponsePlan } from '@waypoint/core';

@@ -47,15 +47,28 @@ export async function snap(page: Page, testInfo: TestInfo, name: string): Promis
 }
 
 /**
+ * Getting started is ready for answers once it has begun keeping them (in this tab only, so a
+ * refresh does not lose them). Before that, a press on "Continue" would go nowhere.
+ */
+export async function gettingStartedReady(page: Page): Promise<void> {
+  await expect(page).toHaveURL(/\/start/);
+  await expect
+    .poll(() => page.evaluate(() => window.sessionStorage.getItem('wp-start-draft')))
+    .not.toBeNull();
+}
+
+/**
  * The first visit as a guest: welcome → getting started (all five steps, nothing required) →
  * Today. Returns once the guest session exists.
  */
 export async function startAsGuest(page: Page, name = 'Amani'): Promise<void> {
   await page.goto('/welcome');
   await page.getByRole('link', { name: 'Get started' }).first().click();
-  await expect(page).toHaveURL(/\/start/);
+  await gettingStartedReady(page);
+  // The first question is what is going on; like every answer here, it can be left open.
+  await page.getByRole('button', { name: 'Continue' }).click();
   await page.getByLabel('What should we call you?').fill(name);
-  for (let step = 0; step < 4; step++) {
+  for (let step = 0; step < 3; step++) {
     await page.getByRole('button', { name: 'Continue' }).click();
   }
   await expect(page.getByRole('heading', { name: 'Your choices' })).toBeVisible();

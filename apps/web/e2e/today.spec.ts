@@ -5,7 +5,7 @@
  * to each other.
  */
 import type { Page } from '@playwright/test';
-import { expect, snap, startAsGuest, test } from './fixtures';
+import { expect, gettingStartedReady, snap, startAsGuest, test } from './fixtures';
 
 /** Every module's address, as the navigation has them. */
 const MODULES = [
@@ -27,12 +27,12 @@ const MODULES = [
 async function startWith(page: Page, situation: string, from = '/welcome'): Promise<void> {
   await page.goto(from);
   await page.getByRole('link', { name: 'Get started' }).first().click();
-  await expect(page).toHaveURL(/\/start/);
-  await page.getByLabel('What should we call you?').fill('Amani');
-  await page.getByRole('button', { name: 'Continue' }).click();
+  await gettingStartedReady(page);
   // The radio's input sits under its label; press the label, as a person would.
   await page.getByText(situation, { exact: true }).click();
   await expect(page.getByRole('radio', { name: situation })).toBeChecked();
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await page.getByLabel('What should we call you?').fill('Amani');
   for (let step = 0; step < 3; step++) {
     await page.getByRole('button', { name: 'Continue' }).click();
   }
@@ -227,14 +227,13 @@ test('the welcome page shows every module, and what it says works without an acc
   await page.goto('/welcome');
   // What getting started will ask, before anything is asked.
   const route = page.getByRole('list', { name: 'Setting up' });
-  for (const station of [
-    'Where you are',
-    'What’s going on',
-    'What you can do',
-    'Your time',
-    'Your choices',
-  ])
-    await expect(route.getByText(station, { exact: true })).toBeVisible();
+  await expect(route.getByRole('listitem')).toHaveText([
+    /What’s going on/,
+    /Where you are/,
+    /What you can do/,
+    /Your time/,
+    /Your choices/,
+  ]);
 
   // Every module is on the page: open as it is, or through getting started.
   const open = ['/shield', '/support', '/civic', '/surroundings', '/signals/forecasts'];

@@ -32,9 +32,12 @@ import {
   WORK_TYPE_OPTIONS,
 } from '@/lib/options';
 import { matchesQuery } from '@/lib/search';
+import { clearDraft, readDraft, writeDraft } from './draft';
 import styles from './onboarding.module.css';
 
-const STEPS = ['place', 'situation', 'skills', 'time', 'privacy'] as const;
+// What is going on comes first: it is the question people came with, and the one the first
+// step on Today is chosen from. Where they are and what to call them comes second.
+const STEPS = ['situation', 'place', 'skills', 'time', 'privacy'] as const;
 type StepKey = (typeof STEPS)[number];
 
 interface SkillOption {
@@ -87,8 +90,8 @@ export function Onboarding({
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState(initial.displayName);
   const [country, setCountry] = useState(initial.country);
-  // Nothing known yet (first page, no country from the network): suggest the country the
-  // device's time zone belongs to. It is only a starting point on the first step, to change.
+  // Nothing known yet (no country from the network): suggest the country the device's time
+  // zone belongs to. It is only a starting point on the "where you are" step, to change.
   useEffect(() => {
     if (initial.country) return;
     const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -107,6 +110,67 @@ export function Onboarding({
     Object.fromEntries(ONBOARDING_CONSENTS.map((c) => [c, initial.consents?.[c] ?? false])),
   );
 
+  // The answers so far are kept in this tab (see ./draft), so a refresh does not lose them.
+  // They are read once the page is in the browser, and only written after that, so the first
+  // render never overwrites them with the empty form.
+  const [restored, setRestored] = useState(false);
+  const finished = useRef(false);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: read once, when the page opens
+  useEffect(() => {
+    const draft = readDraft({
+      steps: STEPS.length,
+      countries: new Set(countries.map((c) => c.code)),
+      situations: SITUATION_OPTIONS,
+      lifeStages: LIFE_STAGE_OPTIONS,
+      workTypes: WORK_TYPE_OPTIONS,
+      skills: new Set(skills.map((s) => s.id)),
+      consents: ONBOARDING_CONSENTS,
+    });
+    if (draft) {
+      if (draft.step !== undefined) setStep(draft.step);
+      if (draft.name !== undefined) setName(draft.name);
+      if (draft.country) setCountry(draft.country);
+      if (draft.situation !== undefined) setSituation(draft.situation);
+      if (draft.lifeStage !== undefined) setLifeStage(draft.lifeStage);
+      if (draft.workType !== undefined) setWorkType(draft.workType);
+      if (draft.picked) setPicked(draft.picked);
+      if (draft.hours !== undefined) setHours(draft.hours);
+      if (draft.budget !== undefined) setBudget(draft.budget);
+      if (draft.attention !== undefined) setAttention(draft.attention);
+      if (draft.consents) setConsents(draft.consents);
+    }
+    setRestored(true);
+  }, []);
+  useEffect(() => {
+    if (!restored || finished.current) return;
+    writeDraft({
+      step,
+      name,
+      country,
+      situation,
+      lifeStage,
+      workType,
+      picked,
+      hours,
+      budget,
+      attention,
+      consents,
+    });
+  }, [
+    restored,
+    step,
+    name,
+    country,
+    situation,
+    lifeStage,
+    workType,
+    picked,
+    hours,
+    budget,
+    attention,
+    consents,
+  ]);
+
   const headingRef = useRef<HTMLHeadingElement>(null);
   const firstRender = useRef(true);
   // Move focus to the new step's heading so screen readers announce it.
@@ -119,7 +183,7 @@ export function Onboarding({
     headingRef.current?.focus();
   }, [step]);
 
-  const current: StepKey = STEPS[step] ?? 'place';
+  const current: StepKey = STEPS[step] ?? 'situation';
   const skillName = useMemo(() => new Map(skills.map((s) => [s.id, s.name])), [skills]);
 
   const matches = useMemo(() => {
@@ -171,6 +235,9 @@ export function Onboarding({
           skills: picked,
         },
       });
+      // Saved: the copy kept in this tab has done its job.
+      finished.current = true;
+      clearDraft();
       // Today chooses the step that fits what they said; a carer is not sent to a career form.
       router.push(next as Route);
       router.refresh();
@@ -209,6 +276,25 @@ export function Onboarding({
       <form className={styles.card} onSubmit={onSubmit} noValidate>
         <p className="wp-meta">{common('stepOf', { current: step + 1, total: STEPS.length })}</p>
 
+        {current === 'situation' ? (
+          <div className={styles.step}>
+            <h2 ref={headingRef} tabIndex={-1}>
+              {t('situationTitle')}
+            </h2>
+            <RadioGroup
+              label={t('situationLead')}
+              value={situation ?? ''}
+              onChange={(v) => setSituation(v || null)}
+            >
+              {SITUATION_OPTIONS.map((s) => (
+                <Radio key={s} value={s}>
+                  {situations(s)}
+                </Radio>
+              ))}
+            </RadioGroup>
+          </div>
+        ) : null}
+
         {current === 'place' ? (
           <div className={styles.step}>
             <h2 ref={headingRef} tabIndex={-1}>
@@ -232,49 +318,6 @@ export function Onboarding({
               maxLength={60}
               autoComplete="given-name"
             />
-          </div>
-        ) : null}
-
-        {current === 'situation' ? (
-          <div className={styles.step}>
-            <h2 ref={headingRef} tabIndex={-1}>
-              {t('situationTitle')}
-            </h2>
-            <RadioGroup
-              label={t('situationLead')}
-              value={situation ?? ''}
-              onChange={(v) => setSituation(v || null)}
-            >
-              {SITUATION_OPTIONS.map((s) => (
-                <Radio key={s} value={s}>
-                  {situations(s)}
-                </Radio>
-              ))}
-            </RadioGroup>
-            <div className={styles.pair}>
-              <SelectField
-                label={t('lifeStage')}
-                optionalLabel={common('optional')}
-                options={LIFE_STAGE_OPTIONS.map((l) => ({
-                  id: l,
-                  label: lifeStages(l),
-                  textValue: lifeStages(l),
-                }))}
-                selectedKey={lifeStage}
-                onSelectionChange={(k) => setLifeStage(k ? String(k) : null)}
-              />
-              <SelectField
-                label={t('workType')}
-                optionalLabel={common('optional')}
-                options={WORK_TYPE_OPTIONS.map((w) => ({
-                  id: w,
-                  label: workTypes(w),
-                  textValue: workTypes(w),
-                }))}
-                selectedKey={workType}
-                onSelectionChange={(k) => setWorkType(k ? String(k) : null)}
-              />
-            </div>
           </div>
         ) : null}
 
@@ -377,6 +420,32 @@ export function Onboarding({
               <Radio value="2">{t('attention2')}</Radio>
               <Radio value="3">{t('attention3')}</Radio>
             </RadioGroup>
+            {/* Two optional answers about working life. They sit here, with time and money, so
+                the first screen asks one thing only. */}
+            <div className={styles.pair}>
+              <SelectField
+                label={t('lifeStage')}
+                optionalLabel={common('optional')}
+                options={LIFE_STAGE_OPTIONS.map((l) => ({
+                  id: l,
+                  label: lifeStages(l),
+                  textValue: lifeStages(l),
+                }))}
+                selectedKey={lifeStage}
+                onSelectionChange={(k) => setLifeStage(k ? String(k) : null)}
+              />
+              <SelectField
+                label={t('workType')}
+                optionalLabel={common('optional')}
+                options={WORK_TYPE_OPTIONS.map((w) => ({
+                  id: w,
+                  label: workTypes(w),
+                  textValue: workTypes(w),
+                }))}
+                selectedKey={workType}
+                onSelectionChange={(k) => setWorkType(k ? String(k) : null)}
+              />
+            </div>
           </div>
         ) : null}
 

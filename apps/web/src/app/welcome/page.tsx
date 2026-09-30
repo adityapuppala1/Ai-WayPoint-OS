@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /** What getting started asks, in order (the same five stations as on /start). */
-const STATIONS = ['place', 'situation', 'skills', 'time', 'privacy'] as const;
+const STATIONS = ['situation', 'place', 'skills', 'time', 'privacy'] as const;
 
 /** Modules that open with no account; each has a row of its own further up the page. */
 const OPEN = new Set(['shield', 'civic', 'surroundings']);

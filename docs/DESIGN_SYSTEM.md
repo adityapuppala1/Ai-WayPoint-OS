@@ -31,7 +31,9 @@ solves that problem, so the interface borrows its discipline:
 `packages/tokens/src/index.ts` is the one source. `pnpm --filter @waypoint/tokens build`
 writes `tokens.css` (committed); the phone app reads the same values through `nativeTheme()`.
 `packages/tokens/test` checks every text pair, status colours on overlays and on dark tints,
-the Sign against the page, the marker and the focus ring on each surface, in both themes.
+text on the focus, hover and pressed fills (a focused menu item or list row, a button on the
+Sign), the Sign against the page, the marker and the focus ring on each surface, in both
+themes.
 
 ### Depth
 

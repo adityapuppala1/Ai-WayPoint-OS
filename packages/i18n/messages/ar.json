@@ -2073,7 +2073,11 @@
     "feedbackEmpty": "لا ملاحظات بعد.",
     "feedbackRated": "التقييم: {rating, number} من 5",
     "feedbackNoMessage": "لا رسالة.",
-    "feedbackReplyTo": "يرغب في ردّ على <link>{email}</link>"
+    "feedbackReplyTo": "يرغب في ردّ على <link>{email}</link>",
+    "cAlready": "أكّد شخص آخر هذه النتيجة بالفعل.",
+    "cOwnVerdict": "أنت من سجّل هذه النتيجة، لذا يجب أن يؤكّدها شخص آخر.",
+    "cNotJudged": "لا توجد نتيجة لتأكيدها بعد.",
+    "sWasWithdrawn": "سُحبت هذه الإشارة، لذا لا يمكن نشرها مرة أخرى."
   },
   "byText": {
     "title": "Waypoint عبر الرسائل",

@@ -21,6 +21,7 @@ import {
   eq,
   gte,
   inArray,
+  isNull,
   signalStates,
   signals,
   sql,
@@ -108,7 +109,11 @@ export async function relevantSignals(
   opts: { limit?: number; days?: number; query?: string; topic?: string } = {},
 ): Promise<SignalView[]> {
   const since = new Date(Date.now() - (opts.days ?? 180) * 86_400_000);
-  const where = [gte(signals.publishedAt, since), eq(signals.isDemo, false)];
+  const where = [
+    gte(signals.publishedAt, since),
+    eq(signals.isDemo, false),
+    isNull(signals.withdrawnAt),
+  ];
   if (opts.query?.trim()) {
     where.push(sql`${signals.search} @@ websearch_to_tsquery('simple', ${opts.query.trim()})`);
   }
@@ -170,6 +175,7 @@ export async function savedSignals(db: Database, who: SignalReader): Promise<Sig
         eq(signalStates.userId, who.userId),
         eq(signalStates.saved, true),
         eq(signals.isDemo, false),
+        isNull(signals.withdrawnAt),
       ),
     )
     .orderBy(desc(signalStates.updatedAt))
@@ -195,7 +201,7 @@ export async function setSignalState(
   const [exists] = await db
     .select({ id: signals.id })
     .from(signals)
-    .where(eq(signals.id, signalId))
+    .where(and(eq(signals.id, signalId), isNull(signals.withdrawnAt)))
     .limit(1);
   if (!exists) throw notFound('Signal');
   const set = {
@@ -280,13 +286,13 @@ export async function adminSignals(db: Database, now = new Date()): Promise<Admi
   const rows = await db
     .select()
     .from(signals)
-    .where(eq(signals.isDemo, false))
+    .where(and(eq(signals.isDemo, false), isNull(signals.withdrawnAt)))
     .orderBy(desc(signals.createdAt), desc(signals.id))
     .limit(200);
   const [total] = await db
     .select({ n: sql<number>`count(*)::int` })
     .from(signals)
-    .where(eq(signals.isDemo, false));
+    .where(and(eq(signals.isDemo, false), isNull(signals.withdrawnAt)));
   const since = now.getTime() - SIGNAL_WINDOW_DAYS * DAY;
   return {
     items: rows.map((r) => ({
@@ -357,8 +363,20 @@ export async function publishSignal(
       })
       .onConflictDoNothing({ target: signals.contentHash })
       .returning({ id: signals.id });
-    if (!row)
+    if (!row) {
+      const [taken] = await tx
+        .select({ withdrawnAt: signals.withdrawnAt })
+        .from(signals)
+        .where(eq(signals.contentHash, contentHash))
+        .limit(1);
+      if (taken?.withdrawnAt)
+        throw new ApiError(
+          409,
+          'withdrawn',
+          'This signal was withdrawn, so it is not published again. Its withdrawal is in the audit log.',
+        );
       throw new ApiError(409, 'duplicate', 'This signal is already published, from this source.');
+    }
     await audit(tx, actor, {
       action: 'signal.published',
       targetType: 'signal',
@@ -373,14 +391,26 @@ export async function publishSignal(
  * Take a signal down for everyone (it was wrong, or its source has gone). It also leaves the
  * lists of people who saved it: a withdrawn signal is one Waypoint no longer stands behind.
  * What it said and where it came from stay in the audit log.
+ *
+ * The row is marked, not deleted: its content hash then keeps the seed, which runs on every
+ * start and deploy, from adding the same signal again.
  */
-export async function withdrawSignal(db: Database, actor: Actor, id: string): Promise<void> {
+export async function withdrawSignal(
+  db: Database,
+  actor: Actor,
+  id: string,
+  now = new Date(),
+): Promise<void> {
   await db.transaction(async (tx) => {
     const [row] = await tx
-      .delete(signals)
-      .where(and(eq(signals.id, id), eq(signals.isDemo, false)))
+      .update(signals)
+      .set({ withdrawnAt: now })
+      .where(and(eq(signals.id, id), eq(signals.isDemo, false), isNull(signals.withdrawnAt)))
       .returning({ title: signals.title, sourceUrl: signals.sourceUrl });
     if (!row) throw notFound('Signal');
+    // What people did with it (saved, hid, said it was wrong) goes with it, as it did when the
+    // row itself was deleted.
+    await tx.delete(signalStates).where(eq(signalStates.signalId, id));
     await audit(tx, actor, {
       action: 'signal.withdrawn',
       targetType: 'signal',

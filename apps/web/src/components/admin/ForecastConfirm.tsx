@@ -4,7 +4,7 @@ import { Button, ConfirmDialog, toast } from '@waypoint/ui';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { ApiProblem, api, problemKey } from '@/lib/api';
+import { api, problemKey, secondCheckRefusal } from '@/lib/api';
 
 /**
  * The second check on a verdict, for a member of staff who did not record it. Confirming
@@ -23,15 +23,11 @@ export function ForecastConfirm({ id, question }: { id: string; question: string
       await api(`/api/admin/forecasts/${id}/confirm`, { json: {} });
     } catch (err) {
       // Refused for a reason staff can read (it was their own verdict, or a colleague was
-      // quicker): say it in the server's words rather than "something went wrong".
-      toast({
-        title:
-          err instanceof ApiProblem && [403, 409].includes(err.status)
-            ? err.message
-            : errors(problemKey(err)),
-        tone: 'danger',
-      });
-      if (err instanceof ApiProblem && err.status === 409) {
+      // quicker): say which, in their language, rather than "something went wrong".
+      const refusal = secondCheckRefusal(err);
+      toast({ title: refusal ? t(refusal) : errors(problemKey(err)), tone: 'danger' });
+      if (refusal) {
+        // Pressing again would be refused again: close, and show the page as it is now.
         router.refresh();
         return;
       }

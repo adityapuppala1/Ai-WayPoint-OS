@@ -2072,7 +2072,11 @@
     "feedbackEmpty": "अभी कोई राय नहीं आई है।",
     "feedbackRated": "5 में से {rating, number} अंक",
     "feedbackNoMessage": "कोई संदेश नहीं।",
-    "feedbackReplyTo": "जवाब चाहते हैं, इस पते पर: <link>{email}</link>"
+    "feedbackReplyTo": "जवाब चाहते हैं, इस पते पर: <link>{email}</link>",
+    "cAlready": "इस नतीजे की पुष्टि कोई और पहले ही कर चुका है।",
+    "cOwnVerdict": "यह नतीजा आपने दर्ज किया था, इसलिए इसकी पुष्टि किसी और को करनी होगी।",
+    "cNotJudged": "अभी पुष्टि करने के लिए कोई नतीजा नहीं है।",
+    "sWasWithdrawn": "यह संकेत वापस लिया जा चुका है, इसलिए इसे दोबारा प्रकाशित नहीं किया जा सकता।"
   },
   "byText": {
     "title": "टेक्स्ट से Waypoint",

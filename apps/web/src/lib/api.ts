@@ -79,3 +79,16 @@ export function problemKey(err: unknown): 'network' | 'tooMany' | 'generic' {
   }
   return 'generic';
 }
+
+/**
+ * Which `admin.*` message says why a second check on a verdict was refused (a colleague was
+ * quicker, it is this person's own verdict, or there is nothing to confirm yet). The server's
+ * own words for these are English only. Null for any other failure.
+ */
+export function secondCheckRefusal(err: unknown): 'cAlready' | 'cOwnVerdict' | 'cNotJudged' | null {
+  if (!(err instanceof ApiProblem)) return null;
+  if (err.code === 'checked') return 'cAlready';
+  if (err.code === 'same-person') return 'cOwnVerdict';
+  if (err.code === 'not-judged') return 'cNotJudged';
+  return null;
+}

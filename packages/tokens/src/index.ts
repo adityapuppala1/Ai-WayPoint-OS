@@ -96,6 +96,12 @@ export const light: ColorRoles = {
  * from the last, where they used to be 1.08:1), and a Sign that is lit: a brighter, bluer
  * slate at 3:1 against the page, where the old one was 1.36:1 and read as one more panel.
  * The canvas itself is unchanged, so the browser's theme colour still matches it.
+ *
+ * The fills for focus, hover and press are kept thin enough that text on them still reads:
+ * the lit Sign cannot get darker (it would lose its 3:1 against the page), so the fills on it
+ * are thin; the signal tint on a lighter overlay is thinner than it was; and danger is as
+ * light as the other status colours, so a focused danger menu item stays readable. Danger
+ * stays inside sRGB, so a browser that clips wider colours still paints what is measured.
  */
 export const dark: ColorRoles = {
   canvas: oklch(0.19, 0.018, INK_HUE),
@@ -114,16 +120,16 @@ export const dark: ColorRoles = {
   signText: oklch(0.985, 0.003, INK_HUE),
   signMuted: oklch(0.93, 0.012, INK_HUE),
   signBorder: oklch(0.985, 0.003, INK_HUE, 0.5),
-  signFillHover: oklch(0.985, 0.003, INK_HUE, 0.12),
-  signFillPressed: oklch(0.985, 0.003, INK_HUE, 0.2),
+  signFillHover: oklch(0.985, 0.003, INK_HUE, 0.07),
+  signFillPressed: oklch(0.985, 0.003, INK_HUE, 0.1),
   signal: oklch(0.855, 0.165, 88),
   signalHover: oklch(0.9, 0.15, 92),
   signalInk: oklch(0.22, 0.03, INK_HUE),
-  signalTint: oklch(0.855, 0.165, 88, 0.16),
+  signalTint: oklch(0.855, 0.165, 88, 0.12),
   marker: oklch(0.95, 0.006, INK_HUE),
   focusRing: oklch(0.95, 0.006, INK_HUE),
-  danger: oklch(0.72, 0.16, 25),
-  dangerTint: oklch(0.72, 0.16, 25, 0.14),
+  danger: oklch(0.785, 0.12, 25),
+  dangerTint: oklch(0.785, 0.12, 25, 0.14),
   caution: oklch(0.8, 0.13, 75),
   cautionTint: oklch(0.8, 0.13, 75, 0.14),
   safe: oklch(0.77, 0.12, 155),
@@ -427,6 +433,23 @@ export function contrastReport(mode: 'light' | 'dark'): ContrastCheck[] {
       const ratio = round(contrastOnTint(r[tone], r[`${tone}Tint`], r.raised));
       report.push({ pair: `${tone} / ${tone}Tint on raised`, ratio, min: 4.5, pass: ratio >= 4.5 });
     }
+  }
+  // Text keeps its contrast on the fills laid over it while it is focused, hovered or pressed:
+  // a menu item or option on an overlay (a danger item stays red), a list row or the step a
+  // link points to on a panel, and a button or toast action on the Sign.
+  const states: Array<[string, Oklch, Oklch, Oklch]> = [
+    ['text / signalTint on overlay', r.text, r.signalTint, r.overlay],
+    ['textSecondary / signalTint on overlay', r.textSecondary, r.signalTint, r.overlay],
+    ['danger / signalTint on overlay', r.danger, r.signalTint, r.overlay],
+    ['text / signalTint on raised', r.text, r.signalTint, r.raised],
+    ['textSecondary / signalTint on raised', r.textSecondary, r.signalTint, r.raised],
+    ['textMuted / signalTint on raised', r.textMuted, r.signalTint, r.raised],
+    ['signText / signFillHover on sign', r.signText, r.signFillHover, r.sign],
+    ['signText / signFillPressed on sign', r.signText, r.signFillPressed, r.sign],
+  ];
+  for (const [pair, fg, fill, surface] of states) {
+    const ratio = round(contrastOnTint(fg, fill, surface));
+    report.push({ pair, ratio, min: 4.5, pass: ratio >= 4.5 });
   }
   // A module page's header is a band of that module's tint lying on the page, holding the
   // heading, a lead and the module's mark (the line colour, filled, with the pictogram cut

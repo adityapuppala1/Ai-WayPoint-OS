@@ -333,6 +333,44 @@ describe('signals staff add', () => {
       expect.objectContaining({ action: 'signal.withdrawn', targetId: id }),
     );
   });
+
+  it('keeps a withdrawn seed signal withdrawn when the seed runs again', async () => {
+    const { seedBase } = await import('@waypoint/db/seed');
+    const title = 'Fake QR codes on parking meters lead to payment scams';
+    const listed = async () =>
+      (
+        (await (await req('/api/admin/signals', { cookie: staff.cookie })).json()) as {
+          items: Signal[];
+        }
+      ).items.filter((s) => s.title === title);
+    const [seeded] = await listed();
+    expect(seeded).toBeDefined();
+
+    expect(
+      (await req(`/api/admin/signals/${seeded!.id}`, { method: 'DELETE', cookie: staff.cookie }))
+        .status,
+    ).toBe(200);
+    expect(await listed()).toEqual([]);
+
+    // Every start of the embedded database, and every deploy, runs the seed again.
+    expect((await seedBase(db.getDb())).signals).toBe(0);
+    expect(await listed()).toEqual([]);
+    const american = await guest('US');
+    expect((await signalsFor(american.cookie)).map((s) => s.title)).not.toContain(title);
+
+    // Staff cannot put it back by typing it in again without being told it was withdrawn.
+    const again = await publish(
+      signal({
+        title,
+        sourceName: seeded!.sourceName,
+        sourceUrl: seeded!.sourceUrl,
+        regions: ['US'],
+      }),
+    );
+    expect(again.status).toBe(409);
+    expect(((await again.json()) as { code: string }).code).toBe('withdrawn');
+    expect(await listed()).toEqual([]);
+  });
 });
 
 describe('feedback', () => {

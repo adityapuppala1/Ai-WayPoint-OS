@@ -324,6 +324,18 @@ test('staff add a sourced signal, people see it, and staff withdraw it @desktop'
   await expect(pub.getByRole('heading', { name: title })).toHaveCount(0);
   await visitor.close();
 
+  // It stays withdrawn: typed in again, the console says so and publishes nothing.
+  await form.getByLabel('What changed').fill(title);
+  await form.getByLabel('Summary').fill(SUMMARY);
+  await form.getByLabel('Source name').fill(SOURCE.name);
+  await form.getByLabel('Source address (https://…)').fill(SOURCE.url);
+  await form.getByLabel('Day the source published it').fill(day(-1));
+  await form.getByRole('button', { name: 'Publish signal' }).click();
+  await expect(form.getByRole('alert')).toContainText(
+    'This signal was withdrawn, so it can’t be published again.',
+  );
+  await expect(page.getByRole('heading', { name: title })).toHaveCount(0);
+
   // Both actions are in the staff activity log.
   await page.goto('/admin/audit');
   await expect(page.getByText('Signal published').first()).toBeVisible();
@@ -368,6 +380,27 @@ test('staff edit an open forecast and add a translation; a verdict waits for a s
 
   await page.getByLabel('What people can do about it').first().fill(advice);
   await page.getByLabel('Countries').fill('KE, TZ');
+
+  // A translation started without its question is checked like any other, not dropped while
+  // the form says it saved: nothing is saved until it is put right.
+  await page.getByRole('button', { name: 'In Español (optional)' }).click();
+  const es = page.getByRole('group', { name: 'In Español (optional)' });
+  await es
+    .getByLabel('What people can do about it')
+    .fill('Pregunta en la oficina de vivienda del condado qué barrios cubre la encuesta.');
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(
+    page.getByRole('alert').filter({ hasText: 'Some fields need attention.' }),
+  ).toBeVisible();
+  await expect(page.getByText('Forecast details saved')).toHaveCount(0);
+  const unsaved = await call<{ whatToDo: string; translations: Record<string, unknown> }>(
+    page,
+    `/api/admin/forecasts/${id}`,
+  );
+  expect(unsaved.body.whatToDo).not.toBe(advice);
+  expect(unsaved.body.translations).toEqual({});
+  await es.getByLabel('What people can do about it').fill('');
+
   await page.getByRole('button', { name: 'In Kiswahili (optional)' }).click();
   const sw = page.getByRole('group', { name: 'In Kiswahili (optional)' });
   await expect(sw.getByText('Once saved, a translation’s question')).toBeVisible();

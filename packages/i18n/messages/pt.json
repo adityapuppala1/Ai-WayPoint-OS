@@ -2072,7 +2072,11 @@
     "feedbackEmpty": "Nenhum comentário ainda.",
     "feedbackRated": "Nota: {rating, number} de 5",
     "feedbackNoMessage": "Sem mensagem.",
-    "feedbackReplyTo": "Quer resposta em <link>{email}</link>"
+    "feedbackReplyTo": "Quer resposta em <link>{email}</link>",
+    "cAlready": "Outra pessoa já confirmou este resultado.",
+    "cOwnVerdict": "Você registrou este resultado, então outra pessoa precisa confirmá-lo.",
+    "cNotJudged": "Ainda não há resultado para confirmar.",
+    "sWasWithdrawn": "Este sinal foi retirado, então não pode ser publicado de novo."
   },
   "byText": {
     "title": "Waypoint por mensagem",

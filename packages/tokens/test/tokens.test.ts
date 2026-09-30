@@ -51,6 +51,27 @@ describe('design tokens', () => {
         expect(pairs, pair).toContain(pair);
     });
 
+    it(`checks text on focus, hover and pressed fills in ${mode} mode`, () => {
+      // Menu.module.css paints a focused item with the signal tint on the overlay, and a danger
+      // item keeps its red; List rows and Route steps take the tint on a panel; onSign buttons
+      // and the toast's action lay the Sign fills over the Sign.
+      const report = contrastReport(mode);
+      for (const pair of [
+        'text / signalTint on overlay',
+        'textSecondary / signalTint on overlay',
+        'danger / signalTint on overlay',
+        'text / signalTint on raised',
+        'textSecondary / signalTint on raised',
+        'textMuted / signalTint on raised',
+        'signText / signFillHover on sign',
+        'signText / signFillPressed on sign',
+      ]) {
+        const check = report.find((c) => c.pair === pair);
+        expect(check, pair).toBeDefined();
+        expect(check?.min, pair).toBe(4.5);
+      }
+    });
+
     it(`checks a module page's header band in ${mode} mode: its text and its mark`, () => {
       // PageHeader lays a module's tint over the page and puts the h1, the lead and the
       // module's mark (its line colour, filled) on it.

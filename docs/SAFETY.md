@@ -170,7 +170,9 @@ certain, or that nobody checks afterwards, does harm. So:
   ago that the Signals page would never show it.
 - **Withdrawn for everyone.** A signal that turns out to be wrong is withdrawn: it disappears
   for everyone, including people who saved it, and the audit log keeps its title and source.
-  Adding and withdrawing are both in the audit log.
+  It stays withdrawn: the seed, which runs on every start and deploy, does not add it back,
+  and staff who type it in again are told it was withdrawn. Adding and withdrawing are both in
+  the audit log.
 - **A person's own choices.** "Not relevant" hides a signal for that person only and can be
   undone on the spot. Saving keeps it on their Saved list however old it gets.
 

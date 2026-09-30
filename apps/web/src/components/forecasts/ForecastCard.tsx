@@ -1,7 +1,8 @@
 import { forecasts } from '@waypoint/api';
-import { Disclosure, Icon, Probability } from '@waypoint/ui';
+import { Disclosure, Icon, Probability, Sparkline } from '@waypoint/ui';
 import { getFormatter, getLocale, getTranslations } from 'next-intl/server';
 import styles from './forecasts.module.css';
+import chart from './history.module.css';
 import { wordKey } from './words';
 
 type Forecast = forecasts.ForecastView;
@@ -62,17 +63,35 @@ export async function ForecastCard({
   const judged = f.state === 'resolved' || f.state === 'annulled';
   const judgedOn = judged && f.resolvedAt ? f.resolvedAt : f.resolvesAt;
   // More than one chance: list them all, so a number changed along the way is never hidden
-  // behind the last one.
+  // behind the last one. The line beside the list shows the shape at a glance; the dated list
+  // is the full account, for everyone and for screen readers.
+  const first = f.history[0];
+  const last = f.history.at(-1);
   const history =
-    f.history.length > 1 ? (
-      <ol className={styles.history} aria-label={t('history')}>
-        {f.history.map((h) => (
-          <li key={h.at}>
-            <time dateTime={h.at}>{day(h.at)}</time>
-            <span className="wp-num">{percent(h.probability)}</span>
-          </li>
-        ))}
-      </ol>
+    first && last && f.history.length > 1 ? (
+      <div className={chart.history}>
+        <Sparkline
+          className={chart.line}
+          values={f.history.map((h) => h.probability)}
+          min={0}
+          max={1}
+          module="signals"
+          width={120}
+          height={36}
+          label={t('historyTrend', {
+            first: percent(first.probability),
+            last: percent(last.probability),
+          })}
+        />
+        <ol className={styles.history} aria-label={t('history')}>
+          {f.history.map((h) => (
+            <li key={h.at}>
+              <time dateTime={h.at}>{day(h.at)}</time>
+              <span className="wp-num">{percent(h.probability)}</span>
+            </li>
+          ))}
+        </ol>
+      </div>
     ) : null;
 
   return (

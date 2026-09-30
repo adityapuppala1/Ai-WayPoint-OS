@@ -8,6 +8,9 @@ import { useTranslations } from 'next-intl';
 import { useState, useTransition } from 'react';
 import { api } from '@/lib/api';
 
+/** How a step is ticked off where it lives. */
+type Done = NonNullable<NextStep['done']>;
+
 /** The value of one cookie as the browser holds it, or undefined. */
 function readCookie(name: string): string | undefined {
   const found = document.cookie.split('; ').find((c) => c.startsWith(`${name}=`));
@@ -37,23 +40,42 @@ export function NextStepSign({
   const [busy, setBusy] = useState(false);
   const [, startTransition] = useTransition();
 
+  /** Ticks the step off where it lives (the plan, the checklist, the note), or takes that back. */
+  const record = (done: Done, undo: boolean) => {
+    if (done.type === 'plan-step')
+      return api(`/api/path/plans/${done.planId}/steps/${done.stepId}`, {
+        method: 'PATCH',
+        json: { status: undo ? 'todo' : 'done' },
+      });
+    if (done.type === 'checklist-item')
+      return api(`/api/civic/${done.event}/items/${done.itemId}`, {
+        method: 'PUT',
+        json: { status: undo ? 'todo' : 'done' },
+      });
+    return api(`/api/nudges/${done.noteId}`, { json: { action: undo ? 'restore' : 'acted' } });
+  };
+
+  // Undo puts the same step back on the sign: it is open again where it lives.
+  const undoDone = async (done: Done) => {
+    try {
+      await record(done, true);
+      startTransition(() => router.refresh());
+    } catch {
+      toast({ title: errors('generic'), tone: 'danger' });
+    }
+  };
+
   const markDone = async () => {
     const done = step.done;
     if (!done) return;
     setBusy(true);
     try {
-      if (done.type === 'plan-step')
-        await api(`/api/path/plans/${done.planId}/steps/${done.stepId}`, {
-          method: 'PATCH',
-          json: { status: 'done' },
-        });
-      else if (done.type === 'checklist-item')
-        await api(`/api/civic/${done.event}/items/${done.itemId}`, {
-          method: 'PUT',
-          json: { status: 'done' },
-        });
-      else await api(`/api/nudges/${done.noteId}`, { json: { action: 'acted' } });
-      toast({ title: t('doneToast'), tone: 'safe' });
+      await record(done, false);
+      toast({
+        title: t('doneToast'),
+        tone: 'safe',
+        action: { label: t('undo'), onAction: () => void undoDone(done) },
+      });
       startTransition(() => router.refresh());
     } catch {
       toast({ title: errors('generic'), tone: 'danger' });

@@ -42,7 +42,7 @@ async function startWith(page: Page, situation: string, from = '/welcome'): Prom
 
 const sign = (page: Page) => page.locator('section[aria-live="polite"]').first();
 
-test('someone who lost their job sees their checklist on the sign; “not now” and “done” both move on', async ({
+test('someone who lost their job sees their checklist on the sign; “not now” and “done” both move on, and Undo takes “done” back', async ({
   page,
   context,
 }, testInfo) => {
@@ -85,14 +85,79 @@ test('someone who lost their job sees their checklist on the sign; “not now”
   const kept = (await context.cookies()).find((c) => c.name === 'wp-not-now');
   expect(kept?.value).toMatch(/^\d{4}-\d{2}-\d{2}:[0-9a-z]{6,12}$/);
 
-  // Done: the item is ticked on the checklist itself, and the sign moves on.
+  // Done: the sign moves on, and the toast's Undo puts the same step back on it.
+  const heading = sign(page).getByRole('heading', { level: 2 });
+  const money = 'Work out how long your money lasts';
   await sign(page).getByRole('button', { name: 'Mark as done' }).click();
-  await expect(sign(page).getByRole('heading', { level: 2 })).toHaveText(
-    'Work out how long your money lasts',
-  );
+  await expect(heading).toHaveText(money);
+  const toast = page
+    .getByRole('alertdialog')
+    .filter({ hasText: 'Nice work. On to the next step.' });
+  await toast.getByRole('button', { name: 'Undo' }).click();
+  await expect(heading).toHaveText(second);
+  await expect(toast).toBeHidden();
+
+  // Done for good: the item is ticked on the checklist itself, and the sign moves on.
+  await sign(page).getByRole('button', { name: 'Mark as done' }).click();
+  await expect(heading).toHaveText(money);
   await page.goto('/civic/job-loss');
   await expect(page.getByRole('checkbox', { name: `Mark “${second}” as done` })).toBeChecked();
   await expect(page.getByRole('checkbox', { name: `Mark “${first}” as done` })).not.toBeChecked();
+});
+
+// One guest for both: guest sessions from one address are limited to a few dozen a minute.
+test('one tap, kept quiet or taken back: the Mind line checks in on Today, and a goal’s Undo', async ({
+  page,
+}) => {
+  await startAsGuest(page);
+
+  // The way into Mind is still there, and "Check in" opens the moods beside it.
+  const tools = page.getByRole('complementary', { name: 'Tools' });
+  const all = tools.getByRole('button', { name: 'All modules' });
+  if (await all.isVisible()) await all.click();
+  await expect(tools.locator('a[href="/mind"]')).toBeVisible();
+  const open = tools.getByRole('button', { name: 'Check in' });
+  await expect(open).toHaveAttribute('aria-expanded', 'false');
+  await open.click();
+  await expect(open).toHaveAttribute('aria-expanded', 'true');
+  const moods = tools.getByRole('group', { name: 'How are you today?' });
+  await expect(moods.getByRole('button')).toHaveCount(5);
+  await moods.getByRole('button', { name: 'Okay' }).click();
+  await expect(
+    page.getByRole('alertdialog').filter({ hasText: 'Checked in. Thank you for taking a moment.' }),
+  ).toBeVisible();
+  // Closed again, and nothing on Today says how the person felt.
+  await expect(moods).toBeHidden();
+  await expect(open).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.getByRole('main').getByText('Okay', { exact: true })).toBeHidden();
+  // It is kept in Mind.
+  await page.goto('/mind');
+  await expect(page.getByRole('heading', { level: 1, name: 'Mind' })).toBeVisible();
+  await expect(page.getByText('Your check-ins will show here.')).toHaveCount(0);
+
+  // A goal marked done or let go comes back with Undo.
+  const goal = 'Finish the spreadsheet course';
+  const made = await page.request.post('/api/goals', { data: { title: goal } });
+  expect(made.ok()).toBe(true);
+  await page.goto('/goals');
+  const mine = page
+    .locator('section')
+    .filter({ has: page.getByRole('heading', { level: 2, name: 'Your goals' }) });
+  await expect(mine.getByText(goal, { exact: true })).toBeVisible();
+
+  for (const [item, said] of [
+    ['Mark as done', 'Done'],
+    ['Let it go', 'Let go'],
+  ] as const) {
+    await page.getByRole('button', { name: `Actions for ${goal}` }).click();
+    await page.getByRole('menuitem', { name: item }).click();
+    const toast = page.getByRole('alertdialog').filter({ hasText: goal });
+    await expect(toast).toContainText(said);
+    await expect(mine.getByText(goal, { exact: true })).toHaveCount(0);
+    await toast.getByRole('button', { name: 'Undo' }).click();
+    await expect(mine.getByText(goal, { exact: true })).toBeVisible();
+    await expect(toast).toBeHidden();
+  }
 });
 
 test('someone caring for another person is asked how they are, not sent to plan a career', async ({

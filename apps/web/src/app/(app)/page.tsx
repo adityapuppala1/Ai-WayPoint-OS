@@ -1,7 +1,7 @@
 import { forecasts, today } from '@waypoint/api';
 import { type ListedModule, moduleOrder, NOT_NOW_COOKIE, usesFahrenheit } from '@waypoint/core';
 import type { Messages } from '@waypoint/i18n';
-import { Icon, Panel, Route as RouteLine, type Station } from '@waypoint/ui';
+import { Icon, Panel, ProgressRing, Route as RouteLine, type Station } from '@waypoint/ui';
 import type { Metadata, Route } from 'next';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
@@ -95,9 +95,12 @@ export default async function TodayPage() {
     timeZone: viewer.profile.timezone,
   });
 
+  const plan = view.plan;
   const stations: Station[] = view.week.map((s) => ({
     id: s.id,
     label: s.title,
+    // Each station leads to its step in the plan.
+    href: plan ? `/path/plans/${plan.id}#step-${s.id}` : undefined,
     meta: `${kinds(s.kind)}, ${t('minutes', { count: s.minutes })}`,
     state:
       s.status === 'done' || s.status === 'skipped'
@@ -106,6 +109,8 @@ export default async function TodayPage() {
           ? 'current'
           : 'upcoming',
   }));
+
+  const weekDone = view.week.filter((s) => s.status === 'done' || s.status === 'skipped').length;
 
   // A note that is on the sign is not listed a second time underneath it.
   const onSign = step.done?.type === 'note' ? step.done.noteId : null;
@@ -207,15 +212,24 @@ export default async function TodayPage() {
             </section>
           ) : null}
 
-          {view.plan && stations.length ? (
+          {plan && stations.length ? (
             <Panel
               title={t('weekTitle')}
-              description={t('progress', {
-                done: view.week.filter((s) => s.status === 'done' || s.status === 'skipped').length,
-                total: view.week.length,
-              })}
+              description={t('progress', { done: weekDone, total: view.week.length })}
+              mark={
+                <ProgressRing
+                  value={weekDone}
+                  total={view.week.length}
+                  module="path"
+                  label={t('weekLabel')}
+                  valueText={format.number(weekDone / view.week.length, {
+                    style: 'percent',
+                    maximumFractionDigits: 0,
+                  })}
+                />
+              }
               actions={
-                <Link href={`/path/plans/${view.plan.id}` as Route} className={styles.panelLink}>
+                <Link href={`/path/plans/${plan.id}` as Route} className={styles.panelLink}>
                   {t('openPlan')}
                 </Link>
               }

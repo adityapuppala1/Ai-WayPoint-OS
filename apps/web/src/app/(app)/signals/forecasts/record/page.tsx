@@ -1,9 +1,10 @@
 import { forecasts } from '@waypoint/api';
 import { getEnv } from '@waypoint/core/env';
 import { dbReady, getDb } from '@waypoint/db';
-import { EmptyState, LinkButton, Panel, Stat } from '@waypoint/ui';
+import { EmptyState, LinkButton, PageHeader, Panel, Stat, StatStrip } from '@waypoint/ui';
 import type { Metadata, Route } from 'next';
 import { getFormatter, getLocale, getTranslations } from 'next-intl/server';
+import { Count } from '@/components/Count';
 import { ForecastCard } from '@/components/forecasts/ForecastCard';
 import { ForesightNav } from '@/components/forecasts/ForesightNav';
 import styles from '@/components/forecasts/forecasts.module.css';
@@ -51,10 +52,7 @@ export default async function ForecastRecordPage({
 
   return (
     <div className="wp-page">
-      <header className="wp-page-head">
-        <h1>{t('recordTitle')}</h1>
-        <p className="wp-lead">{t('recordLead')}</p>
-      </header>
+      <PageHeader module="signals" title={t('recordTitle')} lead={t('recordLead')} />
       <ForesightNav current="/signals/forecasts/record" />
 
       {nothingYet ? (
@@ -71,13 +69,13 @@ export default async function ForecastRecordPage({
       ) : (
         <>
           <Panel>
-            <div className={styles.stats}>
-              <Stat value={format.number(record.judged)} label={t('countJudged')} />
-              <Stat value={format.number(record.happened)} label={t('countHappened')} />
-              <Stat value={format.number(record.open)} label={t('countOpen')} />
-              <Stat value={format.number(record.awaiting)} label={t('countAwaiting')} />
-              <Stat value={format.number(record.annulled)} label={t('countAnnulled')} />
-            </div>
+            <StatStrip label={t('recordTitle')}>
+              <Stat value={<Count value={record.judged} />} label={t('countJudged')} />
+              <Stat value={<Count value={record.happened} />} label={t('countHappened')} />
+              <Stat value={<Count value={record.open} />} label={t('countOpen')} />
+              <Stat value={<Count value={record.awaiting} />} label={t('countAwaiting')} />
+              <Stat value={<Count value={record.annulled} />} label={t('countAnnulled')} />
+            </StatStrip>
             {record.unchecked ? (
               <p className={styles.note}>{t('uncheckedCount', { count: record.unchecked })}</p>
             ) : null}

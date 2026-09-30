@@ -1,4 +1,4 @@
-import { List, ModuleMark } from '@waypoint/ui';
+import { List, ModuleMark, PageHeader } from '@waypoint/ui';
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { LinkRow } from '@/components/LinkRow';
@@ -16,10 +16,7 @@ export default async function ExplorePage() {
   const forecasts = await getTranslations('forecasts');
   return (
     <div className="wp-page">
-      <header className="wp-page-head">
-        <h1>{t('title')}</h1>
-        <p className="wp-lead">{t('lead')}</p>
-      </header>
+      <PageHeader module="today" title={t('title')} lead={t('lead')} />
       <div className="wp-panel-flat">
         <List>
           {NAV.map((item) => (

@@ -1,6 +1,6 @@
 import { HEALTH_SOURCES } from '@waypoint/content';
 import { usesFahrenheit } from '@waypoint/core';
-import { Icon, ModuleMark } from '@waypoint/ui';
+import { Icon, PageHeader } from '@waypoint/ui';
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { SurroundingsView } from '@/components/surroundings/SurroundingsView';
@@ -25,17 +25,13 @@ export default async function SurroundingsPage() {
 
   return (
     <div className="wp-page">
-      <header className="wp-page-head">
-        <div className="wp-row">
-          <ModuleMark module="surroundings" size="lg" />
-          <h1>{t('title')}</h1>
-        </div>
-        <p className="wp-lead">{t('lead')}</p>
+      <div className="wp-section">
+        <PageHeader module="surroundings" title={t('title')} lead={t('lead')} />
         <p className="wp-secondary wp-row" style={{ gap: 'var(--wp-space-2)' }}>
           <Icon name="lock" size={16} />
           <span>{t('privacy')}</span>
         </p>
-      </header>
+      </div>
       <SurroundingsView imperialDefault={usesFahrenheit(country)} sources={sources} />
     </div>
   );

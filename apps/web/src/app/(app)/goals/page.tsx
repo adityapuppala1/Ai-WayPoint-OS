@@ -1,5 +1,5 @@
 import { goals as goalsService } from '@waypoint/api';
-import { Disclosure, EmptyState, ModuleMark, Panel } from '@waypoint/ui';
+import { Disclosure, EmptyState, PageHeader, Panel } from '@waypoint/ui';
 import type { Metadata } from 'next';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import { GoalComposer } from '@/components/goals/GoalComposer';
@@ -32,13 +32,7 @@ export default async function GoalsPage() {
 
   return (
     <div className="wp-page">
-      <header className="wp-page-head">
-        <div className="wp-row">
-          <ModuleMark module="goals" size="lg" />
-          <h1>{t('title')}</h1>
-        </div>
-        <p className="wp-lead">{t('lead')}</p>
-      </header>
+      <PageHeader module="goals" title={t('title')} lead={t('lead')} />
 
       <Panel title={t('yourGoals')} as="section">
         {active.length ? (

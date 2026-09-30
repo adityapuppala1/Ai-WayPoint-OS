@@ -1,5 +1,5 @@
 import { circles as circlesService } from '@waypoint/api';
-import { Icon, type IconName, LinkButton, ModuleMark, Notice, Panel } from '@waypoint/ui';
+import { Icon, type IconName, LinkButton, Notice, PageHeader, Panel } from '@waypoint/ui';
 import type { Metadata, Route } from 'next';
 import Link from 'next/link';
 import { getLocale, getTranslations } from 'next-intl/server';
@@ -40,13 +40,7 @@ export default async function CirclesPage() {
 
   return (
     <div className="wp-page">
-      <header className="wp-page-head">
-        <div className="wp-row">
-          <ModuleMark module="circles" size="lg" />
-          <h1>{t('title')}</h1>
-        </div>
-        <p className="wp-lead">{t('lead')}</p>
-      </header>
+      <PageHeader module="circles" title={t('title')} lead={t('lead')} />
 
       {guest ? (
         <Notice

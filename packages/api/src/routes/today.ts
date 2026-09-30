@@ -48,19 +48,24 @@ app.openapi(
     method: 'post',
     path: '/nudges/{id}',
     tags: ['Today'],
-    summary: 'Mark a nudge as read, acted on or dismissed',
+    summary: 'Mark a nudge as read, acted on or dismissed, or put it back (undo)',
     request: {
       params: IdParam,
-      ...jsonBody(z.object({ action: z.enum(['read', 'acted', 'dismissed']) })),
+      ...jsonBody(z.object({ action: z.enum(['read', 'acted', 'dismissed', 'restore']) })),
     },
     responses: { 200: jsonContent(OkSchema), 404: errors[404] },
   }),
   async (c) => {
     const { action } = c.req.valid('json');
+    // "restore" is Undo: the note is unread and shown again, as it was before.
+    const change =
+      action === 'restore'
+        ? { status: 'delivered' as const, readAt: null }
+        : { status: action === 'dismissed' ? ('dropped' as const) : action, readAt: new Date() };
     const res = await c
       .get('db')
       .update(nudges)
-      .set({ status: action === 'dismissed' ? 'dropped' : action, readAt: new Date() })
+      .set(change)
       .where(and(eq(nudges.id, c.req.valid('param').id), eq(nudges.userId, c.get('user')!.id)))
       .returning({ id: nudges.id });
     if (!res.length) throw notFound('Nudge');

@@ -1,0 +1,21 @@
+/* Short facts side by side, a thin rule between them: the product never joins facts with dots. */
+.facts {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--wp-space-1) var(--wp-space-2);
+  max-inline-size: 100%;
+}
+
+/* A long address or name breaks rather than pushing the line off the screen. */
+.item {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+.sep {
+  flex: none;
+  inline-size: 1px;
+  block-size: 0.9em;
+  background: var(--wp-border-strong);
+}

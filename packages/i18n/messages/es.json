@@ -450,7 +450,8 @@
       "situation": "Le dijiste a Waypoint: «{situation}».",
       "review": "Tienes una meta, y el repaso de esta semana sigue pendiente.",
       "nothingElse": "Hoy no hay nada más esperándote."
-    }
+    },
+    "nudgeDismissed": "Nota descartada."
   },
   "support": {
     "title": "Pedir ayuda ahora",
@@ -1762,7 +1763,7 @@
     "posterQr": "Código QR: escanéalo para unirte",
     "posterScan": "Escanea para unirte",
     "posterOr": "O entra en <site></site> y escribe este código:",
-    "posterFree": "Gratis · en cualquier teléfono · en tu idioma",
+    "posterFree": "Gratis. En cualquier teléfono. En tu idioma.",
     "posterPrivacy": "{organisation} solo ve totales de grupos de {k, number} personas o más: nunca a ti, ni lo que escribes.",
     "countMeHintGuest": "Opcional, y solo para este programa. Sin una cuenta todavía no se te cuenta: tu elección se guarda y empieza a contar cuando creas una cuenta y confirmas tu correo. Puedes cambiarlo cuando quieras en los ajustes de privacidad.",
     "countedGuest": "Elegiste que se te cuente en sus totales semanales anónimos. Eso empieza cuando crees una cuenta y confirmes tu correo."
@@ -1788,7 +1789,7 @@
     "active7d": "activas esta semana",
     "safetyTitle": "Seguridad",
     "crisis7d": "respuestas de crisis mostradas esta semana",
-    "crisisTiers": "{urgent} urgentes · {high} de alto riesgo · {distress} de malestar",
+    "crisisTiers": "<f>{urgent} urgentes</f><f>{high} de alto riesgo</f><f>{distress} de malestar</f>",
     "followUpsDue": "seguimientos pendientes",
     "heldForSafety": "publicaciones retenidas por la seguridad de quien escribe (nunca se muestran)",
     "toReview": "publicaciones por revisar",
@@ -1813,7 +1814,7 @@
     },
     "aiByFeature": "Por función",
     "aiDaily": "Llamadas por día, últimos 14 días",
-    "aiFeatureRow": "{count, plural, one {# llamada} other {# llamadas}} · {cost}",
+    "aiFeatureRow": "<f>{count, plural, one {# llamada} other {# llamadas}}</f><f>{cost}</f>",
     "deliveryTitle": "Mensajes",
     "queued": "pendientes de enviar",
     "failed": "no se pudieron enviar",
@@ -1832,7 +1833,7 @@
       "roles": "Puestos",
       "resources": "Recursos de aprendizaje"
     },
-    "contentRow": "{total} entradas · {stale} por revisar",
+    "contentRow": "<f>{total} entradas</f><f>{stale} por revisar</f>",
     "contentOldest": "revisión más antigua: {date}",
     "contentGeneral": "{count, plural, one {# es orientación general} other {# son orientación general}}",
     "allFresh": "Todos los recursos vitales se revisaron en los últimos 180 días.",
@@ -1946,7 +1947,7 @@
     },
     "channelOn": "configurado",
     "channelOff": "sin configurar",
-    "channelRow": "{in} recibidos · {out} enviados",
+    "channelRow": "<f>{in} recibidos</f><f>{out} enviados</f>",
     "channelsNone": "Aún no hay ningún canal de mensajes configurado",
     "channelsNoneBody": "Hasta que se añada un proveedor de SMS, WhatsApp o USSD, solo se puede usar Waypoint en la web. La guía de configuración está en docs/CHANNELS.md.",
     "channelIn": "mensajes recibidos",
@@ -2496,6 +2497,7 @@
     "how5": "Cada probabilidad que mostró un pronóstico queda anotada con su fecha, y el equipo registra el resultado en cuanto se conoce. Un número cambiado después de los hechos queda a la vista de todos.",
     "unchecked": "Aún sin segunda comprobación: otra persona del equipo todavía no ha confirmado este resultado.",
     "how6": "Otra persona del equipo comprueba cada resultado. Hasta entonces, el pronóstico lleva la nota «aún sin segunda comprobación».",
-    "uncheckedCount": "{count, plural, one {# resultado aún no tiene} other {# resultados aún no tienen}} segunda comprobación."
+    "uncheckedCount": "{count, plural, one {# resultado aún no tiene} other {# resultados aún no tienen}} segunda comprobación.",
+    "historyTrend": "La probabilidad a lo largo del tiempo: de {first} a {last}"
   }
 }

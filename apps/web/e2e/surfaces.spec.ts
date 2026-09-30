@@ -156,7 +156,16 @@ test('a signal can be saved, hidden and brought back, and an empty search says s
     expect(await noSidewaysScroll(page)).toBe(true);
     expect(await seriousProblems(page)).toEqual([]);
 
-    // Save is a switch: it says "Saved", and pressing it again would take the save back.
+    // Save is a switch: it says "Saved", and pressing it again would take the save back. It
+    // is also said in a toast whose Undo takes it back.
+    await andSaved(page, () => item.getByRole('button', { name: `Save: ${title}` }).click());
+    const said = page.getByRole('alertdialog').filter({ hasText: title });
+    await expect(said).toContainText('Saved');
+    await andSaved(page, () => said.getByRole('button', { name: 'Undo' }).click());
+    await expect(item.getByRole('button', { name: `Save: ${title}` })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
     await andSaved(page, () => item.getByRole('button', { name: `Save: ${title}` }).click());
     await expect(item.getByRole('button', { name: `Saved: ${title}` })).toHaveAttribute(
       'aria-pressed',
@@ -454,6 +463,19 @@ test('staff edit an open forecast and add a translation; a verdict waits for a s
   await expect(page.getByText('Forecast details changed').first()).toBeVisible();
 });
 
+/**
+ * Chooses what the feedback is about. The option is chosen with the keyboard, and the list is
+ * gone before anything else is pressed: while it slides in or fades out it sits over the
+ * form, and a press by position could land on the wrong option or on the list itself.
+ */
+async function chooseTopic(page: Page, topic: string) {
+  await page.getByRole('button', { name: /What is it about\?/ }).click();
+  const list = page.getByRole('listbox');
+  await list.getByRole('option', { name: topic }).press('Enter');
+  await expect(list).toBeHidden();
+  await expect(page.getByRole('button', { name: /What is it about\?/ })).toContainText(topic);
+}
+
 test('anyone can tell us what worked or what didn’t, from Settings', async ({
   page,
   context,
@@ -475,8 +497,7 @@ test('anyone can tell us what worked or what didn’t, from Settings', async ({
     'Write a few words or choose a number first.',
   );
 
-  await page.getByRole('button', { name: /What is it about\?/ }).click();
-  await page.getByRole('option', { name: 'Shield' }).click();
+  await chooseTopic(page, 'Shield');
   await page.getByRole('radio', { name: '2', exact: true }).check({ force: true });
   await page.getByLabel('What happened?').fill('The scam check took a long time on my phone.');
   expect(await noSidewaysScroll(page)).toBe(true);
@@ -495,8 +516,7 @@ test('anyone can tell us what worked or what didn’t, from Settings', async ({
   await snap(page, testInfo, 'feedback-form-ar-dark');
   await inArabicAndDark(context, baseURL ?? '', false);
   await page.goto('/settings/feedback');
-  await page.getByRole('button', { name: /What is it about\?/ }).click();
-  await page.getByRole('option', { name: 'Shield' }).click();
+  await chooseTopic(page, 'Shield');
   await page.getByRole('radio', { name: '2', exact: true }).check({ force: true });
   await page.getByLabel('What happened?').fill('The scam check took a long time on my phone.');
   await page.getByRole('button', { name: 'Send feedback' }).click();

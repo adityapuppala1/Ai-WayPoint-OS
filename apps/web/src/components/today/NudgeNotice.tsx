@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, LinkButton, Notice } from '@waypoint/ui';
+import { Button, LinkButton, Notice, toast } from '@waypoint/ui';
 import type { Route } from 'next';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -18,12 +18,25 @@ export interface NudgeView {
 /** A gentle note for today. Opening or dismissing it marks it read so it doesn't come back. */
 export function NudgeNotice({ nudge }: { nudge: NudgeView }) {
   const t = useTranslations('today');
+  const errors = useTranslations('errors');
   const router = useRouter();
   const [gone, setGone] = useState(false);
   if (gone) return null;
 
   const mark = (action: 'acted' | 'dismissed') =>
     api(`/api/nudges/${nudge.id}`, { json: { action } }).catch(() => undefined);
+
+  // Undo brings the note back as it was. By then this row may have left the page, so the
+  // note returns with the refreshed list rather than by state here.
+  const restore = async () => {
+    try {
+      await api(`/api/nudges/${nudge.id}`, { json: { action: 'restore' } });
+      setGone(false);
+      router.refresh();
+    } catch {
+      toast({ title: errors('generic'), tone: 'danger' });
+    }
+  };
 
   const support = nudge.href === '/support';
   return (
@@ -49,6 +62,11 @@ export function NudgeNotice({ nudge }: { nudge: NudgeView }) {
             onPress={async () => {
               setGone(true);
               await mark('dismissed');
+              toast({
+                title: t('nudgeDismissed'),
+                description: nudge.title,
+                action: { label: t('undo'), onAction: () => void restore() },
+              });
               router.refresh();
             }}
           >

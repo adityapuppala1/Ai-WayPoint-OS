@@ -1,0 +1,12 @@
+/* Every chance a forecast has shown: a small line beside the dated list (under it on a phone). */
+.history {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--wp-space-3) var(--wp-space-6);
+}
+
+.line {
+  flex: none;
+  margin-block-start: var(--wp-space-1);
+}

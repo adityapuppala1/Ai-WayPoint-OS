@@ -457,7 +457,8 @@ declare const messages: {
       "situation": "You told Waypoint: “{situation}”.",
       "review": "You have a goal, and this week’s review is still open.",
       "nothingElse": "Nothing else is waiting for you today."
-    }
+    },
+    "nudgeDismissed": "Note dismissed."
   },
   "support": {
     "title": "Get help now",
@@ -1768,7 +1769,7 @@ declare const messages: {
     "posterQr": "QR code: scan to join",
     "posterScan": "Scan to join",
     "posterOr": "Or go to <site></site> and enter this code:",
-    "posterFree": "Free · works on any phone · in your language",
+    "posterFree": "Free. Works on any phone. In your language.",
     "posterPrivacy": "{organisation} only ever sees totals for groups of {k, number} or more people — never you, and never what you write.",
     "eyebrowJoined": "Your programme",
     "countMeHintGuest": "Optional, and only for this programme. Without an account you are not counted yet: your choice is kept and starts to count once you create an account and confirm your email address. You can change it any time in Privacy settings.",
@@ -1795,7 +1796,7 @@ declare const messages: {
     "active7d": "active this week",
     "safetyTitle": "Safety",
     "crisis7d": "crisis responses shown this week",
-    "crisisTiers": "{urgent} urgent · {high} high risk · {distress} distress",
+    "crisisTiers": "<f>{urgent} urgent</f><f>{high} high risk</f><f>{distress} distress</f>",
     "followUpsDue": "check-ins due",
     "heldForSafety": "posts held for the writer’s safety (never shown)",
     "toReview": "posts waiting for review",
@@ -1820,7 +1821,7 @@ declare const messages: {
     },
     "aiByFeature": "By feature",
     "aiDaily": "Calls per day, last 14 days",
-    "aiFeatureRow": "{count, plural, one {# call} other {# calls}} · {cost}",
+    "aiFeatureRow": "<f>{count, plural, one {# call} other {# calls}}</f><f>{cost}</f>",
     "deliveryTitle": "Messages",
     "queued": "waiting to send",
     "failed": "could not be sent",
@@ -1839,7 +1840,7 @@ declare const messages: {
       "roles": "Roles",
       "resources": "Learning resources"
     },
-    "contentRow": "{total} entries · {stale} to recheck",
+    "contentRow": "<f>{total} entries</f><f>{stale} to recheck</f>",
     "contentOldest": "oldest check {date}",
     "allFresh": "Every lifeline was checked within the last 180 days.",
     "staleTitle": "Lifelines to recheck",
@@ -1953,7 +1954,7 @@ declare const messages: {
     },
     "channelOn": "set up",
     "channelOff": "not set up",
-    "channelRow": "{in} in · {out} out",
+    "channelRow": "<f>{in} in</f><f>{out} out</f>",
     "channelsNone": "No text channel is set up yet",
     "channelsNoneBody": "Until an SMS, WhatsApp or USSD provider is added, people can only use Waypoint on the web. The setup guide is docs/CHANNELS.md.",
     "channelIn": "messages received",
@@ -2503,7 +2504,8 @@ declare const messages: {
     "how5": "Every chance a forecast showed stays listed with its date, and staff record the outcome as soon as it is known. A number changed after the fact is there for anyone to see.",
     "unchecked": "Not yet double-checked: a second member of our staff has not confirmed this outcome.",
     "how6": "A second member of staff checks each outcome. Until they have, the forecast is marked “not yet double-checked”.",
-    "uncheckedCount": "{count, plural, one {# outcome has} other {# outcomes have}} not been double-checked yet."
+    "uncheckedCount": "{count, plural, one {# outcome has} other {# outcomes have}} not been double-checked yet.",
+    "historyTrend": "The chance over time: from {first} to {last}"
   }
 };
 export default messages;

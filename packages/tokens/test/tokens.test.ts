@@ -11,6 +11,7 @@ import {
   light,
   motion,
   type Oklch,
+  signEdge,
 } from '../src';
 
 const css = readFileSync(join(__dirname, '..', 'tokens.css'), 'utf8');
@@ -96,6 +97,30 @@ describe('design tokens', () => {
     expect(focus.shadowInset).toBe(
       'inset 0 0 0 2px var(--wp-focus-ring), inset 0 0 0 5px var(--wp-signal)',
     );
+    // Inside the Sign (and a toast) the ring takes the Sign's own text colour.
+    expect(focus.shadowOnSign).toBe('0 0 0 2px var(--wp-sign-text), 0 0 0 5px var(--wp-signal)');
+  });
+
+  it('gives the Sign a wider signal edge in the dark', () => {
+    expect(signEdge.dark).toBeGreaterThan(signEdge.light);
+  });
+
+  it('gives hover and pressed fills as plain see-through colours, pressed the stronger', () => {
+    // Ready-made, so components need no color-mix() (older Safari and Firefox lack it).
+    for (const r of [light, dark]) {
+      for (const [hover, pressed] of [
+        [r.fillHover, r.fillPressed],
+        [r.signFillHover, r.signFillPressed],
+      ] as const) {
+        expect(hover.a).toBeGreaterThan(0);
+        expect(pressed.a ?? 1).toBeGreaterThan(hover.a ?? 1);
+        expect(pressed.a).toBeLessThanOrEqual(0.2);
+      }
+      // The fills are the text colour thinned out, so they work on any surface.
+      expect({ ...r.fillHover, a: undefined }).toEqual({ ...r.text, a: undefined });
+      expect({ ...r.signFillHover, a: undefined }).toEqual({ ...r.signText, a: undefined });
+      expect(r.signBorder.a).toBeGreaterThanOrEqual(0.4);
+    }
   });
 
   it('keeps motion short, with one longer moment for the route', () => {
@@ -112,12 +137,24 @@ describe('design tokens', () => {
     for (const name of [
       '--wp-focus-shadow',
       '--wp-focus-shadow-inset',
+      '--wp-focus-shadow-on-sign',
       '--wp-duration-route',
       '--wp-ease-route',
       '--wp-press-scale',
     ])
       expect(css.split(`${name}:`).length - 1, name).toBe(1);
-    for (const name of ['--wp-shadow-1', '--wp-shadow-2', '--wp-shadow-3', '--wp-marker'])
+    for (const name of [
+      '--wp-shadow-1',
+      '--wp-shadow-2',
+      '--wp-shadow-3',
+      '--wp-marker',
+      '--wp-sign-edge',
+      '--wp-fill-hover',
+      '--wp-fill-pressed',
+      '--wp-sign-fill-hover',
+      '--wp-sign-fill-pressed',
+      '--wp-sign-border',
+    ])
       expect(css.split(`${name}:`).length - 1, name).toBe(3);
     // The old names stay for the pages that use them, pointing at the scale.
     expect(css).toContain('--wp-shadow-raised: var(--wp-shadow-1);');

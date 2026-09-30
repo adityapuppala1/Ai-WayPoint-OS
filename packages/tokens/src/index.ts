@@ -23,9 +23,14 @@ export interface ColorRoles {
   textSecondary: Oklch;
   textMuted: Oklch;
   textInverse: Oklch;
+  fillHover: Oklch; // the text colour thinned out: laid over a control under the pointer
+  fillPressed: Oklch; // and, stronger, while it is pressed
   sign: Oklch; // the Next Step sign panel
   signText: Oklch;
   signMuted: Oklch;
+  signBorder: Oklch; // outlines on the sign (its secondary button)
+  signFillHover: Oklch; // the same two fills for controls that sit on the sign or a toast
+  signFillPressed: Oklch;
   signal: Oklch; // the one accent: primary CTA fill, focus halo, active marker
   signalHover: Oklch;
   signalInk: Oklch; // text on signal
@@ -58,9 +63,14 @@ export const light: ColorRoles = {
   textSecondary: oklch(0.41, 0.026, INK_HUE),
   textMuted: oklch(0.49, 0.02, INK_HUE),
   textInverse: oklch(0.985, 0.003, INK_HUE),
+  fillHover: oklch(0.24, 0.03, INK_HUE, 0.06),
+  fillPressed: oklch(0.24, 0.03, INK_HUE, 0.12),
   sign: oklch(0.275, 0.038, INK_HUE),
   signText: oklch(0.985, 0.003, INK_HUE),
   signMuted: oklch(0.84, 0.014, INK_HUE),
+  signBorder: oklch(0.985, 0.003, INK_HUE, 0.4),
+  signFillHover: oklch(0.985, 0.003, INK_HUE, 0.1),
+  signFillPressed: oklch(0.985, 0.003, INK_HUE, 0.18),
   signal: oklch(0.855, 0.165, 88),
   signalHover: oklch(0.8, 0.165, 83),
   signalInk: oklch(0.24, 0.03, INK_HUE),
@@ -98,9 +108,14 @@ export const dark: ColorRoles = {
   textSecondary: oklch(0.82, 0.012, INK_HUE),
   textMuted: oklch(0.72, 0.014, INK_HUE),
   textInverse: oklch(0.2, 0.02, INK_HUE),
+  fillHover: oklch(0.95, 0.006, INK_HUE, 0.08),
+  fillPressed: oklch(0.95, 0.006, INK_HUE, 0.15),
   sign: oklch(0.5, 0.06, INK_HUE),
   signText: oklch(0.985, 0.003, INK_HUE),
   signMuted: oklch(0.93, 0.012, INK_HUE),
+  signBorder: oklch(0.985, 0.003, INK_HUE, 0.5),
+  signFillHover: oklch(0.985, 0.003, INK_HUE, 0.12),
+  signFillPressed: oklch(0.985, 0.003, INK_HUE, 0.2),
   signal: oklch(0.855, 0.165, 88),
   signalHover: oklch(0.9, 0.15, 92),
   signalInk: oklch(0.22, 0.03, INK_HUE),
@@ -262,7 +277,8 @@ export const elevation = {
  * Focus, the same on every control: a 2px ring in the text colour and a 3px signal-yellow
  * halo around it. Two colours, so one of them stands out on any surface (the ring on light
  * ones, the halo on the slate sign). Controls that sit flush in a row or are clipped by
- * their container draw the same ring inside their edge.
+ * their container draw the same ring inside their edge, and inside the Sign the ring takes
+ * the Sign's own text colour.
  */
 const FOCUS_RING = 2;
 const FOCUS_HALO = 3;
@@ -271,7 +287,11 @@ export const focus = {
   halo: FOCUS_HALO,
   shadow: `0 0 0 ${FOCUS_RING}px var(--wp-focus-ring), 0 0 0 ${FOCUS_RING + FOCUS_HALO}px var(--wp-signal)`,
   shadowInset: `inset 0 0 0 ${FOCUS_RING}px var(--wp-focus-ring), inset 0 0 0 ${FOCUS_RING + FOCUS_HALO}px var(--wp-signal)`,
+  shadowOnSign: `0 0 0 ${FOCUS_RING}px var(--wp-sign-text), 0 0 0 ${FOCUS_RING + FOCUS_HALO}px var(--wp-signal)`,
 } as const;
+
+/** The signal band on the Sign's leading edge, in px. Wider in the dark, where it carries further. */
+export const signEdge = { light: 6, dark: 8 } as const;
 
 export const motion = {
   instant: 80,

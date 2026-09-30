@@ -24,6 +24,7 @@ import {
   radius,
   SERIES_HUES,
   series,
+  signEdge,
   space,
   toCss,
   zIndex,
@@ -44,6 +45,7 @@ function colorVars(roles: ColorRoles, mode: 'light' | 'dark'): string[] {
   for (const step of [1, 2, 3] as const) {
     lines.push(`--wp-shadow-${step}: ${elevation[mode][step]};`);
   }
+  lines.push(`--wp-sign-edge: ${signEdge[mode] / 16}rem;`);
   return lines;
 }
 
@@ -73,6 +75,7 @@ const staticVars: string[] = [
   '--wp-shadow-overlay: var(--wp-shadow-3);',
   `--wp-focus-shadow: ${focus.shadow};`,
   `--wp-focus-shadow-inset: ${focus.shadowInset};`,
+  `--wp-focus-shadow-on-sign: ${focus.shadowOnSign};`,
   ...Object.entries(zIndex).map(([k, v]) => `--wp-z-${k}: ${v};`),
   ...Object.entries(layout).map(([k, v]) => `--wp-${kebab(k)}: ${v}rem;`),
 ];

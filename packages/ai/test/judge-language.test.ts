@@ -46,6 +46,19 @@ describe('what the judge may read, with only English switched on', () => {
       expect(judgeReads(text, 'en'), text).toBe(false);
   });
 
+  it('does not read Spanish that says “has”, nor Dutch or German, which share short words with English', () => {
+    for (const text of [
+      // "has" is Spanish too (haber), and a word said twice is still one word.
+      '¿Has visto el correo? Ya has recibido la factura de este mes.',
+      'Has ganado un premio. Has sido elegido entre miles de clientes.',
+      'Has sido seleccionado. Has recibido un bono de 500 euros.',
+      // "is", "we", "of", "was" and "am" are everyday Dutch and German words.
+      'Uw pakket is onderweg. We hebben uw adres nodig, klik op de link of bel ons.',
+      'Ihr Paket ist da. Was wollen Sie tun? Wir rufen Sie am Montag an.',
+    ])
+      expect(judgeReads(text, 'en'), text).toBe(false);
+  });
+
   it('does not read a script it has no words for, whatever link or brand it carries', () => {
     for (const text of [
       'Ваш аккаунт заблокирован. Срочно перейдите по ссылке http://sberbank-secure.xyz',

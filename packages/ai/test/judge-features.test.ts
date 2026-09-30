@@ -187,10 +187,9 @@ describe('Scam Shield’s second opinion', () => {
   const opinion = (input: Record<string, unknown> = {}, ctx: Record<string, unknown> = {}) =>
     ai.shieldOpinion(caller(ctx), { text: OFFER, locale: 'en', country: 'KE', ...input });
 
-  it('comes from the judge when it is sure, in words the rules already have, and the language model is not asked', async () => {
+  it('comes from the judge, in words the rules already have, when no language model can answer', async () => {
     const asked = judge({ payToWork: 0.95, moveToChat: 0.9 });
-    const llm = llmSays('very-high');
-    useModel(llm);
+    useModel(null);
     expect(await opinion()).toEqual({
       level: 'high',
       categories: ['job'],
@@ -202,11 +201,28 @@ describe('Scam Shield’s second opinion', () => {
     });
     expect(asked).toHaveLength(1);
     expect(asked[0]?.state).toEqual({ message: OFFER });
-    expect(llm.doGenerateCalls).toHaveLength(0);
     const rows = await usageRows('judge-shield');
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ provider: 'typesafe', model: 'jev-1.13.0', status: 'ok' });
     expect(await usageRows('shield')).toHaveLength(0);
+  });
+
+  it('never stops the language model from being asked, even when it is sure of a scam', async () => {
+    // "High" is the most the judge says: a model that says "very high" is still heard.
+    judge({ payToWork: 0.95, moveToChat: 0.9 });
+    const llm = llmSays('very-high');
+    useModel(llm);
+    expect(await opinion()).toEqual({
+      level: 'very-high',
+      categories: ['job'],
+      reasons: [
+        'Asks for money up front',
+        'Asks you to pay before you can work',
+        'Moves the conversation to a private chat app',
+      ],
+      model: 'jev-1.13.0+mock-model',
+    });
+    expect(llm.doGenerateCalls).toHaveLength(1);
   });
 
   it('gives its reasons in the reader’s language', async () => {
@@ -231,21 +247,34 @@ describe('Scam Shield’s second opinion', () => {
     ]);
   });
 
-  it('skips the language model when the judge is sure there is nothing', async () => {
+  it('still asks the language model when the judge finds nothing, and the model’s answer stands', async () => {
+    // A scam written to talk the judge down, or one none of its questions covers, must not
+    // also silence the language model: the judge's "nothing found" counts for nothing.
     const asked = judge();
     const llm = llmSays('high');
     useModel(llm);
     expect(await opinion()).toEqual({
-      level: 'low',
-      categories: [],
-      reasons: [],
-      model: 'jev-1.13.0',
+      level: 'high',
+      categories: ['job'],
+      reasons: ['Asks for money up front'],
+      model: 'mock-model',
     });
     expect(asked).toHaveLength(1);
-    expect(llm.doGenerateCalls).toHaveLength(0);
+    expect(llm.doGenerateCalls).toHaveLength(1);
   });
 
-  it('asks the language model as well when the judge is unsure, and keeps the higher level', async () => {
+  it('gives no opinion at all when the judge finds nothing and no language model answers', async () => {
+    // Nothing found is not a second opinion that agreed: the page must not say one did.
+    const asked = judge();
+    useModel(null);
+    expect(await opinion()).toBeNull();
+    expect(asked).toHaveLength(1);
+    // The same when a sign sits in the middle of its range but nothing adds up to a warning.
+    judge({ pressure: 0.5 });
+    expect(await opinion()).toBeNull();
+  });
+
+  it('asks the language model as well when the judge sees something, and keeps the higher level', async () => {
     judge({ payToWork: 0.8 });
     const llm = llmSays('high');
     useModel(llm);
@@ -269,8 +298,7 @@ describe('Scam Shield’s second opinion', () => {
   });
 
   it('asks the language model as well when the message talks to whoever is checking it', async () => {
-    // Text written to talk a checker down may have worked on the judge: its "nothing" is not
-    // trusted, and the attempt is itself a warning sign.
+    // When the judge is fairly sure the text addresses the checker, that is a warning sign.
     judge({ hiddenInstructions: 0.95 });
     const llm = llmSays('low', []);
     useModel(llm);
@@ -284,7 +312,7 @@ describe('Scam Shield’s second opinion', () => {
     });
   });
 
-  it('stands on its own when it is unsure and no language model can answer', async () => {
+  it('stands on its own when it sees something and no language model can answer', async () => {
     judge({ payToWork: 0.8 });
     useModel(null);
     expect(await opinion()).toMatchObject({ level: 'unclear', model: 'jev-1.13.0' });
@@ -393,15 +421,21 @@ describe('Scam Shield’s second opinion', () => {
     const RUSHED = 'Act now. This offer ends today, do not wait.';
     const rules = checkMessage({ text: RUSHED, country: 'IN' });
     expect(rules.level).toBe('unclear');
+    // A judge that sees nothing gives nothing: the rules' result is used as it is.
     const asked = judge();
-    const nothing = await opinion({ text: RUSHED, rules });
+    expect(await opinion({ text: RUSHED, rules })).toBeNull();
     expect(asked).toHaveLength(1);
+    // And a language model that sees nothing either cannot lower it through the merge.
+    judge();
+    useModel(model({ level: 'low', categories: [], reasons: [] }));
+    const nothing = await opinion({ text: RUSHED, rules });
     expect(nothing?.level).toBe('low');
     const merged = mergeAiOpinion(rules, nothing!, 'IN', 'en');
     expect(merged.level).toBe(rules.level);
     expect(merged.score).toBe(rules.score);
     expect(merged.signals.map((s) => s.id)).toEqual(rules.signals.map((s) => s.id));
     expect(merged.advice).toEqual(rules.advice);
+    useModel(null);
 
     // And it raises a message the rules had nothing on.
     const quiet = checkMessage({ text: OFFER, country: 'KE' });
@@ -720,6 +754,16 @@ describe('guided mode, when no keyword says what a question is about', () => {
     const reply = await guidedReply(QUESTION);
     expect(reply).toContain(MONEY);
     expect(reply).not.toContain(MENU);
+  });
+
+  it('never turns a pick of “scam” into “no scam signs found” about the person’s own question', async () => {
+    const CALLER =
+      'A man phoned me saying he is from my bank and asked for the number they just texted me. Should I give it?';
+    judge({ intent: { choice: 'scam', p: 0.9, confidence: 0.85 } });
+    expect(await intent(CALLER)).toBe('scam');
+    const reply = await guidedReply(CALLER);
+    expect(reply).not.toMatch(/no common scam signs|didn’t find common scam signs/i);
+    expect(reply).toContain('[Shield: check a message for scams](/shield)');
   });
 
   it('shows the general menu when the judge picks none of these, or is not well ahead', async () => {

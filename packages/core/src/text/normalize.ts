@@ -106,7 +106,11 @@ export function detectScript(text: string): Script {
   return 'latin';
 }
 
-const MARKERS: Array<[lang: string, words: string[]]> = [
+/**
+ * Common words of each Latin-script language Waypoint speaks other than English (folded, as
+ * `foldText` gives them). English has none here: `detectLanguage` falls back to it.
+ */
+export const LANGUAGE_MARKERS: ReadonlyArray<readonly [lang: string, words: readonly string[]]> = [
   [
     'es',
     [
@@ -223,7 +227,7 @@ export function detectLanguage(text: string): string {
   if (!words.length) return 'und';
   let best = 'en';
   let bestScore = 0;
-  for (const [lang, markers] of MARKERS) {
+  for (const [lang, markers] of LANGUAGE_MARKERS) {
     const set = new Set(markers);
     const score = words.filter((w) => set.has(w)).length;
     if (score > bestScore) {

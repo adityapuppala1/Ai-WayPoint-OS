@@ -66,14 +66,17 @@ then an optional AI second opinion on a redacted copy that can **only raise** th
 Nothing pasted is stored — only a hash, the verdict and the rule ids.
 
 The second opinion comes from the judge (TypeSafe's Jev) where one is set up and the language
-is switched on for it, from the language model otherwise or when the judge is unsure, and
-from both when both answered: the higher level stands. The judge is asked about one warning
-sign at a time and cannot write, so each reason it adds is the title of a sign the rules
-already have words for, in the reader's language. It never says "very high", so it is asked
-only about messages the rules rated low or unclear, and its "nothing found" counts for
-nothing: a message that tells the checker it is safe is rated by the rules as if the judge
-were not there, and that attempt is itself shown as a warning sign. Which model answered is stored with the check
-([AI.md](AI.md#typed-decisions-jev)).
+is switched on for it, and from the language model whenever one may answer, whatever the
+judge says: the highest level of the rules, the judge and the model stands. The judge is
+asked about one warning sign at a time and cannot write, so each reason it adds is the title
+of a sign the rules already have words for, in the reader's language. It never says "very
+high", so it is asked only about messages the rules rated low or unclear, and its "nothing
+found" counts for nothing: it is not reported as a second opinion, and a message that tells
+the checker it is safe is rated by the rules and the language model as if the judge were not
+there. When the judge is fairly sure a message contains text addressed to the checker (about
+0.75 or more on that question alone), that is shown as a warning sign. No rule looks for such
+text, so when the judge misses it, is fooled by it or is not set up, no such sign is shown.
+Which model answered is stored with the check ([AI.md](AI.md#typed-decisions-jev)).
 
 - **Every language, not just English.** Each rule carries cues in English, Hindi (Devanagari
   and romanised), Spanish, French, Portuguese, Arabic and Swahili, and the golden set has at
@@ -266,11 +269,15 @@ choice, and nothing from Mind, Health, Money, Circles, Ask or Shield is ever use
     self-harm. If so the answer is not sent and the guided text goes out instead. The prompt
     forbids all five; this checks what came back. Without a judge the answer goes out as
     before, with links and phone numbers stripped.
-  - **Plan rewrites**: each reworded step is checked against its original for a promise the
-    template did not make and for a course, site, organisation or number it did not name. One
-    flag keeps the template wording for the whole plan.
+  - **Plan rewrites**: the reworded title, summary and week headings, and each reworded step,
+    are checked against the template's own wording for a promise the template did not make and
+    for a course, site, organisation or number it did not name. One flag keeps the template
+    wording for the whole plan.
   - **Guided mode**: when no keyword says what a question is about, the judge may pick which
-    part of Waypoint to point to. It writes none of the words.
+    part of Waypoint to point to. It writes none of the words. However a question is routed to
+    scams, guided mode gives a rules verdict on the person's own words only when the rules
+    warn; otherwise it shows the way to Shield and never says "no common scam signs found"
+    about someone describing a call or an offer.
 - **Where the judge is never used**: to decide or lower a crisis tier; at crisis tier 3, where
   nothing goes to it as nothing goes to a model; on the journal, mood notes or health notes;
   on Circles posts; on forecasts; on numbers or dates. Nobody has tested Jev on crisis

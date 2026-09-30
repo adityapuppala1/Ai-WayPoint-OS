@@ -15,7 +15,9 @@
  * What comes out of here can only ever raise a verdict: it goes through the same merge as the
  * language model's opinion (`mergeAiOpinion` takes the higher level). Scam text is written to
  * deceive, and TypeSafe's own notes say text that argues for its own label "can move the
- * answer". So a "nothing found" from the judge is never allowed to mean anything.
+ * answer". So a "nothing found" from the judge is never allowed to mean anything: it is not
+ * reported as an opinion, and it never stops the language model from being asked
+ * (`shieldOpinion`).
  */
 import type { ScamCategory } from '@waypoint/content/types';
 import type { RiskLevel } from '@waypoint/core';
@@ -138,9 +140,7 @@ export const SHIELD_SIGN_RULES: Record<
  * treated as a ranking, not a truth:
  *
  *  - `seenAt`: a sign counts only at 0.7 or above (the cut TypeSafe's examples use for a
- *    flag). It then adds its weight times the probability.
- *  - `absentBelow`: under 0.3 a sign is taken as not there. In between, the judge is unsure:
- *    the sign adds nothing, and the language model is asked as well.
+ *    flag). It then adds its weight times the probability; below that it adds nothing.
  *  - Seen signs add up the way the rules' signals do (several weak signs add up, one strong
  *    one can be enough), into a score from 0 to 1.
  *  - `unclearAt`, `highAt`: the score needed for each level. Higher than the rules ask of
@@ -152,7 +152,6 @@ export const SHIELD_SIGN_RULES: Record<
  */
 export const SHIELD_JUDGE = {
   seenAt: 0.7,
-  absentBelow: 0.3,
   unclearAt: 0.3,
   highAt: 0.6,
 } as const;
@@ -175,11 +174,6 @@ export interface ShieldJudgement {
   seen: string[];
   /** The kinds of scam the seen signs point to, strongest first. */
   categories: ScamCategory[];
-  /**
-   * Neither "nothing here" nor "high": some sign sits where Jev's answer means little, or the
-   * text addresses whoever is checking it. The language model is then asked as well.
-   */
-  unsure: boolean;
 }
 
 /** Add up the judge's answers. Pure arithmetic: the same answers always give the same level. */
@@ -202,6 +196,5 @@ export function readShieldSigns(answers: JudgeAnswers<typeof SHIELD_SIGNS>): Shi
     score,
     seen: shown.map((s) => s.rule),
     categories: [...new Set(shown.flatMap((s) => (s.category ? [s.category] : [])))],
-    unsure: level !== 'high' && ids.some((id) => answers[id].noul >= SHIELD_JUDGE.absentBelow),
   };
 }

@@ -54,13 +54,12 @@ describe('the questions Scam Shield asks the judge', () => {
 });
 
 describe('turning the judge’s answers into a level', () => {
-  it('finds nothing when every sign is clearly absent, and is sure of it', () => {
+  it('finds nothing when every sign is clearly absent', () => {
     expect(readShieldSigns(answers())).toEqual({
       level: 'low',
       score: 0,
       seen: [],
       categories: [],
-      unsure: false,
     });
   });
 
@@ -70,14 +69,13 @@ describe('turning the judge’s answers into a level', () => {
       level: 'high',
       seen: ['share-otp'],
       categories: ['sim-swap-otp'],
-      unsure: false,
     });
     expect(out.score).toBeCloseTo(0.78 * 0.9);
   });
 
-  it('says only unclear for one strong sign it thinks likely, and is unsure', () => {
+  it('says only unclear for one strong sign it thinks likely', () => {
     const out = readShieldSigns(answers({ payToWork: 0.8 }));
-    expect(out).toMatchObject({ level: 'unclear', seen: ['pay-to-work'], unsure: true });
+    expect(out).toMatchObject({ level: 'unclear', seen: ['pay-to-work'] });
   });
 
   it('lets signs add up: two likely strong signs are high', () => {
@@ -97,25 +95,27 @@ describe('turning the judge’s answers into a level', () => {
       level: 'low',
       seen: [],
       categories: [],
-      unsure: true,
     });
   });
 
-  it('counts nothing for a sign it is unsure about, and says it is unsure', () => {
+  it('counts nothing for a sign below the cut', () => {
     const out = readShieldSigns(answers({ asksForCode: 0.69, guaranteedReturns: 0.5 }));
-    expect(out).toMatchObject({ level: 'low', score: 0, seen: [], unsure: true });
-    // The edges of the band: 0.3 is unsure, just under it is absent; 0.7 counts as seen.
-    expect(readShieldSigns(answers({ threatens: SHIELD_JUDGE.absentBelow })).unsure).toBe(true);
-    expect(readShieldSigns(answers({ threatens: 0.29 })).unsure).toBe(false);
+    expect(out).toMatchObject({ level: 'low', score: 0, seen: [] });
+    // The edge: 0.7 counts as seen.
     expect(readShieldSigns(answers({ asksForCode: 0.69 })).seen).toEqual([]);
     expect(readShieldSigns(answers({ asksForCode: SHIELD_JUDGE.seenAt })).seen).toEqual([
       'share-otp',
     ]);
   });
 
-  it('treats text written at the checker as a warning sign, and never as a sure answer', () => {
+  it('treats text written at the checker as a warning sign when it is fairly sure of it', () => {
     const out = readShieldSigns(answers({ hiddenInstructions: 0.95 }));
-    expect(out).toMatchObject({ level: 'unclear', seen: ['hidden-instructions'], unsure: true });
+    expect(out).toMatchObject({ level: 'unclear', seen: ['hidden-instructions'] });
+    // On its own it shows from 0.75 (docs/SAFETY.md says so); below that, no sign at all.
+    expect(readShieldSigns(answers({ hiddenInstructions: 0.75 })).seen).toEqual([
+      'hidden-instructions',
+    ]);
+    expect(readShieldSigns(answers({ hiddenInstructions: 0.74 })).seen).toEqual([]);
   });
 
   it('never says very high, whatever it is told', () => {

@@ -8,6 +8,7 @@ export {
   foldIndic,
   foldPattern,
   foldText,
+  LANGUAGE_MARKERS,
   normalizeText,
   unleet,
 } from './normalize';

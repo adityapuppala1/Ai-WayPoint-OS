@@ -8,9 +8,9 @@
  *   pnpm test:e2e                          # all five, or add --project=firefox for one
  *
  * The server starts with a fresh embedded database in the system temp folder (never your own
- * `.data/`), no AI provider or texting provider, and email caught by a local mail catcher, so
- * every run starts from the same place and nothing leaves the machine. Set E2E_BASE_URL to
- * test a server that is already running (for example a staging copy) instead.
+ * `.data/`), no AI provider, judge or texting provider, and email caught by a local mail
+ * catcher, so every run starts from the same place and nothing leaves the machine. Set
+ * E2E_BASE_URL to test a server that is already running (for example a staging copy) instead.
  */
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -94,12 +94,17 @@ export default defineConfig({
           // Test-only secrets (a production build refuses to start without them).
           BETTER_AUTH_SECRET: 'e2e-only-secret-never-use-in-production-0000000',
           WAYPOINT_KEK: 'MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=',
-          // Empty values win over anything in .env.local: no real database, AI, email or texts.
+          // Empty values win over anything in .env.local or the shell: no real database, AI
+          // (the judge included), email or texts. A new outside service needs its key here.
           DATABASE_URL: '',
           ANTHROPIC_API_KEY: '',
           OPENAI_API_KEY: '',
           GOOGLE_GENERATIVE_AI_API_KEY: '',
           OLLAMA_BASE_URL: '',
+          TYPESAFE_API_KEY: '',
+          // Empty is each one's default: a local value cannot change the run or stop it starting.
+          AI_JUDGE_MODEL: '',
+          AI_JUDGE_LOCALES: '',
           RESEND_API_KEY: '',
           // Email goes to the local mail catcher, never out of the machine.
           SMTP_URL: `smtp://127.0.0.1:${MAIL_PORT}`,

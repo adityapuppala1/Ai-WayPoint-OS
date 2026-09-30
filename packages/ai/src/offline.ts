@@ -17,7 +17,8 @@ interface Copy {
   intro: string;
   menu: string[];
   scam: string;
-  verdict: Record<RiskLevel, string>;
+  /** Only for a warning: "no scam signs" is never said about a person's own question. */
+  verdict: Record<Exclude<RiskLevel, 'low'>, string>;
   signs: string;
   work: string;
   money: string;
@@ -44,7 +45,6 @@ const COPY: Record<string, Copy> = {
     ],
     scam: 'I checked it with Shield’s rules: {verdict}.',
     verdict: {
-      low: 'no common scam signs found',
       unclear: 'some warning signs — be careful',
       high: 'high risk — this looks like a scam',
       'very-high': 'very high risk — this is very likely a scam',
@@ -76,7 +76,6 @@ const COPY: Record<string, Copy> = {
     ],
     scam: 'मैंने शील्ड के नियमों से जाँचा: {verdict}।',
     verdict: {
-      low: 'धोखे के आम संकेत नहीं मिले',
       unclear: 'कुछ चेतावनी संकेत हैं — सावधान रहें',
       high: 'जोखिम ज़्यादा है — यह धोखा लगता है',
       'very-high': 'जोखिम बहुत ज़्यादा है — यह लगभग निश्चित रूप से धोखा है',
@@ -108,7 +107,6 @@ const COPY: Record<string, Copy> = {
     ],
     scam: 'Lo revisé con las reglas del Escudo: {verdict}.',
     verdict: {
-      low: 'no encontré señales comunes de estafa',
       unclear: 'hay algunas señales de alerta: ten cuidado',
       high: 'riesgo alto: parece una estafa',
       'very-high': 'riesgo muy alto: casi seguro es una estafa',
@@ -141,7 +139,6 @@ const COPY: Record<string, Copy> = {
     ],
     scam: 'Je l’ai vérifié avec les règles du Bouclier : {verdict}.',
     verdict: {
-      low: 'aucun signe d’arnaque courant',
       unclear: 'quelques signaux d’alerte : soyez prudent',
       high: 'risque élevé : cela ressemble à une arnaque',
       'very-high': 'risque très élevé : c’est très probablement une arnaque',
@@ -174,7 +171,6 @@ const COPY: Record<string, Copy> = {
     ],
     scam: 'Verifiquei com as regras do Escudo: {verdict}.',
     verdict: {
-      low: 'não encontrei sinais comuns de golpe',
       unclear: 'há alguns sinais de alerta — tenha cuidado',
       high: 'risco alto — parece golpe',
       'very-high': 'risco muito alto — é quase certamente golpe',
@@ -206,7 +202,6 @@ const COPY: Record<string, Copy> = {
     ],
     scam: 'فحصتُها بقواعد الدرع: {verdict}.',
     verdict: {
-      low: 'لم أجد علامات احتيال شائعة',
       unclear: 'هناك بعض علامات التحذير — كن حذرًا',
       high: 'الخطر مرتفع — يبدو أنه احتيال',
       'very-high': 'الخطر مرتفع جدًا — هذا احتيال على الأرجح',
@@ -238,7 +233,6 @@ const COPY: Record<string, Copy> = {
     ],
     scam: 'Nimeukagua kwa kanuni za Ngao: {verdict}.',
     verdict: {
-      low: 'sikupata dalili za kawaida za ulaghai',
       unclear: 'kuna dalili kadhaa za tahadhari — kuwa mwangalifu',
       high: 'hatari ni kubwa — inaonekana kuwa ulaghai',
       'very-high': 'hatari ni kubwa sana — karibu hakika ni ulaghai',
@@ -426,6 +420,10 @@ export function offlineReply(
         country: opts.country ?? undefined,
         locale: isLocale(opts.locale) ? opts.locale : 'en',
       });
+      // What was checked is the person's own words, often a description of a call or an offer
+      // rather than the message itself, so the rules finding nothing says nothing: no verdict,
+      // only the way to Shield, where the message can be pasted. A warning still stands.
+      if (r.level === 'low') return link(c.menu[0] ?? c.links.shield, '/shield');
       const lines = [c.scam.replace('{verdict}', c.verdict[r.level])];
       // Warning signs and advice come back already translated by the Shield engine.
       const signs = r.signals.slice(0, 3).map((s) => `- ${s.title}`);

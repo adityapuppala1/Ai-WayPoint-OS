@@ -86,8 +86,10 @@ because of it.
   level, cancels a rule that fired, or is believed when it says "this is fine". Scam text is
   written to deceive, and TypeSafe's own notes say text that argues for its own label "can
   move the answer". So a "nothing found" means nothing: it is not reported as an opinion and
-  never stops the language model from being asked. And a message that addresses the checker
-  is itself treated as a warning sign.
+  never stops the language model from being asked. When the judge is fairly sure a message
+  addresses the checker (about 0.75 or more on that question alone), that is shown as a
+  warning sign. No rule looks for such text, so when the judge misses it, is fooled by it or
+  is not set up, no such sign is shown.
 - **Never in immediate danger.** At crisis tier 3 nothing goes to the judge, as nothing goes to
   a model. The crisis check is Waypoint's own rules and runs first.
 - **Never the detector.** The crisis classifier and the Shield rules run first and without it.

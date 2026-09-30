@@ -111,6 +111,11 @@ describe('turning the judge’s answers into a level', () => {
   it('treats text written at the checker as a warning sign when it is fairly sure of it', () => {
     const out = readShieldSigns(answers({ hiddenInstructions: 0.95 }));
     expect(out).toMatchObject({ level: 'unclear', seen: ['hidden-instructions'] });
+    // On its own it shows from 0.75 (docs/SAFETY.md says so); below that, no sign at all.
+    expect(readShieldSigns(answers({ hiddenInstructions: 0.75 })).seen).toEqual([
+      'hidden-instructions',
+    ]);
+    expect(readShieldSigns(answers({ hiddenInstructions: 0.74 })).seen).toEqual([]);
   });
 
   it('never says very high, whatever it is told', () => {

@@ -73,8 +73,10 @@ of a sign the rules already have words for, in the reader's language. It never s
 high", so it is asked only about messages the rules rated low or unclear, and its "nothing
 found" counts for nothing: it is not reported as a second opinion, and a message that tells
 the checker it is safe is rated by the rules and the language model as if the judge were not
-there, and that attempt is itself shown as a warning sign. Which model answered is stored
-with the check ([AI.md](AI.md#typed-decisions-jev)).
+there. When the judge is fairly sure a message contains text addressed to the checker (about
+0.75 or more on that question alone), that is shown as a warning sign. No rule looks for such
+text, so when the judge misses it, is fooled by it or is not set up, no such sign is shown.
+Which model answered is stored with the check ([AI.md](AI.md#typed-decisions-jev)).
 
 - **Every language, not just English.** Each rule carries cues in English, Hindi (Devanagari
   and romanised), Spanish, French, Portuguese, Arabic and Swahili, and the golden set has at

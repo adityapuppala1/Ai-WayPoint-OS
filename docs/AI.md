@@ -126,6 +126,13 @@ sent, so a short English message with few common words is rated without the judg
 `detectLanguage`, which the crisis check and texting use, still falls back to English; the
 judge does not use it.)
 
+That strict test is for what people paste or type. What Waypoint's own model wrote for the
+reader (a texted answer, a reworded plan) is read unless it is clearly in another language or
+script (`judgeWrittenLanguage`): the model writes in the reader's language, and a clipped
+answer such as "Paracetamol 1g every 6 hours, max 4g daily" has too few common words to name
+it, yet is exactly what the reply check looks for. An answer to someone who wrote in a language
+that is not switched on is still not sent: the model answers them in theirs.
+
 To switch a language on:
 
 1. Set `TYPESAFE_API_KEY` and run `pnpm --filter @waypoint/ai eval:judge`. It sends the scam

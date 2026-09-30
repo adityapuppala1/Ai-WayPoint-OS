@@ -190,17 +190,22 @@ const LISTS: ReadonlyArray<readonly [string, ReadonlySet<string>]> = [
 ];
 const UNNAMED = new Set(NEVER_NAMED.map(([lang]) => lang));
 
-/** The language `text` is clearly written in ("en", "es", "hi"…), or "und". */
-export function judgeTextLanguage(text: string): string {
+type Reading =
+  | { script: 'hi' | 'ar' | 'bn' }
+  | { script: 'latin'; words: number; scores: ReadonlyArray<readonly [string, number]> }
+  | null;
+
+/** The script that holds nine letters in ten, and for Latin, each list's common words. */
+function read(text: string): Reading {
   const plain = text.replace(NOT_WORDS, ' ');
   const letters = plain.match(/\p{L}/gu) ?? [];
-  if (!letters.length) return UNDETERMINED;
+  if (!letters.length) return null;
   const counts = SCRIPTS.map(
     ([script, pattern]) => [script, letters.filter((l) => pattern.test(l)).length] as const,
   );
   const [script, most] = counts.reduce((a, b) => (b[1] > a[1] ? b : a));
-  if (most < letters.length * ONE_SCRIPT) return UNDETERMINED;
-  if (script !== 'latin') return script;
+  if (most < letters.length * ONE_SCRIPT) return null;
+  if (script !== 'latin') return { script };
 
   const words = foldText(plain)
     .split(/[^a-z']+/)
@@ -210,9 +215,42 @@ export function judgeTextLanguage(text: string): string {
   const scores = LISTS.map(
     ([lang, set]) => [lang, new Set(words.filter((w) => set.has(w))).size] as const,
   ).sort((a, b) => b[1] - a[1]);
-  const [best, runnerUp] = scores;
+  return { script, words: words.length, scores };
+}
+
+/** The language `text` is clearly written in ("en", "es", "hi"…), or "und". */
+export function judgeTextLanguage(text: string): string {
+  const reading = read(text);
+  if (!reading) return UNDETERMINED;
+  if (reading.script !== 'latin') return reading.script;
+  const [best, runnerUp] = reading.scores;
   if (!best || best[1] < MARKERS_NEEDED.words) return UNDETERMINED;
-  if (best[1] < words.length * MARKERS_NEEDED.share) return UNDETERMINED;
+  if (best[1] < reading.words * MARKERS_NEEDED.share) return UNDETERMINED;
   if (runnerUp && runnerUp[1] === best[1]) return UNDETERMINED;
   return UNNAMED.has(best[0]) ? UNDETERMINED : best[0];
+}
+
+/**
+ * The language of text Waypoint's own model wrote for a reader of `locale` (an answer, a
+ * reworded plan): as `judgeTextLanguage`, except that Latin-script text that is not clearly in
+ * any language is taken to be in the reader's, when that is a Latin-script language and no
+ * other language has more of its common words in it. The model is told to write in the
+ * reader's language, and its short answers ("Paracetamol 1g every 6 hours, max 4g daily") can
+ * be too clipped to name one. Never for text a person pasted or typed: that is only ever read
+ * when its language is clear.
+ */
+export function judgeWrittenLanguage(text: string, locale: string): string {
+  const clear = judgeTextLanguage(text);
+  const reading = read(text);
+  if (clear !== UNDETERMINED || reading?.script !== 'latin') return clear;
+  const reader = locale.trim().toLowerCase().split(/[-_]/)[0] ?? '';
+  // A language written in the Latin script, with a list of its own ("hi" has one for Hindi
+  // typed in Latin letters, but is written in Devanagari).
+  const latin =
+    LISTS.some(([lang]) => lang === reader) &&
+    !UNNAMED.has(reader) &&
+    !SCRIPTS.some(([script]) => script === reader);
+  if (!latin) return UNDETERMINED;
+  const own = reading.scores.find(([lang]) => lang === reader)?.[1] ?? 0;
+  return reading.scores.some(([lang, n]) => lang !== reader && n > own) ? UNDETERMINED : reader;
 }

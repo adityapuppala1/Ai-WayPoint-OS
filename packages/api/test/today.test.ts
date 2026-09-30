@@ -345,6 +345,17 @@ describe('Today’s next step', () => {
     });
     expect(acted.status).toBe(200);
     expect((await today(cookie)).nextStep.kind).toBe('explore');
+
+    // Undo: the note is back where it was, on the sign and in the list.
+    const restored = await req(`/api/nudges/${done.noteId}`, {
+      cookie,
+      json: { action: 'restore' },
+      method: 'POST',
+    });
+    expect(restored.status).toBe(200);
+    const again = await today(cookie);
+    expect(again.nextStep).toMatchObject({ kind: 'reminder', done: { noteId: done.noteId } });
+    expect(again.nudges.map((n) => n.title)).toContain('Call the clinic about Mum’s results');
   });
 
   it('a safety note comes before everything else', async () => {

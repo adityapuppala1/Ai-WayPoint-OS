@@ -31,6 +31,7 @@ const AREA_MARK: Record<Goal['area'], ModuleKey> = {
 export function GoalItem({ goal }: { goal: Goal }) {
   const t = useTranslations('goals');
   const common = useTranslations('common');
+  const today = useTranslations('today');
   const errors = useTranslations('errors');
   const format = useFormatter();
   const router = useRouter();
@@ -44,6 +45,26 @@ export function GoalItem({ goal }: { goal: Goal }) {
   const patch = async (json: Record<string, unknown>) => {
     try {
       await api(`/api/goals/${goal.id}`, { method: 'PATCH', json });
+      router.refresh();
+    } catch {
+      toast({ title: errors('generic'), tone: 'danger' });
+    }
+  };
+
+  /**
+   * Done, paused or let go: said in a toast, with Undo to put the goal back as it was. The
+   * goal moves between lists at once, so the toast is where it can be taken back.
+   */
+  const setStatus = async (status: 'done' | 'paused' | 'dropped') => {
+    const before = goal.status;
+    try {
+      await api(`/api/goals/${goal.id}`, { method: 'PATCH', json: { status } });
+      toast({
+        title: t(`status.${status}`),
+        description: goal.title,
+        tone: status === 'done' ? 'safe' : 'info',
+        action: { label: today('undo'), onAction: () => void patch({ status: before }) },
+      });
       router.refresh();
     } catch {
       toast({ title: errors('generic'), tone: 'danger' });
@@ -118,12 +139,12 @@ export function GoalItem({ goal }: { goal: Goal }) {
         }
       >
         {open ? (
-          <MenuItem id="done" icon="check" onAction={() => patch({ status: 'done' })}>
+          <MenuItem id="done" icon="check" onAction={() => void setStatus('done')}>
             {t('markDone')}
           </MenuItem>
         ) : null}
         {open ? (
-          <MenuItem id="pause" icon="time" onAction={() => patch({ status: 'paused' })}>
+          <MenuItem id="pause" icon="time" onAction={() => void setStatus('paused')}>
             {t('pause')}
           </MenuItem>
         ) : (
@@ -132,7 +153,7 @@ export function GoalItem({ goal }: { goal: Goal }) {
           </MenuItem>
         )}
         {open ? (
-          <MenuItem id="drop" icon="close" onAction={() => patch({ status: 'dropped' })}>
+          <MenuItem id="drop" icon="close" onAction={() => void setStatus('dropped')}>
             {t('drop')}
           </MenuItem>
         ) : null}

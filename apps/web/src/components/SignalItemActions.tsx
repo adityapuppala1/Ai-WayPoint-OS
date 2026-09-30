@@ -8,8 +8,9 @@ import styles from './SignalItem.module.css';
 
 /**
  * One signal with the two things a person can do about it: keep it ("Save") or say it is not
- * for them ("Not relevant"). Both can be taken back on the spot: Save is a switch, and a
- * hidden signal leaves a line with "Undo" where it was until the page is left.
+ * for them ("Not relevant"). Both can be taken back on the spot: Save says so in a toast with
+ * "Undo" (and is a switch too), and a hidden signal leaves a line with "Undo" where it was
+ * until the page is left.
  *
  * The words come in as props: the `signals` messages stay on the server.
  */
@@ -61,11 +62,24 @@ export function SignalItemActions({
     });
   };
 
-  const toggleSaved = () => {
-    const next = !saved;
+  const setSavedTo = (next: boolean) => {
     setSaved(next);
     send({ saved: next }, () => setSaved(!next));
   };
+  const toggleSaved = () => {
+    const next = !saved;
+    setSavedTo(next);
+    // Keeping something is said once, with a way to take it back. Unsaving is the switch itself.
+    if (next)
+      toast({
+        title: labels.saved,
+        description: title,
+        tone: 'safe',
+        action: { label: labels.undo, onAction: () => setSavedTo(false) },
+      });
+  };
+  // Hiding has its Undo in the row it leaves behind (with the keyboard on it), so it needs no
+  // toast: two Undo buttons for one thing would only make the person choose between them.
   const hide = (next: boolean) => {
     follow.current = true;
     setHidden(next);

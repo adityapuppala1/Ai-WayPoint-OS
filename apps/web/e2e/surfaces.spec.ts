@@ -156,7 +156,16 @@ test('a signal can be saved, hidden and brought back, and an empty search says s
     expect(await noSidewaysScroll(page)).toBe(true);
     expect(await seriousProblems(page)).toEqual([]);
 
-    // Save is a switch: it says "Saved", and pressing it again would take the save back.
+    // Save is a switch: it says "Saved", and pressing it again would take the save back. It
+    // is also said in a toast whose Undo takes it back.
+    await andSaved(page, () => item.getByRole('button', { name: `Save: ${title}` }).click());
+    const said = page.getByRole('alertdialog').filter({ hasText: title });
+    await expect(said).toContainText('Saved');
+    await andSaved(page, () => said.getByRole('button', { name: 'Undo' }).click());
+    await expect(item.getByRole('button', { name: `Save: ${title}` })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
     await andSaved(page, () => item.getByRole('button', { name: `Save: ${title}` }).click());
     await expect(item.getByRole('button', { name: `Saved: ${title}` })).toHaveAttribute(
       'aria-pressed',

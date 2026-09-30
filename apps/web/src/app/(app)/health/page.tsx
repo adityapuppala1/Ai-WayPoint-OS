@@ -2,10 +2,12 @@ import { health as healthService } from '@waypoint/api';
 import { ModuleMark, Panel } from '@waypoint/ui';
 import type { Metadata } from 'next';
 import { getFormatter, getTranslations } from 'next-intl/server';
+import { EmptyNote } from '@/components/EmptyNote';
 import { CareGuide } from '@/components/health/CareGuide';
 import { DayCheckin } from '@/components/health/DayCheckin';
 import { Reminders } from '@/components/health/Reminders';
 import { WeekBars } from '@/components/health/WeekBars';
+import { JumpLink } from '@/components/JumpLink';
 import { ltr } from '@/lib/bidi';
 import { requireViewer } from '@/lib/server';
 
@@ -49,6 +51,7 @@ export default async function HealthPage() {
           }),
         })}`}
         as="section"
+        id="today"
       >
         <DayCheckin day={view.today} />
       </Panel>
@@ -57,7 +60,9 @@ export default async function HealthPage() {
         {view.week.loggedDays ? (
           <WeekBars week={view.week} />
         ) : (
-          <p className="wp-secondary">{t('weekEmpty')}</p>
+          <EmptyNote action={<JumpLink to="today">{t('logToday')}</JumpLink>}>
+            {t('weekEmpty')}
+          </EmptyNote>
         )}
       </Panel>
 

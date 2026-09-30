@@ -1,0 +1,6 @@
+.empty {
+  display: grid;
+  justify-items: start;
+  gap: var(--wp-space-2);
+  color: var(--wp-text-secondary);
+}

@@ -48,12 +48,12 @@ export default async function MindPage() {
         </Notice>
       ) : null}
 
-      <Panel title={t('checkinTitle')} description={t('checkinLead')} as="section">
+      <Panel title={t('checkinTitle')} description={t('checkinLead')} as="section" id="checkin">
         <MoodCheckin />
       </Panel>
 
       <Panel title={t('trendTitle')} as="section">
-        <MoodTrend summary={view.summary} />
+        <MoodTrend summary={view.summary} checkinId="checkin" />
       </Panel>
 
       <Panel title={t('journalTitle')} description={t('journalLead')} as="section">

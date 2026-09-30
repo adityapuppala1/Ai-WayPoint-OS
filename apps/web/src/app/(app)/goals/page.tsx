@@ -6,6 +6,7 @@ import { GoalComposer } from '@/components/goals/GoalComposer';
 import { GoalItem } from '@/components/goals/GoalItem';
 import styles from '@/components/goals/goals.module.css';
 import { WeeklyReview } from '@/components/goals/WeeklyReview';
+import { JumpLink } from '@/components/JumpLink';
 import { type NextStop, NextStops } from '@/components/NextStops';
 import { requireViewer } from '@/lib/server';
 
@@ -47,11 +48,16 @@ export default async function GoalsPage() {
             ))}
           </ul>
         ) : (
-          <EmptyState title={t('empty')} />
+          // The way in is the form underneath, already open: the link puts the keyboard in it.
+          <div role="note">
+            <EmptyState title={t('empty')} action={<JumpLink to="add-goal">{t('add')}</JumpLink>} />
+          </div>
         )}
-        <Disclosure title={t('add')} headingLevel={3} defaultExpanded={active.length === 0}>
-          <GoalComposer />
-        </Disclosure>
+        <div id="add-goal">
+          <Disclosure title={t('add')} headingLevel={3} defaultExpanded={active.length === 0}>
+            <GoalComposer />
+          </Disclosure>
+        </div>
       </Panel>
 
       <Panel title={t('reviewTitle')} description={t('reviewLead')} as="section" id="review">

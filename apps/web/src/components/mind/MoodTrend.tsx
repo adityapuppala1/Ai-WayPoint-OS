@@ -1,19 +1,33 @@
 import type { MindView } from '@waypoint/api/client';
 import { getFormatter, getTranslations } from 'next-intl/server';
+import { EmptyNote } from '@/components/EmptyNote';
+import { JumpLink } from '@/components/JumpLink';
 import styles from './mind.module.css';
 
 /**
  * Two weeks of check-ins as quiet bars. Each bar carries its own label for screen readers, so
- * the chart never depends on seeing it.
+ * the chart never depends on seeing it. With nothing to show yet, it points at the check-in
+ * (the part of the page with the id `checkinId`).
  */
-export async function MoodTrend({ summary }: { summary: MindView['summary'] }) {
+export async function MoodTrend({
+  summary,
+  checkinId,
+}: {
+  summary: MindView['summary'];
+  checkinId: string;
+}) {
   const t = await getTranslations('mind');
   const format = await getFormatter();
   const day = (d: string) =>
     format.dateTime(new Date(`${d}T12:00:00`), { weekday: 'short', day: 'numeric' });
   const last = summary.days.length - 1;
   const hasAny = summary.days.some((d) => d.mood !== null);
-  if (!hasAny) return <p className="wp-secondary">{t('trendEmpty')}</p>;
+  if (!hasAny)
+    return (
+      <EmptyNote action={<JumpLink to={checkinId}>{t('checkinTitle')}</JumpLink>}>
+        {t('trendEmpty')}
+      </EmptyNote>
+    );
   return (
     <div>
       <ul className={styles.trend}>

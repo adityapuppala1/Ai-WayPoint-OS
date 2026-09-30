@@ -57,3 +57,34 @@ describe('emails', () => {
     expect(mail?.html).toContain('dir="rtl"');
   });
 });
+
+describe('sending through an SMTP server', () => {
+  it('insists on encryption and never waits for ever', async () => {
+    const { smtpOptions } = await import('../src/email/send');
+    const submission = smtpOptions('smtp://user:pass@mail.example:587');
+    // Port 587 starts in the clear: without requireTLS a server (or someone in between) that
+    // does not offer STARTTLS would be sent the password and the message unencrypted.
+    expect(submission.requireTLS).toBe(true);
+    for (const timeout of ['connectionTimeout', 'greetingTimeout', 'socketTimeout'] as const) {
+      expect(submission[timeout]).toBeGreaterThan(0);
+      expect(submission[timeout]).toBeLessThanOrEqual(30_000);
+    }
+    // Already encrypted from the first byte.
+    expect(smtpOptions('smtps://user:pass@mail.example:465').requireTLS).toBe(false);
+    // A mail catcher on the same machine during development has no certificate.
+    for (const local of ['smtp://localhost:1025', 'smtp://127.0.0.1:1025', 'smtp://[::1]:1025'])
+      expect(smtpOptions(local).requireTLS, local).toBe(false);
+  });
+});
+
+describe('the worker’s settings', () => {
+  it('falls back to a sensible pause when WORKER_INTERVAL_MS is not a number', async () => {
+    const { workerIntervalMs } = await import('../src/jobs');
+    expect(workerIntervalMs(undefined)).toBe(30_000);
+    expect(workerIntervalMs('abc')).toBe(30_000);
+    expect(workerIntervalMs('')).toBe(30_000);
+    expect(workerIntervalMs('-5')).toBe(30_000);
+    expect(workerIntervalMs('5')).toBe(1_000);
+    expect(workerIntervalMs('60000')).toBe(60_000);
+  });
+});

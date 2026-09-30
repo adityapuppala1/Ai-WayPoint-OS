@@ -180,3 +180,103 @@ describe('names other people will read', () => {
     expect(fine.status).toBe(200);
   });
 });
+
+describe('background work', () => {
+  it('stores time zones by name only, never as an offset the database reads backwards', async () => {
+    const me = await account('Tariq');
+    for (const timezone of ['+05:00', '-0800', 'Not/AZone'])
+      expect(
+        (await req('/api/me/profile', { method: 'PATCH', cookie: me.cookie, json: { timezone } }))
+          .status,
+        timezone,
+      ).toBe(422);
+    expect(
+      (
+        await req('/api/me/profile', {
+          method: 'PATCH',
+          cookie: me.cookie,
+          json: { timezone: 'Asia/Kolkata' },
+        })
+      ).status,
+    ).toBe(200);
+  });
+
+  it('keeps delivering to everyone else when one person’s settings are broken', async () => {
+    const { jobs } = await import('../src');
+    const broken = await account('Bea');
+    const fine = await account('Femi');
+    // A value that could only get here from an older version or a direct change to the database.
+    await db
+      .getDb()
+      .update(db.profiles)
+      .set({ timezone: 'Not/AZone', attentionBudget: 3, quietStart: null, quietEnd: null })
+      .where(db.eq(db.profiles.userId, broken.id));
+    await db
+      .getDb()
+      .update(db.profiles)
+      .set({ timezone: 'UTC', attentionBudget: 3, quietStart: null, quietEnd: null })
+      .where(db.eq(db.profiles.userId, fine.id));
+    for (const userId of [broken.id, fine.id])
+      await db.getDb().insert(db.nudges).values({
+        userId,
+        module: 'today',
+        priority: 'normal',
+        title: 'A note',
+      });
+    const result = await jobs.deliverNudges(db.getDb());
+    expect(result.delivered).toBeGreaterThanOrEqual(1);
+    const [note] = await rows<{ status: string }>(
+      db.sql`select status from nudges where user_id = ${fine.id}`,
+    );
+    expect(note?.status).toBe('delivered');
+  });
+
+  it('delivers the check-in after a hard moment even when someone asked for no other messages', async () => {
+    const { jobs } = await import('../src');
+    const me = await account('Imani');
+    await db
+      .getDb()
+      .update(db.profiles)
+      .set({ timezone: 'UTC', attentionBudget: 0, quietStart: null, quietEnd: null })
+      .where(db.eq(db.profiles.userId, me.id));
+    await db
+      .getDb()
+      .insert(db.crisisEvents)
+      .values({
+        userId: me.id,
+        channel: 'ask',
+        tier: 2,
+        categories: ['self-harm'],
+        ruleIds: ['x'],
+        rulesVersion: 'test',
+        language: 'en',
+        followUpAt: new Date(Date.now() - 60_000),
+        followUpStatus: 'scheduled',
+      });
+    expect(await jobs.crisisFollowUps(db.getDb())).toBeGreaterThanOrEqual(1);
+    await jobs.deliverNudges(db.getDb());
+    const [checkIn] = await rows<{ status: string }>(
+      db.sql`select status from nudges where user_id = ${me.id} and dedupe_key = 'crisis-follow-up'`,
+    );
+    expect(checkIn?.status).toBe('delivered');
+  });
+
+  it('forgets what it no longer needs: used sign-in codes and safety records of unlinked numbers', async () => {
+    const { jobs } = await import('../src');
+    await db.getDb().execute(db.sql`
+      insert into verifications (id, identifier, value, expires_at, created_at, updated_at)
+      values ('v-old', '+15550009999', '123456:0', now() - interval '2 days', now() - interval '2 days', now() - interval '2 days'),
+             ('v-new', '+15550009998', '654321:0', now() + interval '5 minutes', now(), now())`);
+    await db.getDb().execute(db.sql`
+      insert into crisis_events (id, user_id, channel, tier, categories, rule_ids, rules_version, created_at)
+      values (gen_random_uuid(), null, 'sms', 2, '{}', '{}', 'test', now() - interval '200 days'),
+             (gen_random_uuid(), null, 'sms', 2, '{}', '{}', 'test', now() - interval '10 days')`);
+    await jobs.retention(db.getDb());
+    const left = await rows<{ id: string }>(db.sql`select id from verifications`);
+    expect(left.map((r) => r.id)).toEqual(['v-new']);
+    const events = await rows<{ n: number }>(
+      db.sql`select count(*)::int as n from crisis_events where user_id is null and channel = 'sms'`,
+    );
+    expect(events[0]?.n).toBe(1);
+  });
+});

@@ -30,7 +30,12 @@ async function shutdown(signal: string) {
   process.stdout.write(
     `${JSON.stringify({ time: new Date().toISOString(), level: 'info', msg: 'shutting down', signal })}\n`,
   );
-  server.close();
+  // Stop taking new requests and let the ones in progress finish (up to 15 seconds) before
+  // the database goes away underneath them.
+  await Promise.race([
+    new Promise<void>((resolve) => server.close(() => resolve())),
+    new Promise<void>((resolve) => setTimeout(resolve, 15_000)),
+  ]);
   await closeDb().catch(() => undefined);
   process.exit(0);
 }

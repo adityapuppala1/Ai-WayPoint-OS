@@ -14,7 +14,7 @@ import { closeDb, dbReady, getDb } from '@waypoint/db';
 const env = getEnv();
 const once = process.argv.includes('--once');
 const workerId = `${hostname()}-${process.pid}`;
-const INTERVAL_MS = Number(process.env.WORKER_INTERVAL_MS ?? 30_000);
+const INTERVAL_MS = jobs.workerIntervalMs(process.env.WORKER_INTERVAL_MS);
 const RETENTION_EVERY = Math.max(1, Math.round((6 * 3_600_000) / INTERVAL_MS));
 
 const log = (msg: string, fields: Record<string, unknown> = {}) =>
@@ -47,18 +47,40 @@ if (once) {
   process.exit(0);
 }
 
+let wake: (() => void) | undefined;
+let running: Promise<void> = Promise.resolve();
+
 const loop = async () => {
   while (!stopping) {
     const started = Date.now();
-    await tick().catch((err: Error) => log('tick failed', { error: err.message }));
-    await new Promise((r) => setTimeout(r, Math.max(1_000, INTERVAL_MS - (Date.now() - started))));
+    // Errors are logged without what a failed statement contained, addresses or numbers.
+    running = tick().catch((err: unknown) => {
+      log('tick failed', jobs.errorFields(err));
+    });
+    await running;
+    if (stopping) break;
+    await new Promise<void>((resolve) => {
+      const timer = setTimeout(resolve, Math.max(1_000, INTERVAL_MS - (Date.now() - started)));
+      wake = () => {
+        clearTimeout(timer);
+        resolve();
+      };
+    });
   }
 };
 
+/** How long a round in progress may take to finish before the process leaves anyway. */
+const DRAIN_MS = 25_000;
+
 for (const sig of ['SIGTERM', 'SIGINT'] as const) {
   process.on(sig, async () => {
+    if (stopping) return;
     stopping = true;
     log('stopping', { signal: sig });
+    wake?.();
+    // Let the round in progress finish: leaving mid-send would send the same messages again
+    // ten minutes later, when their claim runs out.
+    await Promise.race([running, new Promise((r) => setTimeout(r, DRAIN_MS))]);
     await closeDb().catch(() => undefined);
     process.exit(0);
   });

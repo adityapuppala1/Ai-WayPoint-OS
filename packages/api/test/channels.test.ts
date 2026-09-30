@@ -551,6 +551,42 @@ describe('sending queued messages', () => {
     expect(JSON.stringify(row?.payload)).not.toContain('later');
   });
 
+  it('sends everything that is waiting in one run, sign-in codes first', async () => {
+    await api.jobs.dispatchOutbox(db.getDb());
+    sent.length = 0;
+    for (let i = 0; i < 45; i++)
+      await service.queueText(db.getDb(), {
+        channel: 'sms',
+        provider: 'twilio',
+        e164: '+15557770040',
+        body: `Reply ${i}`,
+        identityId: 'x',
+      });
+    // Queued last, behind a pile of replies: a code is only good for five minutes.
+    const { sealWithKek } = await import('@waypoint/core/privacy');
+    await db.enqueueMessage(db.getDb(), {
+      channel: 'sms',
+      recipientRef: sealWithKek('+15557770041', 'outbox'),
+      payload: { template: 'otp', locale: 'en' },
+      secret: { code: '123456' },
+    });
+    const handled = await api.jobs.dispatchOutbox(db.getDb());
+    expect(handled).toBe(46);
+    const to = sent.map((s) => new URLSearchParams(s.body).get('To'));
+    expect(to).toHaveLength(46);
+    expect(to[0]).toBe('+15557770041');
+    // Nothing is left waiting, and a finished message keeps neither words nor recipient.
+    const left = await rows<{ status: string; recipient_ref: string; payload: unknown }>(
+      db.sql`select status, recipient_ref, payload from outbox where status <> 'queued'`,
+    );
+    expect(left.length).toBeGreaterThanOrEqual(46);
+    for (const row of left) expect(row.recipient_ref).toBe('');
+    const waiting = await rows<{ n: number }>(
+      db.sql`select count(*)::int as n from outbox where status = 'queued'`,
+    );
+    expect(waiting[0]?.n).toBe(0);
+  });
+
   it('keeps the words of a waiting message sealed', async () => {
     await service.queueText(db.getDb(), {
       channel: 'sms',
@@ -599,7 +635,7 @@ describe('sending queued messages', () => {
     await api.jobs.dispatchOutbox(db.getDb());
     expect(sent).toHaveLength(0);
     const [stale] = await rows<{ status: string; last_error: string }>(
-      db.sql`select status, last_error from outbox where recipient_ref = 'x'`,
+      db.sql`select status, last_error from outbox where status = 'cancelled' order by created_at limit 1`,
     );
     expect(stale).toMatchObject({ status: 'cancelled', last_error: 'Too old to be useful' });
   });

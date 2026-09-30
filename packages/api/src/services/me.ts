@@ -33,7 +33,12 @@ import type { ApiUser, Consents } from '../types';
 /** The privacy notice version each consent records (kept with the notice's dates in core). */
 export { PRIVACY_POLICY_VERSION };
 
+/**
+ * A time zone by its name ("Africa/Nairobi"), never an offset: JavaScript accepts "+05:00", but
+ * the database reads such offsets the other way round, and an offset knows nothing of summer time.
+ */
 const isTimeZone = (tz: string) => {
+  if (!/^[A-Za-z][A-Za-z0-9_+-]*(?:\/[A-Za-z0-9_+-]+){0,2}$/.test(tz)) return false;
   try {
     new Intl.DateTimeFormat('en', { timeZone: tz });
     return true;

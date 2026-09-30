@@ -377,6 +377,50 @@ describe('Today’s next step', () => {
     expect(next.nextStep.kind).toBe('checklist');
   });
 
+  it('a safety note stays first, however many newer notes arrive after it', async () => {
+    const cookie = await person('lost-job');
+    await db
+      .getDb()
+      .insert(db.nudges)
+      .values({
+        userId: await userId(cookie),
+        module: 'today',
+        priority: 'critical',
+        title: 'Checking in on you',
+        body: 'Last time we talked, things were hard. How are you doing now?',
+        href: '/support',
+        dedupeKey: 'crisis-follow-up',
+        status: 'delivered',
+        createdAt: new Date(Date.now() - 3_600_000),
+      });
+    // Three reminders fall due after it, and each leaves a newer note.
+    const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+    for (const title of ['Morning pills', 'Noon pills', 'Evening pills']) {
+      const created = await req('/api/wellbeing/reminders', {
+        method: 'POST',
+        cookie,
+        json: { title, repeat: 'once', date: tomorrow, time: '09:00' },
+      });
+      expect(created.status).toBe(201);
+      const reminder = (await created.json()) as { id: string };
+      await db
+        .getDb()
+        .update(db.reminders)
+        .set({ nextAt: new Date(Date.now() - 60_000) })
+        .where(db.eq(db.reminders.id, reminder.id));
+    }
+    const { dueReminders } = await import('../src/jobs');
+    expect(await dueReminders(db.getDb())).toBeGreaterThanOrEqual(3);
+
+    const view = await today(cookie);
+    expect(view.nextStep).toMatchObject({
+      kind: 'safety-note',
+      title: 'Checking in on you',
+      detail: 'Last time we talked, things were hard. How are you doing now?',
+    });
+    expect(view.nudges.map((n) => n.title)).toContain('Checking in on you');
+  });
+
   it('with a plan, things with a deadline still come first; then the plan’s own step', async () => {
     const cookie = await person('first-job');
     const overview = (await (await req('/api/path', { cookie })).json()) as {

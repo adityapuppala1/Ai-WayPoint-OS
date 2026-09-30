@@ -35,6 +35,7 @@ import {
   moodCheckins,
   nudges,
   or,
+  sql,
   weeklyReviews,
 } from '@waypoint/db';
 import { englishMessages, type Messages } from '@waypoint/i18n';
@@ -222,7 +223,9 @@ export async function today(
             or(isNull(nudges.expiresAt), gt(nudges.expiresAt, now)),
           ),
         )
-        .orderBy(desc(nudges.createdAt))
+        // A safety note is read before the limit, not after it: however many newer notes
+        // arrive (a reminder three times a day), the check-in after a hard moment stays first.
+        .orderBy(sql`(${nudges.priority} = 'critical') desc`, desc(nudges.createdAt))
         .limit(3),
       // The life-event checklist that matches the person's situation, with their progress.
       event && getChecklist(event, profile.country)

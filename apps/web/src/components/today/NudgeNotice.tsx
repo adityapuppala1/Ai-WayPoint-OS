@@ -5,7 +5,7 @@ import type { Route } from 'next';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { api } from '@/lib/api';
+import { api, problemKey } from '@/lib/api';
 
 export interface NudgeView {
   id: string;
@@ -23,8 +23,9 @@ export function NudgeNotice({ nudge }: { nudge: NudgeView }) {
   const [gone, setGone] = useState(false);
   if (gone) return null;
 
-  const mark = (action: 'acted' | 'dismissed') =>
-    api(`/api/nudges/${nudge.id}`, { json: { action } }).catch(() => undefined);
+  // Opening the note leaves the page, so nobody is told whether this arrived.
+  const acted = () =>
+    api(`/api/nudges/${nudge.id}`, { json: { action: 'acted' } }).catch(() => undefined);
 
   // Undo brings the note back as it was. By then this row may have left the page, so the
   // note returns with the refreshed list rather than by state here.
@@ -51,7 +52,7 @@ export function NudgeNotice({ nudge }: { nudge: NudgeView }) {
               variant={support ? 'support' : 'secondary'}
               size="sm"
               icon={support ? 'support' : 'forward'}
-              onPress={() => void mark('acted')}
+              onPress={() => void acted()}
             >
               {support ? t('nudgeSupport') : t('nudgeOpen')}
             </LinkButton>
@@ -61,7 +62,14 @@ export function NudgeNotice({ nudge }: { nudge: NudgeView }) {
             size="sm"
             onPress={async () => {
               setGone(true);
-              await mark('dismissed');
+              // Said to be dismissed only once it is: otherwise the note stays, and says why.
+              try {
+                await api(`/api/nudges/${nudge.id}`, { json: { action: 'dismissed' } });
+              } catch (err) {
+                setGone(false);
+                toast({ title: errors(problemKey(err)), tone: 'danger' });
+                return;
+              }
               toast({
                 title: t('nudgeDismissed'),
                 description: nudge.title,

@@ -50,7 +50,7 @@ export {
   type QuestionSet,
   score,
 } from './judge-questions';
-export { detectIntent, offlineReply } from './offline';
+export { detectIntent, guidedIntent, offlineReply } from './offline';
 export { companionInstructions, LANGUAGE_NAMES } from './prompts';
 export {
   aiAvailable,

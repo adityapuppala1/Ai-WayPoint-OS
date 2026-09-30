@@ -1884,7 +1884,8 @@ declare const messages: {
       "eval": "Quality checks",
       "judge-shield": "Second check: Shield",
       "judge-plan": "Second check: plan wording",
-      "judge-reply": "Second check: answers by text"
+      "judge-reply": "Second check: answers by text",
+      "judge-intent": "Second check: guided mode"
     },
     "worriedNote": "A member was worried about the writer, not the post. Waypoint has already sent the writer a private note about where to find support; keeping the post is usually right.",
     "contentGeneral": "{count, plural, one {# is general guidance} other {# are general guidance}}",

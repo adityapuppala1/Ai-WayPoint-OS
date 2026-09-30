@@ -1879,7 +1879,8 @@
       "eval": "Ukaguzi wa ubora",
       "judge-shield": "Ukaguzi wa pili: Ngao",
       "judge-plan": "Ukaguzi wa pili: maneno ya mpango",
-      "judge-reply": "Ukaguzi wa pili: majibu kwa ujumbe"
+      "judge-reply": "Ukaguzi wa pili: majibu kwa ujumbe",
+      "judge-intent": "Ukaguzi wa pili: hali ya mwongozo"
     },
     "channelsTitle": "Ujumbe: SMS, WhatsApp na USSD",
     "channelsLead": "Siku 30 zilizopita. Tunahifadhi idadi tu: kamwe si namba, wala alichoandika mtu.",

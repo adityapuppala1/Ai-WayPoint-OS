@@ -632,3 +632,121 @@ describe('an AI rewrite of a plan’s wording', () => {
     expect(asked).toHaveLength(0);
   });
 });
+
+// ───────────────────────────── Guided mode ─────────────────────────────
+
+describe('guided mode, when no keyword says what a question is about', () => {
+  // No keyword for work, money, scams or services is in here, in any language.
+  const QUESTION = 'My landlord says I owe him for three months and I cannot cover it';
+  const MENU = 'I’m in guided mode right now';
+  const MONEY = 'Money can show how long your savings last';
+  const intent = (text = QUESTION, ctx: Record<string, unknown> = {}, crisisTier = 0) =>
+    ai.guidedIntent({ ...caller(), locale: 'en', ...ctx }, text, { crisisTier, country: 'KE' });
+
+  const userMessage = (text: string) => ({
+    id: crypto.randomUUID(),
+    role: 'user' as const,
+    parts: [{ type: 'text' as const, text }],
+  });
+  /** What Ask says, in guided mode because no model is set up. */
+  async function guidedReply(text: string, aiExternal = true, locale = 'en'): Promise<string> {
+    useModel(null);
+    const res = await ai.askResponse({
+      db: db.getDb(),
+      user: { id: userId, isGuest: false },
+      profile: { locale, country: 'KE' },
+      consents: { aiExternal, memory: false },
+      messages: [userMessage(text)],
+    });
+    const chunks = (await res.text())
+      .split('\n')
+      .filter((l) => l.startsWith('data: ') && !l.includes('[DONE]'))
+      .map((l) => JSON.parse(l.slice(6)) as Record<string, unknown>);
+    expect(chunks.find((c) => c.type === 'data-mode')).toMatchObject({ data: { mode: 'guided' } });
+    return chunks
+      .filter((c) => c.type === 'text-delta')
+      .map((c) => c.delta)
+      .join('');
+  }
+
+  it('shows the general menu as before when there is no judge', async () => {
+    expect(await intent()).toBe('general');
+    expect(await guidedReply(QUESTION)).toContain(MENU);
+  });
+
+  it('keeps the keywords first: the judge is not asked when one matches', async () => {
+    const asked = judge({ intent: { choice: 'money' } });
+    expect(await intent('necesito trabajo')).toBe('work');
+    expect(await intent('check www.free-gift.xyz please')).toBe('scam');
+    expect(asked).toHaveLength(0);
+  });
+
+  it('points to the part of Waypoint the judge picks, when it is well ahead', async () => {
+    const asked = judge({ intent: { choice: 'money', p: 0.9, confidence: 0.85 } });
+    expect(await intent(`${QUESTION}. Call me on +254 711 000 000`)).toBe('money');
+    expect(asked).toHaveLength(1);
+    expect(asked[0]?.state).toEqual({ message: `${QUESTION}. Call me on [phone]` });
+    // Every intent guided mode has, and an explicit "none of these".
+    const question = asked[0]?.questions.intent as
+      | { criteria: Record<string, unknown> }
+      | undefined;
+    expect(Object.keys(question?.criteria ?? {})).toEqual([
+      'scam',
+      'work',
+      'money',
+      'civic',
+      'feelings',
+      'general',
+    ]);
+    expect(await usageRows('judge-intent')).toHaveLength(1);
+
+    const reply = await guidedReply(QUESTION);
+    expect(reply).toContain(MONEY);
+    expect(reply).not.toContain(MENU);
+  });
+
+  it('shows the general menu when the judge picks none of these, or is not well ahead', async () => {
+    judge({ intent: { choice: 'general', p: 0.9, confidence: 0.9 } });
+    expect(await intent()).toBe('general');
+    judge({ intent: { choice: 'money', p: 0.9, confidence: 0.59 } });
+    expect(await intent()).toBe('general');
+    judge({ intent: { choice: 'money', p: 0.59, confidence: 0.7 } });
+    expect(await intent()).toBe('general');
+    judge({ intent: { choice: 'money', p: 0.6, confidence: 0.6 } });
+    expect(await intent()).toBe('money');
+  });
+
+  it('shows the general menu as before when the judge fails', async () => {
+    const calls = failingJudge(() => new ai.JudgeError('provider', 'Jev answered HTTP 529'));
+    expect(await intent()).toBe('general');
+    expect(calls()).toBe(1);
+    expect(await guidedReply(QUESTION)).toContain(MENU);
+  });
+
+  it('does not ask the judge without consent, in a language that is not switched on, or about a greeting', async () => {
+    const asked = judge({ intent: { choice: 'money' } });
+    expect(await intent(QUESTION, { allowExternal: false })).toBe('general');
+    expect(await guidedReply(QUESTION, false)).toContain(MENU);
+    expect(await intent(QUESTION, { locale: 'sw' })).toBe('general');
+    // The person reads in English but wrote in a language that is not switched on.
+    expect(await intent('Quiero saber que hacer ahora con todo esto')).toBe('general');
+    expect(await intent('hello there')).toBe('general');
+    expect(asked).toHaveLength(0);
+  });
+
+  it('never asks the judge about someone in distress: the rules answer', async () => {
+    const asked = judge({ intent: { choice: 'money' } });
+    expect(await intent(QUESTION, {}, 1)).toBe('feelings');
+    expect(await intent(QUESTION, {}, 3)).toBe('feelings');
+    // Imminent danger in Ask: the support card is the whole answer, and no one is asked.
+    const res = await ai.askResponse({
+      db: db.getDb(),
+      user: { id: userId, isGuest: false },
+      profile: { locale: 'en', country: 'KE' },
+      consents: { aiExternal: true, memory: false },
+      messages: [userMessage('I have the pills here and I am going to take them all tonight')],
+    });
+    expect(await res.text()).toContain('data-crisis');
+    expect(asked).toHaveLength(0);
+  });
+});

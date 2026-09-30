@@ -56,10 +56,16 @@ export function estimateCostUsd(
 
 /**
  * What the judge's calls are recorded under, one name for each thing it checks: a message in
- * Scam Shield, the wording of a rewritten plan, an answer about to be sent by text. They are
- * checks, not answers, so they never count towards a person's daily allowance (checkBudget).
+ * Scam Shield, the wording of a rewritten plan, an answer about to be sent by text, which part
+ * of Waypoint a question in guided mode is about. They are checks, not answers, so they never
+ * count towards a person's daily allowance (checkBudget).
  */
-export const JUDGE_FEATURES = ['judge-shield', 'judge-plan', 'judge-reply'] as const;
+export const JUDGE_FEATURES = [
+  'judge-shield',
+  'judge-plan',
+  'judge-reply',
+  'judge-intent',
+] as const;
 export type JudgeFeature = (typeof JUDGE_FEATURES)[number];
 
 export type AiFeature =

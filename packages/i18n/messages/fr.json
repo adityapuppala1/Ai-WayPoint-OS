@@ -1879,7 +1879,8 @@
       "eval": "Contrôles qualité",
       "judge-shield": "Seconde vérification : Bouclier",
       "judge-plan": "Seconde vérification : texte du plan",
-      "judge-reply": "Seconde vérification : réponses par message"
+      "judge-reply": "Seconde vérification : réponses par message",
+      "judge-intent": "Seconde vérification : mode guidé"
     },
     "channelsTitle": "Messages : SMS, WhatsApp et USSD",
     "channelsLead": "Les 30 derniers jours. Seuls des totaux sont conservés : jamais de numéros, ni ce que quelqu’un a écrit.",

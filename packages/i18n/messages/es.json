@@ -1879,7 +1879,8 @@
       "eval": "Controles de calidad",
       "judge-shield": "Segunda revisión: Escudo",
       "judge-plan": "Segunda revisión: texto del plan",
-      "judge-reply": "Segunda revisión: respuestas por mensaje"
+      "judge-reply": "Segunda revisión: respuestas por mensaje",
+      "judge-intent": "Segunda revisión: modo guiado"
     },
     "channelsTitle": "Mensajes: SMS, WhatsApp y USSD",
     "channelsLead": "Últimos 30 días. Solo se guardan recuentos: nunca números ni lo que alguien escribió.",

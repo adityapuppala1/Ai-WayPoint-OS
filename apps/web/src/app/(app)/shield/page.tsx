@@ -2,7 +2,7 @@ import { aiAvailable } from '@waypoint/ai';
 import { admin } from '@waypoint/api';
 import { getReportChannels, getScamPatterns } from '@waypoint/content';
 import { dbReady, getDb } from '@waypoint/db';
-import { Disclosure, Panel } from '@waypoint/ui';
+import { Disclosure, PageHeader, Panel } from '@waypoint/ui';
 import type { Metadata } from 'next';
 import { getFormatter, getLocale, getTranslations } from 'next-intl/server';
 import { contentLang, EnglishContentNote } from '@/components/EnglishContentNote';
@@ -33,10 +33,7 @@ export default async function ShieldPage() {
     : null;
   return (
     <div className="wp-page">
-      <header className="wp-page-head">
-        <h1>{t('title')}</h1>
-        <p className="wp-lead">{t('lead')}</p>
-      </header>
+      <PageHeader module="shield" title={t('title')} lead={t('lead')} />
 
       <ShieldChecker
         country={country}

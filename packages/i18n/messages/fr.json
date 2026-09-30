@@ -449,7 +449,8 @@
       "situation": "Vous avez dit à Waypoint : « {situation} ».",
       "review": "Vous avez un objectif, et le bilan de la semaine reste à faire.",
       "nothingElse": "Rien d’autre ne vous attend aujourd’hui."
-    }
+    },
+    "nudgeDismissed": "Note ignorée."
   },
   "support": {
     "title": "Obtenir de l’aide",
@@ -2495,6 +2496,7 @@
     "how5": "Chaque chance affichée par une prévision reste listée avec sa date, et l’équipe enregistre le résultat dès qu’il est connu. Un chiffre modifié après coup reste visible de tous.",
     "unchecked": "Pas encore vérifié une seconde fois : une autre personne de l’équipe n’a pas encore confirmé ce résultat.",
     "how6": "Une seconde personne de l’équipe vérifie chaque résultat. Tant que ce n’est pas fait, la prévision porte la mention « pas encore vérifié une seconde fois ».",
-    "uncheckedCount": "{count, plural, one {# résultat n’a pas encore été vérifié} other {# résultats n’ont pas encore été vérifiés}} une seconde fois."
+    "uncheckedCount": "{count, plural, one {# résultat n’a pas encore été vérifié} other {# résultats n’ont pas encore été vérifiés}} une seconde fois.",
+    "historyTrend": "La chance au fil du temps : de {first} à {last}"
   }
 }

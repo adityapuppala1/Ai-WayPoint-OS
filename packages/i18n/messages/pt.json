@@ -449,7 +449,8 @@
       "situation": "Você disse ao Waypoint: “{situation}”.",
       "review": "Você tem uma meta, e a revisão da semana ainda está em aberto.",
       "nothingElse": "Hoje não há mais nada esperando por você."
-    }
+    },
+    "nudgeDismissed": "Nota dispensada."
   },
   "support": {
     "title": "Pedir ajuda agora",
@@ -2495,6 +2496,7 @@
     "how5": "Cada chance que uma previsão mostrou fica listada com a data, e a equipe registra o resultado assim que ele é conhecido. Um número alterado depois do fato fica à vista de todos.",
     "unchecked": "Ainda sem segunda conferência: outra pessoa da equipe ainda não confirmou este resultado.",
     "how6": "Outra pessoa da equipe confere cada resultado. Até isso acontecer, a previsão fica marcada como “ainda sem segunda conferência”.",
-    "uncheckedCount": "{count, plural, one {# resultado ainda não teve} other {# resultados ainda não tiveram}} segunda conferência."
+    "uncheckedCount": "{count, plural, one {# resultado ainda não teve} other {# resultados ainda não tiveram}} segunda conferência.",
+    "historyTrend": "A chance ao longo do tempo: de {first} para {last}"
   }
 }

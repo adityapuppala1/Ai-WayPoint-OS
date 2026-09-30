@@ -1,5 +1,5 @@
 import { mind as mindService } from '@waypoint/api';
-import { LinkButton, ModuleMark, Notice, Panel } from '@waypoint/ui';
+import { LinkButton, Notice, PageHeader, Panel } from '@waypoint/ui';
 import type { Metadata, Route } from 'next';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
@@ -23,16 +23,12 @@ export default async function MindPage() {
 
   return (
     <div className="wp-page">
-      <header className="wp-page-head">
-        <div className="wp-row">
-          <ModuleMark module="mind" size="lg" />
-          <h1>{t('title')}</h1>
-        </div>
-        <p className="wp-lead">{t('lead')}</p>
+      <div className="wp-section">
+        <PageHeader module="mind" title={t('title')} lead={t('lead')} />
         <p className="wp-secondary">
           {t('notTherapy')} <Link href={'/support' as Route}>{t('getHelp')}</Link>
         </p>
-      </header>
+      </div>
 
       {view.summary.suggestSupport ? (
         <Notice tone="support" title={t('supportTitle')}>

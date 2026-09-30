@@ -15,6 +15,7 @@ import {
   List,
   ModuleMark,
   Notice,
+  PageHeader,
   Spinner,
   TextField,
 } from '@waypoint/ui';
@@ -374,32 +375,34 @@ export function AskChat({
   return (
     <div className={styles.layout}>
       <section className={styles.chat} aria-label={t('title')}>
-        <div className={styles.header}>
-          <div>
-            <h1 className={styles.title}>{t('title')}</h1>
-            <p className={styles.disclosure}>{t('disclosure')}</p>
-          </div>
-          <div className="wp-row">
-            <Button
-              variant="secondary"
-              size="sm"
-              icon="add"
-              onPress={() => router.push('/ask' as Route)}
-            >
-              {t('newChat')}
-            </Button>
-            {/* Narrow screens only: there the list would sit under the message box, unseen. */}
-            <Button
-              variant="secondary"
-              size="sm"
-              icon="menu"
-              className={styles.historyOpen}
-              onPress={() => setHistoryOpen(true)}
-            >
-              {t('history')}
-            </Button>
-          </div>
-        </div>
+        <PageHeader
+          module="ask"
+          title={t('title')}
+          lead={t('lead')}
+          actions={
+            <>
+              <Button
+                variant="secondary"
+                size="sm"
+                icon="add"
+                onPress={() => router.push('/ask' as Route)}
+              >
+                {t('newChat')}
+              </Button>
+              {/* Narrow screens only: there the list would sit under the message box, unseen. */}
+              <Button
+                variant="secondary"
+                size="sm"
+                icon="menu"
+                className={styles.historyOpen}
+                onPress={() => setHistoryOpen(true)}
+              >
+                {t('history')}
+              </Button>
+            </>
+          }
+        />
+        <p className={styles.disclosure}>{t('disclosure')}</p>
 
         <ol className={styles.messages} aria-live="polite" aria-busy={busy}>
           {messages.length === 0 ? (

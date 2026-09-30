@@ -449,7 +449,8 @@
       "situation": "Uliiambia Waypoint: “{situation}”.",
       "review": "Una lengo, na tathmini ya wiki hii bado iko wazi.",
       "nothingElse": "Hakuna jingine linalokusubiri leo."
-    }
+    },
+    "nudgeDismissed": "Dokezo limeondolewa."
   },
   "support": {
     "title": "Pata msaada sasa",
@@ -2495,6 +2496,7 @@
     "how5": "Kila uwezekano ambao kadirio lilionyesha hubaki umeorodheshwa na tarehe yake, na timu hurekodi matokeo mara yanapojulikana. Namba iliyobadilishwa baada ya tukio huonekana kwa kila mtu.",
     "unchecked": "Bado halijahakikiwa mara ya pili: mfanyakazi mwingine bado hajathibitisha matokeo haya.",
     "how6": "Mfanyakazi wa pili huhakiki kila matokeo. Hadi hapo, kadirio huwekewa alama “bado halijahakikiwa mara ya pili”.",
-    "uncheckedCount": "{count, plural, one {Matokeo # bado hayajahakikiwa} other {Matokeo # bado hayajahakikiwa}} mara ya pili."
+    "uncheckedCount": "{count, plural, one {Matokeo # bado hayajahakikiwa} other {Matokeo # bado hayajahakikiwa}} mara ya pili.",
+    "historyTrend": "Uwezekano kwa muda: kutoka {first} hadi {last}"
   }
 }

@@ -1,7 +1,7 @@
 import { forecasts } from '@waypoint/api';
 import { getEnv } from '@waypoint/core/env';
 import { dbReady, getDb } from '@waypoint/db';
-import { EmptyState, LinkButton, Panel } from '@waypoint/ui';
+import { EmptyState, LinkButton, PageHeader, Panel } from '@waypoint/ui';
 import type { Metadata, Route } from 'next';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { ForecastCard } from '@/components/forecasts/ForecastCard';
@@ -38,10 +38,7 @@ export default async function ForecastsPage() {
   );
   return (
     <div className="wp-page">
-      <header className="wp-page-head">
-        <h1>{t('title')}</h1>
-        <p className="wp-lead">{t('lead')}</p>
-      </header>
+      <PageHeader module="signals" title={t('title')} lead={t('lead')} />
       <ForesightNav current="/signals/forecasts" />
       <p className={styles.honest}>{t('honest')}</p>
 

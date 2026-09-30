@@ -456,7 +456,8 @@ declare const messages: {
       "situation": "You told Waypoint: “{situation}”.",
       "review": "You have a goal, and this week’s review is still open.",
       "nothingElse": "Nothing else is waiting for you today."
-    }
+    },
+    "nudgeDismissed": "Note dismissed."
   },
   "support": {
     "title": "Get help now",
@@ -2502,7 +2503,8 @@ declare const messages: {
     "how5": "Every chance a forecast showed stays listed with its date, and staff record the outcome as soon as it is known. A number changed after the fact is there for anyone to see.",
     "unchecked": "Not yet double-checked: a second member of our staff has not confirmed this outcome.",
     "how6": "A second member of staff checks each outcome. Until they have, the forecast is marked “not yet double-checked”.",
-    "uncheckedCount": "{count, plural, one {# outcome has} other {# outcomes have}} not been double-checked yet."
+    "uncheckedCount": "{count, plural, one {# outcome has} other {# outcomes have}} not been double-checked yet.",
+    "historyTrend": "The chance over time: from {first} to {last}"
   }
 };
 export default messages;

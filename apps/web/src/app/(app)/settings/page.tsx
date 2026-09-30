@@ -1,6 +1,6 @@
 import { me } from '@waypoint/api';
 import { COUNTRIES } from '@waypoint/content';
-import { List, Panel } from '@waypoint/ui';
+import { List, PageHeader, Panel } from '@waypoint/ui';
 import type { Metadata } from 'next';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { LinkRow } from '@/components/LinkRow';
@@ -23,10 +23,7 @@ export default async function SettingsPage() {
   );
   return (
     <div className="wp-page">
-      <header className="wp-page-head">
-        <h1>{t('title')}</h1>
-        <p className="wp-lead">{t('lead')}</p>
-      </header>
+      <PageHeader module="today" title={t('title')} lead={t('lead')} />
       <SettingsForm
         profile={viewer.profile}
         countries={countries}

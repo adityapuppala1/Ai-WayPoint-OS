@@ -8,6 +8,8 @@ import {
   AuditTrailSchema,
   adminOverview,
   auditTrail,
+  FeedbackListSchema,
+  feedbackList,
   ModerationInputSchema,
   ModerationQueueSchema,
   moderatePost,
@@ -112,6 +114,25 @@ app.openapi(
     );
     return c.json({ ok: true as const }, 200);
   },
+);
+
+app.openapi(
+  createRoute({
+    method: 'get',
+    path: '/admin/feedback',
+    tags: ['Admin'],
+    summary: 'What people told us worked or did not, newest first',
+    description:
+      'Personal details were removed from each message before it was stored. An address is given only for someone who asked for a reply; guests are never identified.',
+    request: {
+      query: z.object({
+        before: z.iso.datetime().optional(),
+        limit: z.coerce.number().int().min(1).max(200).optional(),
+      }),
+    },
+    responses: { 200: jsonContent(FeedbackListSchema), 401: errors[401], 403: errors[403] },
+  }),
+  async (c) => c.json(await feedbackList(c.get('db'), c.req.valid('query')), 200),
 );
 
 app.openapi(

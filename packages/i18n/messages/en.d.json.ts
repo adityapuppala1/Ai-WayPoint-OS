@@ -721,7 +721,14 @@ declare const messages: {
     "save": "Save",
     "saved": "Saved",
     "dismiss": "Not relevant",
-    "demo": "Example"
+    "demo": "Example",
+    "hidden": "Hidden. You won’t be shown this again.",
+    "undo": "Undo",
+    "filterLabel": "Which signals to show",
+    "filterAll": "All",
+    "showAll": "Show all signals",
+    "savedEmpty": "You haven’t saved any signals yet.",
+    "noMatch": "No signals match “{query}”."
   },
   "settings": {
     "title": "Settings",
@@ -796,7 +803,21 @@ declare const messages: {
     "memoryUnreadable": "This one could not be opened. You can still delete it.",
     "memoryForgetAll": "Forget everything",
     "memoryForgetAllConfirm": "Delete everything Waypoint remembers from Ask? Your conversations, goals and plans stay. This can’t be undone.",
-    "memoryDeleted": "Deleted"
+    "memoryDeleted": "Deleted",
+    "feedbackTitle": "Tell us what worked, or what didn’t",
+    "feedbackLead": "It goes to the people who build Waypoint. Phone numbers, email addresses and card or ID numbers are removed from what you write before it is kept.",
+    "feedbackRow": "A short note to the people who build Waypoint.",
+    "feedbackAbout": "What is it about?",
+    "feedbackOther": "Something else",
+    "feedbackRating": "How well did it work for you?",
+    "feedbackRatingHint": "1 means it didn’t work. 5 means it worked well.",
+    "feedbackMessage": "What happened?",
+    "feedbackMessageHint": "What you were trying to do, and what helped or got in the way.",
+    "feedbackReply": "I’d like a reply",
+    "feedbackReplyHint": "A reply would go to {email}. If you leave this off, the people who read your feedback aren’t shown who sent it.",
+    "feedbackSend": "Send feedback",
+    "feedbackSent": "Thank you. Your feedback has been sent.",
+    "feedbackNeed": "Write a few words or choose a number first."
   },
   "explore": {
     "title": "All modules",
@@ -1749,7 +1770,9 @@ declare const messages: {
       "moderation": "Moderation",
       "reports": "Scam reports",
       "audit": "Activity log",
-      "forecasts": "Forecasts"
+      "forecasts": "Forecasts",
+      "signals": "Signals",
+      "feedback": "Feedback"
     },
     "generatedAt": "As of {time}",
     "peopleTitle": "People",
@@ -1881,7 +1904,10 @@ declare const messages: {
       "forecast_edited": "Forecast details changed",
       "forecast_chance_updated": "Forecast chance changed",
       "forecast_resolved": "Forecast judged",
-      "forecast_annulled": "Forecast withdrawn"
+      "forecast_annulled": "Forecast withdrawn",
+      "signal_published": "Signal published",
+      "signal_withdrawn": "Signal withdrawn",
+      "forecast_verdict_confirmed": "Forecast outcome confirmed by a second person"
     },
     "peak": "Busiest: {count} on {date}",
     "showTable": "Show as a table",
@@ -1932,7 +1958,8 @@ declare const messages: {
       "open": "Open",
       "awaiting": "To judge",
       "resolved": "Judged",
-      "annulled": "Withdrawn"
+      "annulled": "Withdrawn",
+      "unchecked": "Second check"
     },
     "forecastsEmpty": "Nothing here.",
     "forecastNew": "Publish a forecast",
@@ -1971,7 +1998,63 @@ declare const messages: {
     "aSourceUrl": "Where anyone can check it (https://…)",
     "aRecord": "Record the outcome",
     "aRecorded": "Outcome recorded",
-    "aOnce": "This is recorded once and can’t be undone: it becomes part of the public record."
+    "aOnce": "This is recorded once and can’t be undone: it becomes part of the public record.",
+    "cLead": "An outcome stands as soon as it is recorded, and is marked “not yet double-checked” in public until a different member of staff confirms it here.",
+    "cChecked": "Confirmed by a second person",
+    "cWaiting": "Awaiting a second check",
+    "cYours": "Awaiting a second check. You recorded this outcome, so someone else has to confirm it.",
+    "cConfirm": "Confirm the outcome",
+    "cConfirmTitle": "Confirm this outcome?",
+    "cConfirmBody": "Confirm only if you have checked the source yourself and agree with what was recorded. This is logged under your name and can’t be undone.",
+    "cConfirmed": "Outcome confirmed",
+    "eEdit": "Edit details",
+    "eTitle": "Edit forecast details",
+    "eBack": "All forecasts",
+    "eSaved": "Forecast details saved",
+    "eCheck": "Some fields need attention. Check the advice, the sources (name, comma, https:// address) and any translation you started.",
+    "eClosed": "This forecast can no longer be changed: its date has passed or it has been judged.",
+    "tSaved": "In {language}",
+    "tFixed": "This translation’s question and how it is judged are fixed now that it is saved. Its explanation and advice can still change.",
+    "tFixedOnSave": "Once saved, a translation’s question and how it is judged can’t be changed.",
+    "signalsTitle": "Signals",
+    "signalsLead": "Things that changed, each with the source staff read it in. A signal is shown straight away to the people it is about.",
+    "signalsEmpty": "No signals have been added yet.",
+    "signalNew": "Add a signal",
+    "sSourceNeeded": "A signal is never published without a source people can open. Waypoint doesn’t write signals: add only what you have read yourself at the address you give.",
+    "sTitle": "What changed",
+    "sTitleHint": "One plain sentence, like a headline.",
+    "sSummary": "Summary",
+    "sSummaryHint": "In your own words: what changed, for whom, and from when. Don’t copy the source.",
+    "sSourceName": "Source name",
+    "sKind": "Kind of source",
+    "sKinds": {
+      "official": "Official body",
+      "news": "News",
+      "labour-market": "Labour market data",
+      "community": "Community organisation"
+    },
+    "sSourceUrl": "Source address (https://…)",
+    "sPublishedOn": "Day the source published it",
+    "sSectors": "Sectors",
+    "sSectorsHint": "Short English words separated by commas, for example agriculture, transport.",
+    "sImportance": "Importance",
+    "sImportanceHint": "From 1 (minor) to 5 (major).",
+    "sImportanceValue": "Importance {value, number} of 5",
+    "sPublish": "Publish signal",
+    "sPublished": "Signal published",
+    "sCheck": "Some fields need attention. Check the summary, the source name and address (https://) and the date.",
+    "sAdded": "Added {date}.",
+    "sNotShown": "No longer shown to anyone: it is more than a year old.",
+    "sWithdraw": "Withdraw",
+    "sWithdrawTitle": "Withdraw this signal?",
+    "sWithdrawBody": "It will no longer be shown to anyone, including people who saved it. The activity log keeps its title and source.",
+    "sWithdrawn": "Signal withdrawn",
+    "feedbackTitle": "Feedback",
+    "feedbackLead": "What people told us worked or didn’t, newest first. Personal details were removed from each message before it was kept. Nobody is named unless they asked for a reply, and a guest can’t be identified at all.",
+    "feedbackEmpty": "No feedback yet.",
+    "feedbackRated": "Rated {rating, number} of 5",
+    "feedbackNoMessage": "No message.",
+    "feedbackReplyTo": "Would like a reply at <link>{email}</link>"
   },
   "byText": {
     "title": "Waypoint by text",
@@ -2400,7 +2483,10 @@ declare const messages: {
     "newer": "Newer",
     "pageOf": "Page {page, number} of {pages, number}",
     "pagesLabel": "Pages of judged forecasts",
-    "how5": "Every chance a forecast showed stays listed with its date, and staff record the outcome as soon as it is known. A number changed after the fact is there for anyone to see."
+    "how5": "Every chance a forecast showed stays listed with its date, and staff record the outcome as soon as it is known. A number changed after the fact is there for anyone to see.",
+    "unchecked": "Not yet double-checked: a second member of our staff has not confirmed this outcome.",
+    "how6": "A second member of staff checks each outcome. Until they have, the forecast is marked “not yet double-checked”.",
+    "uncheckedCount": "{count, plural, one {# outcome has} other {# outcomes have}} not been double-checked yet."
   }
 };
 export default messages;

@@ -36,7 +36,7 @@ export default async function AdminForecastsPage({
     getFormatter(),
     getLocale(),
   ]);
-  const list = await forecasts.adminForecasts(viewer.db, state, locale);
+  const list = await forecasts.adminForecasts(viewer.db, state, { locale });
   const countries = new Intl.DisplayNames([locale], { type: 'region' });
   const places = new Intl.ListFormat(locale, { type: 'conjunction' });
   const percent = (p: number) => format.number(p, { style: 'percent', maximumFractionDigits: 0 });

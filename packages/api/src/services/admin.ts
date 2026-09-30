@@ -1,8 +1,8 @@
 /**
  * Platform administration: the moderation queue for Circles, scam reports waiting for review,
  * AI spend against the budget, message delivery, conversations by SMS, WhatsApp and USSD
- * (counts only), and how recently the lifeline data (crisis lines, emergency numbers, health
- * lines) was checked against its sources.
+ * (counts only), how recently the lifeline data (crisis lines, emergency numbers, health
+ * lines) was checked against its sources, and the feedback people sent.
  *
  * Every action is written to the audit log. Posts held because the writer may be in danger are
  * never shown to moderators — only counted; the writer was offered support when they posted.
@@ -39,6 +39,7 @@ import {
   type Database,
   desc,
   eq,
+  feedback,
   gte,
   inArray,
   isNull,
@@ -60,7 +61,7 @@ import { channelsReady } from '../channels/providers';
 import { emailReady } from '../email/send';
 import { type Actor, audit } from '../lib/audit';
 import { ApiError, notFound } from '../lib/problem';
-import { forecastsToJudge } from './forecasts';
+import { forecastsToJudge, verdictsToCheck } from './forecasts';
 import { SCAM_CATEGORIES } from './shield';
 
 // ─────────────────────────────── Overview ───────────────────────────────
@@ -555,11 +556,16 @@ export async function adminOverview(db: Database, now = new Date()): Promise<Adm
   };
 }
 
-/** What is waiting for staff: shown as counts in the admin navigation. */
+/**
+ * What is waiting for staff: shown as counts in the admin navigation. For forecasts that is
+ * the ones to judge and, for the staff member looking, the verdicts someone else recorded
+ * that they could confirm.
+ */
 export async function adminCounts(
   db: Database,
+  viewerId?: string,
 ): Promise<{ moderation: number; reports: number; forecasts: number }> {
-  const [posts, [reports], forecasts] = await Promise.all([
+  const [posts, [reports], toJudge, toCheck] = await Promise.all([
     db.execute<{ n: number }>(sql`
       select count(*)::int as n from circle_posts p
       where p.hidden_reason in ('scam', 'reports')
@@ -568,8 +574,13 @@ export async function adminCounts(
     db.select({ n: count() }).from(scamReports).where(eq(scamReports.status, 'new')),
     // Forecasts whose date has passed and that nobody has judged yet.
     forecastsToJudge(db),
+    viewerId ? verdictsToCheck(db, viewerId) : 0,
   ]);
-  return { moderation: num(posts.rows[0]?.n), reports: num(reports?.n), forecasts };
+  return {
+    moderation: num(posts.rows[0]?.n),
+    reports: num(reports?.n),
+    forecasts: toJudge + toCheck,
+  };
 }
 
 // ─────────────────────────────── Moderation ───────────────────────────────
@@ -1019,6 +1030,75 @@ export async function reportedScams(
   };
 }
 
+// ─────────────────────────────── Feedback ───────────────────────────────
+
+export const FeedbackItemSchema = z.object({
+  id: z.string(),
+  /** The part of Waypoint it is about. */
+  module: z.string(),
+  page: z.string().nullable(),
+  /** 1 (did not work) to 5 (worked well), when the person gave one. */
+  rating: z.number().int().nullable(),
+  /** What they wrote. Personal details were removed before it was stored. */
+  message: z.string().nullable(),
+  /**
+   * Where to write back, only when the person asked for a reply and has an account with an
+   * address. Everyone else, and every guest, stays unnamed: nothing here says who they are.
+   */
+  replyTo: z.string().nullable(),
+  createdAt: z.string(),
+});
+
+export const FeedbackListSchema = z
+  .object({
+    items: z.array(FeedbackItemSchema),
+    total: z.number().int(),
+    next: z.string().nullable(),
+  })
+  .openapi('FeedbackList');
+
+export type FeedbackList = z.infer<typeof FeedbackListSchema>;
+
+/** What people told us, newest first, a page at a time. */
+export async function feedbackList(
+  db: Database,
+  opts: { before?: string | null; limit?: number } = {},
+): Promise<FeedbackList> {
+  const limit = Math.min(opts.limit ?? 50, 200);
+  const before = opts.before ? new Date(opts.before) : null;
+  const rows = await db
+    .select({
+      entry: feedback,
+      // Read only to decide whether there is an address to reply to; never returned as such.
+      email: users.email,
+      isGuest: users.isAnonymous,
+    })
+    .from(feedback)
+    .leftJoin(users, eq(users.id, feedback.userId))
+    .where(before && !Number.isNaN(before.getTime()) ? lt(feedback.createdAt, before) : sql`true`)
+    .orderBy(desc(feedback.createdAt), desc(feedback.id))
+    .limit(limit + 1);
+  const [total] = await db.select({ n: count() }).from(feedback);
+  const page = rows.slice(0, limit);
+  return {
+    items: page.map((r) => ({
+      id: r.entry.id,
+      module: r.entry.module,
+      page: r.entry.page,
+      rating: r.entry.rating,
+      message: r.entry.message,
+      replyTo:
+        // Phone accounts have a placeholder address that reaches nobody.
+        r.entry.wantsReply && r.email && !r.isGuest && !r.email.endsWith('.invalid')
+          ? r.email
+          : null,
+      createdAt: r.entry.createdAt.toISOString(),
+    })),
+    total: num(total?.n),
+    next: rows.length > limit ? (page.at(-1)?.entry.createdAt.toISOString() ?? null) : null,
+  };
+}
+
 // ─────────────────────────────── Audit trail ───────────────────────────────
 
 export const AuditEntrySchema = z.object({
@@ -1058,7 +1138,7 @@ export async function auditTrail(
       and(
         // Staff and organisation actions only: what people do for themselves (such as
         // downloading their data) stays out of the admin view.
-        sql`(${auditLog.action} like 'org.%' or ${auditLog.action} like 'moderation.%' or ${auditLog.action} like 'scam-report.%' or ${auditLog.action} like 'forecast.%')`,
+        sql`(${auditLog.action} like 'org.%' or ${auditLog.action} like 'moderation.%' or ${auditLog.action} like 'scam-report.%' or ${auditLog.action} like 'forecast.%' or ${auditLog.action} like 'signal.%')`,
         before && !Number.isNaN(before.getTime()) ? lt(auditLog.createdAt, before) : sql`true`,
       ),
     )

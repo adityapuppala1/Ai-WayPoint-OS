@@ -42,8 +42,9 @@ are remembered for the number.
 
 Questions are answered by the AI assistant only when one of these is true:
 
-- the person texted `AI YES` — their message then goes to the configured AI provider with names,
-  numbers and addresses removed first, and every answer starts with `AI:`; or
+- the person texted `AI YES` — their message then goes to the configured AI provider with phone
+  numbers, email addresses, card, bank and ID numbers removed first (names are not removed
+  automatically), and every answer starts with `AI:`; or
 - a **local** model is configured (`OLLAMA_BASE_URL`), which never leaves your servers.
 
 Otherwise the reply points to what texting can do (help lines, scam checks) and to the website.

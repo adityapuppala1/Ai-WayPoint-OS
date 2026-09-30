@@ -15,7 +15,7 @@ import { KEEP_GUEST_HEADER, LOCALES } from '@waypoint/core';
 import { countryOfNumber, toE164 } from '@waypoint/core/channels';
 import { devSecret, getEnv } from '@waypoint/core/env';
 import { isUuid, newId } from '@waypoint/core/ids';
-import { newWrappedDek, scrubLogText, sealWithKek } from '@waypoint/core/privacy';
+import { hasWebAddress, newWrappedDek, scrubLogText, sealWithKek } from '@waypoint/core/privacy';
 import {
   and,
   authSchema,
@@ -254,7 +254,7 @@ export function isBlockedAuthPath(
 
 /**
  * A name goes into emails other people receive (an invitation says who sent it): one line, at
- * most 80 characters, no web links.
+ * most 80 characters, no links or web addresses, however they are written ("SECURE-BANK.COM").
  */
 function unacceptableName(name: unknown): boolean {
   if (name === undefined) return false;
@@ -265,7 +265,7 @@ function unacceptableName(name: unknown): boolean {
     n.length > 80 ||
     // biome-ignore lint/suspicious/noControlCharactersInRegex: rejecting control characters
     /[\u0000-\u001f\u007f]/.test(n) ||
-    /[a-z][a-z0-9+.-]*:\/\//i.test(n)
+    hasWebAddress(n)
   );
 }
 

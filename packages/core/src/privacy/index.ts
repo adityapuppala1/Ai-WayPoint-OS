@@ -24,4 +24,4 @@ export {
   sealWithKek,
 } from './keys';
 export { type PIIKind, type RedactionResult, redactPII, verhoeffValid } from './redact';
-export { plainName, scrubLogText } from './scrub';
+export { hasWebAddress, plainName, scrubLogText } from './scrub';

@@ -15,7 +15,8 @@ import {
   REACTIONS,
   type REPORT_REASONS,
 } from '@waypoint/core';
-import { redactPII } from '@waypoint/core/privacy';
+import { hasWebAddress, redactPII } from '@waypoint/core/privacy';
+import { foldText } from '@waypoint/core/text';
 import {
   and,
   asc,
@@ -498,15 +499,23 @@ export async function leaveCircle(
   });
 }
 
+/** Names that would pass for Waypoint's own staff, in the languages circles run in. */
+const STAFF_LIKE =
+  /waypoint|(?<![a-z])(?:moderator|moderador|moderateur|admin|administrator|official|oficial|officiel|staff|helpline|support|soporte|suporte)(?![a-z])|msimamizi|مشرف|الدعم|मॉडरेटर|एडमिन/u;
+
 /** A circle name is a first name or nickname: no phone numbers, emails or other contact details. */
 function cleanAlias(name: string | undefined): string | null {
   const alias = name?.trim().replace(/\s+/g, ' ') || null;
-  if (alias && redactPII(alias).found.length) {
+  if (alias && (redactPII(alias).found.length || hasWebAddress(alias))) {
     throw new ApiError(
       422,
       'name-contact',
       'Use a first name or nickname, without contact details or ID numbers.',
     );
+  }
+  // Nobody in a circle speaks for Waypoint: a name that says so would be believed.
+  if (alias && STAFF_LIKE.test(foldText(alias))) {
+    throw new ApiError(422, 'name-reserved', 'Please choose a different name.');
   }
   return alias;
 }

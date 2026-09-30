@@ -180,4 +180,63 @@ describe('text for logs and for emails to other people', () => {
     // Emoji keep their look.
     expect(plainName('Ama \u2764\ufe0f')).toBe('Ama \u2764\ufe0f');
   });
+
+  it('takes web addresses out of names however they are written', async () => {
+    const { hasWebAddress, plainName } = await import('../src/privacy');
+    // Capital letters are still an address, and so are the full stops other scripts use.
+    expect(plainName('SECURE-BANK.COM Support')).toBe('\u2026 Support');
+    expect(plainName('Verify at Secure-Bank.Com/login')).toBe('Verify at \u2026');
+    expect(plainName('evil.com\u3002')).toBe('\u2026\u3002');
+    expect(plainName('evil\uff0ecom')).toBe('\u2026');
+    expect(plainName('pay\u3002evil\u3002top now')).toBe('\u2026 now');
+    for (const name of [
+      'SECURE-BANK.COM',
+      'Visit Evil.Top',
+      'evil.com\u3002',
+      'evil\uff0ecom',
+      'https://x.example',
+      'WWW.BANK.EXAMPLE',
+      'My-Bank.Co.Uk team',
+    ])
+      expect(hasWebAddress(name), name).toBe(true);
+    // Ordinary names, with their titles, initials and company endings, are left alone.
+    for (const name of [
+      'Dr. J. R. Okafor',
+      'Dr.Smith',
+      'St.John Ambulance',
+      'Riverside Works Ltd.',
+      'Acme S.A.',
+      'J.R.R. Tolkien',
+      'Amina K.',
+      'Node.js Meetup',
+      '\u0645\u0624\u0633\u0633\u0629 \u0627\u0644\u0623\u0645\u0644',
+    ]) {
+      expect(hasWebAddress(name), name).toBe(false);
+      expect(plainName(name), name).toBe(name);
+    }
+  });
+
+  it('removes phone numbers wherever they sit in a line', () => {
+    for (const text of [
+      'call (0712345678) now',
+      'tel:+254711000000',
+      'whatsapp:+254711000000 refused',
+      '{"to":"+254711000000","status":"failed"}',
+      'to=+254711000000&from=+15550001111',
+      'number:0712345678.',
+      '<+254 711 000 000>',
+    ])
+      expect(redactPII(text).text, text).not.toMatch(/\d{5}/);
+    // Things that are not phone numbers stay readable.
+    expect(redactPII('on 12.05.2024 at 10:30').text).toBe('on 12.05.2024 at 10:30');
+    expect(redactPII('total 1234.50 for order A1234567').text).toBe(
+      'total 1234.50 for order A1234567',
+    );
+    expect(redactPII('error 550 5.7.1 in version 1.2.3').text).toBe(
+      'error 550 5.7.1 in version 1.2.3',
+    );
+    expect(redactPII('at 2024-05-12 10:30:15 on 2024-05-12T10:30:15Z').text).toBe(
+      'at 2024-05-12 10:30:15 on 2024-05-12T10:30:15Z',
+    );
+  });
 });

@@ -38,7 +38,7 @@ import {
 } from '@waypoint/core';
 import { getEnv } from '@waypoint/core/env';
 import { newId } from '@waypoint/core/ids';
-import { plainName, sealWithKek } from '@waypoint/core/privacy';
+import { hasWebAddress, plainName, sealWithKek } from '@waypoint/core/privacy';
 import {
   and,
   asc,
@@ -83,9 +83,20 @@ const RoleId = z
   .max(60)
   .refine((id) => Boolean(getRole(id)), 'Choose roles from the list.');
 
+/**
+ * A name other people read — on the join page, a poster, an invitation email. It must not be
+ * a way to send them to a website in Waypoint's name.
+ */
+const PublicName = z
+  .string()
+  .trim()
+  .min(2)
+  .max(80)
+  .refine((name) => !hasWebAddress(name), 'Please use a name without web addresses.');
+
 export const OrgInputSchema = z
   .object({
-    name: z.string().trim().min(2).max(80),
+    name: PublicName,
     kind: z.enum(ORG_KINDS),
     country: Country.nullish(),
     sizeBand: z.enum(ORG_SIZE_BANDS).nullish(),
@@ -94,7 +105,7 @@ export const OrgInputSchema = z
 
 export const OrgPatchSchema = z
   .object({
-    name: z.string().trim().min(2).max(80).optional(),
+    name: PublicName.optional(),
     kind: z.enum(ORG_KINDS).optional(),
     country: Country.nullish(),
     sizeBand: z.enum(ORG_SIZE_BANDS).nullish(),
@@ -108,7 +119,7 @@ export const OrgPatchSchema = z
   .openapi('OrganisationPatch');
 
 const programmeFields = {
-  name: z.string().trim().min(2).max(80),
+  name: PublicName,
   description: z.string().trim().max(600).nullish(),
   targetRoleIds: z.array(RoleId).max(5),
   startsOn: DateOnly.nullish(),

@@ -170,7 +170,11 @@ export function GoToButton({
     <button
       type="button"
       className={styles.goTo}
-      onClick={() => {
+      onClick={(event) => {
+        // Safari, and every browser on an iPhone, does not focus a button that is clicked. The
+        // palette gives focus back to whatever had it when it opened, so without this it would
+        // hand it to the page itself when it closes, not to this button.
+        event.currentTarget.focus({ preventScroll: true });
         onBeforeOpen?.();
         open();
       }}

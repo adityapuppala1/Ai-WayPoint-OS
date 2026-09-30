@@ -150,7 +150,7 @@ interface Check {
     advice: string[];
     engine: { ai?: { model: string; level: string; agreed: boolean } };
   };
-  ai: { used: boolean; reason: string; model?: string };
+  ai: { used: boolean; reason: string; model?: string; raised?: boolean };
 }
 
 describe('Scam Shield with the judge', () => {
@@ -186,7 +186,8 @@ describe('Scam Shield with the judge', () => {
     const out = await check(OFFER);
     expect(asked).toHaveLength(1);
     expect(out.result.level).toBe('high');
-    expect(out.ai).toEqual({ used: true, reason: 'used', model: 'jev-1.13.0' });
+    // "raised" is what a page should go by when it says the second check found more.
+    expect(out.ai).toEqual({ used: true, reason: 'used', model: 'jev-1.13.0', raised: true });
     expect(out.result.engine.ai).toEqual({ model: 'jev-1.13.0', level: 'high', agreed: false });
     expect(out.result.signals.map((s) => s.title)).toContain('Asks you to pay before you can work');
     expect(out.result.advice.join(' ')).toContain('Real employers never ask you to pay');
@@ -212,7 +213,8 @@ describe('Scam Shield with the judge', () => {
     const asked = judge();
     const out = await check(RUSHED);
     expect(asked).toHaveLength(1);
-    expect(out.ai.used).toBe(true);
+    // It was asked and it answered, but it raised nothing: the page must not say it did.
+    expect(out.ai).toEqual({ used: true, reason: 'used', model: 'jev-1.13.0', raised: false });
     expect(out.result.level).toBe(rulesOnly.result.level);
     expect(out.result.score).toBe(rulesOnly.result.score);
     expect(out.result.signals).toEqual(rulesOnly.result.signals);

@@ -138,6 +138,12 @@ export const ShieldCheckSchema = z
       used: z.boolean(),
       reason: z.enum(['used', 'skipped-certain', 'no-consent', 'unavailable']),
       model: z.string().optional(),
+      /**
+       * Whether the second opinion raised the level above the rules' own. It is what to go by
+       * before saying it "found more": a second opinion that saw less than the rules changes
+       * nothing, and `engine.ai.agreed` is false for it too.
+       */
+      raised: z.boolean().optional(),
     }),
     /** How many other checks of this exact message in the last 90 days (only shown when 3+). */
     seenBefore: z.number().int().nullable(),
@@ -182,8 +188,14 @@ export async function runShieldCheck(
       { text: input.text, country: input.country, locale: input.locale ?? 'en', rules: result },
     ).catch(() => null);
     if (opinion) {
+      const rulesLevel = result.level;
       result = mergeAiOpinion(result, opinion, input.country, input.locale);
-      ai = { used: true, reason: 'used', model: opinion.model };
+      ai = {
+        used: true,
+        reason: 'used',
+        model: opinion.model,
+        raised: result.level !== rulesLevel,
+      };
     } else {
       // The judge is always an outside service, so with only a judge set up the missing piece
       // is consent too.

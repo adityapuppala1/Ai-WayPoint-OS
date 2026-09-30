@@ -18,6 +18,7 @@ import { ClearMoney } from '@/components/money/ClearMoney';
 import { MoneyForm } from '@/components/money/MoneyForm';
 import styles from '@/components/money/money.module.css';
 import { RunwayTrack } from '@/components/money/RunwayTrack';
+import { NextStops } from '@/components/NextStops';
 import { requireViewer } from '@/lib/server';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -218,6 +219,9 @@ export default async function MoneyPage() {
           <ClearMoney />
         </div>
       </Panel>
+
+      {/* Under pressure: the support you may be entitled to, and a way to more income. */}
+      {stressed ? <NextStops stops={['civic', 'path']} /> : null}
 
       <p className="wp-meta">
         {t('privacy')} {t('disclaimer')}

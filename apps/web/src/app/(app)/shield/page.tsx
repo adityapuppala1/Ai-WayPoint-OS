@@ -6,6 +6,7 @@ import { Disclosure, Panel } from '@waypoint/ui';
 import type { Metadata } from 'next';
 import { getFormatter, getLocale, getTranslations } from 'next-intl/server';
 import { contentLang, EnglishContentNote } from '@/components/EnglishContentNote';
+import { NextStops } from '@/components/NextStops';
 import { ShieldChecker } from '@/components/shield/ShieldChecker';
 import { getViewer, guessCountry } from '@/lib/server';
 import styles from './shield.module.css';
@@ -42,6 +43,8 @@ export default async function ShieldPage() {
         aiAvailable={aiAvailable()}
         aiConsented={viewer?.consents.ai_external ?? false}
         channels={channels}
+        // After a high verdict: a person to talk to, and somewhere to think it through.
+        afterHigh={<NextStops stops={['support', 'ask']} />}
       />
 
       {reported.categories.length ? (

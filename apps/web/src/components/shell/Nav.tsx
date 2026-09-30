@@ -1,16 +1,14 @@
 'use client';
 
-import { cn, Dialog, Icon, type ModuleKey, ModuleMark } from '@waypoint/ui';
+import { cn, Dialog, Icon, ModuleMark } from '@waypoint/ui';
 import type { Route } from 'next';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { LogoMark } from '@/components/Logo';
-import { NAV } from './nav-items';
+import { type DirectoryRow, NAV, PRIMARY_TABS } from './nav-items';
 import styles from './shell.module.css';
-
-const PRIMARY: ModuleKey[] = ['today', 'path', 'shield', 'ask'];
 
 function isActive(pathname: string, href: string) {
   if (href === '/') return pathname === '/';
@@ -88,14 +86,23 @@ export function NavRail({ accountSlot }: { accountSlot: React.ReactNode }) {
   );
 }
 
-export function BottomBar() {
+/**
+ * The phone's bottom bar, and the More sheet behind it: a directory of everywhere that is not
+ * a tab, each with a line saying what it is. The rows are worded on the server (their text is
+ * not among the messages sent to the browser) and arrive as `directory`.
+ */
+export function BottomBar({ directory }: { directory: DirectoryRow[] }) {
   const t = useTranslations('nav');
   const a11y = useTranslations('a11y');
   const shell = useTranslations('shell');
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const primary = NAV.filter((n) => PRIMARY.includes(n.key));
+  const primary = NAV.filter((n) => PRIMARY_TABS.includes(n.key));
   const moreActive = !primary.some((n) => isActive(pathname, n.href));
+  // "What's next?" lives under Signals: only the closest match is the current page.
+  const current = directory
+    .filter((row) => isActive(pathname, row.href))
+    .sort((a, b) => b.href.length - a.href.length)[0];
   return (
     <>
       <nav className={styles.bottomBar} aria-label={a11y('mainNav')}>
@@ -138,41 +145,30 @@ export function BottomBar() {
         closeLabel={a11y('closeMenu')}
       >
         <ul className={styles.sheetList}>
-          {NAV.map((item) => (
-            <li key={item.key}>
+          {directory.map((row) => (
+            <li key={row.key}>
               <Link
-                href={item.ready ? item.href : ('/explore' as Route)}
+                href={row.href as Route}
                 className={styles.sheetLink}
                 onClick={() => setOpen(false)}
-                aria-current={isActive(pathname, item.href) ? 'page' : undefined}
+                aria-current={row === current ? 'page' : undefined}
               >
-                <ModuleMark module={item.key} size="sm" />
-                <span>{t(item.key as NavKey)}</span>
+                {row.module ? (
+                  <ModuleMark module={row.module} size="sm" />
+                ) : (
+                  <span className={styles.moreMark} aria-hidden>
+                    <Icon name="settings" size={18} />
+                  </span>
+                )}
+                <span className={styles.sheetText}>
+                  <span className={styles.sheetName}>{row.name}</span>
+                  {row.description ? (
+                    <span className={styles.sheetHint}>{row.description}</span>
+                  ) : null}
+                </span>
               </Link>
             </li>
           ))}
-          <li>
-            <Link
-              href={'/support' as Route}
-              className={styles.sheetLink}
-              onClick={() => setOpen(false)}
-            >
-              <ModuleMark module="support" size="sm" />
-              <span>{t('support')}</span>
-            </Link>
-          </li>
-          <li>
-            <Link
-              href={'/settings' as Route}
-              className={styles.sheetLink}
-              onClick={() => setOpen(false)}
-            >
-              <span className={styles.moreMark} aria-hidden>
-                <Icon name="settings" size={18} />
-              </span>
-              <span>{t('settings')}</span>
-            </Link>
-          </li>
         </ul>
       </Dialog>
     </>

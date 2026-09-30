@@ -14,7 +14,7 @@ import {
   toast,
 } from '@waypoint/ui';
 import { useLocale, useTranslations } from 'next-intl';
-import { type FormEvent, useRef, useState } from 'react';
+import { type FormEvent, type ReactNode, useRef, useState } from 'react';
 import { ApiProblem, api } from '@/lib/api';
 import { ltr } from '@/lib/bidi';
 import styles from './shield.module.css';
@@ -83,11 +83,14 @@ export function ShieldChecker({
   aiAvailable,
   aiConsented,
   channels,
+  afterHigh,
 }: {
   country: string | null;
   aiAvailable: boolean;
   aiConsented: boolean;
   channels: Channel[];
+  /** Shown under a high or very high verdict: where else on Waypoint to go from here. */
+  afterHigh?: ReactNode;
 }) {
   const t = useTranslations('shield');
   const levels = useTranslations('riskLevels');
@@ -263,6 +266,7 @@ export function ShieldChecker({
             {aiLine ? `${aiLine} ` : ''}
             {t('engine', { version: check.result.engine.rules })}
           </p>
+          {check.result.level === 'high' || check.result.level === 'very-high' ? afterHigh : null}
         </section>
       ) : null}
 

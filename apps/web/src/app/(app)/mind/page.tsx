@@ -8,6 +8,7 @@ import { Journal } from '@/components/mind/Journal';
 import { MoodCheckin } from '@/components/mind/MoodCheckin';
 import { MoodTrend } from '@/components/mind/MoodTrend';
 import styles from '@/components/mind/mind.module.css';
+import { NextStops } from '@/components/NextStops';
 import { requireViewer } from '@/lib/server';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -73,6 +74,8 @@ export default async function MindPage() {
           ))}
         </ol>
       </Panel>
+
+      <NextStops stops={['circles', 'ask']} />
     </div>
   );
 }

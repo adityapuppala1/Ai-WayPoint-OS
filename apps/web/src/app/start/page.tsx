@@ -1,4 +1,5 @@
 import { COUNTRIES, SKILLS, skillName } from '@waypoint/content';
+import { safeNextPath } from '@waypoint/core';
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { getLocale, getTranslations } from 'next-intl/server';
@@ -11,7 +12,13 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t('title') };
 }
 
-export default async function StartPage() {
+export default async function StartPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  // Only a path on this site is carried through; anything else ends on Today.
+  const next = safeNextPath((await searchParams).next);
   const [viewer, locale, country] = await Promise.all([getViewer(), getLocale(), guessCountry()]);
   const tz = (await cookies()).get('wp-tz')?.value;
   const names = new Intl.DisplayNames([locale, 'en'], { type: 'region' });
@@ -25,6 +32,7 @@ export default async function StartPage() {
     <PublicShell hideSignIn={Boolean(viewer)}>
       <Onboarding
         signedIn={Boolean(viewer)}
+        next={next}
         countries={countries}
         skills={SKILLS.map((s) => ({
           id: s.id,

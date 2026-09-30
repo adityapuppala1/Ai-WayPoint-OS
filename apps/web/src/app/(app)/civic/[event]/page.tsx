@@ -9,6 +9,7 @@ import { getTranslations } from 'next-intl/server';
 import { ChecklistItemCheck } from '@/components/civic/ChecklistItemCheck';
 import styles from '@/components/civic/civic.module.css';
 import { contentLang, EnglishContentNote } from '@/components/EnglishContentNote';
+import { NextStops } from '@/components/NextStops';
 import { getViewer, guessCountry } from '@/lib/server';
 
 type Props = { params: Promise<{ event: string }>; searchParams: Promise<{ country?: string }> };
@@ -104,6 +105,7 @@ export default async function ChecklistPage({ params, searchParams }: Props) {
           </Panel>
         );
       })}
+      <NextStops stops={['money', 'ask']} />
       <p className="wp-meta">
         {common('sources')}:{' '}
         {view.sources.map((s, i) => (

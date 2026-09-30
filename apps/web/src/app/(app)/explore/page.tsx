@@ -13,6 +13,7 @@ export default async function ExplorePage() {
   const t = await getTranslations('explore');
   const nav = await getTranslations('nav');
   const modules = await getTranslations('modules');
+  const forecasts = await getTranslations('forecasts');
   return (
     <div className="wp-page">
       <header className="wp-page-head">
@@ -37,6 +38,12 @@ export default async function ExplorePage() {
         <h2 id="explore-more">{t('moreTitle')}</h2>
         <div className="wp-panel-flat">
           <List>
+            <LinkRow
+              href="/signals/forecasts"
+              leading={<ModuleMark module="signals" size="md" />}
+              title={forecasts('navForecasts')}
+              description={forecasts('lead')}
+            />
             <LinkRow
               href="/join"
               leading={<ModuleMark module="org" size="md" />}

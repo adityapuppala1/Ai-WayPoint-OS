@@ -63,8 +63,11 @@ export function Onboarding({
   countries,
   skills,
   initial,
+  next,
 }: {
   signedIn: boolean;
+  /** Where to go when finished: the page the person was heading for, or Today. */
+  next: string;
   countries: Array<{ code: string; name: string }>;
   skills: SkillOption[];
   initial: OnboardingInitial;
@@ -168,7 +171,8 @@ export function Onboarding({
           skills: picked,
         },
       });
-      router.push((situation && situation !== 'steady' ? '/path/new' : '/') as Route);
+      // Today chooses the step that fits what they said; a carer is not sent to a career form.
+      router.push(next as Route);
       router.refresh();
     } catch {
       setError(t('error'));

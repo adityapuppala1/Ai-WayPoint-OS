@@ -6,6 +6,7 @@ import { GoalComposer } from '@/components/goals/GoalComposer';
 import { GoalItem } from '@/components/goals/GoalItem';
 import styles from '@/components/goals/goals.module.css';
 import { WeeklyReview } from '@/components/goals/WeeklyReview';
+import { type NextStop, NextStops } from '@/components/NextStops';
 import { requireViewer } from '@/lib/server';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -23,6 +24,8 @@ export default async function GoalsPage() {
   const view = await goalsService.goalsOverview(viewer.db, viewer.user.id, viewer.profile.timezone);
   const active = view.goals.filter((g) => g.status === 'active');
   const rest = view.goals.filter((g) => g.status !== 'active');
+  // Where the active goals point: the modules for their parts of life (at most three).
+  const stops = active.flatMap((g): NextStop[] => (g.area === 'goals' ? [] : [g.area]));
   const weekDate = (d: string) =>
     format.dateTime(new Date(`${d}T12:00:00`), { day: 'numeric', month: 'long' });
 
@@ -104,6 +107,8 @@ export default async function GoalsPage() {
           ))}
         </Panel>
       ) : null}
+
+      <NextStops stops={stops.length ? stops : ['mind', 'path']} />
     </div>
   );
 }

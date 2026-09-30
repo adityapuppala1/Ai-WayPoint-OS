@@ -309,9 +309,10 @@
   background: var(--wp-signal);
 }
 
+/* The More sheet: one column, so every place has room for a line saying what it is. */
 .sheetList {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: var(--wp-space-1);
   margin: 0;
   padding: 0;
@@ -322,12 +323,32 @@
   display: flex;
   align-items: center;
   gap: var(--wp-space-3);
-  min-block-size: 3rem;
-  padding-inline: var(--wp-space-2);
+  min-block-size: 3.5rem;
+  padding: var(--wp-space-2);
   border-radius: var(--wp-radius-sm);
   color: var(--wp-text);
-  font-weight: var(--wp-weight-medium);
   text-decoration: none;
+}
+
+.sheetLink > :first-child {
+  flex: none;
+}
+
+.sheetText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-inline-size: 0;
+}
+
+.sheetName {
+  font-weight: var(--wp-weight-medium);
+  line-height: var(--wp-leading-snug);
+}
+
+.sheetHint {
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
 }
 
 .sheetLink:hover,

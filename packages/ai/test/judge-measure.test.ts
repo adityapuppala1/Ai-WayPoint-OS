@@ -33,6 +33,12 @@ const quiet = (lang: string, label: 'scam' | 'legit', n: number): ScamCase[] =>
     lang,
     label,
   }));
+const HIGH: ScamCase = {
+  text: 'Congratulations! You are selected for a work from home job. Pay a registration fee of Rs 999 to confirm your seat.',
+  lang: 'en',
+  label: 'scam',
+  country: 'IN',
+};
 const CERTAIN: ScamCase = {
   text: 'You are under digital arrest. Do not tell anyone. Stay on the video call and transfer the money to the safe account now.',
   lang: 'en',
@@ -44,12 +50,7 @@ describe('measuring the judge on the golden set', () => {
     const cases: ScamCase[] = [
       ...quiet('en', 'scam', 2),
       ...quiet('en', 'legit', 2),
-      {
-        text: 'Congratulations! You are selected for a work from home job. Pay a registration fee of Rs 999 to confirm your seat.',
-        lang: 'en',
-        label: 'scam',
-        country: 'IN',
-      },
+      { text: 'Act now. This offer ends today, do not wait.', lang: 'en', label: 'legit' },
     ];
     const rows = await measure(cases, async (c) =>
       c.label === 'scam' ? reading('high', 0.7) : reading('low', 0),
@@ -59,8 +60,8 @@ describe('measuring the judge on the golden set', () => {
       ['low', 'high'],
       ['low', 'low'],
       ['low', 'low'],
-      // The rules already said high: a judge cannot change that either way.
-      ['high', 'high'],
+      // The rules said unclear: a judge that says "low" cannot take that away.
+      ['unclear', 'unclear'],
     ]);
     expect(rows.every((r) => r.asked && r.answered)).toBe(true);
 
@@ -69,9 +70,9 @@ describe('measuring the judge on the golden set', () => {
     expect(lowered.map((r) => r.withJudge)).toEqual(lowered.map((r) => r.rules));
   });
 
-  it('does not ask the judge when the rules are already certain, as in the app', async () => {
+  it('does not ask the judge about a message the rules already rate high or above, as in the app', async () => {
     let asked = 0;
-    const rows = await measure([CERTAIN], async () => {
+    const rows = await measure([CERTAIN, HIGH], async () => {
       asked += 1;
       return reading('low', 0);
     });
@@ -83,6 +84,9 @@ describe('measuring the judge on the golden set', () => {
       answered: false,
       score: null,
     });
+    expect(rows[1]).toMatchObject({ rules: 'high', withJudge: 'high', asked: false, score: null });
+    // Not asking is not failing to answer: such a language still counts as measured.
+    expect(summarise(rows).languages[0]).toMatchObject({ asked: 0, answered: 0, measured: true });
   });
 
   it('counts a judge that gives no answer, or throws, as unanswered: the rules’ level stands', async () => {

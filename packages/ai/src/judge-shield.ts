@@ -18,6 +18,7 @@
  * answer". So a "nothing found" from the judge is never allowed to mean anything.
  */
 import type { ScamCategory } from '@waypoint/content/types';
+import type { RiskLevel } from '@waypoint/core';
 import { defineQuestions, type JudgeAnswers, noul } from './judge-questions';
 
 export const SHIELD_SIGNS = defineQuestions({
@@ -155,6 +156,15 @@ export const SHIELD_JUDGE = {
   unclearAt: 0.3,
   highAt: 0.6,
 } as const;
+
+/**
+ * Whether the judge could change anything for a message the rules rated at this level. "High"
+ * is the most it can say, so a message the rules already rate high or very high is not sent
+ * to it at all: nothing could come of it but a copy of someone's text leaving Waypoint.
+ */
+export function judgeCouldRaise(rulesLevel: RiskLevel): boolean {
+  return rulesLevel === 'low' || rulesLevel === 'unclear';
+}
 
 export interface ShieldJudgement {
   /** Never "very-high": see SHIELD_JUDGE. */

@@ -22,6 +22,7 @@ import {
   type RiskLevel,
   type ShieldResult,
 } from '@waypoint/core';
+import { judgeCouldRaise } from '../judge-shield';
 
 export interface ScamCase {
   text: string;
@@ -51,7 +52,10 @@ export interface MeasuredCase {
   rules: RiskLevel;
   /** The level after the judge's opinion went through the raise-only merge. */
   withJudge: RiskLevel;
-  /** False when the rules were already certain: the app does not ask then, so nor does this. */
+  /**
+   * False when the rules already said high or above, which is as much as the judge can say:
+   * the app does not ask then, so nor does this.
+   */
   asked: boolean;
   answered: boolean;
   score: number | null;
@@ -85,7 +89,7 @@ export async function measure(
       label: c.label,
       rules: rules.level,
       withJudge: rules.level,
-      asked: rules.level !== 'very-high',
+      asked: judgeCouldRaise(rules.level),
       answered: false,
       score: null,
     };
@@ -280,10 +284,13 @@ export function formatReport(
   }
   lines.push('');
   lines.push(
-    '  "asked" leaves out messages the rules were already certain about: the app does not ask',
+    '  "asked" leaves out messages the rules already rate high or above: the judge can say no',
   );
   lines.push(
-    '  the judge then. The sets are small (a few dozen messages a language), so one message',
+    '  more than "high", so the app does not send it those. It is measured on what the rules',
+  );
+  lines.push(
+    '  miss. The sets are small (a few dozen messages a language, fewer asked), so one message',
   );
   lines.push(
     '  moves a rate by several points: a pass here is a reason to look closer, not proof.',

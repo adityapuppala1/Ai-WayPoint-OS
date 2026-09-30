@@ -6,6 +6,7 @@
 import type { ScamCategory } from '@waypoint/content/types';
 import {
   type AiOpinion,
+  LEVEL_ORDER,
   LOCALES,
   type Locale,
   type PlanDraft,
@@ -18,7 +19,7 @@ import { embed, generateText, Output } from 'ai';
 import { z } from 'zod';
 import { judgeAvailable, judgeBarredByCrisis, judgeReads, runJudge } from './judge';
 import { PLAN_REWRITE_CHECKS, planRewriteFlagged, REPLY_CHECKS, replyFlags } from './judge-checks';
-import { readShieldSigns, SHIELD_SIGNS } from './judge-shield';
+import { judgeCouldRaise, readShieldSigns, SHIELD_SIGNS } from './judge-shield';
 import {
   channelInstructions,
   LANGUAGE_NAMES,
@@ -183,8 +184,6 @@ async function replyFlagged(
   return out.ok && replyFlags(out.answers).length > 0;
 }
 
-const LEVELS: RiskLevel[] = ['low', 'unclear', 'high', 'very-high'];
-
 interface ShieldOpinionInput {
   text: string;
   country?: string | null;
@@ -200,9 +199,11 @@ interface ShieldOpinionInput {
  * A second opinion on a message, for the raise-only merge (`mergeAiOpinion`). Text is
  * redacted before it leaves Waypoint.
  *
- * The judge is asked first when it may be (a key, consent, a language that is switched on).
- * The language model is asked when there is no judge, when the judge fails, and when the
- * judge is unsure; with both, the higher level stands. Whoever answered is named in `model`.
+ * The judge is asked first when it may be (a key, consent, a language that is switched on)
+ * and when it could raise the level: "high" is the most it says, so a message the rules
+ * already rate high goes straight to the language model, as before. The language model is
+ * asked when there is no judge, when the judge fails, and when the judge is unsure; with
+ * both, the higher level stands. Whoever answered is named in `model`.
  *
  * When the judge is sure (it found a clear scam, or every sign clearly absent) the language
  * model is not asked: that is the saving, and its cost is that a scam only the language
@@ -220,7 +221,7 @@ export async function shieldOpinion(
   // Both answered. Neither can take away what the other saw: the higher level stands, and its
   // reasons come first.
   const [first, second] =
-    LEVELS.indexOf(written.level) > LEVELS.indexOf(judged.opinion.level)
+    LEVEL_ORDER.indexOf(written.level) > LEVEL_ORDER.indexOf(judged.opinion.level)
       ? [written, judged.opinion]
       : [judged.opinion, written];
   return {
@@ -244,6 +245,8 @@ export async function shieldJudgeOpinion(
   pace: 'interactive' | 'background' = 'interactive',
 ): Promise<{ opinion: AiOpinion; unsure: boolean; score: number } | null> {
   const text = input.text.slice(0, 4000);
+  // Not when its answer could change nothing: the rules already say as much as it can.
+  if (input.rules && !judgeCouldRaise(input.rules.level)) return null;
   if (judgeBarredByCrisis(text) || !judgeReads(text, input.locale)) return null;
   const out = await runJudge(
     {

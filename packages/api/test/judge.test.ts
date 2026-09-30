@@ -206,16 +206,28 @@ describe('Scam Shield with the judge', () => {
   });
 
   it('cannot lower what the rules said: a judge that sees nothing changes nothing', async () => {
-    const rulesOnly = await check(SCAM);
-    expect(rulesOnly.result.level).toBe('high');
-    judge();
-    const out = await check(SCAM);
+    const RUSHED = 'Act now. This offer ends today, do not wait.';
+    const rulesOnly = await check(RUSHED);
+    expect(rulesOnly.result.level).toBe('unclear');
+    const asked = judge();
+    const out = await check(RUSHED);
+    expect(asked).toHaveLength(1);
     expect(out.ai.used).toBe(true);
     expect(out.result.level).toBe(rulesOnly.result.level);
     expect(out.result.score).toBe(rulesOnly.result.score);
     expect(out.result.signals).toEqual(rulesOnly.result.signals);
     expect(out.result.advice).toEqual(rulesOnly.result.advice);
-    expect(await stored(out.id)).toMatchObject({ level: 'high', ai_level: 'low' });
+    expect(await stored(out.id)).toMatchObject({ level: 'unclear', ai_level: 'low' });
+  });
+
+  it('is not sent a message the rules already call high: it could add nothing', async () => {
+    const rulesOnly = await check(SCAM);
+    expect(rulesOnly.result.level).toBe('high');
+    const asked = judge({ payToWork: 0.95 });
+    const out = await check(SCAM);
+    expect(asked).toHaveLength(0);
+    expect(out.result).toEqual(rulesOnly.result);
+    expect(out.ai).toEqual(rulesOnly.ai);
   });
 
   it('gives exactly the rules’ own result when the judge fails or is too slow', async () => {

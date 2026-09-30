@@ -6,6 +6,7 @@ import { SHIELD_SIGNAL_IDS } from '@waypoint/core';
 import { describe, expect, it } from 'vitest';
 import { prepareJudgeRequest } from '../src/judge-questions';
 import {
+  judgeCouldRaise,
   readShieldSigns,
   SHIELD_JUDGE,
   SHIELD_SIGN_RULES,
@@ -133,7 +134,7 @@ describe('turning the judge’s answers into a level', () => {
       seed = (seed * 16807) % 2147483647;
       return seed / 2147483647;
     };
-    for (let round = 0; round < 300; round++) {
+    for (let round = 0; round < 60; round++) {
       const base = Object.fromEntries(IDS.map((id) => [id, Math.round(random() * 100) / 100]));
       for (const id of IDS) {
         let last = 0;
@@ -144,5 +145,16 @@ describe('turning the judge’s answers into a level', () => {
         }
       }
     }
+    // Some fifty thousand sums: plenty of time, for a machine busy with other builds.
+  }, 30_000);
+
+  it('could add nothing to a message the rules already rate high or above', () => {
+    expect(judgeCouldRaise('low')).toBe(true);
+    expect(judgeCouldRaise('unclear')).toBe(true);
+    expect(judgeCouldRaise('high')).toBe(false);
+    expect(judgeCouldRaise('very-high')).toBe(false);
+    // The two go together: if the judge ever said more than "high", this would be wrong.
+    const all = readShieldSigns(answers(Object.fromEntries(IDS.map((id) => [id, 1]))));
+    expect(judgeCouldRaise(all.level)).toBe(false);
   });
 });

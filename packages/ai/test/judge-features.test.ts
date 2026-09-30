@@ -354,6 +354,23 @@ describe('Scam Shield’s second opinion', () => {
     expect(llm.doGenerateCalls).toHaveLength(0);
   });
 
+  it('does not ask the judge when the rules already say high: it could add nothing', async () => {
+    // "High" is the most the judge can say, so a message already there is not sent to it.
+    // The language model, which can say "very high", is asked exactly as before.
+    const asked = judge({ payToWork: 0.95 });
+    const llm = llmSays('very-high');
+    useModel(llm);
+    expect(await opinion({ rules: { level: 'high', signals: [] } })).toMatchObject({
+      level: 'very-high',
+      model: 'mock-model',
+    });
+    expect(asked).toHaveLength(0);
+    expect(llm.doGenerateCalls).toHaveLength(1);
+    // Below that it is asked.
+    await opinion({ rules: { level: 'unclear', signals: [] } });
+    expect(asked).toHaveLength(1);
+  });
+
   it('does not show the judge the words of someone in immediate danger', async () => {
     const asked = judge({ payToWork: 0.95 });
     await opinion({ text: 'I have the pills here and I am going to take them all tonight' });
@@ -373,12 +390,12 @@ describe('Scam Shield’s second opinion', () => {
   });
 
   it('can only raise what the rules said, whatever it answers', async () => {
-    const SCAM =
-      'Congratulations! You are selected for a work from home job. Pay a registration fee of Rs 999 to confirm your seat.';
-    const rules = checkMessage({ text: SCAM, country: 'IN' });
-    expect(rules.level).toBe('high');
-    judge();
-    const nothing = await opinion({ text: SCAM, rules });
+    const RUSHED = 'Act now. This offer ends today, do not wait.';
+    const rules = checkMessage({ text: RUSHED, country: 'IN' });
+    expect(rules.level).toBe('unclear');
+    const asked = judge();
+    const nothing = await opinion({ text: RUSHED, rules });
+    expect(asked).toHaveLength(1);
     expect(nothing?.level).toBe('low');
     const merged = mergeAiOpinion(rules, nothing!, 'IN', 'en');
     expect(merged.level).toBe(rules.level);

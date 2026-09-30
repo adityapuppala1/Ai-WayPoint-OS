@@ -64,7 +64,8 @@ Purpose-specific and revocable (`consents` table, full history in `consent_event
   and only in the languages switched on for it. The same redaction is applied to everything
   it is sent, in one place (`packages/ai/src/judge-questions.ts`). What it is sent, and
   nothing else:
-  - in Scam Shield, the pasted message (up to 4,000 characters), redacted;
+  - in Scam Shield, the pasted message (up to 4,000 characters), redacted — and only when the
+    rules rated it low or unclear, since the judge could not change a higher verdict;
   - for an answer by SMS or WhatsApp, the AI's reply, redacted — not the person's question;
   - for a plan, each reworded step and the template step it came from — not the person's
     goal;

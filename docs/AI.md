@@ -70,7 +70,9 @@ answer can only put Waypoint's own fixed wording in place of something less cert
 
 In Scam Shield the order is: rules, then the judge, then the language model only when there is
 no judge, it fails, or it is unsure (some sign in the middle of its range, or the message
-talks to whoever is checking it). With both, the higher level stands and both are recorded as
+talks to whoever is checking it). The judge is asked only about messages the rules rated low
+or unclear: "high" is the most it can say, so a message already rated high or very high is
+not sent to it (very high is sent to nobody; high goes to the language model, as before). With both, the higher level stands and both are recorded as
 the model that answered (`jev-1.13.0+claude-haiku-4-5`). When the judge is sure — a clear scam,
 or every sign clearly absent — the language model is not asked. That is the saving, and its
 price: a scam that only the language model would have caught is then rated by the rules alone.
@@ -138,7 +140,7 @@ a single real answer from Jev was seen. **They are not tuned.**
 | Use | Cut | Why there |
 | --- | --- | --- |
 | Shield: a sign counts as seen | probability ≥ 0.7 | The cut TypeSafe's examples use for a flag. Below 0.3 a sign is taken as absent; in between the judge is "unsure" and the language model is asked as well |
-| Shield: level from the signs | score ≥ 0.30 unclear, ≥ 0.60 high, never very high | Seen signs add up as the rules' signals do (weight × probability). Stricter than the rules ask of themselves (0.20, 0.45): one strong sign reaches "high" only when Jev is almost certain of it |
+| Shield: level from the signs | score ≥ 0.30 unclear, ≥ 0.60 high, never very high (so it is asked only when the rules say low or unclear) | Seen signs add up as the rules' signals do (weight × probability). Stricter than the rules ask of themselves (0.20, 0.45): one strong sign reaches "high" only when Jev is almost certain of it |
 | Reply by text | any check ≥ 0.7; a method of self-harm ≥ 0.5 | A wrongly withheld answer costs a fuller reply; a wrongly sent one could cost far more |
 | Plan rewrite | either check ≥ 0.5 | Accepting a model's wording is the act that needs confidence; refusing costs only plainer words |
 | Guided intent | confidence ≥ 0.6 and probability ≥ 0.6 | Pointing to the wrong page is cheap to undo |
@@ -244,7 +246,8 @@ Nothing in the code can enforce these, so each use is reviewed against them:
   steer it "can move the answer". So no answer may lower a crisis tier or a Scam Shield level,
   cancel a rule that fired, or decide anything on its own.
 - **Rules first, and shown first.** The deterministic result is computed and used before the
-  judge is awaited. It is skipped when the rules are already certain.
+  judge is awaited. It is skipped when its answer could change nothing: in Shield, when the
+  rules already say as much as it can.
 - **Never in immediate danger, never in another language.** Check the person's own words with
   `judgeBarredByCrisis` and the text with `judgeReads` before asking.
 - **Thresholds are named constants, one per question**, with the reasoning beside them, and

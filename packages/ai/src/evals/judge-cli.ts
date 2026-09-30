@@ -3,9 +3,9 @@
  *
  *   pnpm --filter @waypoint/ai eval:judge
  *
- * It sends every message in evals/datasets/scam.jsonl that the rules are not already certain
- * about to TypeSafe (they were written for testing and hold no real person's words), exactly
- * as the app would: the same questions, the same arithmetic, the same raise-only merge. It
+ * It sends every message in evals/datasets/scam.jsonl that the rules rate low or unclear to
+ * TypeSafe (they were written for testing and hold no real person's words), exactly as the app
+ * would: the same questions, the same arithmetic, the same raise-only merge. It
  * prints the two release gates per language with and without the judge and how well the
  * judge's score matches reality, writes the numbers to evals/results/, and exits non-zero
  * when a language listed in AI_JUDGE_LOCALES fails.

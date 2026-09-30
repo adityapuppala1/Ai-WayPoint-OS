@@ -9,8 +9,10 @@
  *   console and in public;
  * - "Tell us what worked, or what didn't" reaches staff without saying who a guest is.
  */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import AxeBuilder from '@axe-core/playwright';
-import type { Page } from '@playwright/test';
+import type { BrowserContext, Page } from '@playwright/test';
 import { expect, snap, startAsGuest, test } from './fixtures';
 import { STAFF } from './staff';
 
@@ -23,6 +25,22 @@ const SUMMARY =
 
 const day = (offset: number) =>
   new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10);
+
+/** The texts as the message files have them, so the test and the page can't drift. */
+function messages(locale: string) {
+  const file = join(import.meta.dirname, '../../../packages/i18n/messages', `${locale}.json`);
+  return JSON.parse(readFileSync(file, 'utf8')) as {
+    signals: Record<string, string>;
+    settings: Record<string, string>;
+  };
+}
+
+/** Show the pages in Arabic on a dark screen (or put them back), as the person's own choices do. */
+const inArabicAndDark = (context: BrowserContext, url: string, on: boolean) =>
+  context.addCookies([
+    { name: 'NEXT_LOCALE', value: on ? 'ar' : 'en', url },
+    { name: 'wp-theme', value: on ? 'dark' : 'light', url },
+  ]);
 
 const noSidewaysScroll = (page: Page) =>
   page.evaluate(
@@ -86,6 +104,8 @@ async function andSaved(page: Page, press: () => Promise<void>) {
 test('a signal can be saved, hidden and brought back, and an empty search says so', async ({
   page,
   browser,
+  context,
+  baseURL,
 }, testInfo) => {
   needsStaff();
   test.setTimeout(180_000);
@@ -130,6 +150,21 @@ test('a signal can be saved, hidden and brought back, and an empty search says s
       'true',
     );
     await snap(page, testInfo, 'signals-saved');
+
+    // The same list in Arabic on a dark screen: right to left, the buttons in Arabic, nothing
+    // off the edge and nothing too faint to read.
+    const ar = messages('ar').signals;
+    await inArabicAndDark(context, baseURL ?? '', true);
+    await page.goto('/signals');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    await expect(item.getByRole('button', { name: `${ar.saved}: ${title}` })).toBeVisible();
+    await expect(item.getByRole('button', { name: `${ar.dismiss}: ${title}` })).toBeVisible();
+    await expect(page.getByRole('link', { name: ar.filterAll as string })).toBeVisible();
+    expect(await noSidewaysScroll(page)).toBe(true);
+    expect(await seriousProblems(page)).toEqual([]);
+    await snap(page, testInfo, 'signals-ar-dark');
+    await inArabicAndDark(context, baseURL ?? '', false);
+    await page.goto('/signals');
 
     const filters = page.getByRole('navigation', { name: 'Which signals to show' });
     await filters.getByRole('link', { name: 'Saved' }).click();
@@ -406,7 +441,11 @@ test('staff edit an open forecast and add a translation; a verdict waits for a s
   await expect(page.getByText('Forecast details changed').first()).toBeVisible();
 });
 
-test('anyone can tell us what worked or what didn’t, from Settings', async ({ page }, testInfo) => {
+test('anyone can tell us what worked or what didn’t, from Settings', async ({
+  page,
+  context,
+  baseURL,
+}, testInfo) => {
   await startAsGuest(page, 'Baraka');
   await page.goto('/settings');
   await page.getByRole('link', { name: /Tell us what worked, or what didn’t/ }).click();
@@ -430,6 +469,23 @@ test('anyone can tell us what worked or what didn’t, from Settings', async ({ 
   expect(await noSidewaysScroll(page)).toBe(true);
   expect(await seriousProblems(page)).toEqual([]);
   await snap(page, testInfo, 'feedback-form');
+
+  // The same form in Arabic on a dark screen, before anything is sent.
+  await inArabicAndDark(context, baseURL ?? '', true);
+  await page.goto('/settings/feedback');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+    messages('ar').settings.feedbackTitle as string,
+  );
+  expect(await noSidewaysScroll(page)).toBe(true);
+  expect(await seriousProblems(page)).toEqual([]);
+  await snap(page, testInfo, 'feedback-form-ar-dark');
+  await inArabicAndDark(context, baseURL ?? '', false);
+  await page.goto('/settings/feedback');
+  await page.getByRole('button', { name: /What is it about\?/ }).click();
+  await page.getByRole('option', { name: 'Shield' }).click();
+  await page.getByRole('radio', { name: '2', exact: true }).check({ force: true });
+  await page.getByLabel('What happened?').fill('The scam check took a long time on my phone.');
   await page.getByRole('button', { name: 'Send feedback' }).click();
   await expect(page.getByText('Thank you. Your feedback has been sent.')).toBeVisible();
   // The words are cleared, so they are not sent twice.

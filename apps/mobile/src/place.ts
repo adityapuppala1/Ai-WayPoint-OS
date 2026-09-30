@@ -52,7 +52,11 @@ export const START_CONSENTS = [
   'ai_external',
 ] as const satisfies readonly ConsentPurpose[];
 
-export const ALL_CONSENTS = [
+/**
+ * The choices offered in Privacy, the same as on the website. `research_aggregates` (public
+ * trend reports) is left out until such a report exists: nothing reads the answer today.
+ */
+export const OFFERED_CONSENTS = [
   'personalization',
   'foresight_matching',
   'memory',
@@ -60,5 +64,4 @@ export const ALL_CONSENTS = [
   'circle_matching',
   'trusted_contact',
   'org_aggregates',
-  'research_aggregates',
 ] as const satisfies readonly ConsentPurpose[];

@@ -47,10 +47,20 @@ const cookieFrom = (res: Response) =>
     .filter((c) => !c?.startsWith('waypoint.session_data'))
     .join('; ');
 
+let addresses = 0;
+
 async function account(name: string, role?: 'admin'): Promise<{ cookie: string; id: string }> {
   const email = `${name.toLowerCase()}-${crypto.randomUUID().slice(0, 8)}@example.org`;
   const password = 'correct horse battery';
-  await req('/api/auth/sign-up/email', { method: 'POST', json: { email, password, name } });
+  // Each person signs up from an address of their own, as they would in real life (new
+  // accounts are limited per address).
+  addresses++;
+  const headers = { 'x-forwarded-for': `10.62.0.${addresses}` };
+  await req('/api/auth/sign-up/email', {
+    method: 'POST',
+    headers,
+    json: { email, password, name },
+  });
   const [user] = await db
     .getDb()
     .select({ id: db.users.id })
@@ -61,7 +71,11 @@ async function account(name: string, role?: 'admin'): Promise<{ cookie: string; 
     .update(db.users)
     .set({ emailVerified: true, ...(role ? { role } : {}) })
     .where(db.eq(db.users.id, user!.id));
-  const res = await req('/api/auth/sign-in/email', { method: 'POST', json: { email, password } });
+  const res = await req('/api/auth/sign-in/email', {
+    method: 'POST',
+    headers,
+    json: { email, password },
+  });
   expect(res.status).toBe(200);
   return { cookie: cookieFrom(res), id: user!.id };
 }
@@ -105,9 +119,11 @@ type View = {
   reasons: string[];
   isDemo: boolean;
   resolutionNote: string | null;
+  doubleChecked: boolean | null;
 };
 type List = { open: View[]; awaiting: View[]; judged: View[] };
 type Record_ = {
+  unchecked: number;
   open: number;
   awaiting: number;
   judged: number;
@@ -151,9 +167,14 @@ describe('before anything is published', () => {
     const all = [...shown.open, ...shown.awaiting, ...shown.judged];
     expect(all.length).toBeGreaterThan(0);
     for (const f of all) expect(f.isDemo).toBe(true);
+    // An example was never judged by anyone, so it says nothing about a second check, and
+    // the record does not count it as waiting for one.
+    expect(shown.judged.length).toBeGreaterThan(0);
+    for (const f of shown.judged) expect(f.doubleChecked).toBeNull();
+    expect((await record()).unchecked).toBe(0);
     // Staff never see them among the forecasts they manage.
     staff = await account('Editor', 'admin');
-    for (const state of ['open', 'awaiting', 'resolved', 'annulled']) {
+    for (const state of ['open', 'awaiting', 'unchecked', 'resolved', 'annulled']) {
       const managed = (await (
         await req(`/api/admin/forecasts?state=${state}`, { cookie: staff.cookie })
       ).json()) as { items: View[] };
@@ -512,6 +533,128 @@ describe('changing and judging', () => {
     const after = await record();
     expect(after.annulled).toBe(before.annulled + 1);
     expect(after.judged).toBe(before.judged);
+  });
+
+  it('marks a verdict as not yet double-checked until a different member of staff confirms it', async () => {
+    const id = await publish({
+      question: 'Will the ferry timetable change before the school term starts?',
+    });
+    const confirm = (cookie?: string) =>
+      req(`/api/admin/forecasts/${id}/confirm`, { method: 'POST', cookie, json: {} });
+    type Waiting = {
+      counts: Record<string, number>;
+      items: Array<View & { judgedByYou: boolean }>;
+    };
+    const waiting = async (cookie: string) =>
+      (await (await req('/api/admin/forecasts?state=unchecked', { cookie })).json()) as Waiting;
+    const core = await import('../src');
+
+    // Not judged yet: there is nothing to check, and nothing to say about a check.
+    expect((await find(id))?.doubleChecked).toBeNull();
+    expect((await confirm(staff.cookie)).status).toBe(409);
+    const uncheckedBefore = (await record()).unchecked;
+
+    await judge(id, {
+      outcome: 'no',
+      note: 'The operator kept the same timetable for the new term.',
+      sourceUrl: 'https://www.kenyaferry.co.ke/timetable',
+    });
+    // In public it is judged and counted straight away — and says its second check is missing.
+    expect(await find(id)).toMatchObject({
+      state: 'resolved',
+      outcome: 'no',
+      doubleChecked: false,
+    });
+    expect((await record()).unchecked).toBe(uncheckedBefore + 1);
+
+    // The console lists it for a second check and tells the judge it cannot be theirs.
+    const mine = await waiting(staff.cookie);
+    expect(mine.counts.unchecked).toBeGreaterThanOrEqual(1);
+    expect(mine.items.find((f) => f.id === id)).toMatchObject({ judgedByYou: true });
+    expect((await confirm(staff.cookie)).status).toBe(403);
+    expect((await find(id))?.doubleChecked).toBe(false);
+    // With one staff account the badge in the console does not nag about a check they cannot give.
+    const toJudge = await core.forecasts.forecastsToJudge(db.getDb());
+    expect((await core.admin.adminCounts(db.getDb(), staff.id)).forecasts).toBe(toJudge);
+
+    // Nobody outside staff can confirm anything.
+    expect((await confirm()).status).toBe(401);
+    expect((await confirm((await account('Visitor')).cookie)).status).toBe(403);
+
+    const second = await account('Second', 'admin');
+    expect((await waiting(second.cookie)).items.find((f) => f.id === id)).toMatchObject({
+      judgedByYou: false,
+    });
+    expect((await core.admin.adminCounts(db.getDb(), second.id)).forecasts).toBeGreaterThanOrEqual(
+      toJudge + 1,
+    );
+    expect((await confirm(second.cookie)).status).toBe(200);
+    // The verdict is what it was; only the mark has gone.
+    expect(await find(id)).toMatchObject({ state: 'resolved', outcome: 'no', doubleChecked: true });
+    expect((await record()).unchecked).toBe(uncheckedBefore);
+    expect((await waiting(second.cookie)).items.map((f) => f.id)).not.toContain(id);
+    // Checked once.
+    expect((await confirm(second.cookie)).status).toBe(409);
+    const log = (await (await req('/api/admin/audit', { cookie: staff.cookie })).json()) as {
+      items: Array<{ action: string; targetId: string | null }>;
+    };
+    expect(log.items).toContainEqual(
+      expect.objectContaining({ action: 'forecast.verdict-confirmed', targetId: id }),
+    );
+  });
+
+  it('asks for a second check on a withdrawal too, since withdrawing keeps a forecast out of the score', async () => {
+    const id = await publish({
+      question: 'Will the county publish its housing survey before the end of the quarter?',
+    });
+    await judge(id, { outcome: 'annulled', note: 'The county has stopped running the survey.' });
+    expect(await find(id)).toMatchObject({ state: 'annulled', doubleChecked: false });
+    const second = await account('Checker', 'admin');
+    expect(
+      (
+        await req(`/api/admin/forecasts/${id}/confirm`, {
+          method: 'POST',
+          cookie: second.cookie,
+          json: {},
+        })
+      ).status,
+    ).toBe(200);
+    expect((await find(id))?.doubleChecked).toBe(true);
+  });
+
+  it('gives staff everything they may still change about an open forecast, in every language written', async () => {
+    const id = await publish({
+      question: 'Will the clinic open its new wing before the rainy season?',
+      translations: {
+        sw: {
+          question: 'Je, zahanati itafungua jengo lake jipya kabla ya msimu wa mvua?',
+          whatToDo: 'Uliza zahanati ni huduma zipi zitahamia kwenye jengo jipya.',
+          resolutionCriteria:
+            'Ndiyo ikiwa zahanati itatangaza kufunguliwa kwa jengo kabla ya tarehe.',
+        },
+      },
+    });
+    expect((await req(`/api/admin/forecasts/${id}`)).status).toBe(401);
+    expect(
+      (await req(`/api/admin/forecasts/${id}`, { cookie: (await account('Nosy')).cookie })).status,
+    ).toBe(403);
+    expect(
+      (await req(`/api/admin/forecasts/${crypto.randomUUID()}`, { cookie: staff.cookie })).status,
+    ).toBe(404);
+    const res = await req(`/api/admin/forecasts/${id}`, { cookie: staff.cookie });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({
+      id,
+      state: 'open',
+      language: 'en',
+      question: 'Will the clinic open its new wing before the rainy season?',
+      regions: ['KE'],
+      baseRate: 0.3,
+      sources: [{ name: 'Central Bank of Kenya', url: 'https://www.centralbank.go.ke/' }],
+      translations: {
+        sw: { question: 'Je, zahanati itafungua jengo lake jipya kabla ya msimu wa mvua?' },
+      },
+    });
   });
 });
 

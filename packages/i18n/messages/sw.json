@@ -480,7 +480,11 @@
     "reportWrong": "Kuna kosa? Tuambie",
     "textTitle": "Huna data? Wasiliana nasi kwa ujumbe",
     "textBody": "Namba za msaada, ukaguzi wa utapeli na majibu kwa SMS, WhatsApp au USSD.",
-    "textAction": "Jinsi ya kutuma ujumbe kwa Waypoint"
+    "textAction": "Jinsi ya kutuma ujumbe kwa Waypoint",
+    "contactNote": "Hufungua programu ya simu yako ikiwa na ujumbe mfupi unaoweza kuubadilisha. Waypoint haitumi chochote.",
+    "contactMessage": "Ninapitia wakati mgumu sasa hivi na ningependa kuzungumza. Tafadhali nipigie simu au nitumie ujumbe ukiona huu.",
+    "contactSubject": "Tunaweza kuzungumza?",
+    "emailContact": "Mtumie {name} barua pepe"
   },
   "shield": {
     "title": "Ngao ya Ulaghai",
@@ -704,13 +708,14 @@
     "projectTitle": "Tengeneza mradi wa ushahidi kwa {role}",
     "projectDetail": "Unganisha {skills} katika kazi moja ndogo iliyokamilika ambayo mtu anaweza kuiangalia kwa dakika tano.",
     "reviewTitle": "Mwombe mtu akague mradi wako",
-    "reviewDetail": "Ukaguzi wa mwenzako au mshauri hugeuza mradi wako kuwa cheti kilichothibitishwa unachoweza kuwaonyesha waajiri.",
+    "reviewDetail": "Mwonyeshe mtu unayeamini maoni yake: mwenzako, mshauri au kikundi chako. Uliza ni nini kiko wazi na nini kinakosekana, kisha uuboreshe.",
     "applyTitle": "Omba kazi au jinadi: {role}",
-    "applyDetail": "Tuma maombi matatu au pendekezo moja kwa mteja mtarajiwa, na uambatishe kiungo cha mradi wako uliothibitishwa.",
+    "applyDetail": "Tuma maombi matatu au pendekezo moja kwa mteja mtarajiwa, na uambatishe mradi wako ili waone unachoweza kufanya.",
     "weeklyReviewTitle": "Tathmini ya wiki",
     "weeklyReviewDetail": "Nini kilienda vizuri, nini kilikwamisha, na badiliko moja kwa wiki ijayo.",
     "listJoin": ", ",
-    "listAnd": " na "
+    "listAnd": " na ",
+    "projectTitleGeneral": "Tengeneza mradi mdogo unaoonyesha unachoweza kufanya"
   },
   "signals": {
     "title": "Ishara",
@@ -720,7 +725,14 @@
     "save": "Hifadhi",
     "saved": "Imehifadhiwa",
     "dismiss": "Hainihusu",
-    "demo": "Mfano"
+    "demo": "Mfano",
+    "hidden": "Imefichwa. Hutaonyeshwa hii tena.",
+    "undo": "Tendua",
+    "filterLabel": "Ishara zipi zionyeshwe",
+    "filterAll": "Zote",
+    "showAll": "Onyesha ishara zote",
+    "savedEmpty": "Bado hujahifadhi ishara yoyote.",
+    "noMatch": "Hakuna ishara inayolingana na “{query}”."
   },
   "settings": {
     "title": "Mipangilio",
@@ -785,7 +797,31 @@
     "emailConfirmed": "Anwani ya barua pepe imethibitishwa",
     "emailUnconfirmed": "Thibitisha anwani yako ya barua pepe",
     "emailUnconfirmedBody": "Tulikutumia kiungo ulipojisajili. Kuthibitisha kunakuwezesha kujibu mialiko ya kujiunga na timu ya shirika — na kuwaalika watu ikiwa unaendesha shirika.",
-    "deleteOrganisations": "{count, plural, one {Shirika hili halina mmiliki wala msimamizi mwingine, kwa hiyo litafutwa} other {Mashirika haya hayana mmiliki wala msimamizi mwingine, kwa hiyo yatafutwa}} pamoja na akaunti yako: {names}."
+    "deleteOrganisations": "{count, plural, one {Shirika hili halina mmiliki wala msimamizi mwingine, kwa hiyo litafutwa} other {Mashirika haya hayana mmiliki wala msimamizi mwingine, kwa hiyo yatafutwa}} pamoja na akaunti yako: {names}.",
+    "trustedOff": "Ili kuwaona watu hawa Waypoint inapokuonyesha nambari za msaada, washa “{setting}” hapo juu.",
+    "memoryTitle": "Mambo ambayo Waypoint inakumbuka",
+    "memoryLead": "Mambo uliyoiomba ikumbuke katika Uliza; kila moja lilihifadhiwa tu baada ya wewe kukubali. Huhifadhiwa kwa usimbaji.",
+    "memoryEmpty": "Hakuna kinachokumbukwa.",
+    "memoryOff": "Kumbukumbu imezimwa (“{setting}” hapo juu). Waypoint haihifadhi jambo jipya wala haitumii chochote kilichoorodheshwa hapa. Kilichoorodheshwa kinabaki hadi utakapokifuta.",
+    "memorySavedOn": "Ilihifadhiwa {date}",
+    "memoryUnreadable": "Hili halikuweza kufunguliwa. Bado unaweza kulifuta.",
+    "memoryForgetAll": "Sahau kila kitu",
+    "memoryForgetAllConfirm": "Ufute kila kitu ambacho Waypoint inakumbuka kutoka Uliza? Mazungumzo, malengo na mipango yako vinabaki. Hili haliwezi kutenduliwa.",
+    "memoryDeleted": "Imefutwa",
+    "feedbackTitle": "Tuambie kilichofanya kazi, au kisichofanya",
+    "feedbackLead": "Huwafikia watu wanaotengeneza Waypoint. Namba za simu, anwani za barua pepe na namba za kadi au za kitambulisho huondolewa kwenye unachoandika kabla ya kuhifadhiwa.",
+    "feedbackRow": "Ujumbe mfupi kwa watu wanaotengeneza Waypoint.",
+    "feedbackAbout": "Inahusu nini?",
+    "feedbackOther": "Jambo jingine",
+    "feedbackRating": "Ilikufaa kwa kiasi gani?",
+    "feedbackRatingHint": "1 inamaanisha haikufanya kazi. 5 inamaanisha ilifanya kazi vizuri.",
+    "feedbackMessage": "Nini kilitokea?",
+    "feedbackMessageHint": "Ulikuwa unajaribu kufanya nini, na nini kilisaidia au kilikuzuia.",
+    "feedbackReply": "Ningependa jibu",
+    "feedbackReplyHint": "Jibu lingetumwa kwa {email}. Usipochagua hili, wanaosoma maoni yako hawaonyeshwi nani aliyeyatuma.",
+    "feedbackSend": "Tuma maoni",
+    "feedbackSent": "Asante. Maoni yako yametumwa.",
+    "feedbackNeed": "Kwanza andika maneno machache au chagua namba."
   },
   "explore": {
     "title": "Sehemu zote",
@@ -1739,7 +1775,9 @@
       "moderation": "Udhibiti wa maudhui",
       "reports": "Ripoti za utapeli",
       "audit": "Kumbukumbu ya shughuli",
-      "forecasts": "Makadirio"
+      "forecasts": "Makadirio",
+      "signals": "Ishara",
+      "feedback": "Maoni"
     },
     "generatedAt": "Hadi {time}",
     "peopleTitle": "Watu",
@@ -1873,7 +1911,10 @@
       "forecast_edited": "Maelezo ya kadirio yamebadilishwa",
       "forecast_chance_updated": "Uwezekano wa kadirio umebadilishwa",
       "forecast_resolved": "Kadirio limeamuliwa",
-      "forecast_annulled": "Kadirio limeondolewa"
+      "forecast_annulled": "Kadirio limeondolewa",
+      "signal_published": "Ishara imechapishwa",
+      "signal_withdrawn": "Ishara imeondolewa",
+      "forecast_verdict_confirmed": "Matokeo ya kadirio yamethibitishwa na mtu wa pili"
     },
     "peak": "Siku yenye shughuli nyingi: {count} tarehe {date}",
     "showTable": "Onyesha kama jedwali",
@@ -1926,7 +1967,8 @@
       "open": "Wazi",
       "awaiting": "Ya kuamua",
       "resolved": "Yameamuliwa",
-      "annulled": "Yameondolewa"
+      "annulled": "Yameondolewa",
+      "unchecked": "Uhakiki wa pili"
     },
     "forecastsEmpty": "Hakuna kitu hapa.",
     "forecastNew": "Chapisha kadirio",
@@ -1965,7 +2007,63 @@
     "aSourceUrl": "Mahali mtu yeyote anaweza kuhakiki (https://…)",
     "aRecord": "Andika matokeo",
     "aRecorded": "Matokeo yameandikwa",
-    "aOnce": "Hili huandikwa mara moja na haliwezi kutenduliwa: linakuwa sehemu ya rekodi ya wazi."
+    "aOnce": "Hili huandikwa mara moja na haliwezi kutenduliwa: linakuwa sehemu ya rekodi ya wazi.",
+    "cLead": "Matokeo husimama mara yanapoandikwa, na huonekana kwa wote yakiwa na alama “bado halijahakikiwa mara ya pili” hadi mfanyakazi mwingine ayathibitishe hapa.",
+    "cChecked": "Yamethibitishwa na mtu wa pili",
+    "cWaiting": "Yanasubiri uhakiki wa pili",
+    "cYours": "Yanasubiri uhakiki wa pili. Wewe ndiye uliyeandika matokeo haya, kwa hiyo mtu mwingine ndiye anapaswa kuyathibitisha.",
+    "cConfirm": "Thibitisha matokeo",
+    "cConfirmTitle": "Uthibitishe matokeo haya?",
+    "cConfirmBody": "Thibitisha tu ikiwa umehakiki chanzo mwenyewe na unakubaliana na kilichoandikwa. Hili hurekodiwa kwa jina lako na haliwezi kutenduliwa.",
+    "cConfirmed": "Matokeo yamethibitishwa",
+    "eEdit": "Hariri maelezo",
+    "eTitle": "Hariri maelezo ya kadirio",
+    "eBack": "Makadirio yote",
+    "eSaved": "Maelezo ya kadirio yamehifadhiwa",
+    "eCheck": "Baadhi ya sehemu zinahitaji kuangaliwa. Kagua ushauri, vyanzo (jina, mkato, anwani ya https://) na tafsiri yoyote uliyoanza.",
+    "eClosed": "Kadirio hili haliwezi kubadilishwa tena: tarehe yake imepita au limeshaamuliwa.",
+    "tSaved": "Kwa {language}",
+    "tFixed": "Swali la tafsiri hii na jinsi linavyoamuliwa haviwezi kubadilika tena kwa kuwa imeshahifadhiwa. Maelezo na ushauri wake bado vinaweza kubadilishwa.",
+    "tFixedOnSave": "Ikishahifadhiwa, swali la tafsiri na jinsi linavyoamuliwa haviwezi kubadilishwa.",
+    "signalsTitle": "Ishara",
+    "signalsLead": "Mambo yaliyobadilika, kila moja na chanzo ambacho wafanyakazi walilisoma. Ishara huonyeshwa mara moja kwa watu inaowahusu.",
+    "signalsEmpty": "Bado hakuna ishara iliyoongezwa.",
+    "signalNew": "Ongeza ishara",
+    "sSourceNeeded": "Ishara haichapishwi kamwe bila chanzo ambacho watu wanaweza kufungua. Waypoint haiandiki ishara: ongeza tu ulichosoma mwenyewe kwenye anwani unayotoa.",
+    "sTitle": "Kilichobadilika",
+    "sTitleHint": "Sentensi moja rahisi, kama kichwa cha habari.",
+    "sSummary": "Muhtasari",
+    "sSummaryHint": "Kwa maneno yako: nini kimebadilika, kwa nani, na kuanzia lini. Usinakili chanzo.",
+    "sSourceName": "Jina la chanzo",
+    "sKind": "Aina ya chanzo",
+    "sKinds": {
+      "official": "Taasisi rasmi",
+      "news": "Habari",
+      "labour-market": "Takwimu za soko la ajira",
+      "community": "Shirika la kijamii"
+    },
+    "sSourceUrl": "Anwani ya chanzo (https://…)",
+    "sPublishedOn": "Siku chanzo kilipolichapisha",
+    "sSectors": "Sekta",
+    "sSectorsHint": "Maneno mafupi ya Kiingereza yakitenganishwa kwa mkato, kwa mfano agriculture, transport.",
+    "sImportance": "Umuhimu",
+    "sImportanceHint": "Kuanzia 1 (ndogo) hadi 5 (kubwa).",
+    "sImportanceValue": "Umuhimu: {value, number} kati ya 5",
+    "sPublish": "Chapisha ishara",
+    "sPublished": "Ishara imechapishwa",
+    "sCheck": "Baadhi ya sehemu zinahitaji kuangaliwa. Kagua muhtasari, jina na anwani ya chanzo (https://) na tarehe.",
+    "sAdded": "Imeongezwa {date}.",
+    "sNotShown": "Haionyeshwi tena kwa yeyote: ina zaidi ya mwaka mmoja.",
+    "sWithdraw": "Ondoa",
+    "sWithdrawTitle": "Uondoe ishara hii?",
+    "sWithdrawBody": "Haitaonyeshwa tena kwa yeyote, hata kwa walioihifadhi. Kumbukumbu ya shughuli huhifadhi kichwa chake na chanzo chake.",
+    "sWithdrawn": "Ishara imeondolewa",
+    "feedbackTitle": "Maoni",
+    "feedbackLead": "Mambo ambayo watu walituambia yalifanya kazi au hayakufanya, jipya kwanza. Taarifa binafsi ziliondolewa kwenye kila ujumbe kabla ya kuhifadhiwa. Hakuna anayetajwa isipokuwa ameomba jibu, na mgeni hawezi kutambulika kabisa.",
+    "feedbackEmpty": "Bado hakuna maoni.",
+    "feedbackRated": "Alama: {rating, number} kati ya 5",
+    "feedbackNoMessage": "Hakuna ujumbe.",
+    "feedbackReplyTo": "Angependa jibu kupitia <link>{email}</link>"
   },
   "byText": {
     "title": "Waypoint kwa ujumbe",
@@ -2152,7 +2250,8 @@
         "correct": "Kurekebisha: badilisha taarifa zako katika Mipangilio wakati wowote.",
         "delete": "Kufuta: Mipangilio → Faragha na data → Futa akaunti yangu. Hufanyika mara moja na haiwezi kutenduliwa.",
         "withdraw": "Kubadilisha nia: zima chaguo lolote, nalo husimama kuanzia hapo.",
-        "complain": "Kulalamika: tuandikie, au iandikie mamlaka ya ulinzi wa data mahali unapoishi."
+        "complain": "Kulalamika: tuandikie, au iandikie mamlaka ya ulinzi wa data mahali unapoishi.",
+        "memory": "Kuona mambo ambayo Waypoint iliombwa ikumbuke, na kufuta lolote kati yake: Mipangilio → Faragha na data → Mambo ambayo Waypoint inakumbuka. Kuzima kumbukumbu kunasimamisha kutumiwa kwake na kuongezwa kwa mapya; yaliyopo yanabaki hadi utakapoyafuta."
       },
       "children": {
         "title": "Watoto na vijana",
@@ -2393,6 +2492,9 @@
     "newer": "Za karibuni",
     "pageOf": "Ukurasa {page, number} kati ya {pages, number}",
     "pagesLabel": "Kurasa za makadirio yaliyoamuliwa",
-    "how5": "Kila uwezekano ambao kadirio lilionyesha hubaki umeorodheshwa na tarehe yake, na timu hurekodi matokeo mara yanapojulikana. Namba iliyobadilishwa baada ya tukio huonekana kwa kila mtu."
+    "how5": "Kila uwezekano ambao kadirio lilionyesha hubaki umeorodheshwa na tarehe yake, na timu hurekodi matokeo mara yanapojulikana. Namba iliyobadilishwa baada ya tukio huonekana kwa kila mtu.",
+    "unchecked": "Bado halijahakikiwa mara ya pili: mfanyakazi mwingine bado hajathibitisha matokeo haya.",
+    "how6": "Mfanyakazi wa pili huhakiki kila matokeo. Hadi hapo, kadirio huwekewa alama “bado halijahakikiwa mara ya pili”.",
+    "uncheckedCount": "{count, plural, one {Matokeo # bado hayajahakikiwa} other {Matokeo # bado hayajahakikiwa}} mara ya pili."
   }
 }

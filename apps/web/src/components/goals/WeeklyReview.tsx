@@ -1,10 +1,12 @@
 'use client';
 
 import type { WeeklyReview as Review } from '@waypoint/api/client';
+import type { CrisisResponsePlan } from '@waypoint/core';
 import { Button, Radio, RadioGroup, TextField, toast } from '@waypoint/ui';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { type FormEvent, useState } from 'react';
+import { CrisisCard } from '@/components/support/CrisisCard';
 import { api } from '@/lib/api';
 import styles from './goals.module.css';
 
@@ -21,21 +23,28 @@ export function WeeklyReview({ initial }: { initial: Review | null }) {
   const [nextChange, setNextChange] = useState(initial?.nextChange ?? '');
   const [mood, setMood] = useState(initial?.mood ? String(initial.mood) : '');
   const [busy, setBusy] = useState(false);
+  // The answers are checked for signs of danger as they are saved, like a journal entry.
+  const [crisis, setCrisis] = useState<CrisisResponsePlan | null>(null);
+  const support = crisis ? <CrisisCard plan={crisis} onStay={() => setCrisis(null)} /> : null;
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setBusy(true);
     try {
-      await api('/api/goals/review', {
-        method: 'PUT',
-        json: {
-          wentWell: wentWell.trim() || undefined,
-          gotInTheWay: gotInTheWay.trim() || undefined,
-          nextChange: nextChange.trim() || undefined,
-          mood: mood ? Number(mood) : undefined,
+      const saved = await api<{ screening: { plan: CrisisResponsePlan | null } }>(
+        '/api/goals/review',
+        {
+          method: 'PUT',
+          json: {
+            wentWell: wentWell.trim() || undefined,
+            gotInTheWay: gotInTheWay.trim() || undefined,
+            nextChange: nextChange.trim() || undefined,
+            mood: mood ? Number(mood) : undefined,
+          },
         },
-      });
-      toast({ title: t('reviewSaved'), tone: 'safe' }, 3000);
+      );
+      if (saved.screening.plan) setCrisis(saved.screening.plan);
+      else toast({ title: t('reviewSaved'), tone: 'safe' }, 3000);
       setEditing(false);
       router.refresh();
     } catch {
@@ -48,6 +57,7 @@ export function WeeklyReview({ initial }: { initial: Review | null }) {
   if (initial && !editing) {
     return (
       <div className={styles.form}>
+        {support}
         <p className="wp-strong">{t('reviewDone')}</p>
         <dl className={styles.answers}>
           {initial.wentWell ? (
@@ -80,6 +90,7 @@ export function WeeklyReview({ initial }: { initial: Review | null }) {
 
   return (
     <form className={styles.form} onSubmit={submit}>
+      {support}
       <TextField
         label={t('wentWell')}
         value={wentWell}

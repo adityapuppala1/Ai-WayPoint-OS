@@ -112,3 +112,66 @@
 .foot {
   font-size: var(--wp-text-small);
 }
+
+/* The person's own trusted contacts: a raised block inside the card, one row per person. */
+.contacts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-3);
+  padding: var(--wp-space-4);
+  border-radius: var(--wp-radius-sm);
+  background: var(--wp-raised);
+}
+
+.contactsTitle {
+  font-size: var(--wp-text-body);
+  font-weight: var(--wp-weight-semibold);
+  line-height: var(--wp-leading-snug);
+}
+
+.contactList {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.contact {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+  padding-block: var(--wp-space-3);
+  min-inline-size: 0;
+}
+
+.contact:first-child {
+  padding-block-start: 0;
+}
+
+.contact + .contact {
+  border-block-start: 1px solid var(--wp-border-subtle);
+}
+
+.contactName {
+  font-weight: var(--wp-weight-medium);
+  overflow-wrap: anywhere;
+}
+
+.contactAddress {
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+  overflow-wrap: anywhere;
+}
+
+.contactActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-2);
+  margin-block-start: var(--wp-space-2);
+}
+
+.contactNote {
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+}

@@ -1,0 +1,28 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-5);
+  max-inline-size: 40rem;
+}
+
+.end {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-4);
+}
+
+/* The place the thank-you appears in takes no room until it does (it must stay in the page
+   to be announced, so it is not hidden: its share of the gap is taken back instead). */
+.end > [aria-live]:empty {
+  margin-block-end: calc(-1 * var(--wp-space-4));
+}
+
+/*
+ * One to five, side by side. The group's options sit in the only block element directly
+ * inside it (the label and hint are inline), so that is what gets laid out in a row.
+ */
+.ratings > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-1) var(--wp-space-5);
+}

@@ -1,14 +1,85 @@
 /**
- * Your data: a complete, readable export and permanent deletion.
- * Encrypted fields are decrypted for the export (it goes only to the person).
+ * Your data: a complete, readable export, what the assistant was asked to remember, and
+ * permanent deletion. Encrypted fields are decrypted for their owner only.
  */
+import { z } from '@hono/zod-openapi';
 import { openDek, openFor, SEALED } from '@waypoint/core/privacy';
 import * as s from '@waypoint/db';
-import { and, type Database, eq, inArray, ne, or, sql } from '@waypoint/db';
-import { getConsents, getProfile, listTrustedContacts } from './me';
+import { and, type Database, desc, eq, inArray, ne, or, sql } from '@waypoint/db';
+import { notFound } from '../lib/problem';
+import { getConsents, getProfile, listTrustedContacts, userDek } from './me';
 import { handOverOrganisations } from './org';
 
 const iso = (d: Date | null | undefined) => (d ? d.toISOString() : null);
+
+// ───────────────────────────── What Waypoint remembers ─────────────────────────────
+
+export const MemorySchema = z
+  .object({
+    id: z.string(),
+    /** fact | preference | goal | context */
+    kind: z.string(),
+    /** Null when it could not be decrypted: still listed, so it can still be deleted. */
+    content: z.string().nullable(),
+    createdAt: z.string(),
+  })
+  .openapi('Memory');
+
+export type Memory = z.infer<typeof MemorySchema>;
+
+/**
+ * Everything the assistant was asked to remember (each saved only after the person approved
+ * it), newest first, decrypted for its owner. Listed whether or not the memory choice is on:
+ * switching that off stops Waypoint using and saving memories, and deletes nothing, so the
+ * list is where the person sees what is still kept and removes it.
+ */
+export async function listMemories(db: Database, userId: string): Promise<Memory[]> {
+  const rows = await db
+    .select({
+      id: s.memories.id,
+      kind: s.memories.kind,
+      content: s.memories.content,
+      contentCt: s.memories.contentCt,
+      createdAt: s.memories.createdAt,
+    })
+    .from(s.memories)
+    .where(eq(s.memories.userId, userId))
+    .orderBy(desc(s.memories.createdAt));
+  if (!rows.length) return [];
+  const dek = rows.some((r) => r.contentCt) ? await userDek(db, userId) : null;
+  const opened = (ct: string, id: string) => {
+    try {
+      return dek ? openFor(dek, ct, SEALED.memory, userId, id) : null;
+    } catch {
+      return null;
+    }
+  };
+  return rows.map((r) => ({
+    id: r.id,
+    kind: r.kind,
+    // Sealed like goals; ones saved before that are still read as they are.
+    content: r.contentCt ? opened(r.contentCt, r.id) : r.content,
+    createdAt: r.createdAt.toISOString(),
+  }));
+}
+
+/** Delete one memory. Someone else's id answers "not found", like one that never existed. */
+export async function forgetMemory(db: Database, userId: string, id: string): Promise<void> {
+  const gone = await db
+    .delete(s.memories)
+    .where(and(eq(s.memories.id, id), eq(s.memories.userId, userId)))
+    .returning({ id: s.memories.id });
+  if (!gone.length) throw notFound('Memory');
+}
+
+/** "Forget everything": delete all of this person's memories, and nobody else's. */
+export async function forgetAllMemories(db: Database, userId: string): Promise<number> {
+  const gone = await db
+    .delete(s.memories)
+    .where(eq(s.memories.userId, userId))
+    .returning({ id: s.memories.id });
+  return gone.length;
+}
 
 export async function exportData(db: Database, userId: string): Promise<Record<string, unknown>> {
   const [profileRow] = await db

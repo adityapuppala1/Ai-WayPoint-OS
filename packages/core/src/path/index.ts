@@ -164,6 +164,7 @@ export interface PlanTemplates {
   circleTitle: string;
   circleDetail: string;
   projectTitle: string; // {role}
+  projectTitleGeneral: string; // the same step when no role was chosen
   projectDetail: string; // {skills}
   reviewTitle: string;
   reviewDetail: string;
@@ -201,19 +202,36 @@ export const PLAN_TEMPLATES_EN: PlanTemplates = {
   circleDetail:
     "Introduce yourself and share this week's goal. People who plan together tend to follow through.",
   projectTitle: 'Make a proof project for {role}',
+  projectTitleGeneral: 'Make a small project that shows what you can do',
   projectDetail:
     'Combine {skills} in one small, finished piece of work that someone could look at in five minutes.',
   reviewTitle: 'Ask someone to review your project',
   reviewDetail:
-    'A peer or mentor review turns your project into a verified credential you can share with employers.',
+    'Show it to someone whose opinion you trust: a peer, a mentor or your circle. Ask what is clear and what is missing, then improve it.',
   applyTitle: 'Apply or pitch: {role}',
   applyDetail:
-    'Send three applications or one pitch to a potential client, and link your verified project.',
+    'Send three applications or one pitch to a potential client, and include your project so they can see what you can do.',
   weeklyReviewTitle: 'Weekly review',
   weeklyReviewDetail: 'What went well, what got in the way, and one change for next week.',
   listJoin: ', ',
   listAnd: ' and ',
 };
+
+/**
+ * Plans saved before October 2026 sent their project and review steps to two proof-of-work
+ * pages that were never built. Those addresses are stored with the step, so they are
+ * translated here to where the planner sends the same step today (null: the step opens on
+ * the plan itself). Every other address is returned as it is.
+ */
+const RETIRED_STEP_HREFS = new Map<string, string | null>([
+  ['/path/projects/new', null],
+  ['/path/proof', '/circles'],
+]);
+
+export function currentStepHref(href: string | null | undefined): string | null {
+  if (!href) return null;
+  return RETIRED_STEP_HREFS.has(href) ? (RETIRED_STEP_HREFS.get(href) ?? null) : href;
+}
 
 function fill(template: string, vars: Record<string, string | number>): string {
   return template.replace(/\{(\w+)\}/g, (_, k: string) => String(vars[k] ?? ''));
@@ -241,7 +259,13 @@ function resolveVar(v: PlanTextVar, t: PlanTemplates, names: PlanNames): string 
  * Unknown keys fall back to English so an old plan never shows a blank step.
  */
 export function renderPlanText(ref: PlanText, t: PlanTemplates, names: PlanNames): string {
-  const key = ref.key as keyof PlanTemplates;
+  // Plans made without a role used to put the plan's own title where the role goes ("Make a
+  // proof project for Your next steps"). They are stored that way, so they are written with
+  // the wording made for them whenever they are read.
+  const role = ref.vars?.role;
+  const general =
+    ref.key === 'projectTitle' && typeof role === 'object' && role !== null && 'template' in role;
+  const key = (general ? 'projectTitleGeneral' : ref.key) as keyof PlanTemplates;
   const template = t[key] ?? PLAN_TEMPLATES_EN[key] ?? '';
   const vars: Record<string, string | number> = {};
   for (const [k, v] of Object.entries(ref.vars ?? {})) vars[k] = resolveVar(v, t, names);
@@ -432,21 +456,21 @@ export function draftPlan(
 
   // Proof and apply weeks.
   const proofSkillIds = gaps.slice(0, 3).map((g) => g.skillId);
-  const roleVar: PlanTextVar = role ? { role: role.id } : { template: 'titleGeneral' };
   while (planWeeks.length < weeks) {
     const weekNo = planWeeks.length + 1;
     const isLast = weekNo === weeks;
     const steps: PlanStepDraft[] = [];
     if (!isLast || proofWeeks === 1) {
+      // The project is made outside Waypoint, so this step links nowhere: it is ticked off
+      // on the plan itself. (Proof of work, with its own pages, is not built yet.)
       steps.push(
         step(
           {
             kind: 'build',
             minutes: mins(weeklyMinutes * (isLast ? 0.45 : 0.75)),
             skillIds: proofSkillIds,
-            href: '/path/projects/new',
           },
-          txt('projectTitle', { role: roleVar }),
+          role ? txt('projectTitle', { role: { role: role.id } }) : txt('projectTitleGeneral'),
           txt('projectDetail', { skills: { skills: proofSkillIds } }),
         ),
       );
@@ -454,7 +478,7 @@ export function draftPlan(
     if (isLast) {
       steps.push(
         step(
-          { kind: 'connect', minutes: 20, skillIds: [], href: '/path/proof' },
+          { kind: 'connect', minutes: 20, skillIds: [], href: '/circles' },
           txt('reviewTitle'),
           txt('reviewDetail'),
         ),

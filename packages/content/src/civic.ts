@@ -66,7 +66,7 @@ export const CIVIC_CHECKLISTS: CivicChecklist[] = [
         id: 'plan-next',
         title: 'Make a short plan for your next role',
         detail:
-          'Path can suggest roles that fit your skills and build a week-by-week plan, including one small project that proves what you can do.',
+          'Path can suggest roles that fit your skills and build a week-by-week plan, including one small project that shows what you can do.',
         urgency: 'this-month',
       },
       {
@@ -128,7 +128,7 @@ export const CIVIC_CHECKLISTS: CivicChecklist[] = [
         id: 'record-wins',
         title: 'Keep a record of what you learn and achieve',
         detail:
-          'Your work passport in Path turns projects into proof you can show at your next step.',
+          'Write down what you finish and what you learn while it is fresh, and update your skills in Path. It makes your next application or pay conversation easier.',
         urgency: 'later',
       },
     ],
@@ -221,7 +221,8 @@ export const CIVIC_CHECKLISTS: CivicChecklist[] = [
       {
         id: 'surroundings',
         title: 'Learn your new surroundings',
-        detail: 'Surroundings shows local weather, air quality and alerts for your area.',
+        detail:
+          'Surroundings shows the weather, air quality and sun where you are, and what they mean for your day.',
         urgency: 'later',
       },
     ],

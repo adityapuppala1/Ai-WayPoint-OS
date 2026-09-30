@@ -1,33 +1,50 @@
+/* The search: the design system's field and button, side by side. */
 .search {
   display: flex;
+  align-items: flex-start;
   gap: var(--wp-space-2);
 }
 
-.input {
+.field {
   flex: 1;
   /* Inputs have an intrinsic width; let the field shrink on narrow phones. */
   min-inline-size: 0;
-  min-block-size: var(--wp-touch-min);
-  padding-inline: var(--wp-space-3);
-  border: 1px solid var(--wp-border-strong);
-  border-radius: var(--wp-radius-sm);
-  background: var(--wp-raised);
-  color: var(--wp-text);
-  font: inherit;
 }
 
-.button {
+/* "All" and "Saved": filters a person switches between, so they are chips. */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.filters a {
+  display: inline-flex;
+  align-items: center;
   min-block-size: var(--wp-touch-min);
   padding-inline: var(--wp-space-4);
   border: 1px solid var(--wp-border-strong);
-  border-radius: var(--wp-radius-sm);
-  background: var(--wp-raised);
-  color: var(--wp-text);
-  font: inherit;
+  border-radius: var(--wp-radius-round);
+  color: var(--wp-text-secondary);
   font-weight: var(--wp-weight-medium);
-  cursor: pointer;
+  text-decoration: none;
 }
 
-.button:hover {
+.filters a:hover {
   background: var(--wp-sunken);
+  color: var(--wp-text);
+}
+
+.filters a[aria-current="page"] {
+  border-color: var(--wp-text);
+  background: var(--wp-text);
+  color: var(--wp-canvas);
+}
+
+.filters a:focus-visible {
+  outline: 2px solid var(--wp-focus-ring);
+  outline-offset: 2px;
 }

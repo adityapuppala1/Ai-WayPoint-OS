@@ -10,11 +10,15 @@ import { errors, IdParam, jsonBody, jsonContent, OkSchema, router } from '../lib
 import { ipHash } from '../lib/request';
 import { limit, noStore, requireAdmin } from '../middleware';
 import {
+  ADMIN_FORECAST_FILTERS,
+  AdminForecastDetailSchema,
   AdminForecastListSchema,
+  adminForecast,
   adminForecasts,
   ChanceInputSchema,
+  ConfirmInputSchema,
+  confirmVerdict,
   editForecast,
-  FORECAST_STATES,
   ForecastInputSchema,
   ForecastListSchema,
   ForecastPatchSchema,
@@ -100,11 +104,36 @@ app.openapi(
     path: '/admin/forecasts',
     tags: ['Admin'],
     summary: 'Forecasts by state, with how many are in each',
-    request: { query: z.object({ state: z.enum(FORECAST_STATES).optional() }) },
+    description:
+      '`state=unchecked` lists every verdict that no second member of staff has confirmed yet.',
+    request: { query: z.object({ state: z.enum(ADMIN_FORECAST_FILTERS).optional() }) },
     responses: { 200: jsonContent(AdminForecastListSchema), 401: errors[401], 403: errors[403] },
   }),
   async (c) =>
-    c.json(await adminForecasts(c.get('db'), c.req.valid('query').state, c.get('locale')), 200),
+    c.json(
+      await adminForecasts(c.get('db'), c.req.valid('query').state, {
+        locale: c.get('locale'),
+        viewerId: c.get('user')!.id,
+      }),
+      200,
+    ),
+);
+
+app.openapi(
+  createRoute({
+    method: 'get',
+    path: '/admin/forecasts/{id}',
+    tags: ['Admin'],
+    summary: 'One forecast as staff wrote it, in every language, for the edit screen',
+    request: { params: IdParam },
+    responses: {
+      200: jsonContent(AdminForecastDetailSchema),
+      401: errors[401],
+      403: errors[403],
+      404: errors[404],
+    },
+  }),
+  async (c) => c.json(await adminForecast(c.get('db'), c.req.valid('param').id), 200),
 );
 
 app.openapi(
@@ -170,6 +199,30 @@ app.openapi(
   }),
   async (c) => {
     await judgeForecast(c.get('db'), actor(c), c.req.valid('param').id, c.req.valid('json'));
+    return c.json({ ok: true as const }, 200);
+  },
+);
+
+app.openapi(
+  createRoute({
+    method: 'post',
+    path: '/admin/forecasts/{id}/confirm',
+    tags: ['Admin'],
+    summary: 'The second check: confirm a verdict that another member of staff recorded',
+    description:
+      'Refused for the person who recorded the verdict (403). Until a verdict is confirmed it is shown as judged and marked as not yet double-checked; confirming never changes it.',
+    middleware: [limit('admin-forecast', 120, 3600)] as const,
+    request: { params: IdParam, ...jsonBody(ConfirmInputSchema) },
+    responses: {
+      200: jsonContent(OkSchema),
+      401: errors[401],
+      403: errors[403],
+      404: errors[404],
+      409: errors[409],
+    },
+  }),
+  async (c) => {
+    await confirmVerdict(c.get('db'), actor(c), c.req.valid('param').id);
     return c.json({ ok: true as const }, 200);
   },
 );

@@ -1,7 +1,9 @@
 import { me } from '@waypoint/api';
 import { COUNTRIES } from '@waypoint/content';
+import { List, Panel } from '@waypoint/ui';
 import type { Metadata } from 'next';
 import { getLocale, getTranslations } from 'next-intl/server';
+import { LinkRow } from '@/components/LinkRow';
 import { LegalLinks } from '@/components/legal/LegalLinks';
 import { SettingsForm } from '@/components/settings/SettingsForm';
 import { requireViewer } from '@/lib/server';
@@ -36,6 +38,16 @@ export default async function SettingsPage() {
           emailVerified: await me.isEmailVerified(viewer.db, viewer.user.id),
         }}
       />
+      {/* Somewhere to say what is wrong, or what helped: it reaches the people who build this. */}
+      <Panel flush>
+        <List>
+          <LinkRow
+            href="/settings/feedback"
+            title={t('feedbackTitle')}
+            description={t('feedbackRow')}
+          />
+        </List>
+      </Panel>
       <LegalLinks className="wp-cluster wp-meta" />
     </div>
   );

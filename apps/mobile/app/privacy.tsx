@@ -9,7 +9,7 @@ import { ScrollView, View } from 'react-native';
 import { useTranslations } from 'use-intl';
 import { api } from '../src/api';
 import { confirm } from '../src/confirm';
-import { ALL_CONSENTS } from '../src/place';
+import { OFFERED_CONSENTS } from '../src/place';
 import { useRemote } from '../src/remote';
 import { deleteAccount, fetchMe, type Me } from '../src/session';
 import { useTheme } from '../src/theme';
@@ -100,7 +100,7 @@ export default function PrivacyScreen() {
 
       {consents ? (
         <Panel title={t('consentsTitle')} flush>
-          {ALL_CONSENTS.map((c, i) => (
+          {OFFERED_CONSENTS.map((c, i) => (
             <SwitchRow
               key={c}
               first={i === 0}

@@ -29,6 +29,7 @@ import {
   type SkillLevel,
   suggestRoles,
 } from '@waypoint/core';
+import { currentStepHref } from '@waypoint/core/path';
 import {
   and,
   asc,
@@ -315,7 +316,8 @@ function stepView(s: StepRow, r?: Renderer): PlanStepView {
     status: (STEP_STATUSES as readonly string[]).includes(s.status)
       ? (s.status as PlanStepView['status'])
       : 'todo',
-    href: s.href,
+    // Plans saved earlier may still carry an address for a page that was never built.
+    href: currentStepHref(s.href),
     skillIds: s.skillIds,
     resource: resourceView(s.resourceId),
     doneAt: s.doneAt?.toISOString() ?? null,

@@ -43,7 +43,7 @@ import { oneAtATime } from '../lib/locks';
 import { ApiError, forbidden, notFound } from '../lib/problem';
 import { keyedUniform } from '../lib/request';
 import type { Consents } from '../types';
-import { helpCountry, type Profile } from './me';
+import { helpCountry, offersTrustedContact, type Profile } from './me';
 import { recordCrisis } from './safety';
 
 const SITUATION_TOPIC: Record<string, string> = {
@@ -665,6 +665,7 @@ export async function createPost(
       country: helpCountry(profile),
       locale: profile.locale,
       inCircle: true,
+      hasTrustedContact: await offersTrustedContact(db, userId),
     });
     await recordCrisis(db, {
       userId,

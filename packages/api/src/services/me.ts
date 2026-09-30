@@ -439,6 +439,26 @@ async function addTrustedContactUnlocked(
   };
 }
 
+/**
+ * Whether the support card should offer the person's own contacts: they switched that choice
+ * on and saved at least one. The card never contacts anyone; its buttons open the phone's own
+ * apps, and the details are fetched by the owner's own browser (see /me/trusted-contacts).
+ */
+export async function offersTrustedContact(db: Database, userId: string): Promise<boolean> {
+  const [choice] = await db
+    .select({ granted: consents.granted })
+    .from(consents)
+    .where(and(eq(consents.userId, userId), eq(consents.purpose, 'trusted_contact')))
+    .limit(1);
+  if (!choice?.granted) return false;
+  const [contact] = await db
+    .select({ id: trustedContacts.id })
+    .from(trustedContacts)
+    .where(eq(trustedContacts.userId, userId))
+    .limit(1);
+  return Boolean(contact);
+}
+
 export async function removeTrustedContact(
   db: Database,
   userId: string,

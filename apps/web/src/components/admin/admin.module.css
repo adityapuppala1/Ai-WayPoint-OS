@@ -533,3 +533,39 @@
   flex-direction: column;
   gap: var(--wp-space-2);
 }
+
+/* What is fixed once published (a question, how it is judged): shown, never in a field. */
+.fixed {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-4);
+  margin: 0;
+}
+
+.fixed dt {
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+  font-weight: var(--wp-weight-medium);
+}
+
+.fixed dd {
+  margin: var(--wp-space-1) 0 0;
+  padding: var(--wp-space-3) var(--wp-space-4);
+  border-radius: var(--wp-radius-sm);
+  background: var(--wp-sunken);
+  overflow-wrap: anywhere;
+}
+
+/* A verdict's second check: one line saying where it stands, in words as well as colour. */
+.check {
+  font-size: var(--wp-text-small);
+  font-weight: var(--wp-weight-medium);
+}
+
+.check[data-state="waiting"] {
+  color: var(--wp-caution);
+}
+
+.check[data-state="done"] {
+  color: var(--wp-safe);
+}

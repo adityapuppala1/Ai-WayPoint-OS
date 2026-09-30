@@ -47,7 +47,13 @@ export const ONBOARDING_CONSENTS = [
   'ai_external',
 ] as const satisfies readonly ConsentPurpose[];
 
-export const ALL_CONSENTS = [
+/**
+ * The choices offered in Privacy settings. `research_aggregates` ("include me in anonymised
+ * public trend reports") is left out on purpose: no such report exists and nothing reads the
+ * answer, and a switch that changes nothing is not a choice. Answers already given stay
+ * stored and in the export; offer it again only together with the report (and ask afresh).
+ */
+export const OFFERED_CONSENTS = [
   'personalization',
   'foresight_matching',
   'memory',
@@ -55,7 +61,6 @@ export const ALL_CONSENTS = [
   'circle_matching',
   'trusted_contact',
   'org_aggregates',
-  'research_aggregates',
 ] as const satisfies readonly ConsentPurpose[];
 
 /** Skills most people can claim at some level — shown first when adding skills. */

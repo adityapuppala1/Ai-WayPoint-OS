@@ -1,6 +1,6 @@
 'use client';
 
-import type { Consents, MyProgrammes, TrustedContact } from '@waypoint/api/client';
+import type { Consents, Memory, MyProgrammes, TrustedContact } from '@waypoint/api/client';
 import {
   Button,
   ConfirmDialog,
@@ -18,19 +18,23 @@ import { useTranslations } from 'next-intl';
 import { type FormEvent, useState } from 'react';
 import { ApiProblem, api } from '@/lib/api';
 import { forgetOfflineCopy } from '@/lib/offline';
-import { ALL_CONSENTS } from '@/lib/options';
+import { OFFERED_CONSENTS } from '@/lib/options';
+import { MemoryPanel } from './MemoryPanel';
 import { ProgrammesPanel } from './ProgrammesPanel';
 import styles from './settings.module.css';
 
 export function PrivacySettings({
   consents: initial,
   contacts: initialContacts,
+  memories,
   retention,
   programmes,
   lostOrganisations,
 }: {
   consents: Consents;
   contacts: TrustedContact[];
+  /** What the assistant was asked to remember, newest first. */
+  memories: Memory[];
   retention: number | null;
   programmes: MyProgrammes;
   /** Organisations with no other owner or admin: deleting the account deletes them too. */
@@ -49,7 +53,7 @@ export function PrivacySettings({
   const [confirmChats, setConfirmChats] = useState(false);
   const [confirmAccount, setConfirmAccount] = useState(false);
 
-  const toggle = async (purpose: (typeof ALL_CONSENTS)[number], granted: boolean) => {
+  const toggle = async (purpose: (typeof OFFERED_CONSENTS)[number], granted: boolean) => {
     setConsents((cur) => ({ ...cur, [purpose]: granted }));
     try {
       const next = await api<Consents>('/api/me/consents', {
@@ -91,7 +95,7 @@ export function PrivacySettings({
     <div className={styles.stack}>
       <Panel title={t('consentsTitle')} as="section">
         <div className={styles.form}>
-          {ALL_CONSENTS.map((purpose) => (
+          {OFFERED_CONSENTS.map((purpose) => (
             <Switch
               key={purpose}
               isSelected={consents[purpose]}
@@ -137,6 +141,10 @@ export function PrivacySettings({
           ) : (
             <p className="wp-secondary">{t('trustedEmpty')}</p>
           )}
+          {/* Saving a contact is not choosing to see them on the support card: say which switch does. */}
+          {contacts.length && !consents.trusted_contact ? (
+            <p className="wp-secondary">{t('trustedOff', { setting: c('trusted_contact') })}</p>
+          ) : null}
           {adding ? (
             <form className={styles.form} onSubmit={addContact}>
               <TextField
@@ -196,6 +204,8 @@ export function PrivacySettings({
           ) : null}
         </div>
       </Panel>
+
+      <MemoryPanel memories={memories} memoryOn={consents.memory} />
 
       <Panel title={t('retentionTitle')} as="section">
         <SelectField

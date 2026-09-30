@@ -26,6 +26,7 @@ import { safeExternalHref } from '@waypoint/core/paths';
 import {
   and,
   asc,
+  auditLog,
   type Database,
   desc,
   eq,
@@ -57,8 +58,28 @@ export const FORECAST_CATEGORIES = [
 export const FORECAST_STATES = ['open', 'awaiting', 'resolved', 'annulled'] as const;
 export type ForecastState = (typeof FORECAST_STATES)[number];
 
+/**
+ * What staff can list in the console: the four states, and the verdicts still waiting for a
+ * second member of staff to confirm them.
+ */
+export const ADMIN_FORECAST_FILTERS = [
+  'open',
+  'awaiting',
+  'unchecked',
+  'resolved',
+  'annulled',
+] as const;
+export type AdminForecastFilter = (typeof ADMIN_FORECAST_FILTERS)[number];
+
 const PREDICTOR = 'waypoint';
 const DAY = 86_400_000;
+
+/**
+ * Who recorded a verdict and who confirmed it is read from the audit log, which already
+ * records every staff action on a forecast and is never rewritten.
+ */
+const VERDICT_ACTIONS = ['forecast.resolved', 'forecast.annulled'];
+const CONFIRMED_ACTION = 'forecast.verdict-confirmed';
 
 // ─────────────────────────────── What people see ───────────────────────────────
 
@@ -96,6 +117,11 @@ export const ForecastSchema = z
     resolvedAt: z.string().nullable(),
     resolutionNote: z.string().nullable(),
     resolutionSourceUrl: z.string().nullable(),
+    /**
+     * Once judged: whether a second member of staff, not the one who recorded the outcome,
+     * has confirmed it. Null while there is no outcome to check.
+     */
+    doubleChecked: z.boolean().nullable(),
     /** Its score once judged: 0 is perfect, 0.25 is what saying 50 % would score. */
     score: z.number().nullable(),
     isDemo: z.boolean(),
@@ -132,6 +158,8 @@ export const ForecastRecordSchema = z
     awaiting: z.number().int(),
     judged: z.number().int(),
     annulled: z.number().int(),
+    /** Of those judged or withdrawn: how many no second member of staff has confirmed yet. */
+    unchecked: z.number().int(),
     /** How many came true, of those judged. */
     happened: z.number().int(),
     /** Mean score, or null until `minForScore` forecasts have been judged. */
@@ -215,6 +243,8 @@ function view(
   locale: string,
   reasons: RelevanceReason[],
   now: Date,
+  /** The forecasts whose verdict a second person has confirmed. */
+  checked: Set<string>,
 ): ForecastView | null {
   // The chance shown is the last one published before it closed.
   const close = closedAt(row).getTime();
@@ -245,6 +275,8 @@ function view(
     resolvedAt: row.resolvedAt?.toISOString() ?? null,
     resolutionNote: row.resolutionNote,
     resolutionSourceUrl: safeExternalHref(row.resolutionSourceUrl),
+    // Example rows were never judged by anyone: there is no check to report on them.
+    doubleChecked: JUDGED.includes(row.status) && !row.isDemo ? checked.has(row.id) : null,
     score: score?.brier ?? null,
     isDemo: row.isDemo,
     reasons,
@@ -272,6 +304,21 @@ async function chancesFor(db: Database, ids: string[]): Promise<Map<string, Chan
   for (const r of rows) out.set(r.forecastId, [...(out.get(r.forecastId) ?? []), r]);
   return out;
 }
+
+/** Of these forecasts, the ones whose verdict a second member of staff has confirmed. */
+async function confirmedAmong(db: Database, ids: string[]): Promise<Set<string>> {
+  if (!ids.length) return new Set();
+  const rows = await db
+    .select({ id: auditLog.targetId })
+    .from(auditLog)
+    .where(and(eq(auditLog.action, CONFIRMED_ACTION), inArray(auditLog.targetId, ids)));
+  return new Set(rows.map((r) => r.id).filter((id): id is string => id !== null));
+}
+
+/** A judged forecast that no second person has confirmed (as a condition on `forecasts`). */
+const notConfirmed = sql`not exists (
+  select 1 from audit_log c
+  where c.action = ${CONFIRMED_ACTION} and c.target_id = ${forecasts.id}::text)`;
 
 /** Example rows are shown only outside production, and always labelled. They are never scored. */
 const realOnly = eq(forecasts.isDemo, false);
@@ -317,10 +364,16 @@ export async function listForecasts(
         .from(forecasts)
         .where(and(examples, inArray(forecasts.status, JUDGED)))
     : [{ n: 0 }];
-  const chances = await chancesFor(
-    db,
-    [...ahead, ...past].map((r) => r.id),
-  );
+  const [chances, checked] = await Promise.all([
+    chancesFor(
+      db,
+      [...ahead, ...past].map((r) => r.id),
+    ),
+    confirmedAmong(
+      db,
+      past.map((r) => r.id),
+    ),
+  ]);
   const p = who.profile;
   const profile = {
     country: p?.country ?? undefined,
@@ -346,7 +399,7 @@ export async function listForecasts(
         return {
           row,
           score: rel.score,
-          v: view(row, chances.get(row.id) ?? [], opts.locale, reasons, now),
+          v: view(row, chances.get(row.id) ?? [], opts.locale, reasons, now, checked),
         };
       })
       .filter((x): x is typeof x & { v: ForecastView } => x.v !== null);
@@ -380,11 +433,16 @@ export async function forecastRecord(db: Database, now = new Date()): Promise<Fo
   }
   const board = scoreboard(judged);
   const count = (state: ForecastState) => rows.filter((r) => stateOf(r, now) === state).length;
+  const [unchecked] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(forecasts)
+    .where(and(realOnly, inArray(forecasts.status, JUDGED), notConfirmed));
   return {
     open: count('open'),
     awaiting: count('awaiting'),
     judged: board.judged,
     annulled: count('annulled'),
+    unchecked: Number(unchecked?.n ?? 0),
     happened: judged.filter((j) => j.outcome === 1).length,
     brier: board.brier,
     reference: board.reference,
@@ -404,24 +462,25 @@ const Probability = z
 
 const regionNames = new Intl.DisplayNames(['en'], { type: 'region' });
 /** A country that exists, in its standard code: "uk" becomes GB; "QQ" and "ZZ" are refused. */
-const Region = z
+export const Region = z
   .string()
   .trim()
   .regex(/^[A-Za-z]{2}$/)
   .transform((v) => new Intl.Locale(`und-${v}`).region ?? v.toUpperCase())
   .refine((code) => code !== 'ZZ' && regionNames.of(code) !== code, 'Use a country code.');
 
-const Source = z.object({
-  name: z.string().trim().min(2).max(120),
-  // Stored as the browser will read it: "https:example.org" typed without its slashes would
-  // otherwise become a link to a page on Waypoint itself.
-  url: z
-    .string()
-    .trim()
-    .max(500)
-    .refine((u) => safeExternalHref(u) !== null, 'Use a full https:// address.')
-    .transform((u) => safeExternalHref(u) as string),
-});
+/**
+ * A page anyone can open, stored as the browser will read it: "https:example.org" typed without
+ * its slashes would otherwise become a link to a page on Waypoint itself.
+ */
+export const HttpsAddress = z
+  .string()
+  .trim()
+  .max(500)
+  .refine((u) => safeExternalHref(u) !== null, 'Use a full https:// address.')
+  .transform((u) => safeExternalHref(u) as string);
+
+const Source = z.object({ name: z.string().trim().min(2).max(120), url: HttpsAddress });
 
 const Words = {
   question: z
@@ -502,12 +561,52 @@ export const JudgeInputSchema = z
   })
   .openapi('ForecastJudgeInput');
 
+/** Confirming a verdict takes no words: the second person either confirms it or does not. */
+export const ConfirmInputSchema = z.object({}).openapi('ForecastConfirmInput');
+
 export const AdminForecastListSchema = z
   .object({
-    items: z.array(ForecastSchema),
-    counts: z.record(z.enum(FORECAST_STATES), z.number().int()),
+    items: z.array(
+      ForecastSchema.extend({
+        /**
+         * The staff member asking is the one who recorded this verdict, so the second check
+         * cannot be theirs. Nobody's name is given: who did what is in the audit log.
+         */
+        judgedByYou: z.boolean(),
+      }),
+    ),
+    counts: z.record(z.enum(ADMIN_FORECAST_FILTERS), z.number().int()),
   })
   .openapi('AdminForecastList');
+
+const TranslationOut = z.object({
+  question: z.string(),
+  description: z.string().optional(),
+  whatToDo: z.string(),
+  resolutionCriteria: z.string(),
+});
+
+/** One forecast as staff wrote it, in every language written: what the edit screen starts from. */
+export const AdminForecastDetailSchema = z
+  .object({
+    id: z.string(),
+    state: z.enum(FORECAST_STATES),
+    language: z.enum(LOCALES),
+    category: z.string(),
+    question: z.string(),
+    description: z.string(),
+    whatToDo: z.string(),
+    resolutionCriteria: z.string(),
+    regions: z.array(z.string()),
+    sectors: z.array(z.string()),
+    sources: z.array(SourceSchema),
+    baseRate: z.number().nullable(),
+    translations: z.record(z.string(), TranslationOut),
+    resolvesAt: z.string(),
+  })
+  .openapi('AdminForecastDetail');
+
+export type AdminForecastDetail = z.infer<typeof AdminForecastDetailSchema>;
 
 async function forecastRow(db: Database, id: string): Promise<Row> {
   const [row] = await db.select().from(forecasts).where(eq(forecasts.id, id)).limit(1);
@@ -515,31 +614,93 @@ async function forecastRow(db: Database, id: string): Promise<Row> {
   return row;
 }
 
-/** Staff list: everything in one state, in the staff member's language where written. */
+/** Who recorded each of these verdicts (the staff member's id), where the audit log says. */
+async function judgesOf(db: Database, ids: string[]): Promise<Map<string, string | null>> {
+  const out = new Map<string, string | null>();
+  if (!ids.length) return out;
+  const rows = await db
+    .select({ id: auditLog.targetId, by: auditLog.actorUserId })
+    .from(auditLog)
+    .where(and(inArray(auditLog.action, VERDICT_ACTIONS), inArray(auditLog.targetId, ids)))
+    .orderBy(asc(auditLog.createdAt));
+  for (const r of rows) if (r.id) out.set(r.id, r.by);
+  return out;
+}
+
+/**
+ * Staff list: everything in one state — or every verdict still waiting for its second check —
+ * in the staff member's language where written.
+ */
 export async function adminForecasts(
   db: Database,
-  state: ForecastState = 'open',
-  locale = 'en',
-  now = new Date(),
+  filter: AdminForecastFilter = 'open',
+  opts: { locale?: string; now?: Date /** The staff member looking. */; viewerId?: string } = {},
 ): Promise<z.infer<typeof AdminForecastListSchema>> {
+  const now = opts.now ?? new Date();
   const rows = await db
     .select()
     .from(forecasts)
     .where(realOnly)
     .orderBy(desc(forecasts.createdAt))
     .limit(1000);
-  const counts = { open: 0, awaiting: 0, resolved: 0, annulled: 0 };
-  for (const r of rows) counts[stateOf(r, now)] += 1;
-  const wanted = rows.filter((r) => stateOf(r, now) === state).slice(0, 200);
-  const chances = await chancesFor(
+  const judged = rows.filter((r) => JUDGED.includes(r.status));
+  const checked = await confirmedAmong(
     db,
-    wanted.map((r) => r.id),
+    judged.map((r) => r.id),
   );
+  const counts = { open: 0, awaiting: 0, unchecked: 0, resolved: 0, annulled: 0 };
+  for (const r of rows) counts[stateOf(r, now)] += 1;
+  counts.unchecked = judged.filter((r) => !checked.has(r.id)).length;
+  const wanted = (
+    filter === 'unchecked'
+      ? judged.filter((r) => !checked.has(r.id))
+      : rows.filter((r) => stateOf(r, now) === filter)
+  ).slice(0, 200);
+  const [chances, judges] = await Promise.all([
+    chancesFor(
+      db,
+      wanted.map((r) => r.id),
+    ),
+    judgesOf(
+      db,
+      wanted.filter((r) => JUDGED.includes(r.status)).map((r) => r.id),
+    ),
+  ]);
   return {
     items: wanted
-      .map((r) => view(r, chances.get(r.id) ?? [], locale, [], now))
-      .filter((v): v is ForecastView => v !== null),
+      .map((r) => {
+        const v = view(r, chances.get(r.id) ?? [], opts.locale ?? 'en', [], now, checked);
+        return v
+          ? { ...v, judgedByYou: Boolean(opts.viewerId) && judges.get(r.id) === opts.viewerId }
+          : null;
+      })
+      .filter((v): v is ForecastView & { judgedByYou: boolean } => v !== null),
     counts,
+  };
+}
+
+/** One forecast with everything staff may still change, in every language it was written in. */
+export async function adminForecast(
+  db: Database,
+  id: string,
+  now = new Date(),
+): Promise<AdminForecastDetail> {
+  const row = await forecastRow(db, id);
+  return {
+    id: row.id,
+    state: stateOf(row, now),
+    language: isLocale(row.language) ? row.language : 'en',
+    category: row.category,
+    question: row.question,
+    description: row.description,
+    whatToDo: row.whatToDo,
+    resolutionCriteria: row.resolutionCriteria,
+    regions: row.regions,
+    sectors: row.sectors,
+    sources: row.sources,
+    baseRate: row.baseRate ?? null,
+    translations: row.translations ?? {},
+    resolvesAt: row.resolvesAt.toISOString(),
   };
 }
 
@@ -549,6 +710,30 @@ export async function forecastsToJudge(db: Database): Promise<number> {
     .select({ n: sql<number>`count(*)::int` })
     .from(forecasts)
     .where(and(realOnly, eq(forecasts.status, 'open'), sql`${forecasts.resolvesAt} <= now()`));
+  return Number(row?.n ?? 0);
+}
+
+/**
+ * How many verdicts this staff member could confirm: judged, not yet confirmed, and recorded
+ * by someone else. With a single staff account this is always nought, so the console never
+ * asks that person for a check they cannot give.
+ */
+export async function verdictsToCheck(db: Database, viewerId: string): Promise<number> {
+  const [row] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(forecasts)
+    .where(
+      and(
+        realOnly,
+        inArray(forecasts.status, JUDGED),
+        notConfirmed,
+        sql`coalesce((
+          select a.actor_user_id from audit_log a
+          where a.target_id = ${forecasts.id}::text
+            and a.action in ('forecast.resolved', 'forecast.annulled')
+          order by a.created_at desc limit 1), '') <> ${viewerId}`,
+      ),
+    );
   return Number(row?.n ?? 0);
 }
 
@@ -760,6 +945,57 @@ export async function judgeForecast(
       targetType: 'forecast',
       targetId: id,
       meta: annulled ? {} : { outcome: input.outcome },
+    });
+  });
+}
+
+/**
+ * The second check: a member of staff other than the one who recorded a verdict confirms it.
+ *
+ * A verdict stands from the moment it is recorded — it is public, and it is scored — because
+ * an installation with one member of staff must still be able to keep a record. Until someone
+ * else confirms it, it is marked "not yet double-checked" wherever it is shown. Confirming
+ * changes nothing about the verdict: the record is never rewritten. A second person who
+ * disagrees does not confirm, and the mark stays for everyone to see.
+ */
+export async function confirmVerdict(db: Database, actor: Actor, id: string): Promise<void> {
+  await forecastRow(db, id);
+  await db.transaction(async (tx) => {
+    // One at a time (two staff pressing at once), and only once there is a verdict.
+    const [row] = await tx
+      .select({ status: forecasts.status, outcome: forecasts.outcome })
+      .from(forecasts)
+      .where(eq(forecasts.id, id))
+      .for('update');
+    if (!row || !JUDGED.includes(row.status))
+      throw new ApiError(409, 'not-judged', 'There is no outcome to confirm yet.');
+    const entries = await tx
+      .select({ action: auditLog.action, by: auditLog.actorUserId })
+      .from(auditLog)
+      .where(
+        and(
+          eq(auditLog.targetId, id),
+          inArray(auditLog.action, [...VERDICT_ACTIONS, CONFIRMED_ACTION]),
+        ),
+      )
+      .orderBy(asc(auditLog.createdAt));
+    if (entries.some((e) => e.action === CONFIRMED_ACTION))
+      throw new ApiError(409, 'checked', 'A second person has already confirmed this outcome.');
+    const judge = entries.filter((e) => VERDICT_ACTIONS.includes(e.action)).at(-1)?.by ?? null;
+    if (judge === actor.userId)
+      throw new ApiError(
+        403,
+        'same-person',
+        'The second check has to come from a different member of staff than the one who recorded the outcome.',
+      );
+    await audit(tx, actor, {
+      action: CONFIRMED_ACTION,
+      targetType: 'forecast',
+      targetId: id,
+      meta:
+        row.status === 'annulled'
+          ? { outcome: 'annulled' }
+          : { outcome: row.outcome === 1 ? 'yes' : 'no' },
     });
   });
 }

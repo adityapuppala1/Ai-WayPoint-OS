@@ -6,11 +6,11 @@ import {
   deleteGoal,
   GoalInputSchema,
   GoalPatchSchema,
-  GoalSchema,
+  GoalSavedSchema,
   GoalsViewSchema,
   goalsOverview,
   ReviewInputSchema,
-  ReviewSchema,
+  ReviewSavedSchema,
   saveReview,
   updateGoal,
 } from '../services/goals';
@@ -41,17 +41,22 @@ app.openapi(
     method: 'post',
     path: '/goals',
     tags: ['Goals'],
-    summary: 'Add a goal (its words are stored encrypted)',
+    summary: 'Add a goal (its words are stored encrypted, and screened for signs of danger)',
     middleware: [limit('goal-create', 60, 3600)] as const,
     request: jsonBody(GoalInputSchema),
     responses: {
-      201: jsonContent(GoalSchema, 'Created'),
+      201: jsonContent(GoalSavedSchema, 'Created'),
       401: errors[401],
       409: errors[409],
       429: errors[429],
     },
   }),
-  async (c) => c.json(await createGoal(c.get('db'), c.get('user')!.id, c.req.valid('json')), 201),
+  async (c) => {
+    const db = c.get('db');
+    const user = c.get('user')!;
+    const profile = await getProfile(db, user.id);
+    return c.json(await createGoal(db, user.id, profile, c.req.valid('json')), 201);
+  },
 );
 
 app.openapi(
@@ -59,15 +64,15 @@ app.openapi(
     method: 'put',
     path: '/goals/review',
     tags: ['Goals'],
-    summary: 'Save this week’s review (encrypted); saving again updates it',
+    summary: 'Save this week’s review (encrypted, screened); saving again updates it',
     request: jsonBody(ReviewInputSchema),
-    responses: { 200: jsonContent(ReviewSchema), 401: errors[401] },
+    responses: { 200: jsonContent(ReviewSavedSchema), 401: errors[401] },
   }),
   async (c) => {
     const db = c.get('db');
     const user = c.get('user')!;
     const profile = await getProfile(db, user.id);
-    return c.json(await saveReview(db, user.id, profile.timezone, c.req.valid('json')), 200);
+    return c.json(await saveReview(db, user.id, profile, c.req.valid('json')), 200);
   },
 );
 
@@ -78,18 +83,17 @@ app.openapi(
     tags: ['Goals'],
     summary: 'Update a goal: words, progress or status',
     request: { params: IdParam, ...jsonBody(GoalPatchSchema) },
-    responses: { 200: jsonContent(GoalSchema), 401: errors[401], 404: errors[404] },
+    responses: { 200: jsonContent(GoalSavedSchema), 401: errors[401], 404: errors[404] },
   }),
-  async (c) =>
-    c.json(
-      await updateGoal(
-        c.get('db'),
-        c.get('user')!.id,
-        c.req.valid('param').id,
-        c.req.valid('json'),
-      ),
+  async (c) => {
+    const db = c.get('db');
+    const user = c.get('user')!;
+    const profile = await getProfile(db, user.id);
+    return c.json(
+      await updateGoal(db, user.id, profile, c.req.valid('param').id, c.req.valid('json')),
       200,
-    ),
+    );
+  },
 );
 
 app.openapi(

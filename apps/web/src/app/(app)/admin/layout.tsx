@@ -7,7 +7,11 @@ import { requireAdmin } from '@/lib/server';
 /** Platform staff only. Everyone else gets a plain "not found": the console stays unlisted. */
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const viewer = await requireAdmin('/admin');
-  const [t, waiting] = await Promise.all([getTranslations('admin'), admin.adminCounts(viewer.db)]);
+  const [t, waiting] = await Promise.all([
+    getTranslations('admin'),
+    // Counted for this member of staff: a verdict they recorded is not theirs to confirm.
+    admin.adminCounts(viewer.db, viewer.user.id),
+  ]);
   return (
     <div className="wp-page wp-page-wide">
       <header className="wp-page-head">

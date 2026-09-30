@@ -480,7 +480,11 @@
     "reportWrong": "Une erreur ? Dites-le-nous",
     "textTitle": "Pas de données mobiles ? Écrivez-nous",
     "textBody": "Lignes d’aide, vérification d’arnaques et réponses par SMS, WhatsApp ou USSD.",
-    "textAction": "Comment écrire à Waypoint"
+    "textAction": "Comment écrire à Waypoint",
+    "contactNote": "Ouvre l’application de votre téléphone avec un court message que vous pouvez modifier. Waypoint n’envoie rien.",
+    "contactMessage": "Je traverse un moment difficile et j’aimerais parler. Un appel ou un message dès que possible me ferait du bien.",
+    "contactSubject": "Pouvons-nous parler ?",
+    "emailContact": "Envoyer un e-mail à {name}"
   },
   "shield": {
     "title": "Bouclier anti-arnaque",
@@ -704,13 +708,14 @@
     "projectTitle": "Réalisez un projet témoin pour {role}",
     "projectDetail": "Combinez {skills} dans un petit travail abouti que quelqu’un peut regarder en cinq minutes.",
     "reviewTitle": "Faites relire votre projet",
-    "reviewDetail": "L’avis d’un pair ou d’un mentor transforme votre projet en attestation vérifiée à montrer aux employeurs.",
+    "reviewDetail": "Montrez-le à une personne dont l’avis compte pour vous : un pair, un mentor ou votre cercle. Demandez ce qui est clair et ce qui manque, puis améliorez-le.",
     "applyTitle": "Postuler ou proposer : {role}",
-    "applyDetail": "Envoyez trois candidatures ou une proposition à un client potentiel, avec le lien vers votre projet vérifié.",
+    "applyDetail": "Envoyez trois candidatures ou une proposition à un client potentiel, et joignez votre projet pour montrer ce que vous savez faire.",
     "weeklyReviewTitle": "Bilan de la semaine",
     "weeklyReviewDetail": "Ce qui a marché, ce qui a bloqué, et un changement pour la semaine prochaine.",
     "listJoin": ", ",
-    "listAnd": " et "
+    "listAnd": " et ",
+    "projectTitleGeneral": "Réalisez un petit projet qui montre ce que vous savez faire"
   },
   "signals": {
     "title": "Signaux",
@@ -720,7 +725,14 @@
     "save": "Enregistrer",
     "saved": "Enregistré",
     "dismiss": "Pas pertinent",
-    "demo": "Exemple"
+    "demo": "Exemple",
+    "hidden": "Masqué. Vous ne le verrez plus.",
+    "undo": "Rétablir",
+    "filterLabel": "Signaux à afficher",
+    "filterAll": "Tous",
+    "showAll": "Afficher tous les signaux",
+    "savedEmpty": "Vous n’avez encore enregistré aucun signal.",
+    "noMatch": "Aucun signal ne correspond à « {query} »."
   },
   "settings": {
     "title": "Réglages",
@@ -785,7 +797,31 @@
     "emailConfirmed": "Adresse e-mail confirmée",
     "emailUnconfirmed": "Confirmez votre adresse e-mail",
     "emailUnconfirmedBody": "Nous vous avons envoyé un lien lors de votre inscription. Confirmer votre adresse vous permet de répondre aux invitations à rejoindre l’équipe d’une organisation — et d’inviter des personnes si vous en gérez une.",
-    "deleteOrganisations": "{count, plural, one {Cette organisation n’a pas d’autre propriétaire ni administrateur ; elle sera supprimée} other {Ces organisations n’ont pas d’autre propriétaire ni administrateur ; elles seront supprimées}} avec votre compte : {names}."
+    "deleteOrganisations": "{count, plural, one {Cette organisation n’a pas d’autre propriétaire ni administrateur ; elle sera supprimée} other {Ces organisations n’ont pas d’autre propriétaire ni administrateur ; elles seront supprimées}} avec votre compte : {names}.",
+    "trustedOff": "Pour voir ces personnes quand Waypoint vous montre des lignes d’écoute, activez « {setting} » plus haut.",
+    "memoryTitle": "Ce que Waypoint retient",
+    "memoryLead": "Ce que vous lui avez demandé de retenir dans Parler, chaque élément n’étant enregistré qu’après votre accord. Conservé chiffré.",
+    "memoryEmpty": "Rien n’est retenu.",
+    "memoryOff": "La mémoire est désactivée (« {setting} », plus haut). Waypoint n’enregistre rien de nouveau et n’utilise rien de ce qui figure ici. Ce qui figure ici y reste jusqu’à ce que vous le supprimiez.",
+    "memorySavedOn": "Enregistré le {date}",
+    "memoryUnreadable": "Cet élément n’a pas pu être ouvert. Vous pouvez tout de même le supprimer.",
+    "memoryForgetAll": "Tout oublier",
+    "memoryForgetAllConfirm": "Supprimer tout ce que Waypoint retient de Parler ? Vos conversations, objectifs et plans restent. C’est définitif.",
+    "memoryDeleted": "Supprimé",
+    "feedbackTitle": "Dites-nous ce qui a marché, ou pas",
+    "feedbackLead": "Cela parvient aux personnes qui conçoivent Waypoint. Les numéros de téléphone, adresses e-mail et numéros de carte ou de pièce d’identité sont retirés de votre texte avant conservation.",
+    "feedbackRow": "Un petit mot pour les personnes qui conçoivent Waypoint.",
+    "feedbackAbout": "De quoi s’agit-il ?",
+    "feedbackOther": "Autre chose",
+    "feedbackRating": "Est-ce que cela a bien marché pour vous ?",
+    "feedbackRatingHint": "1 : cela n’a pas marché. 5 : cela a bien marché.",
+    "feedbackMessage": "Que s’est-il passé ?",
+    "feedbackMessageHint": "Ce que vous essayiez de faire, et ce qui a aidé ou gêné.",
+    "feedbackReply": "J’aimerais une réponse",
+    "feedbackReplyHint": "Une réponse serait envoyée à {email}. Si vous ne cochez pas, les personnes qui lisent votre avis ne voient pas qui l’a envoyé.",
+    "feedbackSend": "Envoyer mon avis",
+    "feedbackSent": "Merci. Votre avis a bien été envoyé.",
+    "feedbackNeed": "Écrivez d’abord quelques mots ou choisissez un chiffre."
   },
   "explore": {
     "title": "Tous les modules",
@@ -1739,7 +1775,9 @@
       "moderation": "Modération",
       "reports": "Signalements d’arnaques",
       "audit": "Journal d’activité",
-      "forecasts": "Prévisions"
+      "forecasts": "Prévisions",
+      "signals": "Signaux",
+      "feedback": "Avis"
     },
     "generatedAt": "À {time}",
     "peopleTitle": "Personnes",
@@ -1873,7 +1911,10 @@
       "forecast_edited": "Détails de la prévision modifiés",
       "forecast_chance_updated": "Chance de la prévision modifiée",
       "forecast_resolved": "Prévision jugée",
-      "forecast_annulled": "Prévision retirée"
+      "forecast_annulled": "Prévision retirée",
+      "signal_published": "Signal publié",
+      "signal_withdrawn": "Signal retiré",
+      "forecast_verdict_confirmed": "Résultat d’une prévision confirmé par une seconde personne"
     },
     "peak": "Jour le plus chargé : {count} le {date}",
     "showTable": "Afficher sous forme de tableau",
@@ -1926,7 +1967,8 @@
       "open": "Ouvertes",
       "awaiting": "À juger",
       "resolved": "Jugées",
-      "annulled": "Retirées"
+      "annulled": "Retirées",
+      "unchecked": "Seconde vérification"
     },
     "forecastsEmpty": "Rien ici.",
     "forecastNew": "Publier une prévision",
@@ -1965,7 +2007,63 @@
     "aSourceUrl": "Où chacun peut le vérifier (https://…)",
     "aRecord": "Enregistrer le résultat",
     "aRecorded": "Résultat enregistré",
-    "aOnce": "C’est enregistré une seule fois et ne peut pas être annulé : cela entre dans le bilan public."
+    "aOnce": "C’est enregistré une seule fois et ne peut pas être annulé : cela entre dans le bilan public.",
+    "cLead": "Un résultat vaut dès qu’il est enregistré, et porte en public la mention « pas encore vérifié une seconde fois » jusqu’à ce qu’une autre personne de l’équipe le confirme ici.",
+    "cChecked": "Confirmé par une seconde personne",
+    "cWaiting": "En attente d’une seconde vérification",
+    "cYours": "En attente d’une seconde vérification. Vous avez enregistré ce résultat : c’est à quelqu’un d’autre de le confirmer.",
+    "cConfirm": "Confirmer le résultat",
+    "cConfirmTitle": "Confirmer ce résultat ?",
+    "cConfirmBody": "Ne confirmez que si vous avez vérifié la source vous-même et que vous êtes d’accord avec ce qui a été enregistré. C’est consigné à votre nom et ne peut pas être annulé.",
+    "cConfirmed": "Résultat confirmé",
+    "eEdit": "Modifier les détails",
+    "eTitle": "Modifier les détails de la prévision",
+    "eBack": "Toutes les prévisions",
+    "eSaved": "Détails de la prévision enregistrés",
+    "eCheck": "Certains champs sont à revoir. Vérifiez le conseil, les sources (nom, virgule, adresse https://) et toute traduction commencée.",
+    "eClosed": "Cette prévision ne peut plus être modifiée : sa date est passée ou elle a été jugée.",
+    "tSaved": "En {language}",
+    "tFixed": "La question et la façon de juger de cette traduction sont figées depuis son enregistrement. L’explication et le conseil peuvent encore changer.",
+    "tFixedOnSave": "Une fois enregistrée, la question d’une traduction et la façon de la juger ne peuvent plus changer.",
+    "signalsTitle": "Signaux",
+    "signalsLead": "Ce qui a changé, avec pour chaque élément la source où l’équipe l’a lu. Un signal est affiché aussitôt aux personnes qu’il concerne.",
+    "signalsEmpty": "Aucun signal n’a encore été ajouté.",
+    "signalNew": "Ajouter un signal",
+    "sSourceNeeded": "Un signal n’est jamais publié sans une source que chacun peut ouvrir. Waypoint ne rédige pas les signaux : n’ajoutez que ce que vous avez lu vous-même à l’adresse indiquée.",
+    "sTitle": "Ce qui a changé",
+    "sTitleHint": "Une phrase simple, comme un titre.",
+    "sSummary": "Résumé",
+    "sSummaryHint": "Avec vos mots : ce qui a changé, pour qui et depuis quand. Ne recopiez pas la source.",
+    "sSourceName": "Nom de la source",
+    "sKind": "Type de source",
+    "sKinds": {
+      "official": "Organisme officiel",
+      "news": "Presse",
+      "labour-market": "Données sur l’emploi",
+      "community": "Organisation locale"
+    },
+    "sSourceUrl": "Adresse de la source (https://…)",
+    "sPublishedOn": "Jour de publication par la source",
+    "sSectors": "Secteurs",
+    "sSectorsHint": "Des mots courts en anglais séparés par des virgules, par exemple agriculture, transport.",
+    "sImportance": "Importance",
+    "sImportanceHint": "De 1 (mineur) à 5 (majeur).",
+    "sImportanceValue": "Importance : {value, number} sur 5",
+    "sPublish": "Publier le signal",
+    "sPublished": "Signal publié",
+    "sCheck": "Certains champs sont à revoir. Vérifiez le résumé, le nom et l’adresse de la source (https://) et la date.",
+    "sAdded": "Ajouté le {date}.",
+    "sNotShown": "N’est plus affiché à personne : il a plus d’un an.",
+    "sWithdraw": "Retirer",
+    "sWithdrawTitle": "Retirer ce signal ?",
+    "sWithdrawBody": "Il ne sera plus affiché à personne, y compris à celles et ceux qui l’avaient enregistré. Le journal d’activité garde son titre et sa source.",
+    "sWithdrawn": "Signal retiré",
+    "feedbackTitle": "Avis",
+    "feedbackLead": "Ce que les gens nous ont dit avoir marché ou non, du plus récent au plus ancien. Les données personnelles ont été retirées de chaque message avant conservation. Personne n’est nommé sauf demande de réponse, et un invité ne peut pas être identifié.",
+    "feedbackEmpty": "Aucun avis pour l’instant.",
+    "feedbackRated": "Note : {rating, number} sur 5",
+    "feedbackNoMessage": "Aucun message.",
+    "feedbackReplyTo": "Souhaite une réponse à <link>{email}</link>"
   },
   "byText": {
     "title": "Waypoint par message",
@@ -2152,7 +2250,8 @@
         "correct": "Les corriger : modifiez vos informations dans Réglages à tout moment.",
         "delete": "Les supprimer : Réglages → Confidentialité et données → Supprimer mon compte. C’est immédiat et irréversible.",
         "withdraw": "Changer d’avis : désactivez n’importe quel choix, et il cesse de s’appliquer dès ce moment.",
-        "complain": "Porter plainte : écrivez-nous, ou adressez-vous à l’autorité de protection des données du pays où vous vivez."
+        "complain": "Porter plainte : écrivez-nous, ou adressez-vous à l’autorité de protection des données du pays où vous vivez.",
+        "memory": "Consulter ce que Waypoint a été chargé de retenir et en supprimer ce que vous voulez : Réglages → Confidentialité et données → Ce que Waypoint retient. Désactiver la mémoire fait qu’elle n’est plus utilisée ni complétée ; ce qui s’y trouve reste jusqu’à ce que vous le supprimiez."
       },
       "children": {
         "title": "Enfants et jeunes",
@@ -2393,6 +2492,9 @@
     "newer": "Plus récentes",
     "pageOf": "Page {page, number} sur {pages, number}",
     "pagesLabel": "Pages des prévisions jugées",
-    "how5": "Chaque chance affichée par une prévision reste listée avec sa date, et l’équipe enregistre le résultat dès qu’il est connu. Un chiffre modifié après coup reste visible de tous."
+    "how5": "Chaque chance affichée par une prévision reste listée avec sa date, et l’équipe enregistre le résultat dès qu’il est connu. Un chiffre modifié après coup reste visible de tous.",
+    "unchecked": "Pas encore vérifié une seconde fois : une autre personne de l’équipe n’a pas encore confirmé ce résultat.",
+    "how6": "Une seconde personne de l’équipe vérifie chaque résultat. Tant que ce n’est pas fait, la prévision porte la mention « pas encore vérifié une seconde fois ».",
+    "uncheckedCount": "{count, plural, one {# résultat n’a pas encore été vérifié} other {# résultats n’ont pas encore été vérifiés}} une seconde fois."
   }
 }

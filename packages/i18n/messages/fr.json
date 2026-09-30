@@ -470,7 +470,11 @@
     "reportWrong": "Une erreur ? Dites-le-nous",
     "textTitle": "Pas de données mobiles ? Écrivez-nous",
     "textBody": "Lignes d’aide, vérification d’arnaques et réponses par SMS, WhatsApp ou USSD.",
-    "textAction": "Comment écrire à Waypoint"
+    "textAction": "Comment écrire à Waypoint",
+    "contactNote": "Ouvre l’application de votre téléphone avec un court message que vous pouvez modifier. Waypoint n’envoie rien.",
+    "contactMessage": "Je traverse un moment difficile et j’aimerais parler. Un appel ou un message dès que possible me ferait du bien.",
+    "contactSubject": "Pouvons-nous parler ?",
+    "emailContact": "Envoyer un e-mail à {name}"
   },
   "shield": {
     "title": "Bouclier anti-arnaque",
@@ -775,7 +779,8 @@
     "emailConfirmed": "Adresse e-mail confirmée",
     "emailUnconfirmed": "Confirmez votre adresse e-mail",
     "emailUnconfirmedBody": "Nous vous avons envoyé un lien lors de votre inscription. Confirmer votre adresse vous permet de répondre aux invitations à rejoindre l’équipe d’une organisation — et d’inviter des personnes si vous en gérez une.",
-    "deleteOrganisations": "{count, plural, one {Cette organisation n’a pas d’autre propriétaire ni administrateur ; elle sera supprimée} other {Ces organisations n’ont pas d’autre propriétaire ni administrateur ; elles seront supprimées}} avec votre compte : {names}."
+    "deleteOrganisations": "{count, plural, one {Cette organisation n’a pas d’autre propriétaire ni administrateur ; elle sera supprimée} other {Ces organisations n’ont pas d’autre propriétaire ni administrateur ; elles seront supprimées}} avec votre compte : {names}.",
+    "trustedOff": "Pour voir ces personnes quand Waypoint vous montre des lignes d’écoute, activez « {setting} » plus haut."
   },
   "explore": {
     "title": "Tous les modules",

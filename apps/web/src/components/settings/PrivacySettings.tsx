@@ -137,6 +137,10 @@ export function PrivacySettings({
           ) : (
             <p className="wp-secondary">{t('trustedEmpty')}</p>
           )}
+          {/* Saving a contact is not choosing to see them on the support card: say which switch does. */}
+          {contacts.length && !consents.trusted_contact ? (
+            <p className="wp-secondary">{t('trustedOff', { setting: c('trusted_contact') })}</p>
+          ) : null}
           {adding ? (
             <form className={styles.form} onSubmit={addContact}>
               <TextField

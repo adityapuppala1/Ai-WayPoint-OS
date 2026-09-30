@@ -470,7 +470,11 @@
     "reportWrong": "Kuna kosa? Tuambie",
     "textTitle": "Huna data? Wasiliana nasi kwa ujumbe",
     "textBody": "Namba za msaada, ukaguzi wa utapeli na majibu kwa SMS, WhatsApp au USSD.",
-    "textAction": "Jinsi ya kutuma ujumbe kwa Waypoint"
+    "textAction": "Jinsi ya kutuma ujumbe kwa Waypoint",
+    "contactNote": "Hufungua programu ya simu yako ikiwa na ujumbe mfupi unaoweza kuubadilisha. Waypoint haitumi chochote.",
+    "contactMessage": "Ninapitia wakati mgumu sasa hivi na ningependa kuzungumza. Tafadhali nipigie simu au nitumie ujumbe ukiona huu.",
+    "contactSubject": "Tunaweza kuzungumza?",
+    "emailContact": "Mtumie {name} barua pepe"
   },
   "shield": {
     "title": "Ngao ya Ulaghai",
@@ -775,7 +779,8 @@
     "emailConfirmed": "Anwani ya barua pepe imethibitishwa",
     "emailUnconfirmed": "Thibitisha anwani yako ya barua pepe",
     "emailUnconfirmedBody": "Tulikutumia kiungo ulipojisajili. Kuthibitisha kunakuwezesha kujibu mialiko ya kujiunga na timu ya shirika — na kuwaalika watu ikiwa unaendesha shirika.",
-    "deleteOrganisations": "{count, plural, one {Shirika hili halina mmiliki wala msimamizi mwingine, kwa hiyo litafutwa} other {Mashirika haya hayana mmiliki wala msimamizi mwingine, kwa hiyo yatafutwa}} pamoja na akaunti yako: {names}."
+    "deleteOrganisations": "{count, plural, one {Shirika hili halina mmiliki wala msimamizi mwingine, kwa hiyo litafutwa} other {Mashirika haya hayana mmiliki wala msimamizi mwingine, kwa hiyo yatafutwa}} pamoja na akaunti yako: {names}.",
+    "trustedOff": "Ili kuwaona watu hawa Waypoint inapokuonyesha nambari za msaada, washa “{setting}” hapo juu."
   },
   "explore": {
     "title": "Sehemu zote",

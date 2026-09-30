@@ -17,7 +17,18 @@ without AI, run before any AI call, and are covered by tests and release-gated e
 - **Colour and tone**: a calm "harbour blue" support card — never alarm red.
 - **Records**: a crisis event stores the tier, categories and rule ids — never the words.
   A gentle follow-up check-in is scheduled (12–24 h) and delivered in-app.
-- **Trusted contacts** are only ever contacted when the person presses the button.
+- **Trusted contacts** are only ever contacted when the person presses the button, and then
+  by the person's own phone, never by Waypoint. When someone has switched that choice on and
+  saved a contact, the support card (in Ask, Mind, Health, Goals and Circles) shows each
+  contact with "Text", "Call" or "Email" buttons. These are ordinary `sms:`, `tel:` and
+  `mailto:` links: the phone's own app opens with a short, calm message the person can change
+  or not send ("I’m having a hard time right now and would like to talk…", in their
+  language). The contact's details are decrypted for their owner only and fetched by the
+  owner's browser; no server sends anything and no AI is involved. The message wording makes
+  no clinical claim and still needs clinical and native-speaker review before launch.
+- **Everything written privately is screened**, not only Ask: journal entries, check-in and
+  health notes, a goal and why it matters, and the weekly review all get the same rules and
+  the same card.
 - **By text message too, whatever the first word.** On SMS and WhatsApp the crisis check runs
   on every message before anything else: "hi im suicidal" is not answered with the menu, and a
   command word in front of a cry for help does not hide it. A message sent with CHECK is mostly

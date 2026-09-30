@@ -470,7 +470,11 @@
     "reportWrong": "Algo errado? Avise-nos",
     "textTitle": "Sem dados? Fale com a gente por mensagem",
     "textBody": "Linhas de apoio, verificação de golpes e respostas por SMS, WhatsApp ou USSD.",
-    "textAction": "Como mandar mensagem ao Waypoint"
+    "textAction": "Como mandar mensagem ao Waypoint",
+    "contactNote": "Abre o aplicativo do seu celular com uma mensagem curta que você pode mudar. O Waypoint não envia nada.",
+    "contactMessage": "Estou passando por um momento difícil e gostaria de conversar. Uma ligação ou mensagem assim que possível me ajudaria.",
+    "contactSubject": "Podemos conversar?",
+    "emailContact": "Enviar e-mail para {name}"
   },
   "shield": {
     "title": "Escudo contra golpes",
@@ -775,7 +779,8 @@
     "emailConfirmed": "Endereço de e-mail confirmado",
     "emailUnconfirmed": "Confirme seu endereço de e-mail",
     "emailUnconfirmedBody": "Enviamos um link quando você criou a conta. Confirmar permite responder a convites para a equipe de uma organização — e convidar pessoas, se você administrar uma.",
-    "deleteOrganisations": "{count, plural, one {Esta organização não tem outro dono nem administrador, então será excluída} other {Estas organizações não têm outro dono nem administrador, então serão excluídas}} junto com sua conta: {names}."
+    "deleteOrganisations": "{count, plural, one {Esta organização não tem outro dono nem administrador, então será excluída} other {Estas organizações não têm outro dono nem administrador, então serão excluídas}} junto com sua conta: {names}.",
+    "trustedOff": "Para ver essas pessoas quando o Waypoint mostrar linhas de apoio, ligue “{setting}” acima."
   },
   "explore": {
     "title": "Todos os módulos",

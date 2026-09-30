@@ -474,7 +474,11 @@
     "reportWrong": "Something wrong? Tell us",
     "textTitle": "No data? Reach us by text",
     "textBody": "Help lines, scam checks and answers by SMS, WhatsApp or USSD.",
-    "textAction": "How to text Waypoint"
+    "textAction": "How to text Waypoint",
+    "contactNote": "Opens your phone’s own app with a short message you can change. Waypoint sends nothing.",
+    "contactMessage": "I’m having a hard time right now and would like to talk. Could you call or message me when you see this?",
+    "contactSubject": "Can we talk?",
+    "emailContact": "Email {name}"
   },
   "shield": {
     "title": "Scam Shield",
@@ -779,7 +783,8 @@
     "emailConfirmed": "Email address confirmed",
     "emailUnconfirmed": "Confirm your email address",
     "emailUnconfirmedBody": "We sent you a link when you signed up. Confirming lets you answer invitations to an organisation’s team — and invite people, if you run one.",
-    "deleteOrganisations": "{count, plural, one {This organisation has} other {These organisations have}} no other owner or admin, so {count, plural, one {it} other {they}} will be deleted with your account: {names}."
+    "deleteOrganisations": "{count, plural, one {This organisation has} other {These organisations have}} no other owner or admin, so {count, plural, one {it} other {they}} will be deleted with your account: {names}.",
+    "trustedOff": "To see these contacts when Waypoint shows you help lines, switch on “{setting}” above."
   },
   "explore": {
     "title": "All modules",

@@ -11,6 +11,7 @@ import {
   planCrisisResponse,
 } from '@waypoint/core';
 import { crisisEvents, type Database } from '@waypoint/db';
+import { offersTrustedContact } from './me';
 
 export type Channel = 'web' | 'sms' | 'whatsapp' | 'ussd' | 'api';
 
@@ -63,7 +64,12 @@ export async function screenWriting(
   if (!text.trim()) return { tier: 0, plan: null };
   const assessment = assessCrisis(text);
   if (assessment.tier < 2) return { tier: assessment.tier, plan: null };
-  const plan = planCrisisResponse(assessment, { country: ctx.country, locale: ctx.locale });
+  const plan = planCrisisResponse(assessment, {
+    country: ctx.country,
+    locale: ctx.locale,
+    // The same card as in Ask: someone who chose to see their trusted contacts sees them here.
+    hasTrustedContact: await offersTrustedContact(db, ctx.userId),
+  });
   await recordCrisis(db, {
     userId: ctx.userId,
     channel: ctx.channel ?? 'web',

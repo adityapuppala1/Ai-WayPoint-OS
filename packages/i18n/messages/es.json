@@ -470,7 +470,11 @@
     "reportWrong": "¿Algo está mal? Avísanos",
     "textTitle": "¿Sin datos? Escríbenos por mensaje",
     "textBody": "Líneas de ayuda, revisión de estafas y respuestas por SMS, WhatsApp o USSD.",
-    "textAction": "Cómo escribirle a Waypoint"
+    "textAction": "Cómo escribirle a Waypoint",
+    "contactNote": "Abre la aplicación de tu teléfono con un mensaje corto que puedes cambiar. Waypoint no envía nada.",
+    "contactMessage": "Estoy pasando por un momento difícil y me gustaría hablar. Me ayudaría una llamada o un mensaje lo antes posible.",
+    "contactSubject": "¿Podemos hablar?",
+    "emailContact": "Enviar correo a {name}"
   },
   "shield": {
     "title": "Escudo antiestafas",
@@ -775,7 +779,8 @@
     "emailConfirmed": "Dirección de correo confirmada",
     "emailUnconfirmed": "Confirma tu dirección de correo",
     "emailUnconfirmedBody": "Te enviamos un enlace al registrarte. Al confirmarla podrás responder a invitaciones al equipo de una organización, y también invitar a otras personas si diriges una.",
-    "deleteOrganisations": "{count, plural, one {Esta organización no tiene otra persona propietaria ni administradora, así que se eliminará} other {Estas organizaciones no tienen otra persona propietaria ni administradora, así que se eliminarán}} con tu cuenta: {names}."
+    "deleteOrganisations": "{count, plural, one {Esta organización no tiene otra persona propietaria ni administradora, así que se eliminará} other {Estas organizaciones no tienen otra persona propietaria ni administradora, así que se eliminarán}} con tu cuenta: {names}.",
+    "trustedOff": "Para ver a estas personas cuando Waypoint te muestre líneas de ayuda, activa «{setting}» más arriba."
   },
   "explore": {
     "title": "Todos los módulos",

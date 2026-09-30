@@ -258,3 +258,63 @@ describe('goals and the weekly review', () => {
     expect(JSON.stringify(reviews)).not.toContain('suicidarme');
   });
 });
+
+describe('trusted contacts on the support card', () => {
+  const DARK = { title: 'Get through today', why: 'I want to end my life' };
+  type Saved = { screening: { plan: { actions: Array<{ kind: string }> } | null } };
+  const kinds = async (res: Response) =>
+    ((await res.json()) as Saved).screening.plan?.actions.map((a) => a.kind) ?? [];
+
+  it('offers them only to someone who chose that and saved a contact', async () => {
+    // A contact saved, but the choice is off: the card does not mention them.
+    const quiet = await person();
+    const added = await req('/api/me/trusted-contacts', {
+      method: 'POST',
+      cookie: quiet.cookie,
+      json: { name: 'Asha', phone: '+254 700 000 001', relation: 'sister' },
+    });
+    expect(added.status).toBe(201);
+    expect(
+      await kinds(await req('/api/goals', { method: 'POST', cookie: quiet.cookie, json: DARK })),
+    ).not.toContain('trusted-contact');
+
+    // The choice is on, but nobody saved: nothing to offer.
+    const alone = await person({}, { trusted_contact: true });
+    expect(
+      await kinds(await req('/api/goals', { method: 'POST', cookie: alone.cookie, json: DARK })),
+    ).not.toContain('trusted-contact');
+
+    // Both: wherever writing is screened (here a goal, the same for the journal and health
+    // notes), the card offers the person's own contacts.
+    const ready = await person({}, { trusted_contact: true });
+    await req('/api/me/trusted-contacts', {
+      method: 'POST',
+      cookie: ready.cookie,
+      json: { name: 'Baraka', email: 'baraka@example.org' },
+    });
+    expect(
+      await kinds(await req('/api/goals', { method: 'POST', cookie: ready.cookie, json: DARK })),
+    ).toContain('trusted-contact');
+    const entry = await req('/api/mind/journal', {
+      method: 'POST',
+      cookie: ready.cookie,
+      json: { promptId: 'free', body: 'I want to end my life' },
+    });
+    expect(await kinds(entry)).toContain('trusted-contact');
+
+    // Their details are decrypted for their owner only, and sealed at rest.
+    const mine = (await (
+      await req('/api/me/trusted-contacts', { cookie: ready.cookie })
+    ).json()) as Array<{ name: string; email: string | null }>;
+    expect(mine).toEqual([
+      expect.objectContaining({ name: 'Baraka', email: 'baraka@example.org' }),
+    ]);
+    const theirs = (await (
+      await req('/api/me/trusted-contacts', { cookie: alone.cookie })
+    ).json()) as unknown[];
+    expect(theirs).toEqual([]);
+    const rows = await db.getDb().select().from(db.trustedContacts);
+    expect(JSON.stringify(rows)).not.toContain('Baraka');
+    expect(JSON.stringify(rows)).not.toContain('700 000 001');
+  });
+});

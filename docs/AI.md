@@ -96,9 +96,10 @@ Jev is an outside service, hosted in the United States. It is asked only for peo
 outside AI (`ai_external`, the one-off tick in Shield, or `AI YES` by text). A private model
 on your own servers never stands in for it. Email addresses, phone numbers and card, bank and
 ID numbers are removed from everything it is sent, in one place, and it is sent only the text a
-question is about: the pasted message, the AI's reply, a plan step and its original. Never the
-account, the conversation, or (for a plan) the person's own goal. What a person wrote travels
-in the state and never becomes part of a question.
+question is about: the pasted message, the AI's reply, a plan step and its original, or one
+question in guided mode. Never the account, the rest of the conversation, or (for a plan) the
+person's own goal. What a person wrote travels in the state and never becomes part of a
+question. [PRIVACY.md](PRIVACY.md#what-leaves-waypoint) lists it use by use.
 
 ### Languages: measure, then switch on
 

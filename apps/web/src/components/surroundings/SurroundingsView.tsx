@@ -365,9 +365,11 @@ function Conditions({
                 {t('sunrise', {
                   time: wall(today.sunrise, { hour: 'numeric', minute: '2-digit' }),
                 })}
-                {today.sunset
-                  ? ` · ${t('sunset', { time: wall(today.sunset, { hour: 'numeric', minute: '2-digit' }) })}`
-                  : ''}
+              </p>
+            ) : null}
+            {today?.sunset ? (
+              <p className="wp-meta">
+                {t('sunset', { time: wall(today.sunset, { hour: 'numeric', minute: '2-digit' }) })}
               </p>
             ) : null}
           </div>

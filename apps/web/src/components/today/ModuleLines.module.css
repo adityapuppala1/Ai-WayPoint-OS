@@ -21,6 +21,11 @@
   background: color-mix(in oklch, var(--wp-text) 4%, transparent);
 }
 
+/* One fact to a line in a row's description (the weather row: the place, then the air). */
+.fact {
+  display: block;
+}
+
 .chevron {
   flex: none;
   color: var(--wp-text-muted);

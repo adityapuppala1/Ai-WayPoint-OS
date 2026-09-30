@@ -60,8 +60,9 @@ export default async function ShieldPage() {
             {reported.categories.map((c) => (
               <li key={c.category}>
                 <p className="wp-strong">{t(`categories.${c.category}`)}</p>
+                {/* How many, then how recently: two facts, one line each. */}
+                <p className="wp-meta">{t('reportedCount', { count: c.reports })}</p>
                 <p className="wp-meta">
-                  {t('reportedCount', { count: c.reports })} ·{' '}
                   {t('reportedLatest', {
                     date: format.dateTime(new Date(`${c.latest}T12:00:00Z`), {
                       day: 'numeric',

@@ -17,6 +17,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { type FormEvent, useState } from 'react';
 import { ApiProblem, api } from '@/lib/api';
+import { forgetOfflineCopy } from '@/lib/offline';
 import { ALL_CONSENTS } from '@/lib/options';
 import { ProgrammesPanel } from './ProgrammesPanel';
 import styles from './settings.module.css';
@@ -273,6 +274,7 @@ export function PrivacySettings({
             toast({ title: errors('generic'), tone: 'danger' });
             throw err;
           }
+          await forgetOfflineCopy();
           toast({ title: t('deleted'), tone: 'safe' });
           router.push('/welcome' as Route);
           router.refresh();

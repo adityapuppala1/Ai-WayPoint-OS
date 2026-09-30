@@ -135,7 +135,7 @@ export {
   renderPlanText,
   suggestRoles,
 } from './path';
-export { isInternalPath, safeNextPath } from './paths';
+export { isInternalPath, safeExternalHref, safeNextPath } from './paths';
 export {
   type AiOpinion,
   adviceFor,

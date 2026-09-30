@@ -387,18 +387,33 @@ export function createApp() {
     description: 'Session cookie set by /api/auth (guest sessions included).',
   });
 
-  app.doc31('/openapi.json', (c) => ({
-    openapi: '3.1.0',
-    info: {
-      title: 'Waypoint API',
-      version: API_VERSION,
-      description:
-        'See what’s coming. Know your next step. Never take it alone. Authentication endpoints are documented at /api/auth/reference.',
-      license: { name: 'Proprietary' },
-    },
-    servers: [{ url: new URL(c.req.url).origin }],
-    security: [{ session: [] }],
-  }));
+  // The public API document: built once (not on every request from anyone), and without the
+  // staff console's routes, which are nobody else's business.
+  let apiDocument: string | undefined;
+  app.get('/openapi.json', (c) => {
+    if (!apiDocument) {
+      const doc = app.getOpenAPI31Document({
+        openapi: '3.1.0',
+        info: {
+          title: 'Waypoint API',
+          version: API_VERSION,
+          description:
+            'See what’s coming. Know your next step. Never take it alone. Authentication endpoints are documented at /api/auth/reference.',
+          license: { name: 'Proprietary' },
+        },
+        servers: [{ url: new URL(getEnv().WAYPOINT_URL).origin }],
+        security: [{ session: [] }],
+      });
+      const paths = Object.fromEntries(
+        Object.entries(doc.paths ?? {}).filter(([path]) => !/\/admin(\/|$)/.test(path)),
+      );
+      apiDocument = JSON.stringify({ ...doc, paths });
+    }
+    return c.body(apiDocument, 200, {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'public, max-age=300',
+    });
+  });
 
   app.notFound((c) =>
     problemResponse(404, 'not-found', `No API route for ${c.req.method} ${c.req.path}.`, {

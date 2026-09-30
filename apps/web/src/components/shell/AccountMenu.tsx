@@ -6,6 +6,7 @@ import type { Route } from 'next';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Button as AriaButton } from 'react-aria-components';
+import { forgetOfflineCopy } from '@/lib/offline';
 import styles from './shell.module.css';
 
 export interface AccountSummary {
@@ -29,6 +30,7 @@ export function AccountMenu({ account }: { account: AccountSummary }) {
 
   const signOut = async () => {
     await authClient.signOut().catch(() => undefined);
+    await forgetOfflineCopy();
     router.push('/welcome' as Route);
     router.refresh();
   };

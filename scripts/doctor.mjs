@@ -103,9 +103,7 @@ try {
   const res = await fetch(new URL('/api/ready', url), { signal: AbortSignal.timeout(5000) });
   const body = await res.json().catch(() => ({}));
   if (res.ok)
-    ok(
-      `Server at ${url} is ready (database: ${body.database}, AI: ${body.ai ? 'on' : 'guided mode'})`,
-    );
+    ok(`Server at ${url} is ${body.status === 'ready' ? 'ready' : 'answering, but not ready'}`);
   else bad(`Server at ${url} answered ${res.status}`);
 } catch {
   warn(`No server answering at ${url} (start it with: pnpm dev)`);

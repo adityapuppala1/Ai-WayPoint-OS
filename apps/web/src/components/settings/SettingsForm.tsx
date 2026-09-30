@@ -24,6 +24,7 @@ import { useState } from 'react';
 import { SendConfirmation } from '@/components/auth/SendConfirmation';
 import { LanguagePicker } from '@/components/LanguagePicker';
 import { api } from '@/lib/api';
+import { forgetOfflineCopy } from '@/lib/offline';
 import { LIFE_STAGE_OPTIONS, SITUATION_OPTIONS, WORK_TYPE_OPTIONS } from '@/lib/options';
 import styles from './settings.module.css';
 
@@ -282,6 +283,7 @@ export function SettingsForm({
                 icon="signOut"
                 onPress={async () => {
                   await authClient.signOut();
+                  await forgetOfflineCopy();
                   router.push('/welcome' as Route);
                   router.refresh();
                 }}

@@ -737,6 +737,41 @@ describe('AI answers', () => {
   });
 });
 
+describe('what anyone can fetch', () => {
+  it('never lets a browser or proxy keep help numbers that were chosen by someone’s session', async () => {
+    const me = await account('Pia');
+    await req('/api/me/profile', { method: 'PATCH', cookie: me.cookie, json: { country: 'KE' } });
+    const mine = await req('/api/support', { cookie: me.cookie });
+    expect(((await mine.json()) as { country: string }).country).toBe('KE');
+    expect(mine.headers.get('cache-control')).toBe('private, no-store');
+    expect(mine.headers.get('vary') ?? '').toMatch(/cookie/i);
+    // Asked for by country, the answer is the same for everyone and may be shared.
+    const byCountry = await req('/api/support?country=KE', { cookie: me.cookie });
+    expect(byCountry.headers.get('cache-control')).toMatch(/^public/);
+    const anonymous = await req('/api/support');
+    expect(anonymous.headers.get('cache-control')).toMatch(/^public/);
+    expect(anonymous.headers.get('vary') ?? '').toMatch(/cookie/i);
+  });
+
+  it('shows the API document without the staff console, built once', async () => {
+    const first = await req('/api/openapi.json');
+    expect(first.status).toBe(200);
+    const doc = (await first.json()) as { paths: Record<string, unknown>; servers: unknown[] };
+    const paths = Object.keys(doc.paths);
+    expect(paths.length).toBeGreaterThan(40);
+    expect(paths.filter((p) => p.includes('/admin'))).toEqual([]);
+    expect(first.headers.get('cache-control')).toMatch(/max-age=\d+/);
+    const again = (await (await req('/api/openapi.json')).json()) as { paths: object };
+    expect(Object.keys(again.paths)).toEqual(paths);
+  });
+
+  it('says only whether the server is ready, not what it runs on', async () => {
+    const ready = await req('/api/ready');
+    expect(ready.status).toBe(200);
+    expect(await ready.json()).toEqual({ status: 'ready' });
+  });
+});
+
 describe('deleting an account', () => {
   it('takes feedback, unpublished scam reports and waiting messages with it', async () => {
     const me = await account('Dele');

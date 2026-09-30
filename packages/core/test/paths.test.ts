@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isInternalPath, safeNextPath } from '../src/paths';
+import { isInternalPath, safeExternalHref, safeNextPath } from '../src/paths';
 
 describe('paths people are sent back to', () => {
   it('allows ordinary paths on this site', () => {
@@ -31,5 +31,30 @@ describe('paths people are sent back to', () => {
     expect(safeNextPath('/\\evil.example')).toBe('/');
     expect(safeNextPath('//evil.example', '/today')).toBe('/today');
     expect(safeNextPath('/path')).toBe('/path');
+  });
+});
+
+describe('links built from data (an AI source, a signal, a forecast)', () => {
+  it('open only web pages', () => {
+    expect(safeExternalHref('https://www.who.int/news/item/x')).toBe(
+      'https://www.who.int/news/item/x',
+    );
+    expect(safeExternalHref(' https://example.org/a b ')).toBe('https://example.org/a%20b');
+    for (const bad of [
+      'javascript:alert(1)',
+      'JaVaScRiPt:alert(1)',
+      'data:text/html,<script>alert(1)</script>',
+      'vbscript:x',
+      'file:///etc/passwd',
+      '//evil.example',
+      '/relative',
+      'http://example.org/plain',
+      'https://user:pass@example.org/',
+      'not a url',
+      '',
+      null,
+      undefined,
+    ])
+      expect(safeExternalHref(bad), String(bad)).toBeNull();
   });
 });

@@ -17,7 +17,36 @@ for (const warning of configWarnings(env))
     `${JSON.stringify({ time: new Date().toISOString(), level: 'warn', msg: warning })}\n`,
   );
 
-const server = serve({ fetch: handleRequest, port, hostname }, (info) => {
+/**
+ * The web app sets these for pages; served on its own, the API has to set them itself. It only
+ * ever answers with data, so nothing may be framed, scripted or sniffed into something else.
+ */
+const SECURITY_HEADERS: Record<string, string> = {
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'Referrer-Policy': 'no-referrer',
+  'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'",
+  'Cross-Origin-Resource-Policy': 'same-site',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+  ...(env.WAYPOINT_URL.startsWith('https://')
+    ? { 'Strict-Transport-Security': 'max-age=63072000; includeSubDomains' }
+    : {}),
+};
+
+async function secured(request: Request): Promise<Response> {
+  const response = await handleRequest(request);
+  const headers = new Headers(response.headers);
+  // The auth reference page (development only) brings its own policy.
+  for (const [name, value] of Object.entries(SECURITY_HEADERS))
+    if (!headers.has(name)) headers.set(name, value);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
+const server = serve({ fetch: secured, port, hostname }, (info) => {
   process.stdout.write(
     `${JSON.stringify({ time: new Date().toISOString(), level: 'info', msg: 'api listening', port: info.port, database: env.embeddedDb ? 'embedded' : 'postgres' })}\n`,
   );

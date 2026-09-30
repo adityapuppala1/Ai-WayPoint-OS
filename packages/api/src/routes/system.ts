@@ -1,8 +1,7 @@
 import { createRoute, z } from '@hono/zod-openapi';
-import { aiAvailable } from '@waypoint/ai';
 import { MODULE_IDS } from '@waypoint/core';
 import { redactPII } from '@waypoint/core/privacy';
-import { dbKind, feedback, sql } from '@waypoint/db';
+import { feedback, sql } from '@waypoint/db';
 import { errors, jsonBody, jsonContent, router } from '../lib/openapi';
 import { limit } from '../middleware';
 
@@ -35,18 +34,15 @@ app.openapi(
     tags: ['System'],
     summary: 'Readiness: the database answers',
     responses: {
-      200: jsonContent(
-        z.object({ status: z.literal('ready'), database: z.string(), ai: z.boolean() }),
-      ),
+      200: jsonContent(z.object({ status: z.literal('ready') })),
       503: jsonContent(z.object({ status: z.literal('unavailable') }), 'Not ready'),
     },
   }),
   async (c) => {
     try {
       await c.get('db').execute(sql`select 1`);
-      return c.json({ status: 'ready' as const, database: dbKind(), ai: aiAvailable() }, 200, {
-        'Cache-Control': 'no-store',
-      });
+      // Anyone can call this: it says whether the server is ready, not what it runs on.
+      return c.json({ status: 'ready' as const }, 200, { 'Cache-Control': 'no-store' });
     } catch {
       return c.json({ status: 'unavailable' as const }, 503, { 'Cache-Control': 'no-store' });
     }

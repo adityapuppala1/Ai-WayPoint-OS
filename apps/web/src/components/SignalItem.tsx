@@ -1,4 +1,5 @@
 import type { SignalView } from '@waypoint/api/client';
+import { safeExternalHref } from '@waypoint/core/paths';
 import { Disclosure } from '@waypoint/ui';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import styles from './SignalItem.module.css';
@@ -26,6 +27,8 @@ export async function SignalItem({
   const common = await getTranslations('common');
   const format = await getFormatter();
   const Heading = `h${headingLevel}` as 'h3';
+  // Only a secure web page becomes a link; anything else is shown as plain text.
+  const sourceHref = safeExternalHref(signal.sourceUrl);
   return (
     <article className={styles.item}>
       <div className={styles.head}>
@@ -38,9 +41,13 @@ export async function SignalItem({
       </div>
       <p className={styles.summary}>{signal.summary}</p>
       <p className={styles.meta}>
-        <a href={signal.sourceUrl} target="_blank" rel="noopener noreferrer">
-          {t('source', { name: signal.sourceName })}
-        </a>
+        {sourceHref ? (
+          <a href={sourceHref} target="_blank" rel="noopener noreferrer">
+            {t('source', { name: signal.sourceName })}
+          </a>
+        ) : (
+          <span>{t('source', { name: signal.sourceName })}</span>
+        )}
         <span aria-hidden className={styles.sep} />
         <time dateTime={signal.publishedAt}>
           {format.dateTime(new Date(signal.publishedAt), {

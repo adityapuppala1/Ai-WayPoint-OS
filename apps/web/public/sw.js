@@ -3,8 +3,10 @@
  * - /api/support (public help numbers): network first with a cached copy, which
  *   /offline.html reads so help numbers still show without a connection.
  * - Built assets (/_next/static): cache first (they are content-hashed).
- * Pages are never cached, so nothing personal is stored by the service worker. */
-const VERSION = 'wp-v1';
+ * Pages are never cached. The one copy kept for offline use — help numbers for the person's
+ * country — is deleted when they sign out (the page sends "forget"), so the next person to
+ * use the device never sees it. */
+const VERSION = 'wp-v2';
 const STATIC = `${VERSION}-static`;
 const PAGES = `${VERSION}-pages`;
 const PRECACHE = ['/offline.html', '/icons/icon-192.png', '/manifest.webmanifest'];
@@ -20,6 +22,10 @@ self.addEventListener('activate', (event) => {
       .then((keys) => Promise.all(keys.filter((k) => !k.startsWith(VERSION)).map((k) => caches.delete(k))))
       .then(() => self.clients.claim()),
   );
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data === 'forget') event.waitUntil(caches.delete(PAGES));
 });
 
 self.addEventListener('fetch', (event) => {

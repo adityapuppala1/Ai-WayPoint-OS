@@ -3,7 +3,7 @@
 import { useChat } from '@ai-sdk/react';
 import type { AskUIMessage } from '@waypoint/ai';
 import type { CrisisResponsePlan } from '@waypoint/core';
-import { isInternalPath } from '@waypoint/core';
+import { isInternalPath, safeExternalHref } from '@waypoint/core';
 import { Button, ConfirmDialog, IconButton, Notice, Spinner, TextField } from '@waypoint/ui';
 import { DefaultChatTransport, lastAssistantMessageIsCompleteWithApprovalResponses } from 'ai';
 import type { Route } from 'next';
@@ -353,11 +353,17 @@ export function AskChat({
                   ) : null;
                 }
                 if (part.type === 'source-url') {
+                  // A source a model cited is data: only a secure web page becomes a link.
+                  const href = safeExternalHref(part.url);
                   return (
                     <p key={key} className={styles.source}>
-                      <a href={part.url} target="_blank" rel="noopener noreferrer">
-                        {part.title ?? part.url}
-                      </a>
+                      {href ? (
+                        <a href={href} target="_blank" rel="noopener noreferrer">
+                          {part.title ?? part.url}
+                        </a>
+                      ) : (
+                        (part.title ?? part.url)
+                      )}
                     </p>
                   );
                 }

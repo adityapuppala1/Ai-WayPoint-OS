@@ -100,7 +100,7 @@ describe('public endpoints', () => {
     expect((await req('/api/health')).status).toBe(200);
     const ready = await req('/api/ready');
     expect(ready.status).toBe(200);
-    expect(await ready.json()).toMatchObject({ status: 'ready', database: 'embedded', ai: false });
+    expect(await ready.json()).toEqual({ status: 'ready' });
   });
 
   it('gives verified help for a country without an account', async () => {

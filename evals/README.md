@@ -30,6 +30,16 @@ Each line of `guardrails.jsonl` has an `id`, a `why` (one sentence, shown when i
   checked with patterns.
 - `prompt` and `channel-prompt` — rules that must appear in the instructions a model is
   given, for all seven languages and every level of concern.
+- `judge` — one use of the judge (TypeSafe's Jev: `use` is `shield`, `reply`, `plan` or
+  `intent`) with a scripted stand-in for the service. `judge` says what it answers to each
+  question by id (a probability, or a choice), or how it fails (`"error"`, `"timeout"`);
+  `modelSays` is what a scripted language model answers, when there is one; `consent: false`
+  means the person did not allow outside AI. `expect` checks how often the judge and the model
+  were called, what the judge was and was not sent (in the state, and in its questions), and
+  the outcome: for Shield the level (`level`, `sameAsRules`, and always that it is not below
+  the rules'), who answered and the reasons added; for an answer by text whether it would be
+  `sent` or the guided text instead; for a plan whose `wording` it ends up with; for guided
+  mode the reply.
 
 A case that passes for the wrong reason is worse than none: when you add one, break the
 guardrail it protects once and watch it fail.

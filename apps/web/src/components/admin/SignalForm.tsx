@@ -102,9 +102,11 @@ export function SignalForm({
       router.refresh();
     } catch (err) {
       setError(
-        err instanceof ApiProblem && [400, 409, 422].includes(err.status)
-          ? { title: t('sCheck'), detail: err.issues[0]?.message ?? err.message }
-          : { title: errors(problemKey(err)) },
+        err instanceof ApiProblem && err.code === 'withdrawn'
+          ? { title: t('sWasWithdrawn') }
+          : err instanceof ApiProblem && [400, 409, 422].includes(err.status)
+            ? { title: t('sCheck'), detail: err.issues[0]?.message ?? err.message }
+            : { title: errors(problemKey(err)) },
       );
     } finally {
       setBusy(false);

@@ -2067,7 +2067,8 @@
     "feedbackReplyTo": "Quiere respuesta en <link>{email}</link>",
     "cAlready": "Otra persona ya ha confirmado este resultado.",
     "cOwnVerdict": "Tú registraste este resultado, así que debe confirmarlo otra persona.",
-    "cNotJudged": "Todavía no hay ningún resultado que confirmar."
+    "cNotJudged": "Todavía no hay ningún resultado que confirmar.",
+    "sWasWithdrawn": "Esta señal se retiró, así que no se puede volver a publicar."
   },
   "byText": {
     "title": "Waypoint por mensaje",

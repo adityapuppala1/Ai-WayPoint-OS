@@ -315,6 +315,18 @@ test('staff add a sourced signal, people see it, and staff withdraw it @desktop'
   await expect(pub.getByRole('heading', { name: title })).toHaveCount(0);
   await visitor.close();
 
+  // It stays withdrawn: typed in again, the console says so and publishes nothing.
+  await form.getByLabel('What changed').fill(title);
+  await form.getByLabel('Summary').fill(SUMMARY);
+  await form.getByLabel('Source name').fill(SOURCE.name);
+  await form.getByLabel('Source address (https://…)').fill(SOURCE.url);
+  await form.getByLabel('Day the source published it').fill(day(-1));
+  await form.getByRole('button', { name: 'Publish signal' }).click();
+  await expect(form.getByRole('alert')).toContainText(
+    'This signal was withdrawn, so it can’t be published again.',
+  );
+  await expect(page.getByRole('heading', { name: title })).toHaveCount(0);
+
   // Both actions are in the staff activity log.
   await page.goto('/admin/audit');
   await expect(page.getByText('Signal published').first()).toBeVisible();

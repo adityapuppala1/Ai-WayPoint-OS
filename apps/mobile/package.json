@@ -21,7 +21,7 @@
     "@better-auth/expo": "1.7.6",
     "@expo-google-fonts/overpass": "0.4.2",
     "@expo/metro-runtime": "57.0.16",
-    "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-native-async-storage/async-storage": "3.1.1",
     "@waypoint/content": "workspace:*",
     "@waypoint/core": "workspace:*",
     "@waypoint/i18n": "workspace:*",

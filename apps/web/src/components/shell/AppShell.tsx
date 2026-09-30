@@ -5,6 +5,8 @@ import { AccountMenu } from './AccountMenu';
 import { MobileHeader } from './MobileHeader';
 import { BottomBar, NavRail } from './Nav';
 import { type DirectoryRow, NAV, PRIMARY_TABS } from './nav-items';
+import { OfflineNotice } from './OfflineNotice';
+import { PageFrame } from './pending';
 import { QuickExit } from './QuickExit';
 import styles from './shell.module.css';
 
@@ -63,7 +65,7 @@ async function moreDirectory(): Promise<DirectoryRow[]> {
 /** The frame around every signed-in (or guest) page: rail on wide screens, bottom bar on phones. */
 export async function AppShell({ children }: { children: ReactNode }) {
   const viewer = await getViewer();
-  const t = await getTranslations('shell');
+  const [t, common] = await Promise.all([getTranslations('shell'), getTranslations('common')]);
   const account = {
     signedIn: Boolean(viewer),
     isGuest: viewer?.user.isGuest ?? false,
@@ -83,7 +85,8 @@ export async function AppShell({ children }: { children: ReactNode }) {
           <QuickExit />
         </div>
         <main id="main" className={styles.main} tabIndex={-1}>
-          {children}
+          <OfflineNotice />
+          <PageFrame label={common('loading')}>{children}</PageFrame>
         </main>
       </div>
       <BottomBar directory={await moreDirectory()} />

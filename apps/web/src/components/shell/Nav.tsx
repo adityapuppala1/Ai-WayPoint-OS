@@ -8,6 +8,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { LogoMark } from '@/components/Logo';
 import { type DirectoryRow, NAV, PRIMARY_TABS } from './nav-items';
+import { LinkPending } from './pending';
 import styles from './shell.module.css';
 
 function isActive(pathname: string, href: string) {
@@ -55,6 +56,7 @@ export function NavRail({ accountSlot }: { accountSlot: React.ReactNode }) {
               >
                 <ModuleMark module={item.key} size="sm" tone={active ? 'solid' : 'tint'} />
                 <span>{t(item.key as NavKey)}</span>
+                <LinkPending className={styles.pendingMark} />
               </Link>
             </li>
           );
@@ -69,6 +71,7 @@ export function NavRail({ accountSlot }: { accountSlot: React.ReactNode }) {
               <Icon name="more" size={18} weight="bold" />
             </span>
             <span>{t('explore')}</span>
+            <LinkPending className={styles.pendingMark} />
           </Link>
         </li>
       </ul>
@@ -79,6 +82,7 @@ export function NavRail({ accountSlot }: { accountSlot: React.ReactNode }) {
         >
           <Icon name="support" size={20} weight="fill" />
           <span>{t('support')}</span>
+          <LinkPending />
         </Link>
         {accountSlot}
       </div>
@@ -118,6 +122,7 @@ export function BottomBar({ directory }: { directory: DirectoryRow[] }) {
                 >
                   <ModuleMark module={item.key} size="sm" tone={active ? 'solid' : 'tint'} />
                   <span>{t(item.key as NavKey)}</span>
+                  <LinkPending className={styles.pendingMark} />
                 </Link>
               </li>
             );
@@ -166,6 +171,7 @@ export function BottomBar({ directory }: { directory: DirectoryRow[] }) {
                     <span className={styles.sheetHint}>{row.description}</span>
                   ) : null}
                 </span>
+                <LinkPending />
               </Link>
             </li>
           ))}

@@ -52,6 +52,19 @@ spec:
               value: "30000"
             - name: HOME
               value: /tmp
+          # The worker touches a file at the start and end of every round. If it has not for
+          # five minutes it is stuck (no email goes out, nobody can confirm an address):
+          # restart it.
+          livenessProbe:
+            exec:
+              command:
+                - node
+                - -e
+                - "process.exit(Date.now()-require('fs').statSync('/tmp/waypoint-worker-alive').mtimeMs<300000?0:1)"
+            initialDelaySeconds: 60
+            periodSeconds: 60
+            timeoutSeconds: 10
+            failureThreshold: 2
           resources:
             requests:
               cpu: 100m

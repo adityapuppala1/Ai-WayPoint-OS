@@ -1,7 +1,7 @@
 import { createRoute, z } from '@hono/zod-openapi';
 import { MODULE_IDS } from '@waypoint/core';
 import { redactPII } from '@waypoint/core/privacy';
-import { feedback, sql } from '@waypoint/db';
+import { dbReady, feedback, schemaCurrent, sql } from '@waypoint/db';
 import { errors, jsonBody, jsonContent, router } from '../lib/openapi';
 import { limit } from '../middleware';
 
@@ -32,20 +32,25 @@ app.openapi(
     method: 'get',
     path: '/ready',
     tags: ['System'],
-    summary: 'Readiness: the database answers',
+    summary: 'Readiness: the database answers and its schema is the one this code needs',
     responses: {
       200: jsonContent(z.object({ status: z.literal('ready') })),
-      503: jsonContent(z.object({ status: z.literal('unavailable') }), 'Not ready'),
+      503: jsonContent(z.object({ status: z.enum(['unavailable', 'migrating']) }), 'Not ready'),
     },
   }),
   async (c) => {
+    const no = { 'Cache-Control': 'no-store' };
     try {
+      await dbReady();
       await c.get('db').execute(sql`select 1`);
-      // Anyone can call this: it says whether the server is ready, not what it runs on.
-      return c.json({ status: 'ready' as const }, 200, { 'Cache-Control': 'no-store' });
     } catch {
-      return c.json({ status: 'unavailable' as const }, 503, { 'Cache-Control': 'no-store' });
+      return c.json({ status: 'unavailable' as const }, 503, no);
     }
+    // Newer code than schema (a release in progress): wait for the migrations to finish.
+    if (!(await schemaCurrent(c.get('db'))))
+      return c.json({ status: 'migrating' as const }, 503, no);
+    // Anyone can call this: it says whether the server is ready, not what it runs on.
+    return c.json({ status: 'ready' as const }, 200, no);
   },
 );
 

@@ -150,7 +150,9 @@ export function createApp() {
   });
 
   app.use('*', async (c, next) => {
-    await dbReady();
+    // Liveness and readiness must answer when the database does not: liveness says the
+    // process is up, readiness checks the database itself and answers 503.
+    if (!/\/(health|ready)$/.test(c.req.path)) await dbReady();
     c.set('db', getDb());
     await next();
   });

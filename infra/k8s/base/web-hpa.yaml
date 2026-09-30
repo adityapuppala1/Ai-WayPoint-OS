@@ -18,12 +18,8 @@ spec:
         target:
           type: Utilization
           averageUtilization: 70
-    - type: Resource
-      resource:
-        name: memory
-        target:
-          type: Utilization
-          averageUtilization: 80
+  # CPU only. Memory does not fall when pods are added, so a memory target near a pod's
+  # resting use would pin this at its maximum.
   behavior:
     scaleUp:
       # Add pods quickly when traffic arrives…

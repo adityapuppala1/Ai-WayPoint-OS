@@ -1,13 +1,14 @@
-# Database migrations and reference data (help lines, starter circles), run once per release
-# BEFORE the new web and worker pods start:
+# Database migrations and reference data (help lines, starter circles), run once per release:
 #
 #   kubectl -n waypoint delete job waypoint-migrate --ignore-not-found
 #   kubectl apply -k infra/k8s/base
 #   kubectl -n waypoint wait --for=condition=complete job/waypoint-migrate --timeout=10m
 #
-# A Job cannot be changed once created, which is why the old one is deleted first. Migrations
-# only ever add (a column, a table, an index), so the version that is still running keeps
-# working while the new one rolls out.
+# A Job cannot be changed once created, which is why the old one is deleted first. The job
+# and the new pods are created by the same `apply`; what keeps the order right is the web
+# pods' readiness check, which answers "migrating" (503) until this job has finished, so the
+# new pods take no traffic before then. Migrations only ever add (a column, a table, an
+# index), so the version that is still running keeps working in the meantime.
 apiVersion: batch/v1
 kind: Job
 metadata:

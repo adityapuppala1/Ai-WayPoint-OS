@@ -6,7 +6,9 @@
  *   pnpm worker          run continuously
  *   pnpm worker --once   run each task once and exit (cron-style)
  */
-import { hostname } from 'node:os';
+import { writeFileSync } from 'node:fs';
+import { hostname, tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { jobs } from '@waypoint/api';
 import { getEnv } from '@waypoint/core/env';
 import { closeDb, dbReady, getDb } from '@waypoint/db';
@@ -16,6 +18,20 @@ const once = process.argv.includes('--once');
 const workerId = `${hostname()}-${process.pid}`;
 const INTERVAL_MS = jobs.workerIntervalMs(process.env.WORKER_INTERVAL_MS);
 const RETENTION_EVERY = Math.max(1, Math.round((6 * 3_600_000) / INTERVAL_MS));
+
+/**
+ * Touched at the start and end of every round. The deployment's liveness check reads it
+ * (infra/k8s/base/worker-deployment.yaml, infra/docker/compose.yml): a worker that has not
+ * touched it for five minutes is stuck and gets restarted.
+ */
+const HEARTBEAT_FILE = 'waypoint-worker-alive';
+const beat = () => {
+  try {
+    writeFileSync(join(tmpdir(), HEARTBEAT_FILE), String(Date.now()));
+  } catch {
+    // No writable temp folder: the worker still works, it just cannot be watched this way.
+  }
+};
 
 const log = (msg: string, fields: Record<string, unknown> = {}) =>
   process.stdout.write(
@@ -53,11 +69,13 @@ let running: Promise<void> = Promise.resolve();
 const loop = async () => {
   while (!stopping) {
     const started = Date.now();
+    beat();
     // Errors are logged without what a failed statement contained, addresses or numbers.
     running = tick().catch((err: unknown) => {
       log('tick failed', jobs.errorFields(err));
     });
     await running;
+    beat();
     if (stopping) break;
     await new Promise<void>((resolve) => {
       const timer = setTimeout(resolve, Math.max(1_000, INTERVAL_MS - (Date.now() - started)));

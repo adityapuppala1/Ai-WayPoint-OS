@@ -137,7 +137,9 @@ extensions (a managed one is simplest), and a container registry.
      --from-literal=WAYPOINT_KEK='…'
    ```
 
-4. Deploy. The migration job runs first; wait for it before trusting the rollout:
+4. Deploy. The migration job and the new pods start together; the new pods take no traffic
+   until the job has finished (`/api/ready` answers 503 "migrating" while the database is
+   behind the code), and the old ones keep answering until then:
 
    ```bash
    kubectl -n waypoint delete job waypoint-migrate --ignore-not-found
@@ -148,16 +150,24 @@ extensions (a managed one is simplest), and a container registry.
 
 **What the manifests give you**
 
-- **Web:** two pods to start with, spread over nodes; liveness on `/api/health` (the process
-  answers) and readiness on `/api/ready` (the database answers), so a database outage takes
-  pods out of service without restarting them; rolling updates that never go below the
-  current number of pods; a read-only file system, no root, no extra privileges.
-- **Autoscaling:** 2 to 10 web pods on CPU (70 %) and memory (80 %). One pod uses about one
-  core; see [infra/load/README.md](../infra/load/README.md) for what that carries.
+- **Web:** spread over nodes; liveness on `/api/health` (the process answers, whatever the
+  database does) and readiness on `/api/ready` (the database answers and has the schema this
+  version needs). A database outage takes pods out of service without restarting them, and a
+  pod that starts during one connects by itself when the database is back. Rolling updates
+  never go below the current number of pods; a read-only file system, no root, no extra
+  privileges.
+- **Autoscaling:** 2 to 10 web pods on CPU (70 %). The autoscaler owns the number of pods —
+  the Deployment has no `replicas` line, so deploying in a busy hour does not shrink it. One
+  pod uses about one core; see [infra/load/README.md](../infra/load/README.md) for what that
+  carries.
+- **Database connections:** every web pod keeps up to 10 (`DATABASE_POOL_MAX`), the worker
+  the same. Ten pods and a worker are 110: raise Postgres's `max_connections`, lower
+  `DATABASE_POOL_MAX`, or put a pooler (PgBouncer) in front before you let it scale that far.
 - **Disruption budget:** node maintenance never takes the last web pod.
-- **Worker:** one pod, which finishes its round before it stops.
+- **Worker:** one pod, which finishes its round before it stops, and is restarted if it has
+  been stuck for five minutes (it touches a file every round; the liveness check reads it).
 - **Migration job:** once per release. Migrations only ever add, so the version still running
-  keeps working while the new one rolls out.
+  keeps working; the new version waits at its readiness check until they are applied.
 - **Network policy:** only the ingress controller can reach the web pods; nothing can reach
   the worker. Change the namespace label in `networkpolicy.yaml` to your ingress controller's.
 
@@ -221,9 +231,15 @@ Work through this list. Each line is something only the operator can do.
 
 ## Looking after it
 
-**Is it healthy?** Watch `/api/ready` from outside (it answers 503 when the database does not),
-the web and worker logs for lines with `"level":"error"`, and the admin overview
-(`/admin`) for messages that could not be sent and AI spend against the budget.
+**Is it healthy?** Watch `/api/ready` from outside (it answers 503 when the database does not,
+or is behind the code), the web and worker logs for lines with `"level":"error"`, and the
+admin overview (`/admin`) for messages that could not be sent and AI spend against the
+budget. With Compose, `docker compose ps` shows the web and worker containers as unhealthy
+when they are; Compose does not restart an unhealthy container by itself, so look at it.
+
+**HTTPS is remembered for two years, for subdomains too** (`Strict-Transport-Security` with
+`includeSubDomains`). Give Waypoint a host name of its own (`waypoint.example.org`), not the
+bare domain, unless every other site under that domain is HTTPS-only as well.
 
 **How big should it be?** One web container uses one CPU core. On the reference machine that
 carried about 50 page views or 600 simple API answers a second
@@ -236,7 +252,9 @@ containers first.
 1. Generate a new key. Set it as `WAYPOINT_KEK` and move the old one to
    `WAYPOINT_KEK_PREVIOUS`. Restart web and worker.
 2. The worker re-wraps every person's data key under the new key (up to 500 each time its
-   retention job runs, every six hours; `pnpm worker --once` runs it now). Its log line
+   retention job runs, every six hours). To run it now:
+   `docker compose --env-file .env -f infra/docker/compose.yml run --rm worker node --import tsx src/index.ts --once`,
+   or on Kubernetes `kubectl -n waypoint exec deploy/waypoint-worker -- node --import tsx src/index.ts --once`. Its log line
    `retention` shows `"keys":{"dataKeys":…,"remaining":…}`.
 3. When `remaining` is 0, remove `WAYPOINT_KEK_PREVIOUS` and restart. Keep the old key in your
    offline store for as long as you keep backups made before the rotation.
@@ -246,7 +264,8 @@ counters; pending approvals in Ask must be asked again. Do it when you suspect i
 on a schedule.
 
 **Upgrades.** Read the release notes, deploy to staging, run `pnpm test:e2e` against it
-(`E2E_BASE_URL=https://staging…`), then production. One-time links and codes issued before
+(`E2E_BASE_URL=https://staging…`; the tests that need the test server's own staff account or
+an empty database skip themselves), then production. One-time links and codes issued before
 an upgrade that changes how they are stored stop working; people ask for a new one.
 
 **If something goes wrong.** Take the app out of service at the proxy rather than deleting

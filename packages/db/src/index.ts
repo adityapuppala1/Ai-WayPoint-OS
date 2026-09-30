@@ -7,6 +7,7 @@ export {
   migrationsFolder,
   runMigrations,
   type Schema,
+  schemaCurrent,
 } from './client';
 export * from './schema';
 /** Any Drizzle Postgres table (used by generic helpers such as guest-account merging). */

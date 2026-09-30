@@ -103,6 +103,31 @@ describe('public endpoints', () => {
     expect(await ready.json()).toEqual({ status: 'ready' });
   });
 
+  it('is not ready while the database is behind the code (a release in progress)', async () => {
+    // The state a new server finds before the migration job has run: the newest migration
+    // is not recorded as applied yet.
+    const d = db.getDb();
+    const newest = await d.execute<{ id: number; hash: string; created_at: string }>(
+      db.sql`select id, hash, created_at from drizzle.__drizzle_migrations
+             order by created_at desc limit 1`,
+    );
+    const row = newest.rows[0]!;
+    await d.execute(db.sql`delete from drizzle.__drizzle_migrations where id = ${row.id}`);
+    try {
+      const behind = await req('/api/ready');
+      expect(behind.status).toBe(503);
+      expect(await behind.json()).toEqual({ status: 'migrating' });
+      // Liveness is unaffected: the process is fine, it is only waiting.
+      expect((await req('/api/health')).status).toBe(200);
+    } finally {
+      await d.execute(
+        db.sql`insert into drizzle.__drizzle_migrations (id, hash, created_at)
+               values (${row.id}, ${row.hash}, ${row.created_at})`,
+      );
+    }
+    expect((await req('/api/ready')).status).toBe(200);
+  });
+
   it('gives verified help for a country without an account', async () => {
     const res = await req('/api/support?country=in');
     expect(res.status).toBe(200);

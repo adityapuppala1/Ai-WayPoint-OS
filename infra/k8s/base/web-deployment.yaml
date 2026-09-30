@@ -8,8 +8,8 @@ metadata:
     app.kubernetes.io/name: waypoint-web
     app.kubernetes.io/component: web
 spec:
-  # The autoscaler owns the number of replicas; this is only where a new install starts.
-  replicas: 2
+  # No `replicas` here on purpose: the autoscaler (web-hpa.yaml) owns the number of pods. A
+  # number in this file would set it back on every `kubectl apply`, in the middle of a busy hour.
   revisionHistoryLimit: 5
   selector:
     matchLabels:
@@ -76,7 +76,8 @@ spec:
             periodSeconds: 2
             failureThreshold: 30
           # Liveness: the process answers. It does not touch the database, so a database
-          # outage never makes Kubernetes restart healthy pods.
+          # outage never makes Kubernetes restart healthy pods — and a pod that starts during
+          # one stays up and connects by itself when the database is back.
           livenessProbe:
             httpGet:
               path: /api/health
@@ -84,7 +85,9 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 3
             failureThreshold: 3
-          # Readiness: the database answers. A pod that cannot reach it gets no traffic.
+          # Readiness: the database answers and has the schema this version needs. A pod
+          # that cannot reach it gets no traffic, and during a release the new pods wait here
+          # until the migration job has finished while the old ones keep answering.
           readinessProbe:
             httpGet:
               path: /api/ready

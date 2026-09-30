@@ -16,6 +16,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { pg_trgm } from '@electric-sql/pglite/contrib/pg_trgm';
 import { vector } from '@electric-sql/pglite-pgvector';
 import { getEnv } from '@waypoint/core/env';
+import { sql } from 'drizzle-orm';
 import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres';
 import { migrate as migratePg } from 'drizzle-orm/node-postgres/migrator';
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
@@ -43,12 +44,18 @@ export type Database = PgDatabase<RowsQueryResultHKT, Schema>;
 interface DbState {
   kind: 'embedded' | 'postgres';
   db: Database;
-  /** Resolves once the database is reachable and (when enabled) migrated. */
-  ready: Promise<void>;
+  /**
+   * Resolves once the database is reachable and (when enabled) migrated. With a Postgres
+   * server this is the latest attempt: after a failure the next caller tries again, so a
+   * process that started while the database was down recovers by itself.
+   */
+  readonly ready: Promise<void>;
   close: () => Promise<void>;
 }
 
 const GLOBAL_KEY = Symbol.for('waypoint.db');
+/** How long a failed connection to Postgres is remembered before the next caller tries again. */
+const RETRY_AFTER_MS = 1000;
 type GlobalWithDb = typeof globalThis & { [GLOBAL_KEY]?: DbState };
 
 export function migrationsFolder(): string {
@@ -135,16 +142,36 @@ function createPostgres(url: string): DbState {
     application_name: 'waypoint',
   });
   const db = drizzlePg({ client: pool, schema, casing: 'snake_case' }) as unknown as Database;
-  const ready = (async () => {
-    const c = await pool.connect();
-    c.release();
-    if (env.WAYPOINT_AUTO_MIGRATE) {
-      await migratePg(db as never, { migrationsFolder: migrationsFolder() });
-      await autoSeed(db, env.WAYPOINT_AUTO_SEED ?? false);
-    }
-  })();
-  ready.catch(() => undefined);
-  return { kind: 'postgres', db, ready, close: () => pool.end() };
+  let failed = false;
+  let lastAttempt = 0;
+  const attempt = (): Promise<void> => {
+    failed = false;
+    lastAttempt = Date.now();
+    const p = (async () => {
+      const c = await pool.connect();
+      c.release();
+      if (env.WAYPOINT_AUTO_MIGRATE) {
+        await migratePg(db as never, { migrationsFolder: migrationsFolder() });
+        await autoSeed(db, env.WAYPOINT_AUTO_SEED ?? false);
+      }
+    })();
+    // Avoid unhandled rejections; callers see the error when they await `ready`.
+    p.catch(() => {
+      failed = true;
+    });
+    return p;
+  };
+  let current = attempt();
+  return {
+    kind: 'postgres',
+    db,
+    get ready() {
+      // A failed start is not remembered for ever: try again, at most once a second.
+      if (failed && Date.now() - lastAttempt >= RETRY_AFTER_MS) current = attempt();
+      return current;
+    },
+    close: () => pool.end(),
+  };
 }
 
 function state(): DbState {
@@ -168,6 +195,27 @@ export function dbReady(): Promise<void> {
 
 export function dbKind(): 'embedded' | 'postgres' {
   return state().kind;
+}
+
+/**
+ * True when every migration this code was built with has been applied to the database. A
+ * server whose code is newer than the schema is not ready to serve: during a release the new
+ * pods wait here until the migration job has finished, and the old ones keep answering.
+ */
+export async function schemaCurrent(db: Database = getDb()): Promise<boolean> {
+  const journal = JSON.parse(
+    readFileSync(join(migrationsFolder(), 'meta', '_journal.json'), 'utf8'),
+  ) as { entries: Array<{ when: number }> };
+  const newest = Math.max(0, ...journal.entries.map((e) => e.when));
+  try {
+    const res = await db.execute<{ applied: string | number | null }>(
+      sql`select max(created_at) as applied from drizzle.__drizzle_migrations`,
+    );
+    return Number(res.rows[0]?.applied ?? 0) >= newest;
+  } catch {
+    // No migrations table yet: nothing has been applied.
+    return false;
+  }
 }
 
 /** Run migrations now (used by the CLI and deploy jobs). */

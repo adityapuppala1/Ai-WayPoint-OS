@@ -64,6 +64,35 @@ jobs:
         env:
           WAYPOINT_TEST_DATABASE_URL: postgres://waypoint:ci-only-database-password@localhost:5432/waypoint
 
+  # The real app in a real browser, at phone and desktop widths: the journeys people take,
+  # accessibility, the first pages in light, dark and Arabic, and the staff console.
+  browser:
+    name: Browser tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: corepack enable pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @waypoint/web build
+        env:
+          BETTER_AUTH_SECRET: ci-only-secret-not-for-production-use-000000
+          WAYPOINT_KEK: MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=
+      - run: pnpm --filter @waypoint/web exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+      - name: Keep the report when a test fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-test-report
+          path: |
+            apps/web/playwright-report
+            apps/web/test-results
+          retention-days: 7
+
   # The deployment files are checked on every change, so they never drift from the app.
   infra:
     name: Deployment files
@@ -84,5 +113,7 @@ jobs:
           fi
           printf 'WAYPOINT_DOMAIN=waypoint.example.org\nPOSTGRES_PASSWORD=ci-only-database-password\n' > .env
           docker compose --env-file .env -f infra/docker/compose.yml config --quiet
+      - name: The files still do what the deployment guide promises
+        run: node infra/check.mjs
       - name: Load test script parses
         run: node --check infra/load/run.mjs

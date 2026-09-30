@@ -12,6 +12,13 @@
   gap: var(--wp-space-4);
 }
 
+/* The sign and what it will ask belong together: a smaller gap than between sections. */
+.start {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-4);
+}
+
 .title {
   max-inline-size: 18ch;
   font-size: clamp(var(--wp-text-h2), 1.4rem + 2.6vw, var(--wp-text-sign));

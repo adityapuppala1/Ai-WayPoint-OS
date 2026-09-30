@@ -157,7 +157,7 @@ declare const messages: {
     "more": "More",
     "allModules": "All modules",
     "home": "Waypoint home",
-    "offline": "You’re offline. Help lines and your saved plan still work.",
+    "offline": "You’re offline. Help lines still work.",
     "organisations": "Organisations",
     "admin": "Admin"
   },
@@ -180,7 +180,8 @@ declare const messages: {
     "point2Body": "Week-by-week plans built from real skills and free courses, sized to the hours you actually have.",
     "point3Title": "Your data stays yours",
     "point3Body": "Private things are encrypted, nothing optional is on by default, and you can export or delete everything at any time.",
-    "freeNote": "Free for individuals. Works on low-cost phones and slow connections."
+    "freeNote": "Free for individuals. Works on low-cost phones and slow connections.",
+    "noAccountTitle": "Works without an account"
   },
   "situations": {
     "first-job": "Looking for my first job",
@@ -445,8 +446,17 @@ declare const messages: {
     "nudgeDismiss": "Dismiss",
     "toolWeather": "Weather and air today",
     "toolWeatherHint": "Choose your place in Surroundings",
-    "weatherNow": "{temp} · {kind}",
-    "weatherAir": "Air: {level}"
+    "weatherNow": "{temp}, {kind}",
+    "weatherAir": "Air: {level}",
+    "why": {
+      "start": "So the steps Waypoint suggests fit where you are.",
+      "checklist": "It is on the checklist for your situation, under “{urgency}”.",
+      "money": "The numbers you entered show money is under pressure.",
+      "plan": "It is the next open step in your plan.",
+      "situation": "You told Waypoint: “{situation}”.",
+      "review": "You have a goal, and this week’s review is still open.",
+      "nothingElse": "Nothing else is waiting for you today."
+    }
   },
   "support": {
     "title": "Get help now",
@@ -550,13 +560,14 @@ declare const messages: {
       "deepfake-voice": "Cloned voice",
       "other": "Something else"
     },
-    "reportedTitle": "Reported recently · {country}",
+    "reportedTitle": "Reported recently: {country}",
     "reportedTitleAnywhere": "Reported recently",
     "reportedLead": "Scams people reported in the last 90 days. Our team checks each report before it appears here.",
     "reportedCount": "{count, plural, one {# report} other {# reports}}",
     "reportedLatest": "latest {date}",
     "reportedHosts": "Websites named",
-    "reportLinks": "Websites in the message: {hosts}. They’ll be included in your report so others can be warned."
+    "reportLinks": "Websites in the message: {hosts}. They’ll be included in your report so others can be warned.",
+    "paste": "Paste"
   },
   "ask": {
     "title": "Ask",
@@ -1367,7 +1378,8 @@ declare const messages: {
     "mindBody": "That’s health too. You can talk to someone today.",
     "mindAction": "Get help now",
     "sourcesTitle": "Where this guidance comes from",
-    "checked": "Checked {date}"
+    "checked": "Checked {date}",
+    "logToday": "Log today"
   },
   "surroundings": {
     "title": "Surroundings",
@@ -2073,7 +2085,7 @@ declare const messages: {
         "scam": "Messages you check with Scam Shield. We keep only a fingerprint of the text, the result, which warning signs matched and the names of any websites it links to — enough to spot scams going round.",
         "crisis": "The words that made Waypoint show crisis support. We keep only that it happened, how serious it looked and which rule matched.",
         "location": "Where you are. Weather and air quality come to your browser straight from the forecast service, for a place rounded to about 1 km, and the place you choose stays on your device.",
-        "tracking": "Advertising cookies, tracking cookies or analytics that follow you. Our only cookies keep you signed in, remember that this device has signed in before (so someone guessing your password can’t lock you out), and remember your language, time zone and display choices."
+        "tracking": "Advertising cookies, tracking cookies or analytics that follow you. Our only cookies keep you signed in, remember that this device has signed in before (so someone guessing your password can’t lock you out), and remember your language, time zone and display choices, and which steps you set aside for today."
       },
       "choices": {
         "title": "Your choices",

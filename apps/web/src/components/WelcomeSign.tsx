@@ -3,8 +3,10 @@
 import { LinkButton, Sign } from '@waypoint/ui';
 import type { Route } from 'next';
 import { useTranslations } from 'next-intl';
+import { startHref } from '@/app/welcome/start-href';
 
-export function WelcomeSign() {
+/** The welcome page's sign. `next` is where the person was heading when they were sent here. */
+export function WelcomeSign({ next = '/' }: { next?: string }) {
   const t = useTranslations('welcome');
   const today = useTranslations('today');
   return (
@@ -14,7 +16,7 @@ export function WelcomeSign() {
       module="today"
       details={[{ label: today('time'), value: today('minutes', { count: 2 }) }]}
       actions={
-        <LinkButton variant="primary" size="lg" icon="forward" href={'/start' as Route}>
+        <LinkButton variant="primary" size="lg" icon="forward" href={startHref(next) as Route}>
           {t('getStarted')}
         </LinkButton>
       }

@@ -150,7 +150,7 @@
     "more": "Plus",
     "allModules": "Tous les modules",
     "home": "Accueil de Waypoint",
-    "offline": "Vous êtes hors ligne. Les lignes d’écoute et votre plan enregistré fonctionnent toujours.",
+    "offline": "Vous êtes hors ligne. Les lignes d’écoute fonctionnent toujours.",
     "organisations": "Organisations",
     "admin": "Administration"
   },
@@ -173,7 +173,8 @@
     "point2Body": "Des plans semaine par semaine fondés sur de vraies compétences et des cours gratuits, adaptés aux heures dont vous disposez vraiment.",
     "point3Title": "Vos données restent les vôtres",
     "point3Body": "Ce qui est privé est chiffré, rien de facultatif n’est activé par défaut, et vous pouvez tout exporter ou supprimer à tout moment.",
-    "freeNote": "Gratuit pour les particuliers. Fonctionne sur des téléphones d’entrée de gamme et avec des connexions lentes."
+    "freeNote": "Gratuit pour les particuliers. Fonctionne sur des téléphones d’entrée de gamme et avec des connexions lentes.",
+    "noAccountTitle": "Fonctionne sans compte"
   },
   "situations": {
     "first-job": "Je cherche mon premier emploi",
@@ -438,8 +439,17 @@
     "nudgeDismiss": "Ignorer",
     "toolWeather": "Météo et air aujourd’hui",
     "toolWeatherHint": "Choisissez votre lieu dans Alentours",
-    "weatherNow": "{temp} · {kind}",
-    "weatherAir": "Air : {level}"
+    "weatherNow": "{temp}, {kind}",
+    "weatherAir": "Air : {level}",
+    "why": {
+      "start": "Pour que les étapes proposées par Waypoint correspondent à votre situation.",
+      "checklist": "C’est dans la liste pour votre situation, sous « {urgency} ».",
+      "money": "Les montants que vous avez saisis montrent que l’argent est sous pression.",
+      "plan": "C’est la prochaine étape à faire de votre plan.",
+      "situation": "Vous avez dit à Waypoint : « {situation} ».",
+      "review": "Vous avez un objectif, et le bilan de la semaine reste à faire.",
+      "nothingElse": "Rien d’autre ne vous attend aujourd’hui."
+    }
   },
   "support": {
     "title": "Obtenir de l’aide",
@@ -543,13 +553,14 @@
       "deepfake-voice": "Voix clonée",
       "other": "Autre chose"
     },
-    "reportedTitle": "Signalé récemment · {country}",
+    "reportedTitle": "Signalé récemment : {country}",
     "reportedTitleAnywhere": "Signalé récemment",
     "reportedLead": "Arnaques signalées ces 90 derniers jours. Notre équipe vérifie chaque signalement avant qu’il n’apparaisse ici.",
     "reportedCount": "{count, plural, one {# signalement} other {# signalements}}",
     "reportedLatest": "dernier le {date}",
     "reportedHosts": "Sites cités",
-    "reportLinks": "Sites présents dans le message : {hosts}. Ils seront ajoutés à votre signalement pour prévenir les autres."
+    "reportLinks": "Sites présents dans le message : {hosts}. Ils seront ajoutés à votre signalement pour prévenir les autres.",
+    "paste": "Coller"
   },
   "ask": {
     "title": "Parler",
@@ -1360,7 +1371,8 @@
     "mindBody": "C’est aussi de la santé. Vous pouvez parler à quelqu’un dès aujourd’hui.",
     "mindAction": "Obtenir de l’aide",
     "sourcesTitle": "D’où viennent ces informations",
-    "checked": "Vérifié le {date}"
+    "checked": "Vérifié le {date}",
+    "logToday": "Renseigner la journée"
   },
   "surroundings": {
     "title": "Alentours",
@@ -2066,7 +2078,7 @@
         "scam": "Les messages que vous vérifiez avec le Bouclier anti-arnaque. Nous ne gardons qu’une empreinte du texte, le résultat, les signaux d’alerte repérés et le nom des sites vers lesquels il renvoie — de quoi repérer les arnaques qui circulent.",
         "crisis": "Les mots qui ont amené Waypoint à afficher une aide de crise. Nous gardons seulement le fait que c’est arrivé, le niveau de gravité apparent et la règle concernée.",
         "location": "L’endroit où vous êtes. La météo et la qualité de l’air arrivent dans votre navigateur directement depuis le service de prévisions, pour un lieu arrondi à environ 1 km, et le lieu choisi reste sur votre appareil.",
-        "tracking": "Cookies publicitaires, cookies de pistage ou mesures d’audience qui vous suivent. Nos seuls cookies vous gardent connecté, retiennent que cet appareil s’est déjà connecté (pour qu’une personne qui essaie de deviner votre mot de passe ne puisse pas vous bloquer) et retiennent votre langue, votre fuseau horaire et vos choix d’affichage."
+        "tracking": "Cookies publicitaires, cookies de pistage ou mesures d’audience qui vous suivent. Nos seuls cookies vous gardent connecté, retiennent que cet appareil s’est déjà connecté (pour qu’une personne qui essaie de deviner votre mot de passe ne puisse pas vous bloquer) et retiennent votre langue, votre fuseau horaire, vos choix d’affichage et les étapes que vous avez remises à plus tard aujourd’hui."
       },
       "choices": {
         "title": "Vos choix",

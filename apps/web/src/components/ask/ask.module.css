@@ -110,6 +110,15 @@
   font-size: var(--wp-text-meta);
 }
 
+/* Something Ask saved, as a row that opens it: a list of one, in its own small panel. */
+.toolRow {
+  max-inline-size: min(28rem, 100%);
+  overflow: hidden;
+  border: 1px solid var(--wp-border-subtle);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-raised);
+}
+
 .approval {
   display: flex;
   flex-direction: column;
@@ -190,14 +199,41 @@
   gap: var(--wp-space-3);
 }
 
-.history {
+/* Narrow screens open the conversations from this button, in a sheet. */
+@media (min-width: 72rem) {
+  .historyOpen {
+    display: none;
+  }
+}
+
+.historySheet {
   display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-3);
+}
+
+/* A phone held sideways opens it as a side sheet against the edge with the camera cut-out:
+   keep the title, the close button and the list clear of it (as the More sheet does). */
+:global([role="dialog"]):has(.historySheet) {
+  padding-inline-end: max(var(--wp-space-6), env(safe-area-inset-left), env(safe-area-inset-right));
+}
+
+/* Beside the chat on a wide screen. Under that width it would land below the message box,
+   which stays at the foot of the screen, so nobody would find it: the sheet replaces it. */
+.history {
+  display: none;
   flex-direction: column;
   gap: var(--wp-space-3);
   padding: var(--wp-space-4);
   border: 1px solid var(--wp-border-subtle);
   border-radius: var(--wp-radius-md);
   background: var(--wp-raised);
+}
+
+@media (min-width: 72rem) {
+  .history {
+    display: flex;
+  }
 }
 
 .historyTitle {
@@ -214,12 +250,17 @@
 }
 
 .historyLink {
-  display: block;
-  overflow: hidden;
+  display: flex;
+  align-items: center;
+  min-block-size: var(--wp-touch-min);
   padding: var(--wp-space-2);
   border-radius: var(--wp-radius-sm);
   font-size: var(--wp-text-small);
   text-decoration: none;
+}
+
+.historyLink span {
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

@@ -14,6 +14,7 @@
     "./governor": "./src/governor/index.ts",
     "./path": "./src/path/index.ts",
     "./money": "./src/money/index.ts",
+    "./next-step": "./src/next-step/index.ts",
     "./env": "./src/env.ts",
     "./ids": "./src/ids.ts",
     "./paths": "./src/paths.ts",

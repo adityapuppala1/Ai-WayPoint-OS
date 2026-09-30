@@ -12,6 +12,7 @@ import type { Metadata, Route } from 'next';
 import Link from 'next/link';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { LinkRow } from '@/components/LinkRow';
+import { NextStops } from '@/components/NextStops';
 import { RoleCard } from '@/components/path/RoleCard';
 import { requireViewer } from '@/lib/server';
 import styles from './path.module.css';
@@ -186,6 +187,8 @@ export default async function PathPage() {
           </List>
         </Panel>
       ) : null}
+
+      <NextStops stops={['signals', 'circles']} />
     </div>
   );
 }

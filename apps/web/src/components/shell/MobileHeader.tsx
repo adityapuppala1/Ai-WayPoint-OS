@@ -5,6 +5,7 @@ import type { Route } from 'next';
 import Link from 'next/link';
 import { LogoMark } from '@/components/Logo';
 import { AccountMenu, type AccountSummary } from './AccountMenu';
+import { LinkPending } from './pending';
 import { QuickExit } from './QuickExit';
 import styles from './shell.module.css';
 
@@ -27,6 +28,7 @@ export function MobileHeader({
         <Link href={'/support' as Route} className={styles.helpChip}>
           <Icon name="support" size={18} weight="fill" />
           <span>{helpLabel}</span>
+          <LinkPending />
         </Link>
         <QuickExit compact />
         <div className={styles.mobileAccount}>

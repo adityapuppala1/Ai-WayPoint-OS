@@ -150,7 +150,7 @@
     "more": "Zaidi",
     "allModules": "Sehemu zote",
     "home": "Ukurasa wa mwanzo wa Waypoint",
-    "offline": "Huko mtandaoni. Nambari za msaada na mpango wako uliohifadhiwa bado zinafanya kazi.",
+    "offline": "Huko mtandaoni. Nambari za msaada bado zinafanya kazi.",
     "organisations": "Mashirika",
     "admin": "Usimamizi"
   },
@@ -173,7 +173,8 @@
     "point2Body": "Mipango ya wiki kwa wiki iliyojengwa kwa ujuzi halisi na kozi za bure, kulingana na saa ulizo nazo kweli.",
     "point3Title": "Data yako inabaki kuwa yako",
     "point3Body": "Mambo ya faragha husimbwa, hakuna chaguo la hiari linalowashwa bila wewe, na unaweza kupakua au kufuta kila kitu wakati wowote.",
-    "freeNote": "Bure kwa watu binafsi. Inafanya kazi kwenye simu za bei nafuu na mtandao wa polepole."
+    "freeNote": "Bure kwa watu binafsi. Inafanya kazi kwenye simu za bei nafuu na mtandao wa polepole.",
+    "noAccountTitle": "Inafanya kazi bila akaunti"
   },
   "situations": {
     "first-job": "Natafuta kazi yangu ya kwanza",
@@ -438,8 +439,17 @@
     "nudgeDismiss": "Ondoa",
     "toolWeather": "Hali ya hewa leo",
     "toolWeatherHint": "Chagua mahali pako kwenye Mazingira",
-    "weatherNow": "{temp} · {kind}",
-    "weatherAir": "Hewa: {level}"
+    "weatherNow": "{temp}, {kind}",
+    "weatherAir": "Hewa: {level}",
+    "why": {
+      "start": "Ili hatua ambazo Waypoint inapendekeza zilingane na hali yako.",
+      "checklist": "Iko kwenye orodha ya kukagua ya hali yako, chini ya “{urgency}”.",
+      "money": "Takwimu ulizoweka zinaonyesha pesa ziko chini ya shinikizo.",
+      "plan": "Ni hatua inayofuata ambayo bado haijafanyika katika mpango wako.",
+      "situation": "Uliiambia Waypoint: “{situation}”.",
+      "review": "Una lengo, na tathmini ya wiki hii bado iko wazi.",
+      "nothingElse": "Hakuna jingine linalokusubiri leo."
+    }
   },
   "support": {
     "title": "Pata msaada sasa",
@@ -543,13 +553,14 @@
       "deepfake-voice": "Sauti iliyoigwa",
       "other": "Kitu kingine"
     },
-    "reportedTitle": "Zilizoripotiwa hivi karibuni · {country}",
+    "reportedTitle": "Zilizoripotiwa hivi karibuni: {country}",
     "reportedTitleAnywhere": "Zilizoripotiwa hivi karibuni",
     "reportedLead": "Utapeli ulioripotiwa na watu katika siku 90 zilizopita. Timu yetu hukagua kila ripoti kabla haijaonekana hapa.",
     "reportedCount": "{count, plural, one {ripoti #} other {ripoti #}}",
     "reportedLatest": "ya mwisho {date}",
     "reportedHosts": "Tovuti zilizotajwa",
-    "reportLinks": "Tovuti zilizo kwenye ujumbe: {hosts}. Zitaongezwa kwenye ripoti yako ili wengine waonywe."
+    "reportLinks": "Tovuti zilizo kwenye ujumbe: {hosts}. Zitaongezwa kwenye ripoti yako ili wengine waonywe.",
+    "paste": "Bandika"
   },
   "ask": {
     "title": "Uliza",
@@ -1360,7 +1371,8 @@
     "mindBody": "Hiyo pia ni afya. Unaweza kuzungumza na mtu leo hii.",
     "mindAction": "Pata msaada sasa",
     "sourcesTitle": "Taarifa hizi zinatoka wapi",
-    "checked": "Imekaguliwa {date}"
+    "checked": "Imekaguliwa {date}",
+    "logToday": "Andika siku ya leo"
   },
   "surroundings": {
     "title": "Mazingira",
@@ -2066,7 +2078,7 @@
         "scam": "Jumbe unazokagua kwa Ngao ya Ulaghai. Tunahifadhi tu alama ya maandishi, matokeo, ishara za tahadhari zilizoonekana na majina ya tovuti ambazo ujumbe unaelekeza — inatosha kutambua ulaghai unaosambaa.",
         "crisis": "Maneno yaliyoifanya Waypoint ionyeshe msaada wa dharura. Tunahifadhi tu kwamba ilitokea, ilionekana kuwa mbaya kiasi gani na kanuni ipi ililingana.",
         "location": "Mahali ulipo. Hali ya hewa na ubora wa hewa hufika kwenye kivinjari chako moja kwa moja kutoka kwa huduma ya utabiri, kwa mahali palipokadiriwa hadi takriban kilomita 1, na mahali unapochagua hubaki kwenye kifaa chako.",
-        "tracking": "Kuki za matangazo, kuki za kufuatilia au takwimu zinazokufuata. Kuki zetu pekee hukuweka ukiwa umeingia, hukumbuka kwamba kifaa hiki kimewahi kuingia (ili mtu anayejaribu kubahatisha nenosiri lako asiweze kukufungia nje), na hukumbuka lugha yako, saa za eneo na machaguo ya mwonekano."
+        "tracking": "Kuki za matangazo, kuki za kufuatilia au takwimu zinazokufuata. Kuki zetu pekee hukuweka ukiwa umeingia, hukumbuka kwamba kifaa hiki kimewahi kuingia (ili mtu anayejaribu kubahatisha nenosiri lako asiweze kukufungia nje), na hukumbuka lugha yako, saa za eneo, machaguo ya mwonekano na hatua ulizoziweka kando leo."
       },
       "choices": {
         "title": "Machaguo yako",

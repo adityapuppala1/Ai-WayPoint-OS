@@ -1,9 +1,10 @@
 /**
- * The pages people meet first — welcome, getting started, Today, Ask, Shield, What's next?
- * and settings — at a small phone (375 px) and a laptop (1280 px), in light and dark, in
- * English and in Arabic (right to left). Each must fit the screen without sideways
+ * The pages people meet first — welcome, getting started, Today, Ask, Shield, What's next?,
+ * settings and All modules — at a small phone (375 px) and a laptop (1280 px), in light and
+ * dark, in English and in Arabic (right to left). Each must fit the screen without sideways
  * scrolling, keep every control big enough to press, show where the keyboard focus is, and
- * mirror for right-to-left reading. Screenshots are saved with the results for looking over.
+ * mirror for right-to-left reading, with no facts strung together by middle dots. Screenshots
+ * are saved with the results for looking over.
  */
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -18,6 +19,7 @@ const PAGES = [
   { name: 'shield', path: '/shield', guest: true },
   { name: 'forecasts', path: '/signals/forecasts', guest: true },
   { name: 'settings', path: '/settings', guest: true },
+  { name: 'explore', path: '/explore', guest: true },
 ] as const;
 
 const SIZES = [
@@ -147,6 +149,11 @@ for (const size of SIZES) {
           if (m.sideways) found.push(`${at}: scrolls sideways — ${m.spill.join('; ')}`);
           else if (m.spill.length) found.push(`${at}: off the edge — ${m.spill.join('; ')}`);
           if (m.small.length) found.push(`${at}: too small to press — ${m.small.join('; ')}`);
+          // Facts sit on separate lines; nothing on the page is strung together with dots.
+          const dotted = (await page.getByRole('main').innerText())
+            .split('\n')
+            .filter((line) => line.includes(' · '));
+          if (dotted.length) found.push(`${at}: joined with middle dots — ${dotted.join('; ')}`);
           if (m.dir !== (locale === 'ar' ? 'rtl' : 'ltr')) found.push(`${at}: dir is ${m.dir}`);
           if (m.theme !== theme) found.push(`${at}: theme is ${m.theme}`);
           if (process.env.AUDIT_CRAMPED && m.cramped.length)

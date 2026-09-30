@@ -12,6 +12,7 @@ import {
   loadUnits,
   placeKey,
 } from '@/components/surroundings/storage';
+import styles from './ModuleLines.module.css';
 
 /**
  * Today's weather at a glance, from the forecast this device saved last time (never fetched
@@ -64,14 +65,17 @@ export function SurroundingsGlance({ imperialDefault }: { imperialDefault: boole
       href="/surroundings"
       leading={<ModuleMark module="surroundings" size="sm" />}
       title={t('weatherNow', { temp, kind: s(`kinds.${weatherKind(c.code)}`) })}
-      description={[
-        glance.label,
-        aqi !== null && aqi !== undefined
-          ? t('weatherAir', { level: s(`aqiLevels.${aqiLevel(aqi)}`) })
-          : null,
-      ]
-        .filter(Boolean)
-        .join(' · ')}
+      description={
+        // The place, then the air: two facts, one line each.
+        <>
+          <span className={styles.fact}>{glance.label}</span>
+          {aqi !== null && aqi !== undefined ? (
+            <span className={styles.fact}>
+              {t('weatherAir', { level: s(`aqiLevels.${aqiLevel(aqi)}`) })}
+            </span>
+          ) : null}
+        </>
+      }
     />
   );
 }

@@ -150,7 +150,7 @@
     "more": "Mais",
     "allModules": "Todos os módulos",
     "home": "Início do Waypoint",
-    "offline": "Você está sem conexão. As linhas de apoio e seu plano salvo continuam funcionando.",
+    "offline": "Você está sem conexão. As linhas de apoio continuam funcionando.",
     "organisations": "Organizações",
     "admin": "Administração"
   },
@@ -173,7 +173,8 @@
     "point2Body": "Planos semana a semana com habilidades reais e cursos gratuitos, do tamanho das horas que você realmente tem.",
     "point3Title": "Seus dados continuam seus",
     "point3Body": "O que é privado fica criptografado, nada opcional vem ligado e você pode exportar ou apagar tudo quando quiser.",
-    "freeNote": "Grátis para pessoas. Funciona em celulares simples e conexões lentas."
+    "freeNote": "Grátis para pessoas. Funciona em celulares simples e conexões lentas.",
+    "noAccountTitle": "Funciona sem conta"
   },
   "situations": {
     "first-job": "Procuro meu primeiro emprego",
@@ -438,8 +439,17 @@
     "nudgeDismiss": "Dispensar",
     "toolWeather": "Tempo e ar hoje",
     "toolWeatherHint": "Escolha seu local em Arredores",
-    "weatherNow": "{temp} · {kind}",
-    "weatherAir": "Ar: {level}"
+    "weatherNow": "{temp}, {kind}",
+    "weatherAir": "Ar: {level}",
+    "why": {
+      "start": "Para que os passos que o Waypoint sugere combinem com a sua situação.",
+      "checklist": "Está na lista para a sua situação, em “{urgency}”.",
+      "money": "Os números que você informou mostram que o dinheiro está sob pressão.",
+      "plan": "É o próximo passo em aberto do seu plano.",
+      "situation": "Você disse ao Waypoint: “{situation}”.",
+      "review": "Você tem uma meta, e a revisão da semana ainda está em aberto.",
+      "nothingElse": "Hoje não há mais nada esperando por você."
+    }
   },
   "support": {
     "title": "Pedir ajuda agora",
@@ -543,13 +553,14 @@
       "deepfake-voice": "Voz clonada",
       "other": "Outra coisa"
     },
-    "reportedTitle": "Denunciado recentemente · {country}",
+    "reportedTitle": "Denunciado recentemente: {country}",
     "reportedTitleAnywhere": "Denunciado recentemente",
     "reportedLead": "Golpes que as pessoas denunciaram nos últimos 90 dias. Nossa equipe confere cada denúncia antes de ela aparecer aqui.",
     "reportedCount": "{count, plural, one {# denúncia} other {# denúncias}}",
     "reportedLatest": "a última em {date}",
     "reportedHosts": "Sites citados",
-    "reportLinks": "Sites na mensagem: {hosts}. Eles vão junto com a sua denúncia para alertar outras pessoas."
+    "reportLinks": "Sites na mensagem: {hosts}. Eles vão junto com a sua denúncia para alertar outras pessoas.",
+    "paste": "Colar"
   },
   "ask": {
     "title": "Conversar",
@@ -1360,7 +1371,8 @@
     "mindBody": "Isso também é saúde. Você pode conversar com alguém hoje mesmo.",
     "mindAction": "Pedir ajuda agora",
     "sourcesTitle": "De onde vêm estas informações",
-    "checked": "Verificado em {date}"
+    "checked": "Verificado em {date}",
+    "logToday": "Registrar hoje"
   },
   "surroundings": {
     "title": "Arredores",
@@ -2066,7 +2078,7 @@
         "scam": "As mensagens que você verifica com o Escudo contra golpes. Guardamos só uma impressão digital do texto, o resultado, os sinais de alerta encontrados e os nomes dos sites para os quais ele aponta — o suficiente para identificar golpes em circulação.",
         "crisis": "As palavras que fizeram o Waypoint mostrar apoio em crise. Guardamos só que isso aconteceu, a gravidade aparente e qual regra foi acionada.",
         "location": "Onde você está. O clima e a qualidade do ar chegam ao seu navegador direto do serviço de previsão, para um local arredondado para cerca de 1 km, e o local que você escolhe fica no seu aparelho.",
-        "tracking": "Cookies de publicidade, cookies de rastreamento ou análises que seguem você. Nossos únicos cookies mantêm você conectado, lembram que este aparelho já entrou antes (para que alguém tentando adivinhar sua senha não consiga bloquear você) e lembram seu idioma, fuso horário e preferências de exibição."
+        "tracking": "Cookies de publicidade, cookies de rastreamento ou análises que seguem você. Nossos únicos cookies mantêm você conectado, lembram que este aparelho já entrou antes (para que alguém tentando adivinhar sua senha não consiga bloquear você) e lembram seu idioma, fuso horário, preferências de exibição e quais passos você deixou para depois hoje."
       },
       "choices": {
         "title": "Suas escolhas",

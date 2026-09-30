@@ -150,7 +150,7 @@
     "more": "Más",
     "allModules": "Todos los módulos",
     "home": "Inicio de Waypoint",
-    "offline": "No tienes conexión. Las líneas de ayuda y tu plan guardado siguen funcionando.",
+    "offline": "No tienes conexión. Las líneas de ayuda siguen funcionando.",
     "organisations": "Organizaciones",
     "admin": "Administración"
   },
@@ -173,7 +173,8 @@
     "point2Body": "Planes semana a semana con habilidades reales y cursos gratuitos, a la medida de las horas que de verdad tienes.",
     "point3Title": "Tus datos siguen siendo tuyos",
     "point3Body": "Lo privado va cifrado, nada opcional viene activado y puedes exportar o borrar todo cuando quieras.",
-    "freeNote": "Gratis para personas. Funciona en teléfonos económicos y con conexiones lentas."
+    "freeNote": "Gratis para personas. Funciona en teléfonos económicos y con conexiones lentas.",
+    "noAccountTitle": "Funciona sin cuenta"
   },
   "situations": {
     "first-job": "Busco mi primer empleo",
@@ -438,8 +439,17 @@
     "nudgeDismiss": "Descartar",
     "toolWeather": "El tiempo y el aire hoy",
     "toolWeatherHint": "Elige tu lugar en Entorno",
-    "weatherNow": "{temp} · {kind}",
-    "weatherAir": "Aire: {level}"
+    "weatherNow": "{temp}, {kind}",
+    "weatherAir": "Aire: {level}",
+    "why": {
+      "start": "Para que los pasos que Waypoint sugiere se ajusten a tu situación.",
+      "checklist": "Está en la lista para tu situación, en «{urgency}».",
+      "money": "Las cifras que ingresaste muestran que el dinero está bajo presión.",
+      "plan": "Es el próximo paso pendiente de tu plan.",
+      "situation": "Le dijiste a Waypoint: «{situation}».",
+      "review": "Tienes una meta, y el repaso de esta semana sigue pendiente.",
+      "nothingElse": "Hoy no hay nada más esperándote."
+    }
   },
   "support": {
     "title": "Pedir ayuda ahora",
@@ -543,13 +553,14 @@
       "deepfake-voice": "Voz clonada",
       "other": "Otra cosa"
     },
-    "reportedTitle": "Denunciado hace poco · {country}",
+    "reportedTitle": "Denunciado hace poco: {country}",
     "reportedTitleAnywhere": "Denunciado hace poco",
     "reportedLead": "Estafas que la gente denunció en los últimos 90 días. Nuestro equipo revisa cada denuncia antes de que aparezca aquí.",
     "reportedCount": "{count, plural, one {# denuncia} other {# denuncias}}",
     "reportedLatest": "la última el {date}",
     "reportedHosts": "Sitios web citados",
-    "reportLinks": "Sitios web del mensaje: {hosts}. Se incluirán en tu denuncia para avisar a otras personas."
+    "reportLinks": "Sitios web del mensaje: {hosts}. Se incluirán en tu denuncia para avisar a otras personas.",
+    "paste": "Pegar"
   },
   "ask": {
     "title": "Pregunta",
@@ -1360,7 +1371,8 @@
     "mindBody": "Eso también es salud. Puedes hablar con alguien hoy mismo.",
     "mindAction": "Pedir ayuda ahora",
     "sourcesTitle": "De dónde sale esta información",
-    "checked": "Comprobado el {date}"
+    "checked": "Comprobado el {date}",
+    "logToday": "Registrar hoy"
   },
   "surroundings": {
     "title": "Entorno",
@@ -2066,7 +2078,7 @@
         "scam": "Los mensajes que revisas con el Escudo antiestafas. Solo guardamos una huella del texto, el resultado, las señales de alerta que coincidieron y los nombres de las webs a las que enlaza: lo justo para detectar estafas que circulan.",
         "crisis": "Las palabras que hicieron que Waypoint mostrara ayuda en crisis. Solo guardamos que ocurrió, lo grave que parecía y qué regla coincidió.",
         "location": "Dónde estás. El tiempo y la calidad del aire llegan a tu navegador directamente del servicio de pronósticos, para un lugar redondeado a aproximadamente 1 km, y el lugar que eliges se queda en tu dispositivo.",
-        "tracking": "Cookies publicitarias o de rastreo, ni analíticas que te sigan. Nuestras únicas cookies mantienen tu sesión, recuerdan que este dispositivo ya inició sesión antes (para que alguien que intente adivinar tu contraseña no pueda bloquearte) y recuerdan tu idioma, tu zona horaria y cómo prefieres ver la app."
+        "tracking": "Cookies publicitarias o de rastreo, ni analíticas que te sigan. Nuestras únicas cookies mantienen tu sesión, recuerdan que este dispositivo ya inició sesión antes (para que alguien que intente adivinar tu contraseña no pueda bloquearte) y recuerdan tu idioma, tu zona horaria, cómo prefieres ver la app y qué pasos dejaste hoy para otro momento."
       },
       "choices": {
         "title": "Lo que puedes elegir",

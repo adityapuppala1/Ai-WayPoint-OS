@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { CircleCard } from '@/components/circles/CircleCard';
 import styles from '@/components/circles/circles.module.css';
+import { EmptyNote } from '@/components/EmptyNote';
 import { requireViewer } from '@/lib/server';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -31,6 +32,10 @@ export default async function CirclesPage() {
     locale,
   );
   const guest = viewer.user.isGuest;
+  // Where "pick one below" leads: the circles suggested for this person, or all of them.
+  const firstList = view.suggested.length
+    ? { id: 'circles-suggested', name: t('suggested') }
+    : { id: 'circles-browse', name: t('browse') };
   const max = [...view.mine, ...view.suggested, ...view.browse][0]?.maxMembers ?? 12;
 
   return (
@@ -72,7 +77,9 @@ export default async function CirclesPage() {
               ))}
             </ul>
           ) : (
-            <p className={styles.hint}>{t('mineEmpty')}</p>
+            <EmptyNote action={<a href={`#${firstList.id}`}>{firstList.name}</a>}>
+              {t('mineEmpty')}
+            </EmptyNote>
           )}
         </section>
       )}

@@ -1,24 +1,12 @@
 import { createRoute, z } from '@hono/zod-openapi';
 import { and, eq, nudges } from '@waypoint/db';
 import { loadMessages } from '@waypoint/i18n';
+import { getCookie } from 'hono/cookie';
 import { errors, IdParam, jsonBody, jsonContent, OkSchema, router } from '../lib/openapi';
 import { notFound } from '../lib/problem';
 import { noStore, requireUser } from '../middleware';
 import { getConsents, getProfile } from '../services/me';
-import { type TodayCopy, TodaySchema, today } from '../services/today';
-
-/** Today's generic next steps in the language of the request (the app, other clients). */
-async function todayCopy(locale: Parameters<typeof loadMessages>[0]): Promise<TodayCopy> {
-  const t = (await loadMessages(locale)).today;
-  return {
-    onboardTitle: t.onboardTitle,
-    onboardDetail: t.onboardDetail,
-    makePlanTitle: t.makePlanTitle,
-    makePlanDetail: t.makePlanDetail,
-    exploreTitle: t.exploreTitle,
-    exploreDetail: t.exploreDetail,
-  };
-}
+import { NOT_NOW_COOKIE, TodaySchema, today, todayCopy } from '../services/today';
 
 const app = router();
 app.use('/today', requireUser, noStore);
@@ -36,13 +24,20 @@ app.openapi(
     const db = c.get('db');
     const user = c.get('user')!;
     const locale = c.get('locale');
-    const [profile, consents, copy] = await Promise.all([
+    const [profile, consents, messages] = await Promise.all([
       getProfile(db, user.id),
       getConsents(db, user.id),
-      todayCopy(locale),
+      // The words for the step, in the language of the request (the app, other clients).
+      loadMessages(locale),
     ]);
     return c.json(
-      await today(db, user.id, profile, { matching: consents.foresight_matching, copy, locale }),
+      await today(db, user.id, profile, {
+        matching: consents.foresight_matching,
+        copy: todayCopy(messages),
+        locale,
+        // Steps the person set aside today (the website keeps them in a cookie).
+        notNow: getCookie(c, NOT_NOW_COOKIE),
+      }),
       200,
     );
   },

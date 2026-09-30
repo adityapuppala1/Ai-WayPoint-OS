@@ -20,6 +20,41 @@
   outline: none;
 }
 
+/* The page itself. The wrapper adds no box of its own; while a pressed link waits for its
+   page it is hidden and the placeholder below stands in. */
+.page {
+  display: contents;
+}
+
+.page[hidden] {
+  display: none;
+}
+
+.placeholder {
+  gap: var(--wp-space-8);
+}
+
+.placeholderPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-3);
+  padding: var(--wp-space-4);
+  border: 1px solid var(--wp-border-subtle);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-raised);
+}
+
+/* Offline notice: lines up with the page column, and takes no room while online. */
+.offline {
+  max-inline-size: var(--wp-content-max);
+  margin-inline: auto;
+  margin-block-end: var(--wp-space-6);
+}
+
+.offline:empty {
+  display: none;
+}
+
 /* ───────────── Brand ───────────── */
 .brand {
   display: inline-flex;
@@ -80,8 +115,10 @@
   color: var(--wp-text);
 }
 
-/* The active marker is the signal-yellow bar, like the "you are here" arrow on a sign. */
-.railLink.active::before {
+/* The active marker is the signal-yellow bar, like the "you are here" arrow on a sign. A
+   pressed link shows it at once, before its page has arrived. */
+.railLink.active::before,
+.railLink .pendingMark[data-pending] {
   content: "";
   position: absolute;
   inset-block: 0.5rem;
@@ -196,7 +233,8 @@
   justify-content: space-between;
   gap: var(--wp-space-2);
   padding-block: calc(var(--wp-space-2) + env(safe-area-inset-top)) var(--wp-space-2);
-  padding-inline: var(--wp-space-3);
+  /* A phone held sideways has its camera cut-out at one side: keep clear of it on both. */
+  padding-inline: max(var(--wp-space-3), env(safe-area-inset-left), env(safe-area-inset-right));
   border-block-end: 1px solid var(--wp-border-subtle);
   background: var(--wp-canvas);
 }
@@ -262,6 +300,10 @@
   inset-block-end: 0;
   z-index: var(--wp-z-nav);
   padding-block-end: env(safe-area-inset-bottom);
+  /* Held sideways, the first and last tab would sit under the camera cut-out or the rounded
+     corners. The same room on both sides keeps the five tabs centred, whichever way the
+     phone was turned and whichever way the language reads. */
+  padding-inline: max(env(safe-area-inset-left), env(safe-area-inset-right));
   border-block-start: 1px solid var(--wp-border-subtle);
   background: var(--wp-raised);
 }
@@ -298,7 +340,8 @@
   color: var(--wp-text);
 }
 
-.tab.active::before {
+.tab.active::before,
+.tab .pendingMark[data-pending] {
   content: "";
   position: absolute;
   inset-block-start: 0;
@@ -309,9 +352,16 @@
   background: var(--wp-signal);
 }
 
+/* One marker at a time: it leaves the page you are on as it appears on the one you pressed. */
+.railList:has([data-pending]) .railLink.active::before,
+.bottomBar:has([data-pending]) .tab.active::before {
+  display: none;
+}
+
+/* The More sheet: one column, so every place has room for a line saying what it is. */
 .sheetList {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: var(--wp-space-1);
   margin: 0;
   padding: 0;
@@ -322,12 +372,38 @@
   display: flex;
   align-items: center;
   gap: var(--wp-space-3);
-  min-block-size: 3rem;
-  padding-inline: var(--wp-space-2);
+  min-block-size: 3.5rem;
+  padding: var(--wp-space-2);
   border-radius: var(--wp-radius-sm);
   color: var(--wp-text);
-  font-weight: var(--wp-weight-medium);
   text-decoration: none;
+}
+
+.sheetLink > :first-child {
+  flex: none;
+}
+
+/* Held sideways, the sheet sits against the edge with the camera cut-out. The sheet is the
+   design system's; this pads the one that holds this list (title, close button and rows). */
+:global([role="dialog"]):has(.sheetList) {
+  padding-inline-end: max(var(--wp-space-6), env(safe-area-inset-left), env(safe-area-inset-right));
+}
+
+.sheetText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-inline-size: 0;
+}
+
+.sheetName {
+  font-weight: var(--wp-weight-medium);
+  line-height: var(--wp-leading-snug);
+}
+
+.sheetHint {
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
 }
 
 .sheetLink:hover,

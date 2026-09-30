@@ -1,5 +1,8 @@
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { configWarnings, getEnv, resetEnvForTests } from '../src/env';
+import { configWarnings, devSecret, getEnv, resetEnvForTests } from '../src/env';
 
 const KEYS = [
   'WAYPOINT_OPERATOR',
@@ -22,6 +25,32 @@ afterEach(() => {
     else process.env[k] = saved[k];
   }
   resetEnvForTests();
+});
+
+describe('secrets made up for local development', () => {
+  it('makes one on first use, keeps it, and starts again from a damaged file', () => {
+    const before = process.env.WAYPOINT_DATA_DIR;
+    const dir = mkdtempSync(join(tmpdir(), 'wp-dev-secrets-'));
+    try {
+      process.env.WAYPOINT_DATA_DIR = join(dir, 'data');
+      resetEnvForTests();
+      const first = devSecret('TEST_SECRET');
+      expect(first).toMatch(/^[A-Za-z0-9+/]{43}=$/);
+      expect(devSecret('TEST_SECRET')).toBe(first);
+      const file = join(dir, 'data', 'dev-secrets.json');
+      expect(JSON.parse(readFileSync(file, 'utf8'))).toEqual({ TEST_SECRET: first });
+
+      writeFileSync(file, '{ not json');
+      const again = devSecret('TEST_SECRET');
+      expect(again).not.toBe(first);
+      expect(JSON.parse(readFileSync(file, 'utf8'))).toEqual({ TEST_SECRET: again });
+    } finally {
+      if (before === undefined) delete process.env.WAYPOINT_DATA_DIR;
+      else process.env.WAYPOINT_DATA_DIR = before;
+      resetEnvForTests();
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
 });
 
 describe('who runs this Waypoint (privacy notice and terms)', () => {

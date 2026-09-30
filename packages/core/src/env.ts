@@ -302,13 +302,13 @@ export function devSecret(name: string, bytes = 32): string {
   const env = getEnv();
   if (env.isProd) throw new Error(`${name} must be configured in production.`);
   const file = join(env.dataDir, 'dev-secrets.json');
+  // Read, not "check, then read": the file could change between the two. Missing or damaged
+  // is the same as empty.
   let secrets: Record<string, string> = {};
-  if (existsSync(file)) {
-    try {
-      secrets = JSON.parse(readFileSync(file, 'utf8')) as Record<string, string>;
-    } catch {
-      secrets = {};
-    }
+  try {
+    secrets = JSON.parse(readFileSync(file, 'utf8')) as Record<string, string>;
+  } catch {
+    secrets = {};
   }
   const existing = secrets[name];
   if (existing) return existing;

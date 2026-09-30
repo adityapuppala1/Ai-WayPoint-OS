@@ -206,6 +206,13 @@ choice, and nothing from Mind, Health, Money, Circles, Ask or Shield is ever use
   answer arriving twice (two taps, a retry) saves nothing twice.
 - The client sends only its newest message; the server owns conversation history, so earlier
   assistant turns cannot be rewritten.
+- **The judge** (TypeSafe's Jev, optional: [AI.md](AI.md#the-judge-typed-second-opinions))
+  gives typed second opinions and writes nothing. Safety never depends on it: the crisis check
+  and the Shield rules run first and without it, and with no key, no consent, an unmeasured
+  language, a spent budget or any failure the result is exactly the rules' own. An answer may
+  only add caution. By TypeSafe's own account, text written to steer Jev can move its answer,
+  so nothing it says may lower a crisis tier or a Shield level, and what a person wrote is
+  never part of a question. No feature asks it yet.
 
 ## Evaluations
 
@@ -219,7 +226,8 @@ model that misbehaves, and the cases check what Waypoint guarantees anyway: the 
 before any model in every language, nothing saved without a yes (and no way to forge, move or
 replay one), nothing saved because a pasted message or a tool result said so, no personal
 details sent to an outside model, and the rules on medical, legal and money advice and on
-never claiming to know the future present in every prompt.
+never claiming to know the future present in every prompt. The run blanks every outside AI
+key, the judge's included, so an evaluation can never send anything anywhere.
 
 ## Before launch in a new language or country
 

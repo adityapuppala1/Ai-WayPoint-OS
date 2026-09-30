@@ -58,6 +58,15 @@ Purpose-specific and revocable (`consents` table, full history in `consent_event
   applied to what Waypoint tells the model about the person — their goals, what they asked it
   to remember and their current plan — not only to their messages.
 - A self-hosted model (`OLLAMA_BASE_URL`) keeps everything on your servers.
+- **The judge** (`TYPESAFE_API_KEY`, optional) is an outside service too: TypeSafe, hosted in
+  the United States. It is asked only under the same `ai_external` consent (or a one-off tick
+  where a feature offers one) — a private model never stands in for it — and only in the
+  languages switched on for it. The same redaction is applied to everything it is sent, in one
+  place (`packages/ai/src/judge-questions.ts`). It is sent the text a question is about and
+  nothing about the account (no id, email address or history); names inside that text are not
+  removed, as with any AI provider. TypeSafe says requests are not used to train its model; it
+  states no retention period, and keeping nothing is offered to its enterprise customers only.
+  Decide what you may send, and read its terms, before setting the key. No feature asks it yet.
 - Surroundings fetches weather and air quality from the browser directly (Open-Meteo), with
   coordinates rounded to about 1 km. The chosen place and the last forecast are kept in the
   browser's local storage only, so Waypoint's servers never see a location.
@@ -213,7 +222,8 @@ document: change them together.
   shown when set. The outside services named — AI providers, texting and email services — are
   read from the configuration (`packages/api/src/services/legal.ts`), so the notice never names
   a service that isn't used or leaves out one that is; only host names are shown, never keys or
-  passwords.
+  passwords. TypeSafe is named with the AI providers when, and only when, `TYPESAFE_API_KEY` is
+  set — also when it is the only one.
 - **Versions.** `packages/core/src/legal.ts` holds the "last updated" dates and
   `PRIVACY_POLICY_VERSION`, which every consent records. Change the version when the notice
   changes what Waypoint does with information.

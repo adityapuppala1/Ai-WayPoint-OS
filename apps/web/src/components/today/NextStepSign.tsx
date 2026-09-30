@@ -1,18 +1,11 @@
 'use client';
 
 import type { NextStep } from '@waypoint/api/client';
-import { addNotNow, NOT_NOW_COOKIE } from '@waypoint/core/next-step';
 import { Button, LinkButton, type ModuleKey, Sign, toast } from '@waypoint/ui';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState, useTransition } from 'react';
 import { api } from '@/lib/api';
-
-/** The value of one cookie as the browser holds it, or undefined. */
-function readCookie(name: string): string | undefined {
-  const found = document.cookie.split('; ').find((c) => c.startsWith(`${name}=`));
-  return found ? decodeURIComponent(found.slice(name.length + 1)) : undefined;
-}
 
 /**
  * Today's Next Step sign. The step comes from any module (a checklist, a reminder, money,
@@ -20,21 +13,13 @@ function readCookie(name: string): string | undefined {
  * about each other: setting a step aside shows the next one for the rest of the day, and
  * either way the sign flips to the new step.
  */
-export function NextStepSign({
-  step,
-  day,
-  context,
-}: {
-  step: NextStep;
-  /** The person's local date: "not now" is remembered for this day only. */
-  day: string;
-  context?: string;
-}) {
+export function NextStepSign({ step, context }: { step: NextStep; context?: string }) {
   const t = useTranslations('today');
   const common = useTranslations('common');
   const errors = useTranslations('errors');
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [deferring, setDeferring] = useState(false);
   const [, startTransition] = useTransition();
 
   const markDone = async () => {
@@ -62,13 +47,19 @@ export function NextStepSign({
     }
   };
 
-  // Kept in this browser only, as the day and a key that says nothing about the step. A day
-  // and a half is long enough for any time zone; the server reads it for `day` alone.
-  const notNow = () => {
-    const value = addNotNow(readCookie(NOT_NOW_COOKIE), day, step.key);
-    // biome-ignore lint/suspicious/noDocumentCookie: a small preference cookie the server page reads (like wp-theme)
-    document.cookie = `${NOT_NOW_COOKIE}=${value}; path=/; max-age=129600; samesite=lax`;
-    startTransition(() => router.refresh());
+  // Kept in this browser only, as the day and a key that says nothing about the step. The
+  // server writes it and works out the day when the button is pressed: a page left open past
+  // midnight still sets the step aside for the day it is now.
+  const notNow = async () => {
+    setDeferring(true);
+    try {
+      await api('/api/today/not-now', { json: { key: step.key } });
+      startTransition(() => router.refresh());
+    } catch {
+      toast({ title: errors('generic'), tone: 'danger' });
+    } finally {
+      setDeferring(false);
+    }
   };
 
   const details = [
@@ -99,12 +90,25 @@ export function NextStepSign({
             {t('startStep')}
           </LinkButton>
           {step.done ? (
-            <Button variant="onSign" size="lg" icon="check" onPress={markDone} isBusy={busy}>
+            <Button
+              variant="onSign"
+              size="lg"
+              icon="check"
+              onPress={markDone}
+              isBusy={busy}
+              isDisabled={deferring}
+            >
               {t('markDone')}
             </Button>
           ) : null}
           {step.canDefer ? (
-            <Button variant="onSign" size="lg" onPress={notNow} isDisabled={busy}>
+            <Button
+              variant="onSign"
+              size="lg"
+              onPress={notNow}
+              isBusy={deferring}
+              isDisabled={busy}
+            >
               {common('notNow')}
             </Button>
           ) : null}

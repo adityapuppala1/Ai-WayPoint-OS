@@ -95,6 +95,28 @@ test('someone who lost their job sees their checklist on the sign; “not now”
   await expect(page.getByRole('checkbox', { name: `Mark “${first}” as done` })).not.toBeChecked();
 });
 
+test('“not now” pressed after the day has changed counts for the new day', async ({ page }) => {
+  await startWith(page, 'I recently lost my job or income');
+  await expect(page).toHaveURL(/\/$/, { timeout: 30_000 });
+  const first = 'Get the decision and your final pay details in writing';
+  await expect(sign(page).getByRole('heading', { level: 2 })).toHaveText(first);
+
+  // Today stays open while the person's day changes — as it does at midnight. Here their time
+  // zone moves instead, to one where the date is not the one the page was drawn for (two zones
+  // 25 hours apart never share a date, so one of them differs).
+  const day = (timeZone: string) => new Date().toLocaleDateString('en-CA', { timeZone });
+  const now = day('Africa/Nairobi');
+  const timezone = ['Pacific/Kiritimati', 'Pacific/Pago_Pago'].find((z) => day(z) !== now);
+  const moved = await page.request.patch('/api/me/profile', { data: { timezone } });
+  expect(moved.ok()).toBe(true);
+
+  // The step set aside is set aside for the day it is now, so the sign moves on.
+  await sign(page).getByRole('button', { name: 'Not now' }).click();
+  await expect(sign(page).getByRole('heading', { level: 2 })).toHaveText(
+    'Check unemployment support straight away',
+  );
+});
+
 test('someone caring for another person is asked how they are, not sent to plan a career', async ({
   page,
 }) => {

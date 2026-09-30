@@ -243,6 +243,45 @@ describe('Today’s next step', () => {
     expect(view.nextStep).toMatchObject({ kind: 'explore', why: null });
   });
 
+  it('“not now” is kept for the day it is pressed, not the day the page was drawn', async () => {
+    const cookie = await person('lost-job');
+    const first = await today(cookie);
+    const press = (stored: string) =>
+      req('/api/today/not-now', {
+        method: 'POST',
+        cookie: `${cookie}; wp-not-now=${stored}`,
+        json: { key: first.nextStep.key },
+      });
+    const kept = (res: Response) =>
+      res.headers.getSetCookie().find((line) => line.startsWith('wp-not-now=')) ?? '';
+
+    // Added to what today already holds (another tab set something aside too).
+    const res = await press(`${first.day}:aaaaaaaaaaaaaaaa`);
+    expect(res.status).toBe(200);
+    const line = kept(res);
+    expect(line).toContain(`wp-not-now=${first.day}:aaaaaaaaaaaaaaaa.${first.nextStep.key};`);
+    expect(line.toLowerCase()).toContain('max-age=129600');
+    expect(line.toLowerCase()).toContain('path=/');
+    // Nothing on the page needs to read it.
+    expect(line.toLowerCase()).toContain('httponly');
+
+    // A list from another day is not added to: the day is the person's own, worked out now.
+    expect(kept(await press('2001-01-01:bbbbbbbbbbbbbbbb'))).toContain(
+      `wp-not-now=${first.day}:${first.nextStep.key};`,
+    );
+    const after = await today(cookie, `wp-not-now=${first.day}:${first.nextStep.key}`);
+    expect(after.nextStep.title).not.toBe(first.nextStep.title);
+
+    // Only a key Today gave.
+    const bad = await req('/api/today/not-now', {
+      method: 'POST',
+      cookie,
+      json: { key: 'not a key; Path=/x' },
+    });
+    expect(bad.status).toBe(422);
+    expect(bad.headers.getSetCookie()).toEqual([]);
+  });
+
   it('marking the checklist item done moves on for good', async () => {
     const cookie = await person('lost-job');
     const first = await today(cookie);

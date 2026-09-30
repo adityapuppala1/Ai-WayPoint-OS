@@ -112,6 +112,8 @@ export async function ForecastCard({
             {t(`outcome.${f.state === 'annulled' ? 'annulled' : (f.outcome ?? 'no')}`)}
           </p>
           <p className={styles.said}>{t('weSaid', { chance: percent(f.probability), words })}</p>
+          {/* One member of staff recorded this; a second has not confirmed it yet. */}
+          {f.doubleChecked === false ? <p className={styles.said}>{t('unchecked')}</p> : null}
           {f.resolutionNote ? (
             <p className={styles.description} dir="auto">
               {f.resolutionNote}

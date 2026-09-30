@@ -78,6 +78,9 @@ export default async function ForecastRecordPage({
               <Stat value={format.number(record.awaiting)} label={t('countAwaiting')} />
               <Stat value={format.number(record.annulled)} label={t('countAnnulled')} />
             </div>
+            {record.unchecked ? (
+              <p className={styles.note}>{t('uncheckedCount', { count: record.unchecked })}</p>
+            ) : null}
             {record.since ? (
               <p className={styles.note}>
                 {t('since', {
@@ -160,6 +163,7 @@ export default async function ForecastRecordPage({
           <li>{t('how3')}</li>
           <li>{t('how4')}</li>
           <li>{t('how5')}</li>
+          <li>{t('how6')}</li>
         </ol>
       </Panel>
 

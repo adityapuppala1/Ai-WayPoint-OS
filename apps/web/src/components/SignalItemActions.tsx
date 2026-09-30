@@ -1,6 +1,7 @@
 'use client';
 
 import { Button, toast } from '@waypoint/ui';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
 import { api, problemKey } from '@/lib/api';
@@ -32,7 +33,14 @@ export function SignalItemActions({
   children: ReactNode;
 }) {
   const errors = useTranslations('errors');
+  const router = useRouter();
   const [saved, setSaved] = useState(wasSaved);
+  // What the server says, when it says something new (after a refresh), wins over this copy.
+  const [server, setServer] = useState(wasSaved);
+  if (server !== wasSaved) {
+    setServer(wasSaved);
+    setSaved(wasSaved);
+  }
   const [hidden, setHidden] = useState(false);
   /** Changes go to the server one after another, in the order they were pressed. */
   const queue = useRef<Promise<void>>(Promise.resolve());
@@ -75,7 +83,15 @@ export function SignalItemActions({
         title: labels.saved,
         description: title,
         tone: 'safe',
-        action: { label: labels.undo, onAction: () => setSavedTo(false) },
+        action: {
+          label: labels.undo,
+          // The toast outlives the page: pressed elsewhere, the page then open is redrawn once
+          // the server has it, so nothing there still says "Saved".
+          onAction: () => {
+            setSavedTo(false);
+            void queue.current.then(() => router.refresh());
+          },
+        },
       });
   };
   // Hiding has its Undo in the row it leaves behind (with the keyboard on it), so it needs no

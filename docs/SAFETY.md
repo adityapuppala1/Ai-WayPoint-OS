@@ -271,7 +271,10 @@ choice, and nothing from Mind, Health, Money, Circles, Ask or Shield is ever use
     template did not make and for a course, site, organisation or number it did not name. One
     flag keeps the template wording for the whole plan.
   - **Guided mode**: when no keyword says what a question is about, the judge may pick which
-    part of Waypoint to point to. It writes none of the words.
+    part of Waypoint to point to. It writes none of the words. However a question is routed to
+    scams, guided mode gives a rules verdict on the person's own words only when the rules
+    warn; otherwise it shows the way to Shield and never says "no common scam signs found"
+    about someone describing a call or an offer.
 - **Where the judge is never used**: to decide or lower a crisis tier; at crisis tier 3, where
   nothing goes to it as nothing goes to a model; on the journal, mood notes or health notes;
   on Circles posts; on forecasts; on numbers or dates. Nobody has tested Jev on crisis

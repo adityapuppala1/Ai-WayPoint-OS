@@ -66,7 +66,7 @@ answer can only put Waypoint's own fixed wording in place of something less cert
 | **Scam Shield** second opinion (`shieldOpinion`, `judge-shield.ts`) | Nine yes-or-no questions about the pasted message, one warning sign each: a fee to get work, a fee to receive something, a request for a code or PIN, a threat, guaranteed returns, pressure to act now, a move to another app, a link that does not match the sender, text addressed to whoever is checking the message | Code adds the signs up into a level, never above "high". It goes through the same raise-only merge as the language model's opinion (`mergeAiOpinion`). Each reason shown is the existing, translated title of the sign it saw | The language model's opinion alone, as before. With neither, the rules alone |
 | **Answers by SMS and WhatsApp** (`channelAnswer`) | Five questions about the AI's reply, not the person's question: a diagnosis or a dose, what a court or official will decide, a particular investment, loan or product, a promised outcome, a method of self-harm | The reply is not sent. The existing guided text goes out instead | The reply is sent as before (links and phone numbers are still stripped) |
 | **Plan rewrites** (`personalisePlan`) | Two questions about each reworded step, next to its own original: a promise the template did not make; a course, site, organisation or number it did not name | The whole rewrite is refused and the template wording kept | The rewrite is accepted as before |
-| **Guided mode** in Ask (`guidedIntent`) | One choice, only when no keyword matched: scam, work, money, services, feelings or "none of these" | Waypoint's own guided reply for that topic, instead of the general menu. Used only when the pick is well ahead | The general menu, as before |
+| **Guided mode** in Ask (`guidedIntent`) | One choice, only when no keyword matched: scam, work, money, services, feelings or "none of these" | Waypoint's own guided reply for that topic, instead of the general menu. Used only when the pick is well ahead. For "scam", the rules check the person's own words and a verdict is given only when they warn; otherwise only the way to Shield is shown, never "no common scam signs found" | The general menu, as before |
 
 In Scam Shield the rules come first, then the judge and the language model are asked at the
 same time. The judge is asked only about messages the rules rated low or unclear: "high" is
@@ -152,7 +152,7 @@ a single real answer from Jev was seen. **They are not tuned.**
 | Shield: level from the signs | score ≥ 0.30 unclear, ≥ 0.60 high, never very high (so it is asked only when the rules say low or unclear) | Seen signs add up as the rules' signals do (weight × probability). Stricter than the rules ask of themselves (0.20, 0.45): one strong sign reaches "high" only when Jev is almost certain of it |
 | Reply by text | any check ≥ 0.7; a method of self-harm ≥ 0.5 | A wrongly withheld answer costs a fuller reply; a wrongly sent one could cost far more |
 | Plan rewrite | either check ≥ 0.5 | Accepting a model's wording is the act that needs confidence; refusing costs only plainer words |
-| Guided intent | confidence ≥ 0.6 and probability ≥ 0.6 | Pointing to the wrong page is cheap to undo |
+| Guided intent | confidence ≥ 0.6 and probability ≥ 0.6 | Pointing to the wrong page is cheap to undo, and no pick leads to reassurance: guided mode never says a question showed no scam signs |
 
 Change a number in the code, then run `pnpm check`, `pnpm eval` and `eval:judge` again.
 

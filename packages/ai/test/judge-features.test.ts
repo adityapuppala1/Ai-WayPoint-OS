@@ -756,6 +756,16 @@ describe('guided mode, when no keyword says what a question is about', () => {
     expect(reply).not.toContain(MENU);
   });
 
+  it('never turns a pick of “scam” into “no scam signs found” about the person’s own question', async () => {
+    const CALLER =
+      'A man phoned me saying he is from my bank and asked for the number they just texted me. Should I give it?';
+    judge({ intent: { choice: 'scam', p: 0.9, confidence: 0.85 } });
+    expect(await intent(CALLER)).toBe('scam');
+    const reply = await guidedReply(CALLER);
+    expect(reply).not.toMatch(/no common scam signs|didn’t find common scam signs/i);
+    expect(reply).toContain('[Shield: check a message for scams](/shield)');
+  });
+
   it('shows the general menu when the judge picks none of these, or is not well ahead', async () => {
     judge({ intent: { choice: 'general', p: 0.9, confidence: 0.9 } });
     expect(await intent()).toBe('general');

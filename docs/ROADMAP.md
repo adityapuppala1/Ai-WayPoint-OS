@@ -52,6 +52,11 @@ use in every language, filled in from each installation's own configuration.
     finding and an independent re-check, a reporting policy ([SECURITY.md](../SECURITY.md)) and
     `/.well-known/security.txt`, and guardrail evaluations that run without a model
     ([AI.md](AI.md)). Still to do: a penetration test by an outside firm.
+14. **Typed second opinions (TypeSafe's Jev)** — done: an optional judge that can only add
+    caution, in Scam Shield, on answers by text, on plan rewrites and in guided mode, with
+    guardrail cases and a per-language measurement command
+    ([AI.md](AI.md#typed-decisions-jev)). Still to do: run `eval:judge` with a real key, tune
+    the thresholds (they are starting values) per language, and have TypeSafe's terms reviewed.
 
 ## Before public launch
 

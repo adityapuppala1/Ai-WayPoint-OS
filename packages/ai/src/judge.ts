@@ -28,6 +28,12 @@
  * What callers must keep to (nothing here can enforce it): an answer may add caution, never
  * remove it. Text written to steer Jev "can move the answer" by TypeSafe's own account, so no
  * answer may lower a crisis tier or a Shield level, and none decides anything on its own.
+ * Callers also check the person's own words with `judgeBarredByCrisis` (nothing goes to the
+ * judge in immediate danger) and the text with `judgeReads` (the language it is written in).
+ *
+ * Where it is asked: Scam Shield's second opinion, an AI answer about to be sent by text and a
+ * plan's rewritten wording (features.ts), and what a question in guided mode is about
+ * (offline.ts). Nowhere else: see docs/AI.md for what it is never used for, and why.
  */
 import { assessCrisis, detectLanguage } from '@waypoint/core';
 import { getEnv } from '@waypoint/core/env';

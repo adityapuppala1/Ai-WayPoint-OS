@@ -2,10 +2,11 @@
  * Scam Shield's second opinion from the judge: what it is asked, and how its answers become
  * a level.
  *
- * One question, "is this a scam?", is a weak way to use Jev (an independent phishing test
- * measured 43% of scams caught that way). So it is asked about one warning sign at a time,
- * each a yes-or-no question, and the signs are added up here, in code, with weights and
- * thresholds that can be read and changed without touching a prompt.
+ * One question, "is this a scam?", is a weak way to use Jev: one independent test, on made-up
+ * phishing emails, reported 43% of scams caught that way against 95% accuracy for five sign
+ * questions combined. So it is asked about one warning sign at a time, each a yes-or-no
+ * question, and the signs are added up here, in code, with weights and thresholds that can be
+ * read and changed without touching a prompt.
  *
  * Jev cannot write, so it cannot give a reason. Each question stands for a warning sign the
  * rules already have words for, in every language: the reason a person reads is that sign's
@@ -130,9 +131,10 @@ export const SHIELD_SIGN_RULES: Record<
 
 /**
  * The thresholds. STARTING VALUES, NOT TUNED (see above), and deliberately cautious about
- * raising an alarm: TypeSafe publishes no measurement of how well Jev's probabilities match
- * reality, and independent tests found them over-confident (in one, answers given about 75%
- * were right about 10% of the time). So a probability is treated as a ranking, not a truth:
+ * raising an alarm: TypeSafe calls Jev's probabilities calibrated but publishes no measurement,
+ * and independent tests found them over-confident as delivered (one, on toxic comments,
+ * reported answers given at about 75% being right about 10% of the time). So a probability is
+ * treated as a ranking, not a truth:
  *
  *  - `seenAt`: a sign counts only at 0.7 or above (the cut TypeSafe's examples use for a
  *    flag). It then adds its weight times the probability.

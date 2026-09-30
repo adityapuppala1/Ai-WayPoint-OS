@@ -54,6 +54,16 @@ switching, impersonation, country-specific patterns such as "digital arrest" and
 then an optional AI second opinion on a redacted copy that can **only raise** the level.
 Nothing pasted is stored — only a hash, the verdict and the rule ids.
 
+The second opinion comes from the judge (TypeSafe's Jev) where one is set up and the language
+is switched on for it, from the language model otherwise or when the judge is unsure, and
+from both when both answered: the higher level stands. The judge is asked about one warning
+sign at a time and cannot write, so each reason it adds is the title of a sign the rules
+already have words for, in the reader's language. It never says "very high", is not asked
+when the rules are already certain, and its "nothing found" counts for nothing: a message
+that tells the checker it is safe is rated by the rules as if the judge were not there, and
+that attempt is itself shown as a warning sign. Which model answered is stored with the check
+([AI.md](AI.md#typed-decisions-jev)).
+
 - **Every language, not just English.** Each rule carries cues in English, Hindi (Devanagari
   and romanised), Spanish, French, Portuguese, Arabic and Swahili, and the golden set has at
   least 15 scams and 7 everyday messages per language. The tests hold each language to the same
@@ -206,13 +216,33 @@ choice, and nothing from Mind, Health, Money, Circles, Ask or Shield is ever use
   answer arriving twice (two taps, a retry) saves nothing twice.
 - The client sends only its newest message; the server owns conversation history, so earlier
   assistant turns cannot be rewritten.
-- **The judge** (TypeSafe's Jev, optional: [AI.md](AI.md#the-judge-typed-second-opinions))
-  gives typed second opinions and writes nothing. Safety never depends on it: the crisis check
-  and the Shield rules run first and without it, and with no key, no consent, an unmeasured
-  language, a spent budget or any failure the result is exactly the rules' own. An answer may
-  only add caution. By TypeSafe's own account, text written to steer Jev can move its answer,
-  so nothing it says may lower a crisis tier or a Shield level, and what a person wrote is
-  never part of a question. No feature asks it yet.
+- **The judge** (TypeSafe's Jev, optional: [AI.md](AI.md#typed-decisions-jev)) gives typed
+  second opinions and writes nothing. Safety never depends on it: the crisis check and the
+  Shield rules run first and without it, and with no key, no consent, a language that is not
+  switched on, a spent budget or any failure the result is exactly what it was without a
+  judge. An answer may only add caution. By TypeSafe's own account, text written to steer Jev
+  can move its answer, so nothing it says may lower a crisis tier or a Shield level, and what
+  a person wrote is never part of a question. It is used in four places:
+  - **Scam Shield**: a second opinion that can only raise the level (see above).
+  - **Answers by SMS and WhatsApp**: before an AI answer is sent, the judge is asked whether it
+    gives a diagnosis or a dose, says what a court or official will decide, recommends a
+    particular investment, loan or product, promises an outcome or describes a method of
+    self-harm. If so the answer is not sent and the guided text goes out instead. The prompt
+    forbids all five; this checks what came back. Without a judge the answer goes out as
+    before, with links and phone numbers stripped.
+  - **Plan rewrites**: each reworded step is checked against its original for a promise the
+    template did not make and for a course, site, organisation or number it did not name. One
+    flag keeps the template wording for the whole plan.
+  - **Guided mode**: when no keyword says what a question is about, the judge may pick which
+    part of Waypoint to point to. It writes none of the words.
+- **Where the judge is never used**: to decide or lower a crisis tier; at crisis tier 3, where
+  nothing goes to it as nothing goes to a model; on the journal, mood notes or health notes;
+  on Circles posts; on forecasts; on numbers or dates. Nobody has tested Jev on crisis
+  language that we could find, and TypeSafe's claims about it ("zero hallucinations",
+  "calibrated") are not facts we rely on: independent tests found its probabilities
+  over-confident and its accuracy lower outside English. Its thresholds here are starting
+  values, not tuned, and a language is switched on for it only after
+  `pnpm --filter @waypoint/ai eval:judge` passes for that language.
 
 ## Evaluations
 
@@ -228,6 +258,19 @@ replay one), nothing saved because a pasted message or a tool result said so, no
 details sent to an outside model, and the rules on medical, legal and money advice and on
 never claiming to know the future present in every prompt. The run blanks every outside AI
 key, the judge's included, so an evaluation can never send anything anywhere.
+
+The judge has cases of its own, with a scripted stand-in for the service: it is not called at
+crisis tier 3, without consent, for a reader or a message in a language that is not switched
+on, or when Shield's rules are already certain; it is sent only redacted text, and only in the
+state; a judge that says "nothing wrong" never lowers a rules verdict; a judge that fails or
+times out gives the rules-only result; a flagged answer by text is replaced by the guided
+text and a flagged plan rewrite is refused. Each was broken on purpose once to see its case
+fail.
+
+Whether the real judge is any good is a separate question with its own command:
+`pnpm --filter @waypoint/ai eval:judge` runs the scam golden set through the rules plus the
+real judge, per language, and fails when a language it is switched on in misses either
+Scam Shield gate. It needs a TypeSafe key, so it is not part of `pnpm eval` or CI.
 
 ## Before launch in a new language or country
 

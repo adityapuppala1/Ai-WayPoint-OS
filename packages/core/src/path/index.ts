@@ -205,15 +205,31 @@ export const PLAN_TEMPLATES_EN: PlanTemplates = {
     'Combine {skills} in one small, finished piece of work that someone could look at in five minutes.',
   reviewTitle: 'Ask someone to review your project',
   reviewDetail:
-    'A peer or mentor review turns your project into a verified credential you can share with employers.',
+    'Show it to someone whose opinion you trust: a peer, a mentor or your circle. Ask what is clear and what is missing, then improve it.',
   applyTitle: 'Apply or pitch: {role}',
   applyDetail:
-    'Send three applications or one pitch to a potential client, and link your verified project.',
+    'Send three applications or one pitch to a potential client, and include your project so they can see what you can do.',
   weeklyReviewTitle: 'Weekly review',
   weeklyReviewDetail: 'What went well, what got in the way, and one change for next week.',
   listJoin: ', ',
   listAnd: ' and ',
 };
+
+/**
+ * Plans saved before October 2026 sent their project and review steps to two proof-of-work
+ * pages that were never built. Those addresses are stored with the step, so they are
+ * translated here to where the planner sends the same step today (null: the step opens on
+ * the plan itself). Every other address is returned as it is.
+ */
+const RETIRED_STEP_HREFS = new Map<string, string | null>([
+  ['/path/projects/new', null],
+  ['/path/proof', '/circles'],
+]);
+
+export function currentStepHref(href: string | null | undefined): string | null {
+  if (!href) return null;
+  return RETIRED_STEP_HREFS.has(href) ? (RETIRED_STEP_HREFS.get(href) ?? null) : href;
+}
 
 function fill(template: string, vars: Record<string, string | number>): string {
   return template.replace(/\{(\w+)\}/g, (_, k: string) => String(vars[k] ?? ''));
@@ -438,13 +454,14 @@ export function draftPlan(
     const isLast = weekNo === weeks;
     const steps: PlanStepDraft[] = [];
     if (!isLast || proofWeeks === 1) {
+      // The project is made outside Waypoint, so this step links nowhere: it is ticked off
+      // on the plan itself. (Proof of work, with its own pages, is not built yet.)
       steps.push(
         step(
           {
             kind: 'build',
             minutes: mins(weeklyMinutes * (isLast ? 0.45 : 0.75)),
             skillIds: proofSkillIds,
-            href: '/path/projects/new',
           },
           txt('projectTitle', { role: roleVar }),
           txt('projectDetail', { skills: { skills: proofSkillIds } }),
@@ -454,7 +471,7 @@ export function draftPlan(
     if (isLast) {
       steps.push(
         step(
-          { kind: 'connect', minutes: 20, skillIds: [], href: '/path/proof' },
+          { kind: 'connect', minutes: 20, skillIds: [], href: '/circles' },
           txt('reviewTitle'),
           txt('reviewDetail'),
         ),

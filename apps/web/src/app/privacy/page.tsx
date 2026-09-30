@@ -4,12 +4,7 @@
  * configuration (see `legal.legalFacts`).
  */
 import { legal } from '@waypoint/api';
-import {
-  CONSENT_PURPOSES,
-  LEGAL_UPDATED,
-  MINIMUM_AGE,
-  UNCONFIRMED_ACCOUNT_DAYS,
-} from '@waypoint/core';
+import { LEGAL_UPDATED, MINIMUM_AGE, UNCONFIRMED_ACCOUNT_DAYS } from '@waypoint/core';
 import { LinkButton } from '@waypoint/ui';
 import type { Metadata, Route } from 'next';
 import { getFormatter, getTranslations } from 'next-intl/server';
@@ -24,6 +19,7 @@ import {
   WhoRuns,
 } from '@/components/legal/LegalDocument';
 import { PublicShell } from '@/components/shell/PublicShell';
+import { OFFERED_CONSENTS } from '@/lib/options';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('legal.privacy');
@@ -83,7 +79,8 @@ export default async function PrivacyNoticePage() {
         <>
           <p>{t('choices.lead')}</p>
           <Rows
-            rows={CONSENT_PURPOSES.map((purpose) => ({
+            // Only the choices Privacy settings offers: a purpose nothing acts on is not listed.
+            rows={OFFERED_CONSENTS.map((purpose) => ({
               id: purpose,
               term: consents(purpose),
               detail: consents(`${purpose}Hint`),

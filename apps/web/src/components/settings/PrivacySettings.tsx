@@ -18,7 +18,7 @@ import { useTranslations } from 'next-intl';
 import { type FormEvent, useState } from 'react';
 import { ApiProblem, api } from '@/lib/api';
 import { forgetOfflineCopy } from '@/lib/offline';
-import { ALL_CONSENTS } from '@/lib/options';
+import { OFFERED_CONSENTS } from '@/lib/options';
 import { ProgrammesPanel } from './ProgrammesPanel';
 import styles from './settings.module.css';
 
@@ -49,7 +49,7 @@ export function PrivacySettings({
   const [confirmChats, setConfirmChats] = useState(false);
   const [confirmAccount, setConfirmAccount] = useState(false);
 
-  const toggle = async (purpose: (typeof ALL_CONSENTS)[number], granted: boolean) => {
+  const toggle = async (purpose: (typeof OFFERED_CONSENTS)[number], granted: boolean) => {
     setConsents((cur) => ({ ...cur, [purpose]: granted }));
     try {
       const next = await api<Consents>('/api/me/consents', {
@@ -91,7 +91,7 @@ export function PrivacySettings({
     <div className={styles.stack}>
       <Panel title={t('consentsTitle')} as="section">
         <div className={styles.form}>
-          {ALL_CONSENTS.map((purpose) => (
+          {OFFERED_CONSENTS.map((purpose) => (
             <Switch
               key={purpose}
               isSelected={consents[purpose]}

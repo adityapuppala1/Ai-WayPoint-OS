@@ -26,6 +26,16 @@ for (const k of [
   'RESEND_API_KEY',
 ])
   delete process.env[k];
+// The embedded database answers one request at a time, so races between requests can only be
+// seen against a real Postgres with its pool of connections. To run this file against one:
+//   WAYPOINT_TEST_DATABASE_URL=postgres://waypoint:…@127.0.0.1:5432/waypoint pnpm --filter @waypoint/api test
+// (an empty database: the tables are created, and the tests leave their rows behind).
+if (process.env.WAYPOINT_TEST_DATABASE_URL)
+  Object.assign(process.env, {
+    DATABASE_URL: process.env.WAYPOINT_TEST_DATABASE_URL,
+    WAYPOINT_AUTO_MIGRATE: 'true',
+    WAYPOINT_AUTO_SEED: 'true',
+  });
 
 let app: ReturnType<typeof import('../src').createApp>;
 let db: typeof import('@waypoint/db');
@@ -769,6 +779,189 @@ describe('what anyone can fetch', () => {
     const ready = await req('/api/ready');
     expect(ready.status).toBe(200);
     expect(await ready.json()).toEqual({ status: 'ready' });
+  });
+});
+
+describe('circles', () => {
+  /** An account ready to join circles, and a circle on a topic for them to meet in. */
+  async function member(name: string) {
+    const who = await account(name);
+    await req('/api/me/onboarding', {
+      method: 'POST',
+      cookie: who.cookie,
+      json: {
+        profile: { locale: 'en', country: 'IN', timezone: 'Asia/Kolkata', situation: 'lost-job' },
+        consents: { circle_matching: true },
+        skills: [],
+      },
+    });
+    return who;
+  }
+  async function circleFor(cookie: string, topic: string): Promise<string> {
+    const list = (await (await req('/api/circles', { cookie })).json()) as {
+      suggested: Array<{ id: string; topic: string }>;
+      browse: Array<{ id: string; topic: string }>;
+    };
+    return [...list.suggested, ...list.browse].find((c) => c.topic === topic)!.id;
+  }
+  const join = (cookie: string, circleId: string) =>
+    req(`/api/circles/${circleId}/join`, {
+      method: 'POST',
+      cookie,
+      json: { acceptGuidelines: true },
+    });
+  async function post(cookie: string, circleId: string, body: string, parentId?: string) {
+    const res = await req(`/api/circles/${circleId}/posts`, {
+      method: 'POST',
+      cookie,
+      json: { body, ...(parentId ? { parentId } : {}) },
+    });
+    expect(res.status).toBe(201);
+    return ((await res.json()) as { post: { id: string } }).post.id;
+  }
+
+  it('need three different people to hide a post, not one person three times', async () => {
+    const writer = await member('Wale');
+    const reporter = await member('Rita');
+    const circleId = await circleFor(writer.cookie, 'new-country');
+    await join(writer.cookie, circleId);
+    await join(reporter.cookie, circleId);
+    const postId = await post(writer.cookie, circleId, 'Has anyone found a good language class?');
+    const reports = await Promise.all(
+      Array.from({ length: 3 }, () =>
+        req(`/api/circles/posts/${postId}/report`, {
+          method: 'POST',
+          cookie: reporter.cookie,
+          json: { reason: 'harassment' },
+        }),
+      ),
+    );
+    for (const r of reports) expect(r.status).toBe(200);
+    const [stored] = await rows<{ hidden_at: string | null }>(
+      db.sql`select hidden_at from circle_posts where id = ${postId}`,
+    );
+    expect(stored?.hidden_at).toBeNull();
+    const kept = await rows<{ n: number }>(
+      db.sql`select count(*)::int as n from circle_reports where post_id = ${postId}`,
+    );
+    expect(kept[0]?.n).toBe(1);
+  });
+
+  it('never seat more people than a circle holds, however many join at once', async () => {
+    const people = await Promise.all(Array.from({ length: 6 }, (_, i) => member(`Seat${i}`)));
+    const circleId = await circleFor(people[0]!.cookie, 'first-job');
+    // Two seats left in this circle.
+    await db
+      .getDb()
+      .execute(db.sql`update circles set max_members = member_count + 2 where id = ${circleId}`);
+    const joined = await Promise.all(people.map((p) => join(p.cookie, circleId)));
+    for (const r of joined) expect(r.status).toBe(200);
+    const over = await rows<{ id: string; member_count: number; max_members: number; n: number }>(
+      db.sql`select c.id, c.member_count, c.max_members,
+               (select count(*)::int from circle_members m where m.circle_id = c.id) as n
+             from circles c where c.topic = 'first-job'`,
+    );
+    for (const c of over) {
+      expect(c.n, c.id).toBeLessThanOrEqual(c.max_members);
+      expect(c.member_count, c.id).toBe(c.n);
+    }
+    // Everyone has a seat somewhere.
+    const seated = await rows<{ n: number }>(
+      db.sql`select count(*)::int as n from circle_members m join circles c on c.id = m.circle_id
+             where c.topic = 'first-job' and m.user_id in ${db.sql.raw(
+               `(${people.map((p) => `'${p.id}'`).join(',')})`,
+             )}`,
+    );
+    expect(seated[0]?.n).toBe(6);
+  });
+
+  it('let someone who left still take down what they wrote', async () => {
+    const writer = await member('Lena');
+    const circleId = await circleFor(writer.cookie, 'new-country');
+    await join(writer.cookie, circleId);
+    const postId = await post(writer.cookie, circleId, 'I am moving next month.');
+    const left = await req(`/api/circles/${circleId}/leave`, {
+      method: 'POST',
+      cookie: writer.cookie,
+      json: { deletePosts: false },
+    });
+    expect(left.status).toBe(200);
+    const removed = await req(`/api/circles/posts/${postId}`, {
+      method: 'DELETE',
+      cookie: writer.cookie,
+    });
+    expect(removed.status).toBe(200);
+    expect(await rows(db.sql`select id from circle_posts where id = ${postId}`)).toEqual([]);
+    // Someone else's post is still out of reach once you have left.
+    const other = await member('Omar');
+    await join(other.cookie, circleId);
+    const theirs = await post(other.cookie, circleId, 'Welcome, everyone.');
+    expect(
+      (await req(`/api/circles/posts/${theirs}`, { method: 'DELETE', cookie: writer.cookie }))
+        .status,
+    ).toBe(404);
+  });
+
+  it('give each member a number nobody can work out from their account', async () => {
+    const who = await member('Nuru');
+    const first = await circleFor(who.cookie, 'new-country');
+    const second = await circleFor(who.cookie, 'first-job');
+    await join(who.cookie, first);
+    const numbers: number[] = [];
+    for (const id of [first, second]) {
+      const view = (await (await req(`/api/circles/${id}`, { cookie: who.cookie })).json()) as {
+        yourNumber: number;
+        membership: { number: number } | null;
+      };
+      expect(view.yourNumber).toBeGreaterThanOrEqual(1000);
+      if (view.membership) expect(view.membership.number).toBe(view.yourNumber);
+      // The old number was a plain hash of the two ids: anyone who knew an account id could
+      // compute it for every circle and follow the person from one to the next.
+      let h = 2166136261;
+      for (const ch of `${id}:${who.id}`) {
+        h ^= ch.charCodeAt(0);
+        h = Math.imul(h, 16777619);
+      }
+      expect(view.yourNumber).not.toBe(1000 + ((h >>> 0) % 9000));
+      numbers.push(view.yourNumber);
+    }
+    expect(numbers[0]).not.toBe(numbers[1]);
+  });
+});
+
+describe('limits on what one person can keep', () => {
+  it('hold when many requests arrive at once', async () => {
+    const me = await account('Burst');
+    const goals = await Promise.all(
+      Array.from({ length: 20 }, (_, i) =>
+        req('/api/goals', {
+          method: 'POST',
+          cookie: me.cookie,
+          json: { title: `Goal ${i}`, area: 'path' },
+        }),
+      ),
+    );
+    expect(goals.filter((r) => r.status === 201)).toHaveLength(12);
+    const contacts = await Promise.all(
+      Array.from({ length: 8 }, (_, i) =>
+        req('/api/me/trusted-contacts', {
+          method: 'POST',
+          cookie: me.cookie,
+          json: { name: `Friend ${i}`, phone: '+254711000000' },
+        }),
+      ),
+    );
+    expect(contacts.filter((r) => r.status < 300)).toHaveLength(3);
+    const orgs = await Promise.all(
+      Array.from({ length: 9 }, (_, i) =>
+        req('/api/org', {
+          method: 'POST',
+          cookie: me.cookie,
+          json: { name: `Burst Works ${i}`, kind: 'ngo' },
+        }),
+      ),
+    );
+    expect(orgs.filter((r) => r.status === 201)).toHaveLength(5);
   });
 });
 

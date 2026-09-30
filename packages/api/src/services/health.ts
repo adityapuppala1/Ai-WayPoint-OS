@@ -30,6 +30,7 @@ import {
   lte,
   reminders,
 } from '@waypoint/db';
+import { oneAtATime } from '../lib/locks';
 import { ApiError, notFound } from '../lib/problem';
 import type { Profile } from './me';
 import { helpCountry, userDek } from './me';
@@ -337,6 +338,18 @@ export async function saveDay(
 // ───────────────────────────── Reminders ─────────────────────────────
 
 export async function createReminder(
+  db: Database,
+  userId: string,
+  profile: Profile,
+  input: z.infer<typeof ReminderInputSchema>,
+): Promise<HealthReminder> {
+  // Counted and saved one at a time per person, so the limit holds when requests arrive together.
+  return oneAtATime(db, `reminders:${userId}`, (tx) =>
+    createReminderUnlocked(tx, userId, profile, input),
+  );
+}
+
+async function createReminderUnlocked(
   db: Database,
   userId: string,
   profile: Profile,

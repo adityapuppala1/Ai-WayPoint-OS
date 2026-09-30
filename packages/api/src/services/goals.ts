@@ -8,6 +8,7 @@ import { weekStartOf } from '@waypoint/core';
 import { newId } from '@waypoint/core/ids';
 import { openFor, SEALED, sealFor } from '@waypoint/core/privacy';
 import { and, asc, type Database, desc, eq, goals, weeklyReviews } from '@waypoint/db';
+import { oneAtATime } from '../lib/locks';
 import { ApiError, notFound } from '../lib/problem';
 import { userDek } from './me';
 
@@ -163,6 +164,15 @@ export async function goalsOverview(
 }
 
 export async function createGoal(
+  db: Database,
+  userId: string,
+  input: z.infer<typeof GoalInputSchema>,
+): Promise<Goal> {
+  // Counted and saved one at a time per person, so the limit holds when requests arrive together.
+  return oneAtATime(db, `goals:${userId}`, (tx) => createGoalUnlocked(tx, userId, input));
+}
+
+async function createGoalUnlocked(
   db: Database,
   userId: string,
   input: z.infer<typeof GoalInputSchema>,

@@ -27,6 +27,7 @@ import {
   trustedContacts,
   users,
 } from '@waypoint/db';
+import { oneAtATime } from '../lib/locks';
 import { ApiError, notFound, unauthorized } from '../lib/problem';
 import type { ApiUser, Consents } from '../types';
 
@@ -398,6 +399,15 @@ export async function listTrustedContacts(db: Database, userId: string): Promise
 }
 
 export async function addTrustedContact(
+  db: Database,
+  userId: string,
+  input: z.infer<typeof TrustedContactInputSchema>,
+): Promise<TrustedContact> {
+  // Counted and saved one at a time per person, so the limit holds when requests arrive together.
+  return oneAtATime(db, `contacts:${userId}`, (tx) => addTrustedContactUnlocked(tx, userId, input));
+}
+
+async function addTrustedContactUnlocked(
   db: Database,
   userId: string,
   input: z.infer<typeof TrustedContactInputSchema>,

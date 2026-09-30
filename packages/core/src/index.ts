@@ -11,7 +11,6 @@ export {
   AUTO_HIDE_REPORTS,
   type HoldReason,
   type Moderation,
-  memberNumber,
   moderatePost,
   POST_KINDS,
   type PostKind,

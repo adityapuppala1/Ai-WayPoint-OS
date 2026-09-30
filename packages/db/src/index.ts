@@ -18,6 +18,7 @@ export {
   arrayOverlaps,
   asc,
   count,
+  countDistinct,
   desc,
   eq,
   getTableColumns,

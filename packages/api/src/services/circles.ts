@@ -8,13 +8,13 @@ import { z } from '@hono/zod-openapi';
 import {
   AUTO_HIDE_REPORTS,
   type CrisisResponsePlan,
-  memberNumber,
   moderatePost,
   POST_KINDS,
   planCrisisResponse,
   REACTIONS,
   type REPORT_REASONS,
 } from '@waypoint/core';
+import { newId } from '@waypoint/core/ids';
 import { hasWebAddress, redactPII } from '@waypoint/core/privacy';
 import { foldText } from '@waypoint/core/text';
 import {
@@ -26,6 +26,7 @@ import {
   circleReports,
   circles,
   count,
+  countDistinct,
   type Database,
   desc,
   eq,
@@ -37,7 +38,9 @@ import {
   profiles,
   sql,
 } from '@waypoint/db';
+import { oneAtATime } from '../lib/locks';
 import { ApiError, forbidden, notFound } from '../lib/problem';
+import { keyedUniform } from '../lib/request';
 import type { Consents } from '../types';
 import { helpCountry, type Profile } from './me';
 import { recordCrisis } from './safety';
@@ -154,6 +157,8 @@ export const CircleViewSchema = z
         muted: z.boolean(),
       })
       .nullable(),
+    /** The number the viewer is known by here when they choose no name ("Member 1234"). */
+    yourNumber: z.number().int(),
     posts: z.array(PostSchema),
   })
   .openapi('CircleView');
@@ -294,7 +299,8 @@ export async function circleView(
 ): Promise<CircleView> {
   const circle = await circleOr404(db, circleId);
   const me = await membershipOf(db, circleId, userId);
-  if (!me) return { circle: summary(circle, false), membership: null, posts: [] };
+  const yourNumber = circleNumber(userId, circleId);
+  if (!me) return { circle: summary(circle, false), membership: null, yourNumber, posts: [] };
 
   const members = await db.select().from(circleMembers).where(eq(circleMembers.circleId, circleId));
   const authors = new Map<string, Author>(
@@ -302,7 +308,7 @@ export async function circleView(
       m.userId,
       {
         name: m.alias,
-        number: memberNumber(m.userId, circleId),
+        number: circleNumber(m.userId, circleId),
         you: m.userId === userId,
         role: m.role,
       },
@@ -337,7 +343,7 @@ export async function circleView(
     id
       ? (authors.get(id) ?? {
           name: null,
-          number: memberNumber(id, circleId),
+          number: circleNumber(id, circleId),
           you: false,
           role: 'former',
         })
@@ -381,10 +387,11 @@ export async function circleView(
 
   return {
     circle: summary(circle, true),
+    yourNumber,
     membership: {
       role: me.role,
       name: me.alias,
-      number: memberNumber(userId, circleId),
+      number: circleNumber(userId, circleId),
       muted: Boolean(me.mutedUntil && me.mutedUntil > new Date()),
     },
     posts,
@@ -396,6 +403,18 @@ export async function circleView(
  * same topic and language and puts the person there.
  */
 export async function joinCircle(
+  db: Database,
+  userId: string,
+  circleId: string,
+  input: z.infer<typeof JoinInputSchema>,
+): Promise<{ circleId: string }> {
+  // One join at a time per person: the five-circle limit is counted under the same lock.
+  return oneAtATime(db, `circles:${userId}`, (tx) =>
+    joinCircleUnlocked(tx, userId, circleId, input),
+  );
+}
+
+async function joinCircleUnlocked(
   db: Database,
   userId: string,
   circleId: string,
@@ -417,12 +436,21 @@ export async function joinCircle(
   }
 
   return db.transaction(async (tx) => {
-    let target = circle;
-    // Lock the row so two people can't take the last seat at once.
-    const [fresh] = await tx.select().from(circles).where(eq(circles.id, circle.id)).for('update');
-    if (fresh && fresh.memberCount >= fresh.maxMembers) {
+    // A seat is taken in one statement that only succeeds while there is room, so two
+    // people can never both take the last one — in this circle or in a sibling.
+    const takeSeat = async (id: string) =>
+      (
+        await tx
+          .update(circles)
+          .set({ memberCount: sql`${circles.memberCount} + 1` })
+          .where(and(eq(circles.id, id), sql`${circles.memberCount} < ${circles.maxMembers}`))
+          .returning({ id: circles.id })
+      ).length > 0;
+    let targetId: string | null = (await takeSeat(circle.id)) ? circle.id : null;
+    if (!targetId) {
+      // Full: a sibling on the same topic and language, with room, that they are not in yet.
       const siblings = await tx
-        .select()
+        .select({ id: circles.id })
         .from(circles)
         .where(
           and(
@@ -430,37 +458,43 @@ export async function joinCircle(
             eq(circles.language, circle.language),
             isNull(circles.archivedAt),
             sql`${circles.memberCount} < ${circles.maxMembers}`,
+            sql`not exists (select 1 from ${circleMembers}
+                  where ${circleMembers.circleId} = ${circles.id}
+                    and ${circleMembers.userId} = ${userId})`,
           ),
         )
-        .limit(1);
-      target =
-        siblings[0] ??
-        (
-          await tx
-            .insert(circles)
-            .values({
-              slug: `${circle.topic}-${circle.language}-${Date.now().toString(36)}`,
-              name: circle.name,
-              description: circle.description,
-              topic: circle.topic,
-              country: circle.country,
-              language: circle.language,
-              maxMembers: circle.maxMembers,
-            })
-            .returning()
-        )[0]!;
+        .orderBy(asc(circles.createdAt))
+        .limit(5);
+      for (const sibling of siblings)
+        if (await takeSeat(sibling.id)) {
+          targetId = sibling.id;
+          break;
+        }
+    }
+    if (!targetId) {
+      const [opened] = await tx
+        .insert(circles)
+        .values({
+          slug: `${circle.topic}-${circle.language}-${Date.now().toString(36)}${newId().slice(-4)}`,
+          name: circle.name,
+          description: circle.description,
+          topic: circle.topic,
+          country: circle.country,
+          language: circle.language,
+          maxMembers: circle.maxMembers,
+          memberCount: 1,
+        })
+        .returning({ id: circles.id });
+      if (!opened) throw new Error('Could not open a new circle');
+      targetId = opened.id;
     }
     await tx.insert(circleMembers).values({
-      circleId: target.id,
+      circleId: targetId,
       userId,
       alias,
       guidelinesAcceptedAt: new Date(),
     });
-    await tx
-      .update(circles)
-      .set({ memberCount: sql`${circles.memberCount} + 1` })
-      .where(eq(circles.id, target.id));
-    return { circleId: target.id };
+    return { circleId: targetId };
   });
 }
 
@@ -497,6 +531,15 @@ export async function leaveCircle(
       }
     }
   });
+}
+
+/**
+ * The number someone is known by in a circle when they choose no name. It comes from a keyed
+ * hash, so it is different in every circle and nobody can work it out from an account id:
+ * people cannot be followed from one circle to the next.
+ */
+function circleNumber(userId: string, circleId: string): number {
+  return 1000 + Math.floor(keyedUniform(`${circleId}:${userId}`, 'circle-member') * 9000);
 }
 
 /** Names that would pass for Waypoint's own staff, in the languages circles run in. */
@@ -645,9 +688,17 @@ async function postInMyCircle(db: Database, userId: string, postId: string) {
 }
 
 export async function deletePost(db: Database, userId: string, postId: string): Promise<void> {
-  const { post, member } = await postInMyCircle(db, userId, postId);
-  if (post.authorId !== userId && member.role !== 'host' && member.role !== 'moderator')
-    throw forbidden();
+  // What someone wrote stays theirs to take down, even after they have left the circle.
+  const [own] = await db
+    .select({ id: circlePosts.id })
+    .from(circlePosts)
+    .where(and(eq(circlePosts.id, postId), eq(circlePosts.authorId, userId)))
+    .limit(1);
+  if (!own) {
+    const { post, member } = await postInMyCircle(db, userId, postId);
+    if (post.authorId !== userId && member.role !== 'host' && member.role !== 'moderator')
+      throw forbidden();
+  }
   // Replies go with the post they answer.
   await db
     .delete(circlePosts)
@@ -690,16 +741,16 @@ export async function reportPost(
   const { post } = await postInMyCircle(db, userId, postId);
   if (post.authorId === userId)
     throw new ApiError(400, 'own-post', 'You can delete your own post.');
-  const [existing] = await db
-    .select({ id: circleReports.id })
-    .from(circleReports)
-    .where(and(eq(circleReports.postId, postId), eq(circleReports.reporterId, userId)))
-    .limit(1);
-  if (!existing) {
-    await db.insert(circleReports).values({ postId, reporterId: userId, reason });
-  }
+  // One report per person per post (a unique index says so, however many arrive at once),
+  // and the count is of different people, never of rows.
+  const added = await db
+    .insert(circleReports)
+    .values({ postId, reporterId: userId, reason })
+    .onConflictDoNothing({ target: [circleReports.postId, circleReports.reporterId] })
+    .returning({ id: circleReports.id });
+  const existing = added.length === 0;
   const [reports] = await db
-    .select({ n: count() })
+    .select({ n: countDistinct(circleReports.reporterId) })
     .from(circleReports)
     .where(and(eq(circleReports.postId, postId), isNull(circleReports.resolvedAt)));
   const hide = Number(reports?.n ?? 0) >= AUTO_HIDE_REPORTS && !post.hiddenAt;

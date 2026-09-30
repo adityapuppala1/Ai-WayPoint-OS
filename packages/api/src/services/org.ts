@@ -61,6 +61,7 @@ import {
   users,
 } from '@waypoint/db';
 import { type Actor, audit } from '../lib/audit';
+import { oneAtATime } from '../lib/locks';
 import { ApiError, forbidden, notFound } from '../lib/problem';
 import { keyedHash, keyedUniform, rateLimit } from '../lib/request';
 import { getConsents, setConsents } from './me';
@@ -749,6 +750,17 @@ export async function createOrganisation(
   actor: Actor,
   input: z.infer<typeof OrgInputSchema>,
 ): Promise<{ id: string }> {
+  // Counted and created one at a time per person, so the limit holds when requests arrive together.
+  return oneAtATime(db, `orgs:${actor.userId}`, (tx) =>
+    createOrganisationUnlocked(tx, actor, input),
+  );
+}
+
+async function createOrganisationUnlocked(
+  db: Database,
+  actor: Actor,
+  input: z.infer<typeof OrgInputSchema>,
+): Promise<{ id: string }> {
   const [owned] = await db
     .select({ n: count() })
     .from(members)
@@ -938,6 +950,18 @@ async function programmeIn(db: Database, orgId: string, programmeId: string) {
 }
 
 export async function createProgramme(
+  db: Database,
+  actor: Actor,
+  orgId: string,
+  input: z.infer<typeof ProgrammeInputSchema>,
+): Promise<{ id: string; joinCode: string }> {
+  // Counted and created one at a time per organisation, so the limit holds.
+  return oneAtATime(db, `programmes:${orgId}`, (tx) =>
+    createProgrammeUnlocked(tx, actor, orgId, input),
+  );
+}
+
+async function createProgrammeUnlocked(
   db: Database,
   actor: Actor,
   orgId: string,

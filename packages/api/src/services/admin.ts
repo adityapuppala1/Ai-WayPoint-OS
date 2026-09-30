@@ -785,6 +785,13 @@ export async function moderatePost(
 
   await db.transaction(async (tx) => {
     if (action === 'remove') {
+      // A reply held because its writer may be in danger is theirs alone to see, and no
+      // moderator ever reads it: it is set loose from the post being removed rather than
+      // deleted with it, so the writer still finds their words and the support card.
+      await tx
+        .update(circlePosts)
+        .set({ parentId: null })
+        .where(and(eq(circlePosts.parentId, postId), eq(circlePosts.hiddenReason, 'crisis')));
       await tx
         .delete(circlePosts)
         .where(or(eq(circlePosts.id, postId), eq(circlePosts.parentId, postId)));

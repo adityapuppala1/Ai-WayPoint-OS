@@ -59,16 +59,3 @@ export function moderatePost(
     scamLevel: shield.level,
   };
 }
-
-/**
- * A stable number for someone who hasn't chosen a name in a circle. Different in every circle,
- * so people can't be followed from one circle to another.
- */
-export function memberNumber(userId: string, circleId: string): number {
-  let h = 2166136261;
-  for (const ch of `${circleId}:${userId}`) {
-    h ^= ch.charCodeAt(0);
-    h = Math.imul(h, 16777619);
-  }
-  return 1000 + ((h >>> 0) % 9000);
-}

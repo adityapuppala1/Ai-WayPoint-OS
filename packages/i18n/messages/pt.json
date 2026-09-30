@@ -449,7 +449,8 @@
       "plan": "É o próximo passo em aberto do seu plano.",
       "situation": "Você disse ao Waypoint: “{situation}”.",
       "review": "Você tem uma meta, e a revisão da semana ainda está em aberto.",
-      "nothingElse": "Hoje não há mais nada esperando por você."
+      "nothingElse": "Hoje não há mais nada esperando por você.",
+      "setAside": "Você deixou os outros passos de lado por hoje."
     }
   },
   "support": {

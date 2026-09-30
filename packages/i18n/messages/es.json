@@ -449,7 +449,8 @@
       "plan": "Es el próximo paso pendiente de tu plan.",
       "situation": "Le dijiste a Waypoint: «{situation}».",
       "review": "Tienes una meta, y el repaso de esta semana sigue pendiente.",
-      "nothingElse": "Hoy no hay nada más esperándote."
+      "nothingElse": "Hoy no hay nada más esperándote.",
+      "setAside": "Hoy dejaste de lado los demás pasos."
     }
   },
   "support": {

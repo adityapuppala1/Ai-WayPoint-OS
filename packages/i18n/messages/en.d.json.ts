@@ -456,7 +456,8 @@ declare const messages: {
       "plan": "It is the next open step in your plan.",
       "situation": "You told Waypoint: “{situation}”.",
       "review": "You have a goal, and this week’s review is still open.",
-      "nothingElse": "Nothing else is waiting for you today."
+      "nothingElse": "Nothing else is waiting for you today.",
+      "setAside": "You set the other steps aside for today."
     }
   },
   "support": {

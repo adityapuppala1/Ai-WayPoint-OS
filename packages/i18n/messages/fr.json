@@ -449,7 +449,8 @@
       "plan": "C’est la prochaine étape à faire de votre plan.",
       "situation": "Vous avez dit à Waypoint : « {situation} ».",
       "review": "Vous avez un objectif, et le bilan de la semaine reste à faire.",
-      "nothingElse": "Rien d’autre ne vous attend aujourd’hui."
+      "nothingElse": "Rien d’autre ne vous attend aujourd’hui.",
+      "setAside": "Vous avez mis les autres étapes de côté pour aujourd’hui."
     }
   },
   "support": {

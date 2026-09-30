@@ -162,6 +162,7 @@ export interface TodayCopy {
     situation: string;
     review: string;
     nothingElse: string;
+    setAside: string;
   };
 }
 
@@ -323,6 +324,8 @@ export async function today(
         notes,
         list,
         plan: active,
+        // The last step is only shown alone when everything above it was set aside today.
+        rest: ranked.length > 1 ? 'set-aside' : notes.length ? 'notes' : 'nothing',
       }),
       key: step.key,
       rung: step.rung,
@@ -364,6 +367,8 @@ function describe(
     notes: TodayView['nudges'];
     list: ChecklistView | null;
     plan: Awaited<ReturnType<typeof activePlanWithNextStep>>;
+    /** Behind the last step: steps set aside today, notes listed under the sign, or nothing. */
+    rest: 'set-aside' | 'notes' | 'nothing';
   },
 ): Described {
   const { copy } = known;
@@ -381,6 +386,14 @@ function describe(
   // "You told Waypoint: …" — only when the situation has words; otherwise say nothing.
   const said = known.situation ? copy.situations[known.situation] : undefined;
   const becauseOfSituation = said ? copy.why.situation.replace('{situation}', said) : null;
+  // "Nothing else is waiting" only when that is true: steps set aside for today still wait,
+  // and so do notes listed right under the sign (those say what they are themselves).
+  const whyLast =
+    known.rest === 'set-aside'
+      ? copy.why.setAside
+      : known.rest === 'nothing'
+        ? copy.why.nothingElse
+        : null;
 
   switch (step.kind) {
     case 'safety-note':
@@ -437,9 +450,9 @@ function describe(
     case 'review':
       return { ...base, ...copy.review, why: copy.why.review };
     case 'talk':
-      return { ...base, ...copy.talk, why: copy.why.nothingElse };
+      return { ...base, ...copy.talk, why: whyLast };
     case 'explore':
-      return { ...base, ...copy.explore, why: copy.why.nothingElse };
+      return { ...base, ...copy.explore, why: whyLast };
   }
 }
 

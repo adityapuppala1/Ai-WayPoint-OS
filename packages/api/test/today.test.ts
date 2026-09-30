@@ -180,11 +180,35 @@ describe('Today’s next step', () => {
       'check-in',
       'explore',
     ]);
+    // Those steps are still waiting: the sign says they were set aside, not that there are none.
     expect(view.nextStep).toMatchObject({
       kind: 'explore',
       canDefer: false,
+      why: 'You set the other steps aside for today.',
+    });
+  });
+
+  it('says nothing else is waiting only when that is true', async () => {
+    const cookie = await person('steady');
+    expect((await today(cookie)).nextStep).toMatchObject({
+      kind: 'explore',
       why: 'Nothing else is waiting for you today.',
     });
+    // A note that is not a step (someone in a circle is thinking of you) is listed right under
+    // the sign, so the sign does not say that nothing is waiting.
+    await db
+      .getDb()
+      .insert(db.nudges)
+      .values({
+        userId: await userId(cookie),
+        module: 'circles',
+        priority: 'high',
+        title: 'Someone in your circle is thinking of you',
+        href: '/support',
+      });
+    const view = await today(cookie);
+    expect(view.nudges.map((n) => n.title)).toContain('Someone in your circle is thinking of you');
+    expect(view.nextStep).toMatchObject({ kind: 'explore', why: null });
   });
 
   it('marking the checklist item done moves on for good', async () => {

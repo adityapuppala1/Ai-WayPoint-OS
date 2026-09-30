@@ -34,6 +34,8 @@ use in every language, filled in from each installation's own configuration.
    report review that feeds Shield, AI spend, delivery and lifeline freshness. Still to do:
    billing for paid plans, CSV export of totals, and single sign-on for large organisations.
 9. **Proof of work** — projects, peer review and verifiable credentials (signing is built).
+   Until the pages exist, plans promise no credential and link to no proof page; a test checks
+   every link a plan can carry against the pages the app really has.
 10. **SMS / WhatsApp / USSD** — done: help lines, scam checks and answers by text through
     Twilio, the WhatsApp Cloud API or Africa's Talking, with email through Resend or SMTP.
     Still to do: WhatsApp message templates for reminders the person asked for, and voice (IVR)

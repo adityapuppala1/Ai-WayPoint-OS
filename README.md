@@ -69,7 +69,7 @@ card, bank and ID numbers removed).
 | **Services** — life-event checklists (job loss, moving country, new baby…) with official links | ✅ |
 | **Signals** — sourced changes ranked for you, with "Why am I seeing this?" | ✅ |
 | **What’s next?** — forecasts that staff publish and judge: each shows its chance as a number and in words (never 0% or 100%), its sources, what you can do either way and the day it will be judged. A public record shows how they turned out, with a score only once enough have been judged. Nothing is generated: with none published, the page says so | ✅ |
-| **Settings & Privacy** — consents, trusted contacts (encrypted), export all data, delete account | ✅ |
+| **Settings & Privacy** — consents, trusted contacts (encrypted; one tap from the support card, sent by your own phone), see and delete what the assistant was asked to remember, export all data, delete account | ✅ |
 | **Accounts** — guest sessions, email sign-up (guest data moves across), passkeys ready | ✅ |
 | **Money** — runway on a cautious income, pressure level, the five most useful next steps, money-safety tips; numbers encrypted | ✅ |
 | **Goals** — a few private goals with progress, and a weekly review (encrypted) | ✅ |

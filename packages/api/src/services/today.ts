@@ -329,7 +329,8 @@ export async function today(
         notes,
         list,
         plan: active,
-        // The last step is only shown alone when everything above it was set aside today.
+        // Read only for the last step (explore, talk). It is chosen while the ladder holds more
+        // only when everything above it was set aside today.
         rest: ranked.length > 1 ? 'set-aside' : notes.length ? 'notes' : 'nothing',
       }),
       key: step.key,

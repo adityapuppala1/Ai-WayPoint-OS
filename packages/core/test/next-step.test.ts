@@ -3,6 +3,7 @@ import {
   addNotNow,
   chooseNextStep,
   lifeEventFor,
+  moduleForHref,
   moduleOrder,
   NEXT_STEP_RUNGS,
   type NextStepFacts,
@@ -435,6 +436,25 @@ describe('situations', () => {
       const order = moduleOrder(situation);
       expect([...order].sort(), String(situation)).toEqual([...others].sort());
     }
+  });
+
+  it('knows which module a link on this site belongs to', () => {
+    expect(moduleForHref('/goals')).toBe('goals');
+    expect(moduleForHref('/path/plans/0192f0c1-7a2b')).toBe('path');
+    expect(moduleForHref('/goals#review')).toBe('goals');
+    expect(moduleForHref('/money?from=ask')).toBe('money');
+    // Today's own address, pages that are not modules, and anything that is not a path here.
+    for (const other of [
+      '/',
+      '/settings',
+      '/support',
+      '',
+      null,
+      'goals',
+      '//goals',
+      'https://x/goals',
+    ])
+      expect(moduleForHref(other), String(other)).toBeUndefined();
   });
 
   it('puts what matters for the situation first', () => {

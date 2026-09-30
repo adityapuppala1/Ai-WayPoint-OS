@@ -103,6 +103,7 @@ export {
   chooseNextStep,
   type ListedModule,
   lifeEventFor,
+  moduleForHref,
   moduleOrder,
   NEXT_STEP_KINDS,
   NEXT_STEP_REASONS,

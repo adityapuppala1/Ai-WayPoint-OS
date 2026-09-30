@@ -177,9 +177,12 @@ function stepKey(id: string): string {
   return (h >>> 0).toString(36).padStart(7, '0');
 }
 
-/** The module a link belongs to: `/civic/job-loss` → civic. */
-function moduleForHref(href: string | null): ModuleId | undefined {
-  if (!href) return undefined;
+/**
+ * The module a link on this site belongs to: `/civic/job-loss` → civic. Undefined for Today's
+ * own address, for pages that are not modules, and for anything that is not a path here.
+ */
+export function moduleForHref(href: string | null | undefined): ModuleId | undefined {
+  if (!href?.startsWith('/')) return undefined;
   const seg = (href.split('/')[1] ?? '').split(/[?#]/)[0] ?? '';
   return (MODULE_IDS as readonly string[]).includes(seg) ? (seg as ModuleId) : undefined;
 }

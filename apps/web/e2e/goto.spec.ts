@@ -189,6 +189,45 @@ test.describe('the go-to palette', () => {
     await expect(composer).toHaveValue(words);
   });
 
+  test('handed-off words the person cleared, or left behind, do not come back @desktop', async ({
+    page,
+  }) => {
+    await openToday(page);
+    const words = 'I lost my job and feel stuck';
+    const composer = page.getByRole('textbox', { name: 'Your message' });
+    const handOff = async () => {
+      await page.keyboard.press('Control+k');
+      const palette = page.getByRole('dialog', { name: 'Go to' });
+      await palette.getByRole('searchbox').fill(words);
+      await palette.getByRole('menuitem').last().click();
+      await expect(page).toHaveURL(/\/ask$/);
+      await expect(composer).toHaveValue(words);
+    };
+
+    // Cleared (someone was looking over a shoulder), then a new conversation: a new, empty box.
+    await handOff();
+    await composer.fill('');
+    await page
+      .getByRole('region', { name: 'Ask' })
+      .getByRole('button', { name: 'New conversation' })
+      .click();
+    await page.waitForTimeout(1000);
+    await expect(composer).toHaveValue('');
+    // Handed off from Ask itself, the words land in the new conversation's box.
+    await handOff();
+
+    // Left without a word changed, and Ask opened again: nothing waits there either.
+    await openToday(page);
+    await handOff();
+    const rail = page.getByRole('navigation', { name: 'Main' });
+    await rail.getByRole('link', { name: 'Today' }).click();
+    await expect(page).toHaveURL(/\/$/);
+    await rail.getByRole('link', { name: 'Ask' }).click();
+    await expect(page).toHaveURL(/\/ask$/);
+    await page.waitForTimeout(1000);
+    await expect(composer).toHaveValue('');
+  });
+
   test('Escape three times still leaves at once, with the palette open @desktop', async ({
     page,
     context,

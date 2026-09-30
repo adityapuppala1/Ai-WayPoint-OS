@@ -73,6 +73,13 @@ const numberOr = (fallback: number) =>
     z.coerce.number().int().min(1).default(fallback),
   );
 
+/** Text that takes its default when left empty (as in .env.example), trimmed otherwise. */
+const textOr = (fallback: string) =>
+  z
+    .string()
+    .optional()
+    .transform((v) => (v && v.trim().length > 0 ? v.trim() : fallback));
+
 const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   WAYPOINT_URL: z.string().url().default('http://localhost:3000'),
@@ -145,6 +152,31 @@ const EnvSchema = z.object({
   AI_EMBEDDING_PROVIDER: z.enum(['none', 'openai', 'google', 'ollama']).default('none'),
   AI_MONTHLY_BUDGET_USD: z.coerce.number().min(0).default(25),
   AI_TOOL_APPROVAL_SECRET: optionalString,
+  /**
+   * The judge: TypeSafe's Jev, an outside service (hosted in the United States) that answers
+   * typed questions (yes/no, one of N, a level) with probabilities. It writes nothing and is
+   * never needed for safety. Without a key nothing is ever sent to it.
+   */
+  TYPESAFE_API_KEY: optionalString,
+  /**
+   * The exact version asked, never an alias such as jev-latest: an alias moves when TypeSafe
+   * ships a release, and the thresholds in the code were set against one version.
+   */
+  AI_JUDGE_MODEL: textOr('jev-1.13.0').pipe(z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/)),
+  /**
+   * Languages the judge may be asked in ("en,es"). English only by default: TypeSafe says Jev
+   * is weaker in other languages, so each one is switched on only after it has been measured.
+   */
+  AI_JUDGE_LOCALES: textOr('en')
+    .transform((v) => [
+      ...new Set(
+        v
+          .split(',')
+          .map((code) => code.trim().toLowerCase())
+          .filter(Boolean),
+      ),
+    ])
+    .pipe(z.array(z.string().regex(/^[a-z]{2,3}$/)).min(1)),
   // Channels: SMS, WhatsApp and USSD (any one provider is enough)
   TWILIO_ACCOUNT_SID: optionalString,
   TWILIO_AUTH_TOKEN: optionalString,

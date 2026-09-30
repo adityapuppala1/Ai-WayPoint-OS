@@ -37,6 +37,9 @@ These are the ones a production installation must get right.
 | `WAYPOINT_SECURITY_CONTACT` | Where to report a security problem | Shown in `/.well-known/security.txt`. |
 | `EMAIL_FROM` with `SMTP_URL` or `RESEND_API_KEY` | Sending email | Without it nobody can confirm an address, so nobody can sign in to a new account. SMTP must use TLS (`smtps://`, or `smtp://` on a server that offers STARTTLS). |
 | `WAYPOINT_ADMIN_EMAIL`, `WAYPOINT_ADMIN_PASSWORD` | The first staff account | Created on first start. Use a long password and remove `WAYPOINT_ADMIN_PASSWORD` afterwards. |
+| `TYPESAFE_API_KEY` (optional) | Switches on the judge: typed second opinions from TypeSafe's Jev ([AI.md](AI.md#the-judge-typed-second-opinions)) | Off when empty, and Waypoint then behaves exactly as without it. An outside service in the United States: the privacy notice names it once the key is set, so read TypeSafe's terms and decide what you may send before you set it. |
+| `AI_JUDGE_MODEL` | The exact Jev version asked. Default `jev-1.13.0` | Keep it pinned. An alias such as `jev-latest` changes when TypeSafe ships a release, and the thresholds in the code were set against one version. Run `pnpm eval` before moving it. |
+| `AI_JUDGE_LOCALES` | Languages the judge is asked in, e.g. `en,es`. Default `en` | TypeSafe says Jev is weaker outside English. Add a language only after measuring it on that language's own cases. |
 
 Generate the two secrets:
 

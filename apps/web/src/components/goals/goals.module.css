@@ -1,0 +1,113 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.goal {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--wp-space-3);
+  align-items: start;
+  padding-block: var(--wp-space-4);
+}
+
+.goal + .goal {
+  border-block-start: 1px solid var(--wp-border-subtle);
+}
+
+.goalBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+  min-inline-size: 0;
+}
+
+.goalTitle {
+  font-weight: var(--wp-weight-semibold);
+  overflow-wrap: anywhere;
+}
+
+.goal[data-status="done"] .goalTitle {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  color: var(--wp-text-secondary);
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-1) var(--wp-space-3);
+  color: var(--wp-text-muted);
+  font-size: var(--wp-text-meta);
+}
+
+/* Progress: a short road with the person's own marker. */
+.progress {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--wp-space-3);
+  align-items: center;
+  margin-block-start: var(--wp-space-2);
+}
+
+.progress input[type="range"] {
+  inline-size: 100%;
+  accent-color: var(--wp-line-goals);
+  min-block-size: var(--wp-touch-min);
+}
+
+.progressValue {
+  min-inline-size: 5ch;
+  font-variant-numeric: tabular-nums;
+  font-size: var(--wp-text-small);
+  text-align: end;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-4);
+}
+
+.row {
+  display: grid;
+  gap: var(--wp-space-4);
+}
+
+@media (min-width: 36rem) {
+  .row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-3);
+  align-items: center;
+}
+
+.hint {
+  color: var(--wp-text-muted);
+  font-size: var(--wp-text-small);
+}
+
+.answers {
+  display: grid;
+  gap: var(--wp-space-3);
+  margin: 0;
+}
+
+.answers dt {
+  color: var(--wp-text-muted);
+  font-size: var(--wp-text-small);
+}
+
+.answers dd {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

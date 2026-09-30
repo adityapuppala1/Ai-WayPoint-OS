@@ -1,0 +1,31 @@
+@layer components {
+  .tooltip {
+    max-inline-size: 16rem;
+    padding: var(--wp-space-1) var(--wp-space-2);
+    border-radius: var(--wp-radius-xs);
+    background: var(--wp-sign);
+    color: var(--wp-sign-text);
+    font-size: var(--wp-text-small);
+    line-height: var(--wp-leading-meta);
+    box-shadow: var(--wp-shadow-overlay);
+  }
+
+  .tooltip[data-entering] {
+    animation: in var(--wp-duration-fast) var(--wp-ease-out);
+  }
+
+  .tooltip[data-exiting] {
+    animation: in var(--wp-duration-instant) var(--wp-ease-in) reverse;
+  }
+
+  .shortcut {
+    margin-inline-start: var(--wp-space-2);
+    color: var(--wp-sign-muted);
+  }
+
+  @keyframes in {
+    from {
+      opacity: 0;
+    }
+  }
+}

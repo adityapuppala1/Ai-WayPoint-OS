@@ -1,0 +1,29 @@
+# Automatic update pull requests. Security fixes are opened as soon as an advisory is
+# published (turn on "Dependabot security updates" in the repository settings); routine
+# updates are grouped weekly so they're easy to review. Every pull request runs the full CI —
+# lint, types, tests, safety evaluations, phone app bundle, build — and the security checks,
+# and nothing is merged unless they pass.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 10
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+    labels: [dependencies]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    labels: [dependencies]
+
+  - package-ecosystem: docker
+    directory: /infra/docker
+    schedule:
+      interval: weekly
+    labels: [dependencies]

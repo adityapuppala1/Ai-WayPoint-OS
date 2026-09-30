@@ -1,0 +1,72 @@
+{
+  "name": "@waypoint/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Waypoint for iOS and Android (Expo). Help lines and scam checks work offline; everything else talks to the same API as the web app.",
+  "main": "expo-router/entry",
+  "scripts": {
+    "dev": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "export": "expo export --platform android --platform ios --output-dir dist",
+    "export:web": "expo export --platform web --output-dir dist-web",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "icons": "node scripts/icons.mjs",
+    "country-names": "tsx scripts/country-names.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/react": "4.0.125",
+    "@better-auth/expo": "1.7.6",
+    "@expo-google-fonts/overpass": "0.4.2",
+    "@expo/metro-runtime": "57.0.16",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@waypoint/content": "workspace:*",
+    "@waypoint/core": "workspace:*",
+    "@waypoint/i18n": "workspace:*",
+    "@waypoint/tokens": "workspace:*",
+    "ai": "7.0.122",
+    "better-auth": "1.7.6",
+    "expo": "57.0.25",
+    "expo-clipboard": "57.0.2",
+    "expo-constants": "57.0.19",
+    "expo-crypto": "57.0.3",
+    "expo-font": "57.0.4",
+    "expo-linking": "57.0.11",
+    "expo-localization": "57.0.2",
+    "expo-network": "57.0.2",
+    "expo-router": "57.0.23",
+    "expo-secure-store": "57.0.4",
+    "expo-splash-screen": "57.0.9",
+    "expo-status-bar": "57.0.1",
+    "expo-system-ui": "57.0.4",
+    "expo-updates": "57.0.23",
+    "expo-web-browser": "57.0.3",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-safe-area-context": "5.7.0",
+    "react-native-screens": "4.26.0",
+    "react-native-svg": "15.15.4",
+    "react-native-web": "0.21.3",
+    "use-intl": "4.14.7",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.3",
+    "@waypoint/api": "workspace:*",
+    "phosphor-react-native": "3.0.6",
+    "typescript": "6.0.3",
+    "vitest": "5.0.2"
+  },
+  "expo": {
+    "autolinking": {
+      "exclude": [
+        "react-native-reanimated",
+        "react-native-gesture-handler"
+      ]
+    }
+  }
+}

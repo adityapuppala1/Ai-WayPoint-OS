@@ -1,0 +1,340 @@
+/* Health: calm, practical, non-judgemental. Coral line colour for the module. */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-5);
+}
+
+.steppers {
+  display: grid;
+  gap: var(--wp-space-5);
+}
+
+.subhead {
+  font-size: var(--wp-text-body);
+  font-weight: var(--wp-weight-semibold);
+  line-height: var(--wp-leading-snug);
+}
+
+.inlineLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wp-space-1);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--wp-space-3);
+}
+
+.hint {
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+}
+
+.error {
+  color: var(--wp-danger);
+  font-size: var(--wp-text-small);
+  font-weight: var(--wp-weight-medium);
+}
+
+/* ───────────── Week ───────────── */
+.metrics {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.metric {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--wp-space-2) var(--wp-space-3);
+}
+
+.metricIcon {
+  display: grid;
+  place-items: center;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  border-radius: var(--wp-radius-sm);
+  background: var(--wp-tint-health);
+  color: var(--wp-line-health);
+}
+
+.metricBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+  min-inline-size: 0;
+}
+
+.metricTitle {
+  font-weight: var(--wp-weight-semibold);
+}
+
+/* Seven small bars, one per day. Neutral colour: no value is "bad". */
+.bars {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--wp-space-2);
+  align-items: end;
+  block-size: 5.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bar {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: var(--wp-space-1);
+  block-size: 100%;
+  text-align: center;
+}
+
+.barTrack {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-block-size: 0;
+}
+
+.barFill {
+  inline-size: min(100%, 1.75rem);
+  min-block-size: 0.25rem;
+  border-radius: var(--wp-radius-xs) var(--wp-radius-xs) 2px 2px;
+  background: color-mix(in oklch, var(--wp-line-health) 70%, var(--wp-raised));
+}
+
+.bar[data-empty="true"] .barFill {
+  block-size: 0.25rem !important;
+  background: var(--wp-border-subtle);
+}
+
+.bar[data-today="true"] .barFill {
+  background: var(--wp-line-health);
+}
+
+.barDay {
+  color: var(--wp-text-muted);
+  font-size: var(--wp-text-meta);
+  line-height: 1;
+}
+
+.bar[data-today="true"] .barDay {
+  color: var(--wp-text);
+  font-weight: var(--wp-weight-semibold);
+}
+
+.guide {
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+}
+
+/* ───────────── Reminders ───────────── */
+.reminders {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reminder {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--wp-space-3);
+  align-items: center;
+  padding-block: var(--wp-space-3);
+}
+
+.reminder + .reminder {
+  border-block-start: 1px solid var(--wp-border-subtle);
+}
+
+.reminder[data-enabled="false"] .reminderTitle {
+  color: var(--wp-text-muted);
+}
+
+.reminderBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-inline-size: 0;
+}
+
+.reminderTitle {
+  font-weight: var(--wp-weight-medium);
+  overflow-wrap: anywhere;
+}
+
+.reminderMeta {
+  color: var(--wp-text-muted);
+  font-size: var(--wp-text-meta);
+}
+
+.ideas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-2);
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.idea {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 2.25rem;
+  padding-inline: var(--wp-space-3);
+  border: 1px solid var(--wp-border-strong);
+  border-radius: var(--wp-radius-round);
+  background: var(--wp-raised);
+  color: var(--wp-text);
+  font-size: var(--wp-text-small);
+  cursor: pointer;
+}
+
+.idea:hover {
+  border-color: var(--wp-line-health);
+}
+
+.idea:focus-visible {
+  outline: 2px solid var(--wp-focus-ring);
+  outline-offset: 2px;
+}
+
+.when {
+  display: grid;
+  gap: var(--wp-space-4);
+}
+
+@media (min-width: 36rem) {
+  .when {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+    align-items: end;
+  }
+}
+
+.nativeField {
+  display: grid;
+  gap: var(--wp-space-1);
+  min-inline-size: 0;
+}
+
+.nativeField label {
+  font-weight: var(--wp-weight-medium);
+}
+
+.nativeField input {
+  inline-size: 100%;
+  min-block-size: var(--wp-touch-min);
+  padding: 0.5rem var(--wp-space-3);
+  border: 1px solid var(--wp-border-strong);
+  border-radius: var(--wp-radius-sm);
+  background: var(--wp-raised);
+  color: var(--wp-text);
+  font: inherit;
+}
+
+.nativeField input:focus-visible {
+  outline: 2px solid transparent;
+  border-color: var(--wp-focus-ring);
+  box-shadow:
+    0 0 0 1px var(--wp-focus-ring),
+    0 0 0 4px var(--wp-signal);
+}
+
+/* ───────────── Care ───────────── */
+.emergency {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-4);
+  padding: var(--wp-space-5);
+  border: 1px solid color-mix(in oklch, var(--wp-danger) 35%, transparent);
+  border-inline-start: 4px solid var(--wp-danger);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-danger-tint);
+}
+
+.emergencyHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wp-space-3);
+}
+
+.emergencyHead h3 {
+  font-size: var(--wp-text-lead);
+}
+
+.flags {
+  display: grid;
+  gap: var(--wp-space-4);
+}
+
+@media (min-width: 40rem) {
+  .flags {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.flag h4 {
+  margin-block-end: var(--wp-space-1);
+  font-size: var(--wp-text-body);
+}
+
+.flag ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+  margin: 0;
+  padding-inline-start: var(--wp-space-5);
+  font-size: var(--wp-text-small);
+}
+
+.flagAction {
+  margin-block-start: var(--wp-space-1);
+  font-size: var(--wp-text-small);
+  font-weight: var(--wp-weight-medium);
+}
+
+.lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.line {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+  padding: var(--wp-space-4);
+  border: 1px solid var(--wp-border-subtle);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-raised);
+}
+
+.lineName {
+  font-weight: var(--wp-weight-semibold);
+}
+
+.sources {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+  margin: 0;
+  padding-inline-start: var(--wp-space-5);
+  font-size: var(--wp-text-small);
+}

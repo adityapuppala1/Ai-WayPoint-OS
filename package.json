@@ -1,0 +1,40 @@
+{
+  "name": "waypoint",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Waypoint — a global, AI-native companion for life transitions. See what's coming. Know your next step. Never take it alone.",
+  "license": "UNLICENSED",
+  "packageManager": "pnpm@11.21.0",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @waypoint/web dev",
+    "dev:all": "turbo run dev",
+    "build": "turbo run build",
+    "start": "pnpm --filter @waypoint/web start",
+    "typecheck": "turbo run typecheck",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "test": "turbo run test --concurrency=4",
+    "test:e2e": "pnpm --filter @waypoint/web test:e2e",
+    "eval": "pnpm --filter @waypoint/ai eval",
+    "db:generate": "pnpm --filter @waypoint/db generate",
+    "db:migrate": "pnpm --filter @waypoint/db migrate",
+    "db:seed": "pnpm --filter @waypoint/db seed",
+    "db:reset": "pnpm --filter @waypoint/db reset",
+    "worker": "pnpm --filter @waypoint/worker dev",
+    "api": "pnpm --filter @waypoint/api-server dev",
+    "doctor": "node scripts/doctor.mjs",
+    "setup": "node scripts/setup.mjs",
+    "check": "biome check . && turbo run typecheck test --concurrency=4"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.14",
+    "turbo": "2.11.5",
+    "typescript": "6.0.3",
+    "vitest": "5.0.2",
+    "@types/node": "22.20.4",
+    "tsx": "4.23.15"
+  }
+}

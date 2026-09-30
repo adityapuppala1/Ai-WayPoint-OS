@@ -1,0 +1,13 @@
+/*
+ * Overpass marks the middle dot (U+00B7) as a combining mark, so browsers draw it with no
+ * width and "a · b" reads "a ·b". "Waypoint Dot" is Overpass's own dot as an ordinary glyph,
+ * used for that one character (see ../fonts/README.md).
+ */
+@font-face {
+  font-family: "Waypoint Dot";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("../fonts/waypoint-dot.woff2") format("woff2-variations");
+  unicode-range: U+00B7;
+}

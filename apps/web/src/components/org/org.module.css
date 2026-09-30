@@ -1,0 +1,590 @@
+/*
+ * Organisation console. Indigo line colour (--wp-line-org). Organisations see programmes the
+ * way a transit authority sees its lines: codes, riders counted in aggregate, never a person.
+ */
+
+/* ───────────── Page furniture ───────────── */
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wp-space-1);
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+}
+
+.pageTitle {
+  overflow-wrap: anywhere;
+}
+
+/* ───────────── Section headings ───────────── */
+.sectionHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--wp-space-3);
+}
+
+.sectionHead > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+  min-inline-size: 0;
+}
+
+.sectionHead h2 {
+  font-size: var(--wp-text-h4);
+}
+
+.hint {
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+  max-inline-size: var(--wp-reading-max);
+}
+
+.metaLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--wp-space-1) var(--wp-space-3);
+  color: var(--wp-text-muted);
+  font-size: var(--wp-text-meta);
+}
+
+/* ───────────── Cards (organisations and programmes) ───────────── */
+.cards {
+  display: grid;
+  gap: var(--wp-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--wp-space-2) var(--wp-space-4);
+  align-items: center;
+  padding: var(--wp-space-4) var(--wp-space-5);
+  border: 1px solid var(--wp-border-subtle);
+  border-inline-start: 4px solid var(--wp-line-org);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-raised);
+  box-shadow: var(--wp-shadow-raised);
+  transition: border-color var(--wp-duration-fast) var(--wp-ease-out);
+}
+
+.card:hover {
+  border-color: var(--wp-border-strong);
+  border-inline-start-color: var(--wp-line-org);
+}
+
+.card:focus-within {
+  outline: 2px solid var(--wp-focus-ring);
+  outline-offset: 2px;
+}
+
+.card[data-closed="true"] {
+  border-inline-start-color: var(--wp-border-strong);
+}
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+  min-inline-size: 0;
+}
+
+.cardTitle {
+  font-size: var(--wp-text-body);
+  font-weight: var(--wp-weight-semibold);
+  line-height: var(--wp-leading-snug);
+  overflow-wrap: anywhere;
+}
+
+.cardTitle a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* The whole card is one link target; the title carries its name. */
+.cardTitle a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.cardTitle a:focus-visible {
+  outline: none;
+}
+
+.cardAside {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--wp-space-1);
+  text-align: end;
+}
+
+@media (max-width: 30rem) {
+  .card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cardAside {
+    align-items: flex-start;
+    text-align: start;
+  }
+}
+
+/* A count people may see: never exact below k, so it reads as a range. */
+.count {
+  font-size: var(--wp-text-small);
+  font-weight: var(--wp-weight-medium);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.count[data-hidden="true"] {
+  color: var(--wp-text-muted);
+  font-weight: var(--wp-weight-regular);
+}
+
+/* ───────────── Join code ───────────── */
+.code {
+  font-size: var(--wp-text-small);
+  font-weight: var(--wp-weight-semibold);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.bigCode {
+  display: block;
+  font-size: clamp(1.75rem, 1.25rem + 2.5vw, 2.5rem);
+  font-weight: var(--wp-weight-semibold);
+  line-height: var(--wp-leading-tight);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.1em;
+  color: var(--wp-text);
+}
+
+.invite {
+  display: grid;
+  gap: var(--wp-space-5);
+}
+
+@media (min-width: 40rem) {
+  .invite {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+  }
+}
+
+.inviteText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-4);
+  min-inline-size: 0;
+}
+
+.linkBox {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+}
+
+.linkValue {
+  padding: var(--wp-space-2) var(--wp-space-3);
+  border-radius: var(--wp-radius-sm);
+  background: var(--wp-sunken);
+  font-size: var(--wp-text-small);
+  overflow-wrap: anywhere;
+}
+
+/* QR codes stay dark-on-white in every theme so any camera can read them. */
+.qr {
+  display: block;
+  inline-size: 10rem;
+  block-size: 10rem;
+  padding: var(--wp-space-2);
+  border: 1px solid var(--wp-border-subtle);
+  border-radius: var(--wp-radius-sm);
+  background: #fff;
+  color: #000;
+  justify-self: start;
+}
+
+/* ───────────── Insights ───────────── */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
+  gap: var(--wp-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+  padding: var(--wp-space-4);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-tint-org);
+}
+
+.statValue {
+  font-size: var(--wp-text-h2);
+  font-weight: var(--wp-weight-semibold);
+  line-height: var(--wp-leading-tight);
+  font-variant-numeric: tabular-nums;
+  color: var(--wp-text);
+}
+
+.stat[data-hidden="true"] {
+  background: var(--wp-sunken);
+}
+
+.stat[data-hidden="true"] .statValue {
+  color: var(--wp-text-muted);
+  font-size: var(--wp-text-h4);
+}
+
+.statLabel {
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+}
+
+.statNote {
+  color: var(--wp-text-muted);
+  font-size: var(--wp-text-meta);
+}
+
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--wp-space-1) var(--wp-space-3);
+  font-size: var(--wp-text-small);
+}
+
+.barTrack {
+  grid-column: 1 / -1;
+  display: flex;
+  block-size: 0.625rem;
+  background: var(--wp-tint-org);
+  border-start-end-radius: 4px;
+  border-end-end-radius: 4px;
+}
+
+/* Grows from the start edge: square at the baseline, a 4px rounded data end. */
+.barFill {
+  display: block;
+  block-size: 100%;
+  background: var(--wp-line-org);
+  border-start-end-radius: 4px;
+  border-end-end-radius: 4px;
+}
+
+.barValue {
+  color: var(--wp-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.groups {
+  display: grid;
+  gap: var(--wp-space-6);
+}
+
+@media (min-width: 48rem) {
+  .groups {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.groups h3 {
+  margin-block-end: var(--wp-space-3);
+  font-size: var(--wp-text-body);
+  font-weight: var(--wp-weight-semibold);
+}
+
+/* ───────────── Promise (what organisations see and never see) ───────────── */
+.promise {
+  display: grid;
+  gap: var(--wp-space-5);
+}
+
+@media (min-width: 40rem) {
+  .promise {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.promise h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+  margin-block-end: var(--wp-space-2);
+  font-size: var(--wp-text-body);
+  font-weight: var(--wp-weight-semibold);
+}
+
+.promise ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+  margin: 0;
+  padding-inline-start: var(--wp-space-5);
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+}
+
+.see {
+  color: var(--wp-safe);
+}
+
+.never {
+  color: var(--wp-danger);
+}
+
+/* ───────────── Stacked rows with hairlines ───────────── */
+.rows {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rows > li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+  padding-block: var(--wp-space-4);
+}
+
+.rows > li:first-child {
+  padding-block-start: 0;
+}
+
+.rows > li:last-child {
+  padding-block-end: 0;
+}
+
+.rows > li + li {
+  border-block-start: 1px solid var(--wp-border-subtle);
+}
+
+/* ───────────── Team ───────────── */
+.people {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.person {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--wp-space-3);
+  align-items: center;
+  padding-block: var(--wp-space-3);
+}
+
+.person + .person {
+  border-block-start: 1px solid var(--wp-border-subtle);
+}
+
+.personText {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.personName {
+  font-weight: var(--wp-weight-medium);
+  overflow-wrap: anywhere;
+}
+
+.personMeta {
+  color: var(--wp-text-muted);
+  font-size: var(--wp-text-meta);
+  overflow-wrap: anywhere;
+}
+
+.personActions {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+}
+
+.subhead {
+  margin-block: var(--wp-space-4) var(--wp-space-1);
+  font-size: var(--wp-text-small);
+  font-weight: var(--wp-weight-semibold);
+  color: var(--wp-text-secondary);
+}
+
+/* ───────────── Forms ───────────── */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-5);
+}
+
+.pair {
+  display: grid;
+  gap: var(--wp-space-4);
+}
+
+@media (min-width: 36rem) {
+  .pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.dateField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+}
+
+.dateField label {
+  font-weight: var(--wp-weight-medium);
+}
+
+.dateField input {
+  min-block-size: var(--wp-touch-min);
+  padding-inline: var(--wp-space-3);
+  border: 1px solid var(--wp-border-strong);
+  border-radius: var(--wp-radius-sm);
+  background: var(--wp-raised);
+  color: var(--wp-text);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.dateField input:focus-visible {
+  outline: 2px solid var(--wp-focus-ring);
+  outline-offset: 1px;
+}
+
+.error {
+  color: var(--wp-danger);
+  font-size: var(--wp-text-small);
+}
+
+/* Role picker: chosen roles as removable chips, then a filterable list. */
+.roles {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
+.roles legend {
+  padding: 0;
+  font-weight: var(--wp-weight-medium);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wp-space-1);
+  min-block-size: 2rem;
+  padding-inline: var(--wp-space-3) var(--wp-space-1);
+  border-radius: var(--wp-radius-round);
+  background: var(--wp-tint-org);
+  font-size: var(--wp-text-small);
+}
+
+.chip button {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  border: 0;
+  border-radius: var(--wp-radius-round);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.chip button:hover {
+  background: color-mix(in oklch, var(--wp-line-org) 15%, transparent);
+}
+
+.chip button:focus-visible {
+  outline: 2px solid var(--wp-focus-ring);
+}
+
+.roleList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-3);
+  max-block-size: 16rem;
+  padding: var(--wp-space-3);
+  border: 1px solid var(--wp-border-subtle);
+  border-radius: var(--wp-radius-sm);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.roleFamily {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+}
+
+.roleFamily > p {
+  color: var(--wp-text-muted);
+  font-size: var(--wp-text-meta);
+  font-weight: var(--wp-weight-medium);
+}
+
+/* ───────────── Danger zone ───────────── */
+.danger {
+  border-color: color-mix(in oklch, var(--wp-danger) 35%, transparent);
+}
+
+/* ───────────── Join page promise list ───────────── */
+.promiseList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.promiseList li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--wp-space-3);
+  align-items: start;
+  color: var(--wp-text-secondary);
+}

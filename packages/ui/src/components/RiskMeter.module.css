@@ -1,0 +1,60 @@
+@layer components {
+  .meter {
+    display: grid;
+    gap: var(--wp-space-3);
+  }
+
+  .verdict {
+    display: flex;
+    align-items: center;
+    gap: var(--wp-space-2);
+    font-size: var(--wp-text-h4);
+    font-weight: var(--wp-weight-semibold);
+    line-height: var(--wp-leading-snug);
+    color: var(--tone);
+  }
+
+  .segments {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.25rem;
+  }
+
+  .segment {
+    block-size: 0.5rem;
+    border-radius: 2px;
+    background: var(--wp-sunken);
+    box-shadow: inset 0 0 0 1px var(--wp-border-subtle);
+  }
+
+  .segment[data-on="true"] {
+    background: var(--tone);
+    box-shadow: none;
+  }
+
+  .scale {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.25rem;
+    font-size: var(--wp-text-meta);
+    color: var(--wp-text-muted);
+  }
+
+  .scale span[data-current="true"] {
+    color: var(--wp-text);
+    font-weight: var(--wp-weight-medium);
+  }
+
+  .low {
+    --tone: var(--wp-safe);
+  }
+
+  .unclear {
+    --tone: var(--wp-caution);
+  }
+
+  .high,
+  .veryHigh {
+    --tone: var(--wp-danger);
+  }
+}

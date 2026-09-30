@@ -1,0 +1,82 @@
+/* Small, composable helpers. Components own their own styles; these glue pages together. */
+.wp-visually-hidden {
+  position: absolute !important;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.wp-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.wp-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-stack-gap, var(--wp-space-4));
+}
+
+.wp-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--wp-cluster-gap, var(--wp-space-3));
+}
+
+.wp-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wp-measure {
+  max-inline-size: var(--wp-reading-max);
+}
+
+.wp-muted {
+  color: var(--wp-text-secondary);
+}
+
+.wp-meta {
+  font-size: var(--wp-text-meta);
+  line-height: var(--wp-leading-meta);
+  color: var(--wp-text-muted);
+}
+
+.wp-secondary {
+  font-size: var(--wp-text-small);
+  color: var(--wp-text-secondary);
+}
+
+.wp-lead {
+  font-size: var(--wp-text-lead);
+  line-height: 1.5;
+  color: var(--wp-text-secondary);
+}
+
+.wp-skip-link {
+  position: fixed;
+  inset-block-start: var(--wp-space-2);
+  inset-inline-start: var(--wp-space-2);
+  z-index: var(--wp-z-skip);
+  padding: var(--wp-space-3) var(--wp-space-4);
+  background: var(--wp-signal);
+  color: var(--wp-signal-ink);
+  font-weight: var(--wp-weight-medium);
+  border-radius: var(--wp-radius-sm);
+  transform: translateY(-200%);
+}
+
+.wp-skip-link:focus {
+  transform: none;
+}
+
+/* Directional icons (arrows, chevrons) point the other way in right-to-left languages. */
+[dir="rtl"] .wp-icon-directional {
+  transform: scaleX(-1);
+}

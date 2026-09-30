@@ -1,0 +1,17 @@
+.panelLink {
+  font-size: var(--wp-text-small);
+  font-weight: var(--wp-weight-medium);
+}
+
+.empty {
+  padding: var(--wp-space-4);
+  color: var(--wp-text-secondary);
+}
+
+.emergency {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+}

@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Offline · Waypoint</title>
+    <style>
+      :root { color-scheme: light dark; --bg: #f2f5f6; --panel: #fff; --text: #1f2a37; --muted: #4b5563; --support: #1d5d80; --tint: #e9f3f8; }
+      @media (prefers-color-scheme: dark) { :root { --bg: #151c25; --panel: #1c2430; --text: #eef1f5; --muted: #c2c9d3; --support: #9cc9e3; --tint: #1b3342; } }
+      * { box-sizing: border-box; }
+      body { margin: 0; font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif; background: var(--bg); color: var(--text); }
+      main { max-width: 36rem; margin: 0 auto; padding: 2.5rem 1rem; display: flex; flex-direction: column; gap: 1.25rem; }
+      h1 { font-size: 1.75rem; line-height: 1.2; margin: 0; }
+      p { margin: 0; }
+      .help { padding: 1.25rem; border-radius: 0.625rem; border-inline-start: 4px solid var(--support); background: var(--tint); display: flex; flex-direction: column; gap: 0.5rem; }
+      .help h2 { font-size: 1.1875rem; margin: 0; }
+      a { color: inherit; }
+      button { font: inherit; min-height: 2.75rem; padding: 0 1rem; border-radius: 0.375rem; border: 1px solid #0003; background: var(--panel); color: var(--text); cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>You’re offline</h1>
+      <p>Waypoint will reconnect on its own. Anything you already opened, like your help numbers, may still work.</p>
+      <section class="help" aria-labelledby="help">
+        <h2 id="help">If you need help right now</h2>
+        <p id="emergency">Call your local emergency number. On most mobile phones, 112 also connects to emergency services.</p>
+        <ul id="services" hidden></ul>
+        <p>When you’re back online, <a href="https://findahelpline.com" rel="noopener">findahelpline.com</a> lists free, confidential support lines around the world.</p>
+      </section>
+      <p><button type="button" id="retry">Try again</button></p>
+    </main>
+    <script>
+      document.getElementById('retry').addEventListener('click', () => location.reload());
+      // Help numbers saved the last time Waypoint was online (public data only).
+      fetch('/api/support')
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (!d) return;
+          const em = document.getElementById('emergency');
+          if (d.emergency?.general) {
+            em.textContent = 'In an emergency, call ';
+            const a = document.createElement('a');
+            a.href = `tel:${d.emergency.general}`;
+            a.textContent = d.emergency.general;
+            em.appendChild(a);
+            em.appendChild(document.createTextNode('.'));
+          }
+          const list = document.getElementById('services');
+          for (const s of (d.services || []).slice(0, 4)) {
+            const li = document.createElement('li');
+            li.textContent = `${s.name} `;
+            if (s.telHref) {
+              const a = document.createElement('a');
+              a.href = s.telHref;
+              a.textContent = s.phone;
+              li.appendChild(a);
+            }
+            list.appendChild(li);
+          }
+          if (list.children.length) list.hidden = false;
+        })
+        .catch(() => {});
+    </script>
+  </body>
+</html>

@@ -1,0 +1,35 @@
+.planBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-5);
+}
+
+.next {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+  padding: var(--wp-space-3) var(--wp-space-4);
+  border-inline-start: 4px solid var(--wp-signal);
+  border-radius: var(--wp-radius-xs);
+  background: var(--wp-sunken);
+}
+
+.nextLink {
+  font-weight: var(--wp-weight-semibold);
+}
+
+.roles {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-3);
+}
+
+.small {
+  font-size: var(--wp-text-small);
+  font-weight: var(--wp-weight-medium);
+}
+
+.pad {
+  padding: var(--wp-space-4);
+  color: var(--wp-text-secondary);
+}

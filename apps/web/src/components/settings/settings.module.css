@@ -1,0 +1,124 @@
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-6);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-5);
+}
+
+.pair {
+  display: grid;
+  gap: var(--wp-space-4);
+}
+
+@media (min-width: 40rem) {
+  .pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+}
+
+.label {
+  font-weight: var(--wp-weight-medium);
+}
+
+.fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.time {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+  font-size: var(--wp-text-small);
+}
+
+.time input {
+  min-block-size: var(--wp-touch-min);
+  padding-inline: var(--wp-space-3);
+  border: 1px solid var(--wp-border-strong);
+  border-radius: var(--wp-radius-sm);
+  background: var(--wp-raised);
+  color: var(--wp-text);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.contacts {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.contacts li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wp-space-3);
+  padding-block: var(--wp-space-3);
+}
+
+.contacts li + li {
+  border-block-start: 1px solid var(--wp-border-subtle);
+}
+
+/* Programmes: name and a way out on one line, the "count me" choice full width below. */
+.programmes {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.programmes li {
+  display: grid;
+  gap: var(--wp-space-3);
+  padding-block: var(--wp-space-4);
+}
+
+.programmes li + li {
+  border-block-start: 1px solid var(--wp-border-subtle);
+}
+
+.programmeHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--wp-space-3);
+  min-inline-size: 0;
+}
+
+.programmeHead > div {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+.dangerZone {
+  border-color: color-mix(in oklch, var(--wp-danger) 35%, transparent);
+}
+
+/* "Email address confirmed": a quiet line with the safe tick. */
+.confirmed {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+  color: var(--wp-safe);
+  font-size: var(--wp-text-small);
+}

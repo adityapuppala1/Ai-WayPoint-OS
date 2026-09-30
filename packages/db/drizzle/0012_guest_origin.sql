@@ -1,0 +1,1 @@
+ALTER TABLE "profiles" ADD COLUMN "guest_origin" text;

@@ -1,0 +1,39 @@
+{
+  "name": "@waypoint/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Pure domain logic: crisis protocol, Scam Shield, foresight maths, credentials, privacy, attention governor, plans.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./crisis": "./src/crisis/index.ts",
+    "./shield": "./src/shield/index.ts",
+    "./foresight": "./src/foresight/index.ts",
+    "./credentials": "./src/credentials/index.ts",
+    "./privacy": "./src/privacy/index.ts",
+    "./governor": "./src/governor/index.ts",
+    "./path": "./src/path/index.ts",
+    "./money": "./src/money/index.ts",
+    "./env": "./src/env.ts",
+    "./ids": "./src/ids.ts",
+    "./paths": "./src/paths.ts",
+    "./headers": "./src/headers.ts",
+    "./text": "./src/text/index.ts",
+    "./mind": "./src/mind/index.ts",
+    "./community": "./src/community/index.ts",
+    "./health": "./src/health/index.ts",
+    "./surroundings": "./src/surroundings/index.ts",
+    "./org": "./src/org/index.ts",
+    "./channels": "./src/channels/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@waypoint/content": "workspace:*",
+    "canonicalize": "5.1.0",
+    "uuid": "14.0.2",
+    "zod": "4.6.5"
+  }
+}

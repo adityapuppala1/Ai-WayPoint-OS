@@ -1,0 +1,15 @@
+{
+  "name": "@waypoint/content",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Curated, sourced content: skills & roles, learning resources, scam library, civic life-event checklists, crisis & support directory.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  }
+}

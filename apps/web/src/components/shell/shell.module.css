@@ -1,0 +1,396 @@
+/* App shell: rail on wide screens, header + bottom bar on phones. */
+.shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-block-size: 100dvh;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.main {
+  flex: 1;
+  padding-block: var(--wp-space-6)
+    calc(var(--wp-bottom-bar) + var(--wp-space-10) + env(safe-area-inset-bottom));
+  padding-inline: max(var(--wp-space-4), env(safe-area-inset-left))
+    max(var(--wp-space-4), env(safe-area-inset-right));
+  outline: none;
+}
+
+/* ───────────── Brand ───────────── */
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+  min-block-size: var(--wp-touch-min);
+  padding-inline: var(--wp-space-1);
+  border-radius: var(--wp-radius-sm);
+  color: var(--wp-text);
+  text-decoration: none;
+}
+
+.brandMark {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.brandText {
+  font-size: var(--wp-text-lead);
+  font-weight: var(--wp-weight-semibold);
+  letter-spacing: -0.01em;
+}
+
+/* ───────────── Rail (≥ 60rem) ───────────── */
+.rail {
+  display: none;
+}
+
+.railList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-block-start: var(--wp-space-6);
+  padding: 0;
+  list-style: none;
+}
+
+.railLink {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-3);
+  min-block-size: var(--wp-touch-min);
+  padding-inline: var(--wp-space-2);
+  border-radius: var(--wp-radius-sm);
+  color: var(--wp-text-secondary);
+  font-weight: var(--wp-weight-medium);
+  text-decoration: none;
+}
+
+.railLink:hover {
+  background: var(--wp-sunken);
+  color: var(--wp-text);
+}
+
+.railLink.active {
+  background: var(--wp-sunken);
+  color: var(--wp-text);
+}
+
+/* The active marker is the signal-yellow bar, like the "you are here" arrow on a sign. */
+.railLink.active::before {
+  content: "";
+  position: absolute;
+  inset-block: 0.5rem;
+  inset-inline-start: calc(-1 * var(--wp-space-3));
+  inline-size: 4px;
+  border-start-end-radius: 4px;
+  border-end-end-radius: 4px;
+  background: var(--wp-signal);
+}
+
+.moreMark {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 28px;
+  block-size: 28px;
+  border-radius: var(--wp-radius-sm);
+  background: var(--wp-sunken);
+  color: var(--wp-text-secondary);
+}
+
+.railFoot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+  margin-block-start: auto;
+  padding-block-start: var(--wp-space-4);
+  border-block-start: 1px solid var(--wp-border-subtle);
+}
+
+.helpLink {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-3);
+  min-block-size: var(--wp-touch-min);
+  padding-inline: var(--wp-space-3);
+  border: 1px solid color-mix(in oklch, var(--wp-support) 30%, transparent);
+  border-radius: var(--wp-radius-sm);
+  background: var(--wp-support-tint);
+  color: var(--wp-support);
+  font-weight: var(--wp-weight-medium);
+  text-decoration: none;
+}
+
+.helpLink:hover,
+.helpLink.active {
+  border-color: var(--wp-support);
+}
+
+.accountButton {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+  inline-size: 100%;
+  min-block-size: var(--wp-touch-min);
+  padding-inline: var(--wp-space-2);
+  border: 0;
+  border-radius: var(--wp-radius-sm);
+  background: transparent;
+  color: var(--wp-text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.accountButton:hover,
+.accountButton[data-hovered] {
+  background: var(--wp-sunken);
+}
+
+.accountButton[data-focus-visible] {
+  outline: 2px solid transparent;
+  box-shadow:
+    0 0 0 2px var(--wp-canvas),
+    0 0 0 4px var(--wp-focus-ring),
+    0 0 0 7px var(--wp-signal);
+}
+
+.accountText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.accountName {
+  overflow: hidden;
+  font-size: var(--wp-text-small);
+  font-weight: var(--wp-weight-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.accountEmail {
+  overflow: hidden;
+  color: var(--wp-text-muted);
+  font-size: var(--wp-text-meta);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.desktopBar {
+  display: none;
+}
+
+/* ───────────── Mobile header ───────────── */
+.mobileHeader {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: var(--wp-z-header);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wp-space-2);
+  padding-block: calc(var(--wp-space-2) + env(safe-area-inset-top)) var(--wp-space-2);
+  padding-inline: var(--wp-space-3);
+  border-block-end: 1px solid var(--wp-border-subtle);
+  background: var(--wp-canvas);
+}
+
+.mobileActions {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+  min-inline-size: 0;
+}
+
+/* On phones the button shows only the icon, but keeps its words for screen readers
+   (display: none would leave it with no name at all). */
+.mobileAccount .accountText {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.mobileAccount .accountButton > svg:last-child {
+  display: none;
+}
+
+.mobileAccount .accountButton {
+  position: relative;
+  inline-size: var(--wp-touch-min);
+  justify-content: center;
+  padding: 0;
+}
+
+.helpChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wp-space-1);
+  min-block-size: 2.25rem;
+  padding-inline: var(--wp-space-3);
+  border-radius: var(--wp-radius-round);
+  background: var(--wp-support-tint);
+  color: var(--wp-support);
+  font-size: var(--wp-text-small);
+  font-weight: var(--wp-weight-medium);
+  text-decoration: none;
+  white-space: nowrap;
+  min-inline-size: 0;
+}
+
+.helpChip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mobileActions > :not(.helpChip) {
+  flex-shrink: 0;
+}
+
+/* ───────────── Bottom bar (phones) ───────────── */
+.bottomBar {
+  position: fixed;
+  inset-inline: 0;
+  inset-block-end: 0;
+  z-index: var(--wp-z-nav);
+  padding-block-end: env(safe-area-inset-bottom);
+  border-block-start: 1px solid var(--wp-border-subtle);
+  background: var(--wp-raised);
+}
+
+.bottomBar ul {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tab {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  inline-size: 100%;
+  min-block-size: var(--wp-bottom-bar);
+  padding: var(--wp-space-1);
+  border: 0;
+  background: transparent;
+  color: var(--wp-text-secondary);
+  font: inherit;
+  font-size: var(--wp-text-meta);
+  font-weight: var(--wp-weight-medium);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.tab.active {
+  color: var(--wp-text);
+}
+
+.tab.active::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 25%;
+  block-size: 3px;
+  border-end-start-radius: 3px;
+  border-end-end-radius: 3px;
+  background: var(--wp-signal);
+}
+
+.sheetList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  gap: var(--wp-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sheetLink {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-3);
+  min-block-size: 3rem;
+  padding-inline: var(--wp-space-2);
+  border-radius: var(--wp-radius-sm);
+  color: var(--wp-text);
+  font-weight: var(--wp-weight-medium);
+  text-decoration: none;
+}
+
+.sheetLink:hover,
+.sheetLink[aria-current="page"] {
+  background: var(--wp-sunken);
+}
+
+@media (min-width: 60rem) {
+  .shell {
+    grid-template-columns: var(--wp-rail-width) minmax(0, 1fr);
+  }
+
+  .rail {
+    position: sticky;
+    inset-block-start: 0;
+    display: flex;
+    flex-direction: column;
+    block-size: 100dvh;
+    overflow-y: auto;
+    padding: var(--wp-space-4) var(--wp-space-3);
+    border-inline-end: 1px solid var(--wp-border-subtle);
+    background: var(--wp-raised);
+  }
+
+  .mobileHeader,
+  .bottomBar {
+    display: none;
+  }
+
+  .desktopBar {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: var(--wp-z-header);
+    display: flex;
+    justify-content: flex-end;
+    block-size: 0;
+    padding-inline: var(--wp-space-6);
+    overflow: visible;
+  }
+
+  .desktopBar > * {
+    margin-block-start: var(--wp-space-4);
+  }
+
+  .main {
+    padding-block: var(--wp-space-10) var(--wp-space-16);
+    padding-inline: var(--wp-space-8);
+  }
+}
+
+@media print {
+  .rail,
+  .bottomBar,
+  .mobileHeader,
+  .desktopBar {
+    display: none;
+  }
+}
+
+/* Phones: help and quick exit always get the room they need (in every language);
+   the signpost mark alone identifies the app. */
+@media (max-width: 30rem) {
+  .mobileHeader .brandText {
+    display: none;
+  }
+}

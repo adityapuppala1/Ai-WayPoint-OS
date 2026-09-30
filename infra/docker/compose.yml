@@ -1,0 +1,50 @@
+# Production-like stack: Postgres (with pgvector), the web app and the worker.
+#   cp .env.example .env   # fill in BETTER_AUTH_SECRET, WAYPOINT_KEK and an AI key
+#   docker compose -f infra/docker/compose.yml up --build
+name: waypoint
+
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: waypoint
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-waypoint}
+      POSTGRES_DB: waypoint
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U waypoint"]
+      interval: 5s
+      retries: 10
+
+  migrate:
+    build: { context: ../.., dockerfile: infra/docker/Dockerfile, target: worker }
+    env_file: ../../.env
+    environment:
+      DATABASE_URL: postgres://waypoint:${POSTGRES_PASSWORD:-waypoint}@db:5432/waypoint
+      WAYPOINT_AUTO_SEED: "true"
+    command: ["sh", "-c", "pnpm --filter @waypoint/db migrate && pnpm --filter @waypoint/db seed"]
+    depends_on:
+      db: { condition: service_healthy }
+
+  web:
+    build: { context: ../.., dockerfile: infra/docker/Dockerfile, target: web }
+    env_file: ../../.env
+    environment:
+      DATABASE_URL: postgres://waypoint:${POSTGRES_PASSWORD:-waypoint}@db:5432/waypoint
+      WAYPOINT_URL: ${WAYPOINT_URL:-http://localhost:3000}
+    ports:
+      - "3000:3000"
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  worker:
+    build: { context: ../.., dockerfile: infra/docker/Dockerfile, target: worker }
+    env_file: ../../.env
+    environment:
+      DATABASE_URL: postgres://waypoint:${POSTGRES_PASSWORD:-waypoint}@db:5432/waypoint
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+volumes:
+  pgdata:

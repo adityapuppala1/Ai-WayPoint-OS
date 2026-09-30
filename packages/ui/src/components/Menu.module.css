@@ -1,0 +1,52 @@
+@layer components {
+  .popover {
+    min-inline-size: 12rem;
+    border: 1px solid var(--wp-border-subtle);
+    border-radius: var(--wp-radius-sm);
+    background: var(--wp-overlay);
+    box-shadow: var(--wp-shadow-overlay);
+  }
+
+  .popover[data-entering] {
+    animation: pop var(--wp-duration-fast) var(--wp-ease-out);
+  }
+
+  .menu {
+    padding: var(--wp-space-1);
+    outline: none;
+  }
+
+  .item {
+    display: flex;
+    align-items: center;
+    gap: var(--wp-space-3);
+    min-block-size: 2.75rem;
+    padding: var(--wp-space-2) var(--wp-space-3);
+    border-radius: var(--wp-radius-xs);
+    cursor: pointer;
+    outline: none;
+    color: var(--wp-text);
+    text-decoration: none;
+  }
+
+  .item[data-focused] {
+    background: var(--wp-signal-tint);
+  }
+
+  .danger {
+    color: var(--wp-danger);
+  }
+
+  .separator {
+    block-size: 1px;
+    margin-block: var(--wp-space-1);
+    background: var(--wp-border-subtle);
+  }
+
+  @keyframes pop {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+  }
+}

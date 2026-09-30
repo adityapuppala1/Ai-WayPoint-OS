@@ -1,0 +1,222 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-6);
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
+.group > legend {
+  padding: 0;
+  margin-block-end: var(--wp-space-1);
+  font-size: var(--wp-text-lead);
+  font-weight: var(--wp-weight-semibold);
+}
+
+.hint {
+  color: var(--wp-text-muted);
+  font-size: var(--wp-text-small);
+}
+
+.grid {
+  display: grid;
+  gap: var(--wp-space-3) var(--wp-space-4);
+}
+
+@media (min-width: 36rem) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.total {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--wp-weight-medium);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--wp-space-3);
+}
+
+/* ───────── Runway: a road measured in months, on a square-root scale ───────── */
+.runway {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-3);
+}
+
+.runwayValue {
+  font-size: var(--wp-text-h3);
+  font-weight: var(--wp-weight-semibold);
+  line-height: var(--wp-leading-snug);
+  text-wrap: balance;
+}
+
+.track {
+  position: relative;
+  block-size: 0.75rem;
+  margin-block: var(--wp-space-2);
+  border-radius: var(--wp-radius-round);
+  background: repeating-linear-gradient(
+    90deg,
+    var(--wp-sunken) 0 0.75rem,
+    color-mix(in oklch, var(--wp-sunken) 60%, var(--wp-canvas)) 0.75rem 1.5rem
+  );
+  box-shadow: inset 0 0 0 1px var(--wp-border-subtle);
+}
+
+.fill {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  border-radius: inherit;
+  background: var(--tone, var(--wp-line-money));
+}
+
+.fill[data-open="true"] {
+  inset-inline-end: 0;
+}
+
+.marker {
+  position: absolute;
+  inset-block-start: 50%;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  border: 3px solid var(--wp-canvas);
+  border-radius: 50%;
+  background: var(--tone, var(--wp-line-money));
+  box-shadow: 0 0 0 1px var(--tone, var(--wp-line-money));
+  transform: translate(-50%, -50%);
+}
+
+[dir="rtl"] .marker {
+  transform: translate(50%, -50%);
+}
+
+.tick {
+  position: absolute;
+  inset-block: -0.25rem;
+  inline-size: 2px;
+  background: var(--wp-border-strong);
+}
+
+.axis {
+  position: relative;
+  block-size: 1.25rem;
+  color: var(--wp-text-muted);
+  font-size: var(--wp-text-meta);
+  font-variant-numeric: tabular-nums;
+}
+
+.axis span {
+  position: absolute;
+  inset-block-start: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+[dir="rtl"] .axis span {
+  transform: translateX(50%);
+}
+
+.axis span:last-child {
+  transform: translateX(-100%);
+}
+
+[dir="rtl"] .axis span:last-child {
+  transform: translateX(100%);
+}
+
+.stable {
+  --tone: var(--wp-safe);
+}
+
+.watch {
+  --tone: var(--wp-caution);
+}
+
+.tight {
+  --tone: var(--wp-caution);
+}
+
+.critical {
+  --tone: var(--wp-danger);
+}
+
+/* ───────── Numbers at a glance ───────── */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--wp-space-4);
+}
+
+@media (min-width: 48rem) {
+  .stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.next {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+
+.next li {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  gap: var(--wp-space-3);
+  counter-increment: step;
+}
+
+.next li::before {
+  content: counter(step);
+  display: grid;
+  place-items: center;
+  inline-size: 2rem;
+  block-size: 2rem;
+  border-radius: 50%;
+  background: var(--wp-tint-money);
+  color: var(--wp-text);
+  font-weight: var(--wp-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.nextTitle {
+  font-weight: var(--wp-weight-semibold);
+}
+
+.safety {
+  display: grid;
+  gap: var(--wp-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.safety li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--wp-space-2);
+  align-items: start;
+}
+
+.safety svg {
+  color: var(--wp-safe);
+  margin-block-start: 0.15em;
+}

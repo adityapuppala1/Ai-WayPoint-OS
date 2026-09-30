@@ -1,0 +1,198 @@
+@layer components {
+  .route {
+    --line: var(--wp-line-path);
+    --station: 1rem;
+    --rail: 0.25rem;
+
+    list-style: none;
+    padding: 0;
+    position: relative;
+  }
+
+  /* Vertical route: stations on a thick line along the inline-start edge. */
+  .vertical .station {
+    position: relative;
+    display: grid;
+    grid-template-columns: 2rem 1fr;
+    gap: var(--wp-space-3);
+    padding-block-end: var(--wp-space-5);
+  }
+
+  .vertical .station:last-child {
+    padding-block-end: 0;
+  }
+
+  .vertical .station::before {
+    content: "";
+    position: absolute;
+    inset-inline-start: calc(1rem - var(--rail) / 2);
+    inset-block: calc(var(--station) / 2 + 0.25rem) 0;
+    inline-size: var(--rail);
+    background: var(--line);
+    border-radius: var(--rail);
+  }
+
+  .vertical .station:last-child::before {
+    display: none;
+  }
+
+  /* Track ahead of you is drawn dashed, like a line under construction. */
+  .vertical .station[data-state="current"]::before,
+  .vertical .station[data-state="upcoming"]::before {
+    background: repeating-linear-gradient(
+      to bottom,
+      var(--line) 0 0.375rem,
+      transparent 0.375rem 0.75rem
+    );
+    opacity: 0.55;
+  }
+
+  .dotCell {
+    display: grid;
+    justify-items: center;
+    padding-block-start: 0.2rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .dot {
+    inline-size: var(--station);
+    block-size: var(--station);
+    border-radius: 50%;
+    background: var(--wp-raised);
+    border: var(--rail) solid var(--line);
+    display: grid;
+    place-items: center;
+    color: var(--wp-raised);
+  }
+
+  .station[data-state="done"] .dot {
+    background: var(--line);
+  }
+
+  .station[data-state="current"] .dot {
+    inline-size: 1.25rem;
+    block-size: 1.25rem;
+    margin-block-start: -0.125rem;
+    background: var(--wp-signal);
+    border-color: var(--wp-text);
+    box-shadow: 0 0 0 4px color-mix(in oklch, var(--wp-signal) 45%, transparent);
+  }
+
+  .label {
+    display: block;
+    font-weight: var(--wp-weight-medium);
+    line-height: var(--wp-leading-snug);
+  }
+
+  .station[data-state="done"] .label {
+    color: var(--wp-text-secondary);
+  }
+
+  .station[data-state="current"] .label {
+    font-weight: var(--wp-weight-semibold);
+  }
+
+  .detail {
+    display: block;
+    margin-block-start: 0.125rem;
+    font-size: var(--wp-text-small);
+    color: var(--wp-text-secondary);
+  }
+
+  .meta {
+    display: block;
+    margin-block-start: 0.125rem;
+    font-size: var(--wp-text-meta);
+    color: var(--wp-text-muted);
+  }
+
+  .content a {
+    text-decoration: none;
+  }
+
+  .content a:hover {
+    text-decoration: underline;
+  }
+
+  /* Horizontal route: a compact progress line. */
+  .horizontal {
+    display: flex;
+    align-items: flex-start;
+    container-type: inline-size;
+  }
+
+  .horizontal .station {
+    flex: 1 1 0;
+    min-inline-size: 0;
+    position: relative;
+    display: grid;
+    justify-items: center;
+    gap: var(--wp-space-2);
+    text-align: center;
+  }
+
+  .horizontal .station::after {
+    content: "";
+    position: absolute;
+    inset-block-start: calc(var(--station) / 2 + 0.2rem - var(--rail) / 2);
+    inset-inline-start: 50%;
+    inline-size: 100%;
+    block-size: var(--rail);
+    background: var(--line);
+    border-radius: var(--rail);
+  }
+
+  .horizontal .station[data-state="current"]::after,
+  .horizontal .station[data-state="upcoming"]::after {
+    background: repeating-linear-gradient(
+      to right,
+      var(--line) 0 0.375rem,
+      transparent 0.375rem 0.75rem
+    );
+    opacity: 0.55;
+  }
+
+  .horizontal .station:last-child::after {
+    display: none;
+  }
+
+  .horizontal .label {
+    font-size: var(--wp-text-small);
+    padding-inline: var(--wp-space-1);
+    overflow-wrap: anywhere;
+  }
+
+  .horizontal .content {
+    min-inline-size: 0;
+  }
+
+  /* In narrow containers, only the current station keeps its label. */
+  @container (max-width: 30rem) {
+    .horizontal .label,
+    .horizontal .detail {
+      display: none;
+    }
+
+    .horizontal .station[data-state="current"] .label {
+      display: block;
+      white-space: nowrap;
+      overflow-wrap: normal;
+    }
+  }
+
+  .compact .label,
+  .compact .detail {
+    display: none;
+  }
+
+  .compact .station[data-state="current"] .label {
+    display: block;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .station[data-state="current"] .dot {
+      transition: box-shadow var(--wp-duration-slow) var(--wp-ease-out);
+    }
+  }
+}

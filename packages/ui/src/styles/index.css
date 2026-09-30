@@ -1,0 +1,15 @@
+/*
+ * Waypoint design system entry. Import once, from the root layout.
+ * Cascade order is fixed here so component styles never fight the base.
+ */
+@layer reset, tokens, base, components, utilities;
+
+@import "@waypoint/tokens/tokens.css";
+@import "@fontsource-variable/overpass/index.css";
+@import "@fontsource-variable/noto-sans-devanagari/index.css";
+@import "@fontsource-variable/noto-sans-bengali/index.css";
+@import "@fontsource-variable/noto-sans-arabic/index.css";
+@import "./fonts.css";
+@import "./reset.css" layer(reset);
+@import "./base.css" layer(base);
+@import "./utilities.css" layer(utilities);

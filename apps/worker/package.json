@@ -1,0 +1,23 @@
+{
+  "name": "@waypoint/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Background jobs: signal ingestion, forecast checks, outbox dispatch, retention clean-up.",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "once": "tsx src/index.ts --once",
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@waypoint/ai": "workspace:*",
+    "@waypoint/api": "workspace:*",
+    "@waypoint/core": "workspace:*",
+    "@waypoint/db": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.4",
+    "tsx": "4.23.15"
+  }
+}

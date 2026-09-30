@@ -1,0 +1,25 @@
+{
+  "name": "@waypoint/auth",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Better Auth configuration: email+password, guest (anonymous) sessions, organisations, admin roles, passkeys.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@better-auth/core": "1.7.6",
+    "@better-auth/expo": "1.7.6",
+    "@better-auth/passkey": "1.7.6",
+    "@better-auth/utils": "0.4.2",
+    "@waypoint/core": "workspace:*",
+    "@waypoint/db": "workspace:*",
+    "better-auth": "1.7.6",
+    "drizzle-orm": "0.45.3"
+  }
+}

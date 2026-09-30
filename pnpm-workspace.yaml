@@ -1,0 +1,47 @@
+packages:
+  - apps/*
+  - packages/*
+
+# The mobile app's native modules must match its Expo SDK (57); optional peers would otherwise
+# be filled with the newest release, which the SDK doesn't support.
+overrides:
+  react-native-worklets: 0.10.1
+  '@react-native/metro-config': 0.86.3
+
+# Type definitions that import React without declaring @types/react would otherwise use the
+# hoisted copy, which may be the mobile app's (React 19.2) rather than the web's (19.3).
+packageExtensions:
+  '@phosphor-icons/react':
+    peerDependencies:
+      '@types/react': '*'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+
+# pnpm 11 blocks dependency install scripts unless they are allowed here.
+allowBuilds:
+  esbuild: true
+  # Prebuilt platform binaries arrive as optional dependencies; their scripts are not needed.
+  '@parcel/watcher': false
+  '@swc/core': false
+
+# Keep node_modules paths short on Windows (MAX_PATH) without registry changes.
+virtualStoreDirMaxLength: 60
+
+# pnpm 11 refuses packages published in the last day (supply-chain protection).
+# These exact versions were reviewed and pinned when the project was created.
+minimumReleaseAgeExclude:
+  - '@ai-sdk/anthropic@4.0.68'
+  - '@ai-sdk/gateway@4.0.100'
+  - '@ai-sdk/google@4.0.85'
+  - '@ai-sdk/mcp@2.0.62'
+  - '@ai-sdk/openai-compatible@3.0.59'
+  - '@ai-sdk/openai@4.0.80'
+  - '@ai-sdk/provider-utils@5.0.51'
+  - '@ai-sdk/provider@4.0.19'
+  - '@ai-sdk/react@4.0.125'
+  - '@hono/node-server@2.1.3'
+  - '@nodable/entities@3.1.0'
+  - ai@7.0.122
+  - fast-xml-parser@5.11.2
+  - hono@4.13.11

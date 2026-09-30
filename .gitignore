@@ -1,0 +1,49 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# builds
+.next/
+dist/
+out/
+build/
+*.tsbuildinfo
+.turbo/
+
+# expo / react native
+.expo/
+apps/mobile/ios/
+apps/mobile/android/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# local data (embedded Postgres, uploads, logs)
+.data/
+*.log
+logs/
+
+# env & secrets — never commit these
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# testing
+coverage/
+test-results/
+playwright-report/
+blob-report/
+evals/results/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+*.swp
+
+# phone app web export
+dist-web/

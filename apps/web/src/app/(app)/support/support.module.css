@@ -1,0 +1,90 @@
+.danger {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-3);
+  padding: var(--wp-space-5);
+  border: 1px solid color-mix(in oklch, var(--wp-support) 35%, transparent);
+  border-inline-start: 4px solid var(--wp-support);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-support-tint);
+}
+
+.dangerTitle {
+  font-size: var(--wp-text-lead);
+}
+
+.numbers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-2) var(--wp-space-8);
+  margin: 0;
+}
+
+.numbers dt {
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+}
+
+.numbers dd {
+  margin: 0;
+  font-size: var(--wp-text-lead);
+  font-weight: var(--wp-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.picker {
+  max-inline-size: 20rem;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.service {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+  padding-block: var(--wp-space-4);
+}
+
+.service:first-child {
+  padding-block-start: 0;
+}
+
+.service + .service {
+  border-block-start: 1px solid var(--wp-border-subtle);
+}
+
+.serviceHead {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.serviceName {
+  font-size: var(--wp-text-body);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-2);
+}
+
+.foot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+}
+
+.foot p {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+}

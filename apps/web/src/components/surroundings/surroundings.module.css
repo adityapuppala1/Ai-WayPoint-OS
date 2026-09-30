@@ -1,0 +1,367 @@
+/* Surroundings: sky-blue line colour; big, glanceable numbers; advice in plain words. */
+
+.picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-4);
+}
+
+.pickerRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-3);
+}
+
+.searchRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--wp-space-3);
+}
+
+.searchField {
+  flex: 1 1 14rem;
+  min-inline-size: 0;
+}
+
+.message {
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+}
+
+.results {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--wp-border-subtle);
+  border-radius: var(--wp-radius-md);
+  overflow: hidden;
+}
+
+.results li + li {
+  border-block-start: 1px solid var(--wp-border-subtle);
+}
+
+.result {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-3);
+  inline-size: 100%;
+  min-block-size: var(--wp-touch-min);
+  padding: var(--wp-space-3) var(--wp-space-4);
+  border: 0;
+  background: var(--wp-raised);
+  color: var(--wp-text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.result:hover {
+  background: var(--wp-tint-surroundings);
+}
+
+.result:focus-visible {
+  outline: 2px solid var(--wp-focus-ring);
+  outline-offset: -2px;
+}
+
+.result > span {
+  display: flex;
+  flex-direction: column;
+}
+
+.resultName {
+  font-weight: var(--wp-weight-medium);
+}
+
+.resultRegion {
+  color: var(--wp-text-muted);
+  font-size: var(--wp-text-small);
+}
+
+/* ───────────── Place bar ───────────── */
+.placeBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wp-space-3);
+}
+
+.placeName {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--wp-space-2);
+  font-weight: var(--wp-weight-semibold);
+}
+
+.placeName > svg {
+  color: var(--wp-line-surroundings);
+}
+
+.placeRegion {
+  color: var(--wp-text-muted);
+  font-size: var(--wp-text-small);
+  font-weight: var(--wp-weight-regular);
+}
+
+.placeActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--wp-space-2);
+}
+
+/* ───────────── Now ───────────── */
+.now {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-5);
+}
+
+.nowIcon {
+  flex-shrink: 0;
+  color: var(--wp-line-surroundings);
+}
+
+.nowText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-inline-size: 0;
+}
+
+.nowTemp {
+  font-size: var(--wp-text-sign);
+  font-weight: var(--wp-weight-semibold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.nowKind {
+  font-size: var(--wp-text-lead);
+  font-weight: var(--wp-weight-medium);
+}
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-2) var(--wp-space-5);
+  margin: var(--wp-space-4) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--wp-text-small);
+}
+
+.facts li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wp-space-1);
+}
+
+/* ───────────── Advice ───────────── */
+.advice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.adviceItem {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--wp-space-3);
+  align-items: start;
+}
+
+.adviceItem > svg {
+  margin-block-start: 0.125rem;
+  color: var(--wp-info);
+}
+
+.adviceItem[data-severity="caution"] > svg {
+  color: var(--wp-caution);
+}
+
+.adviceItem[data-severity="danger"] > svg {
+  color: var(--wp-danger);
+}
+
+.adviceTitle {
+  font-weight: var(--wp-weight-semibold);
+}
+
+/* ───────────── Air & sun ───────────── */
+.pair {
+  display: grid;
+  gap: var(--wp-space-4);
+}
+
+@media (min-width: 40rem) {
+  .pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.gauge {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+}
+
+.gaugeValue {
+  font-size: var(--wp-text-h4);
+  font-weight: var(--wp-weight-semibold);
+  line-height: var(--wp-leading-snug);
+}
+
+.gaugeValue[data-level="good"],
+.gaugeValue[data-uv="low"] {
+  color: var(--wp-safe);
+}
+
+.gaugeValue[data-level="moderate"],
+.gaugeValue[data-uv="protect"] {
+  color: var(--wp-caution);
+}
+
+.gaugeValue[data-level="sensitive"],
+.gaugeValue[data-level="unhealthy"],
+.gaugeValue[data-level="very-unhealthy"],
+.gaugeValue[data-level="hazardous"],
+.gaugeValue[data-uv="extra"] {
+  color: var(--wp-danger);
+}
+
+/* ───────────── Hours & days ───────────── */
+.hours {
+  /* Contains the visually hidden labels, which are absolutely positioned: without this they
+     escape the scroller and widen the page. */
+  position: relative;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(3.5rem, 1fr);
+  gap: var(--wp-space-2);
+  margin: 0;
+  padding: 0 0 var(--wp-space-2);
+  overflow-x: auto;
+  list-style: none;
+  scroll-snap-type: x proximity;
+}
+
+.hour {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--wp-space-1);
+  padding: var(--wp-space-2) var(--wp-space-1);
+  border-radius: var(--wp-radius-sm);
+  background: var(--wp-sunken);
+  scroll-snap-align: start;
+  text-align: center;
+}
+
+.hour > svg {
+  color: var(--wp-line-surroundings);
+}
+
+.hourTime {
+  color: var(--wp-text-muted);
+  font-size: var(--wp-text-meta);
+}
+
+.hourTemp {
+  font-weight: var(--wp-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.hourRain {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  color: var(--wp-info);
+  font-size: var(--wp-text-meta);
+}
+
+.days {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.day {
+  display: grid;
+  grid-template-columns: minmax(5.5rem, 1fr) auto minmax(0, 1.4fr) auto;
+  grid-template-areas:
+    "name icon kind range"
+    "name icon rain range";
+  column-gap: var(--wp-space-3);
+  align-items: center;
+  padding: var(--wp-space-3) var(--wp-space-4);
+}
+
+.day + .day {
+  border-block-start: 1px solid var(--wp-border-subtle);
+}
+
+.day > svg {
+  grid-area: icon;
+  color: var(--wp-line-surroundings);
+}
+
+.dayName {
+  grid-area: name;
+  font-weight: var(--wp-weight-medium);
+}
+
+.dayKind {
+  grid-area: kind;
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+}
+
+.dayRain {
+  grid-area: rain;
+  color: var(--wp-info);
+  font-size: var(--wp-text-meta);
+}
+
+.dayRange {
+  grid-area: range;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.sources ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+  margin: var(--wp-space-2) 0 0;
+  padding-inline-start: var(--wp-space-5);
+  font-size: var(--wp-text-small);
+}
+
+@media (max-width: 30rem) {
+  .day {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      "name icon range"
+      "kind kind rain";
+  }
+
+  .dayRain {
+    text-align: end;
+  }
+
+  .nowTemp {
+    font-size: var(--wp-text-h2);
+  }
+}

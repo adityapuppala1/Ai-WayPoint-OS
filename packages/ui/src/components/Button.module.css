@@ -1,0 +1,133 @@
+@layer components {
+  .button {
+    --btn-bg: var(--wp-raised);
+    --btn-fg: var(--wp-text);
+    --btn-border: var(--wp-border-strong);
+    --btn-bg-hover: var(--wp-sunken);
+
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--wp-space-2);
+    min-block-size: var(--wp-touch-min);
+    padding-inline: var(--wp-space-4);
+    border: 1px solid var(--btn-border);
+    border-radius: var(--wp-radius-sm);
+    background: var(--btn-bg);
+    color: var(--btn-fg);
+    font-size: var(--wp-text-body);
+    font-weight: var(--wp-weight-medium);
+    line-height: 1.2;
+    text-align: center;
+    text-decoration: none;
+    /* Long translations wrap inside the button instead of spilling out of small screens. */
+    text-wrap: balance;
+    max-inline-size: 100%;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      background-color var(--wp-duration-fast) var(--wp-ease-out),
+      border-color var(--wp-duration-fast) var(--wp-ease-out),
+      transform var(--wp-duration-fast) var(--wp-ease-out);
+  }
+
+  .button[data-hovered],
+  .button:hover {
+    background: var(--btn-bg-hover);
+  }
+
+  .button[data-pressed] {
+    transform: translateY(1px);
+  }
+
+  .button[data-focus-visible] {
+    outline: 2px solid transparent;
+    box-shadow:
+      0 0 0 2px var(--wp-canvas),
+      0 0 0 4px var(--wp-focus-ring),
+      0 0 0 7px var(--wp-signal);
+  }
+
+  .button[data-disabled] {
+    cursor: not-allowed;
+    opacity: 0.5;
+    transform: none;
+  }
+
+  .primary {
+    --btn-bg: var(--wp-signal);
+    --btn-fg: var(--wp-signal-ink);
+    --btn-border: color-mix(in oklch, var(--wp-signal-ink) 18%, var(--wp-signal));
+    --btn-bg-hover: var(--wp-signal-hover);
+  }
+
+  .secondary {
+    --btn-bg: var(--wp-raised);
+    --btn-border: var(--wp-border-strong);
+  }
+
+  .quiet {
+    --btn-bg: transparent;
+    --btn-border: transparent;
+    --btn-bg-hover: color-mix(in oklch, var(--wp-text) 7%, transparent);
+  }
+
+  .danger {
+    --btn-bg: var(--wp-danger);
+    --btn-fg: var(--wp-raised);
+    --btn-border: var(--wp-danger);
+    --btn-bg-hover: color-mix(in oklch, var(--wp-danger) 88%, black);
+  }
+
+  .support {
+    --btn-bg: var(--wp-support);
+    --btn-fg: var(--wp-raised);
+    --btn-border: var(--wp-support);
+    --btn-bg-hover: color-mix(in oklch, var(--wp-support) 88%, black);
+  }
+
+  /* On the dark slate sign, secondary actions read as outlined white. */
+  .onSign {
+    --btn-bg: transparent;
+    --btn-fg: var(--wp-sign-text);
+    --btn-border: color-mix(in oklch, var(--wp-sign-text) 40%, transparent);
+    --btn-bg-hover: color-mix(in oklch, var(--wp-sign-text) 10%, transparent);
+  }
+
+  .sm {
+    min-block-size: 2.25rem;
+    padding-inline: var(--wp-space-3);
+    font-size: var(--wp-text-small);
+  }
+
+  .lg {
+    min-block-size: 3.25rem;
+    padding-inline: var(--wp-space-6);
+    font-size: var(--wp-text-lead);
+  }
+
+  .block {
+    inline-size: 100%;
+  }
+
+  .spinner {
+    inline-size: 1em;
+    block-size: 1em;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    border-inline-end-color: transparent;
+    animation: spin 700ms linear infinite;
+  }
+
+  .busy .label {
+    opacity: 0.7;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+}

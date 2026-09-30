@@ -1,0 +1,190 @@
+/*
+ * Waypoint by text. The numbers are the point of the page, so they are set large and
+ * tabular; the sample conversation looks like a basic phone's message thread, because that
+ * is where these replies are read.
+ */
+
+.ways {
+  display: grid;
+  gap: var(--wp-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* One channel per row: what it is, the number to use, and the button to use it. */
+.way {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "head action"
+    "number action"
+    "body action";
+  align-items: center;
+  gap: var(--wp-space-1) var(--wp-space-6);
+  padding: var(--wp-space-4) var(--wp-space-5);
+  border: 1px solid var(--wp-border-subtle);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-raised);
+}
+
+.wayHead {
+  grid-area: head;
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+  font-weight: var(--wp-weight-semibold);
+  letter-spacing: 0.02em;
+}
+
+.number {
+  grid-area: number;
+  font-size: var(--wp-text-h2);
+  font-weight: var(--wp-weight-semibold);
+  line-height: var(--wp-leading-tight);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.wayBody {
+  grid-area: body;
+}
+
+.wayAction {
+  grid-area: action;
+}
+
+@media (max-width: 40rem) {
+  .way {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "head"
+      "number"
+      "body"
+      "action";
+  }
+
+  .wayAction {
+    justify-self: start;
+    margin-block-start: var(--wp-space-2);
+  }
+}
+
+.grid {
+  display: grid;
+  gap: var(--wp-space-6);
+}
+
+@media (min-width: 60rem) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
+/* ───────────── The sample conversation ───────────── */
+.thread {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+  margin: 0;
+  padding: var(--wp-space-4);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-sunken);
+  list-style: none;
+}
+
+.bubble {
+  max-inline-size: 85%;
+  padding: var(--wp-space-2) var(--wp-space-3);
+  border-radius: var(--wp-radius-md);
+  font-size: var(--wp-text-small);
+  line-height: var(--wp-leading-body);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.bubble[data-from="person"] {
+  align-self: flex-end;
+  border-end-end-radius: var(--wp-radius-xs);
+  background: var(--wp-tint-ask);
+  color: var(--wp-text);
+}
+
+.bubble[data-from="waypoint"] {
+  align-self: flex-start;
+  border: 1px solid var(--wp-border-subtle);
+  border-end-start-radius: var(--wp-radius-xs);
+  background: var(--wp-raised);
+  color: var(--wp-text);
+}
+
+/* ───────────── Commands ───────────── */
+.commands {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.command {
+  display: grid;
+  gap: var(--wp-space-1);
+  padding-block: var(--wp-space-3);
+}
+
+.command:first-child {
+  padding-block-start: 0;
+}
+
+.command + .command {
+  border-block-start: 1px solid var(--wp-border-subtle);
+}
+
+.command dd {
+  margin: 0;
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+}
+
+.word {
+  display: inline-block;
+  padding: 2px var(--wp-space-2);
+  border: 1px solid var(--wp-border-strong);
+  border-radius: var(--wp-radius-sm);
+  background: var(--wp-raised);
+  /* A key to type, like a label on a keypad; the app's own font, so every script fits. */
+  box-shadow: 0 1px 0 var(--wp-border-strong);
+  font-size: var(--wp-text-small);
+  font-weight: var(--wp-weight-semibold);
+  letter-spacing: 0.02em;
+}
+
+.withIcon {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--wp-space-3);
+}
+
+.withIcon > svg {
+  flex: none;
+  margin-block-start: 2px;
+  color: var(--wp-text-secondary);
+}
+
+/* ───────────── In danger ───────────── */
+.danger {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+  padding: var(--wp-space-5);
+  border: 1px solid color-mix(in oklch, var(--wp-support) 35%, transparent);
+  border-inline-start: 4px solid var(--wp-support);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-support-tint);
+}
+
+.dangerTitle {
+  font-size: var(--wp-text-lead);
+}

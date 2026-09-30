@@ -1,0 +1,22 @@
+{
+  "name": "@waypoint/api-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Standalone Waypoint API service (same Hono app the web app mounts) for split deployments.",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@hono/node-server": "2.1.3",
+    "@waypoint/api": "workspace:*",
+    "@waypoint/core": "workspace:*",
+    "@waypoint/db": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.4",
+    "tsx": "4.23.15"
+  }
+}

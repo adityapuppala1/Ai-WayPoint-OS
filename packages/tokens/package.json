@@ -1,0 +1,19 @@
+{
+  "name": "@waypoint/tokens",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Waypoint design tokens \u2014 single source for web (CSS custom properties) and native (theme object).",
+  "exports": {
+    ".": "./src/index.ts",
+    "./tokens.css": "./tokens.css"
+  },
+  "scripts": {
+    "build": "tsx scripts/build-css.ts && biome format --write tokens.css",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "tsx": "4.23.15"
+  }
+}

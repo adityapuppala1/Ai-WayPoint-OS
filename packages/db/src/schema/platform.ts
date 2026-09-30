@@ -1,0 +1,311 @@
+/**
+ * Platform: organisations, AI usage and cost, messaging channels (SMS/USSD/WhatsApp),
+ * the outbox, background jobs, audit log, data requests and feedback.
+ */
+import {
+  boolean,
+  date,
+  index,
+  integer,
+  jsonb,
+  numeric,
+  pgTable,
+  primaryKey,
+  smallint,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from 'drizzle-orm/pg-core';
+import { createdAt, pk, updatedAt } from './_shared';
+import { organizations, users } from './auth';
+
+// ───────────────────────────── Organisations ─────────────────────────────
+
+export const orgProfiles = pgTable('org_profiles', {
+  organizationId: text()
+    .primaryKey()
+    .references(() => organizations.id, { onDelete: 'cascade' }),
+  /** employer | school | ngo | government | community */
+  kind: text().notNull(),
+  country: text(),
+  sizeBand: text(),
+  /** Minimum group size before any aggregate is shown (never below 20). */
+  kAnonMin: smallint().notNull().default(50),
+  /** free | pro | enterprise */
+  plan: text().notNull().default('free'),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
+/** A programme an organisation runs, e.g. a reskilling cohort or a school leavers’ programme. */
+export const orgProgrammes = pgTable(
+  'org_programmes',
+  {
+    id: pk(),
+    organizationId: text()
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    name: text().notNull(),
+    description: text(),
+    /** Roles from the Path catalogue the programme prepares people for (shown to participants). */
+    targetRoleIds: text().array().notNull().default([]),
+    /** What people type or scan to join (see @waypoint/core/org). A new code retires the old one. */
+    joinCode: text().notNull(),
+    startsOn: date({ mode: 'string' }),
+    endsOn: date({ mode: 'string' }),
+    /** Closed programmes stop accepting people; totals stay available. */
+    archivedAt: timestamp({ withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    index('org_programmes_org_idx').on(t.organizationId),
+    uniqueIndex('org_programmes_join_code_idx').on(t.joinCode),
+  ],
+);
+
+/**
+ * Membership of a programme. The organisation never sees this table: it only sees totals of
+ * at least k people, counting only enrolments where the person chose to be counted in this
+ * programme (`counted`) and still allows organisations to count them at all (consent
+ * `org_aggregates`). Leaving deletes the row.
+ */
+export const orgEnrolments = pgTable(
+  'org_enrolments',
+  {
+    programmeId: uuid()
+      .notNull()
+      .references(() => orgProgrammes.id, { onDelete: 'cascade' }),
+    userId: text()
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    /** The person chose to be counted in this programme's totals (off unless they tick it). */
+    counted: boolean().notNull().default(false),
+    /** When they chose it: they count from a week after this (null while not counted). */
+    countedSince: timestamp({ withTimezone: true }),
+    enrolledAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.programmeId, t.userId] }),
+    index('org_enrolments_user_idx').on(t.userId),
+  ],
+);
+
+/**
+ * A programme's raw totals, taken once a week (the first time anyone looks that week). An
+ * organisation sees the same numbers all week, so it cannot watch them move as one person
+ * joins, leaves or changes their mind.
+ */
+export const orgInsightSnapshots = pgTable(
+  'org_insight_snapshots',
+  {
+    programmeId: uuid()
+      .notNull()
+      .references(() => orgProgrammes.id, { onDelete: 'cascade' }),
+    /** Monday (UTC) of the week the totals belong to. */
+    week: date({ mode: 'string' }).notNull(),
+    counts: jsonb().$type<Record<string, unknown>>().notNull(),
+    takenAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.programmeId, t.week] })],
+);
+
+export const subscriptions = pgTable(
+  'subscriptions',
+  {
+    id: pk(),
+    /** user | organization */
+    ownerType: text().notNull(),
+    ownerId: text().notNull(),
+    plan: text().notNull(),
+    /** active | past_due | cancelled | trialing */
+    status: text().notNull(),
+    provider: text().notNull().default('manual'),
+    providerRef: text(),
+    currentPeriodEnd: timestamp({ withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index('subscriptions_owner_idx').on(t.ownerType, t.ownerId)],
+);
+
+// ───────────────────────────── AI usage ─────────────────────────────
+
+export const aiUsage = pgTable(
+  'ai_usage',
+  {
+    id: pk(),
+    userId: text().references(() => users.id, { onDelete: 'set null' }),
+    organizationId: text(),
+    /** ask | shield | plan | signal-summary | forecast | moderation | embedding */
+    feature: text().notNull(),
+    provider: text().notNull(),
+    model: text().notNull(),
+    inputTokens: integer().notNull().default(0),
+    outputTokens: integer().notNull().default(0),
+    costUsd: numeric({ precision: 12, scale: 6, mode: 'number' }).notNull().default(0),
+    latencyMs: integer(),
+    /** ok | error | fallback | blocked | offline */
+    status: text().notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index('ai_usage_created_idx').on(t.createdAt),
+    index('ai_usage_user_idx').on(t.userId, t.createdAt),
+  ],
+);
+
+// ───────────────────────────── Channels ─────────────────────────────
+
+/**
+ * A phone number that has texted Waypoint (SMS, WhatsApp or USSD): looked up by a keyed hash,
+ * the number itself sealed. Nothing anyone texts is stored — only their language, country and
+ * choices. Forgotten after 180 days without a message.
+ */
+export const channelIdentities = pgTable(
+  'channel_identities',
+  {
+    id: pk(),
+    userId: text().references(() => users.id, { onDelete: 'cascade' }),
+    /** sms | whatsapp | ussd */
+    channel: text().notNull(),
+    addressHash: text().notNull(),
+    addressCt: text().notNull(),
+    locale: text(),
+    country: text(),
+    verifiedAt: timestamp({ withTimezone: true }),
+    optedOutAt: timestamp({ withTimezone: true }),
+    /** They allowed their (redacted) messages to go to an external AI provider, and when. */
+    aiAllowedAt: timestamp({ withTimezone: true }),
+    lastSeenAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex('channel_identities_address_idx').on(t.channel, t.addressHash),
+    index('channel_identities_seen_idx').on(t.lastSeenAt),
+  ],
+);
+
+/** Messages by channel, day and kind — counts only, for the admin console. */
+export const channelStats = pgTable(
+  'channel_stats',
+  {
+    day: date({ mode: 'string' }).notNull(),
+    /** sms | whatsapp | ussd */
+    channel: text().notNull(),
+    /** in | out */
+    direction: text().notNull(),
+    /** Incoming: help | check | crisis | ask | … (see ChannelIntent). Outgoing: reply | ai | otp */
+    intent: text().notNull(),
+    n: integer().notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.day, t.channel, t.direction, t.intent] })],
+);
+
+/** Short-lived state for USSD and SMS menus. */
+export const channelSessions = pgTable('channel_sessions', {
+  id: text().primaryKey(),
+  channel: text().notNull(),
+  state: jsonb().$type<Record<string, unknown>>().notNull(),
+  updatedAt: updatedAt(),
+  expiresAt: timestamp({ withTimezone: true }).notNull(),
+});
+
+/** Transactional outbox: messages are written with the change that caused them, then sent. */
+export const outbox = pgTable(
+  'outbox',
+  {
+    id: pk(),
+    /** push | sms | whatsapp | email */
+    channel: text().notNull(),
+    recipientRef: text().notNull(),
+    payload: jsonb().$type<Record<string, unknown>>().notNull(),
+    /** queued | sent | failed | cancelled */
+    status: text().notNull().default('queued'),
+    attempts: smallint().notNull().default(0),
+    nextAttemptAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    lastError: text(),
+    createdAt: createdAt(),
+    sentAt: timestamp({ withTimezone: true }),
+  },
+  (t) => [index('outbox_due_idx').on(t.status, t.nextAttemptAt)],
+);
+
+// ───────────────────────────── Jobs ─────────────────────────────
+
+/** A small Postgres job queue (claimed with FOR UPDATE SKIP LOCKED). */
+export const jobs = pgTable(
+  'jobs',
+  {
+    id: pk(),
+    kind: text().notNull(),
+    payload: jsonb().$type<Record<string, unknown>>().notNull().default({}),
+    /** Jobs with the same key are not queued twice while one is pending. */
+    uniqueKey: text(),
+    runAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    /** queued | running | done | failed */
+    status: text().notNull().default('queued'),
+    attempts: smallint().notNull().default(0),
+    maxAttempts: smallint().notNull().default(5),
+    lockedBy: text(),
+    lockedAt: timestamp({ withTimezone: true }),
+    lastError: text(),
+    createdAt: createdAt(),
+    finishedAt: timestamp({ withTimezone: true }),
+  },
+  (t) => [
+    index('jobs_due_idx').on(t.status, t.runAt),
+    index('jobs_unique_key_idx').on(t.uniqueKey, t.status),
+  ],
+);
+
+// ───────────────────────────── Accountability ─────────────────────────────
+
+export const auditLog = pgTable(
+  'audit_log',
+  {
+    id: pk(),
+    actorUserId: text(),
+    actorOrganizationId: text(),
+    action: text().notNull(),
+    targetType: text(),
+    targetId: text(),
+    meta: jsonb().$type<Record<string, unknown>>().notNull().default({}),
+    ipHash: text(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index('audit_log_actor_idx').on(t.actorUserId, t.createdAt),
+    index('audit_log_action_idx').on(t.action, t.createdAt),
+  ],
+);
+
+export const dataRequests = pgTable(
+  'data_requests',
+  {
+    id: pk(),
+    userId: text()
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    /** export | delete */
+    kind: text().notNull(),
+    /** pending | processing | ready | done | failed */
+    status: text().notNull().default('pending'),
+    resultRef: text(),
+    requestedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    completedAt: timestamp({ withTimezone: true }),
+  },
+  (t) => [index('data_requests_user_idx').on(t.userId)],
+);
+
+export const feedback = pgTable('feedback', {
+  id: pk(),
+  userId: text().references(() => users.id, { onDelete: 'set null' }),
+  module: text().notNull(),
+  page: text(),
+  rating: smallint(),
+  message: text(),
+  wantsReply: boolean().notNull().default(false),
+  createdAt: createdAt(),
+});

@@ -1,0 +1,42 @@
+import { me } from '@waypoint/api';
+import { COUNTRIES } from '@waypoint/content';
+import type { Metadata } from 'next';
+import { getLocale, getTranslations } from 'next-intl/server';
+import { LegalLinks } from '@/components/legal/LegalLinks';
+import { SettingsForm } from '@/components/settings/SettingsForm';
+import { requireViewer } from '@/lib/server';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('settings');
+  return { title: t('title') };
+}
+
+export default async function SettingsPage() {
+  const viewer = await requireViewer('/settings');
+  const t = await getTranslations('settings');
+  const locale = await getLocale();
+  const names = new Intl.DisplayNames([locale, 'en'], { type: 'region' });
+  const countries = COUNTRIES.map((c) => ({ code: c.code, name: names.of(c.code) ?? c.name })).sort(
+    (a, b) => a.name.localeCompare(b.name, locale),
+  );
+  return (
+    <div className="wp-page">
+      <header className="wp-page-head">
+        <h1>{t('title')}</h1>
+        <p className="wp-lead">{t('lead')}</p>
+      </header>
+      <SettingsForm
+        profile={viewer.profile}
+        countries={countries}
+        account={{
+          isGuest: viewer.user.isGuest,
+          email: viewer.user.isGuest ? null : viewer.user.email,
+          // Phone accounts have a placeholder address that can never be confirmed.
+          canConfirm: !viewer.user.isGuest && !viewer.user.email.endsWith('.invalid'),
+          emailVerified: await me.isEmailVerified(viewer.db, viewer.user.id),
+        }}
+      />
+      <LegalLinks className="wp-cluster wp-meta" />
+    </div>
+  );
+}

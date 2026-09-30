@@ -1,0 +1,105 @@
+@layer components {
+  .stepper {
+    display: grid;
+    gap: var(--wp-space-1);
+    min-inline-size: 0;
+  }
+
+  .label {
+    font-weight: var(--wp-weight-medium);
+    line-height: var(--wp-leading-snug);
+  }
+
+  .description {
+    font-size: var(--wp-text-small);
+    color: var(--wp-text-secondary);
+  }
+
+  .group {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: stretch;
+    max-inline-size: 18rem;
+    border: 1px solid var(--wp-border-strong);
+    border-radius: var(--wp-radius-md);
+    background: var(--wp-raised);
+    overflow: hidden;
+  }
+
+  .group[data-focus-within] {
+    border-color: var(--wp-focus-ring);
+    box-shadow:
+      0 0 0 1px var(--wp-focus-ring),
+      0 0 0 4px var(--wp-signal);
+  }
+
+  .slot {
+    display: contents;
+  }
+
+  .button {
+    display: grid;
+    place-items: center;
+    inline-size: 3rem;
+    min-block-size: 3rem;
+    border: 0;
+    background: var(--wp-sunken);
+    color: var(--wp-text);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .button[data-hovered] {
+    background: color-mix(in oklch, var(--wp-sunken) 80%, var(--wp-text) 8%);
+  }
+
+  .button[data-pressed] {
+    background: color-mix(in oklch, var(--wp-sunken) 70%, var(--wp-text) 14%);
+  }
+
+  .button[data-focus-visible] {
+    outline: 2px solid var(--wp-focus-ring);
+    outline-offset: -3px;
+  }
+
+  .button[data-disabled] {
+    color: var(--wp-text-muted);
+    cursor: default;
+  }
+
+  .value {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: var(--wp-space-1);
+    min-inline-size: 0;
+    padding-inline: var(--wp-space-2);
+  }
+
+  .input {
+    inline-size: 4.5ch;
+    min-inline-size: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--wp-text);
+    font-size: var(--wp-text-lead);
+    font-weight: var(--wp-weight-semibold);
+    line-height: 3rem;
+    text-align: end;
+    outline: none;
+  }
+
+  .input::placeholder {
+    color: var(--wp-text-muted);
+    font-weight: var(--wp-weight-regular);
+  }
+
+  .unit {
+    overflow: hidden;
+    color: var(--wp-text-secondary);
+    font-size: var(--wp-text-small);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

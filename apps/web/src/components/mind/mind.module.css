@@ -1,0 +1,278 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-5);
+}
+
+.fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
+.legend {
+  padding: 0;
+  font-weight: var(--wp-weight-medium);
+}
+
+/* Mood: five tiles with a level marker. Neutral colours — no mood is "wrong". */
+.moods {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--wp-space-2);
+}
+
+.mood {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--wp-space-2);
+  min-block-size: 5.5rem;
+  padding: var(--wp-space-2) var(--wp-space-1);
+  border: 1px solid var(--wp-border-strong);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-raised);
+  color: var(--wp-text);
+  font-size: var(--wp-text-small);
+  font-weight: var(--wp-weight-medium);
+  line-height: 1.2;
+  text-align: center;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mood[data-selected] {
+  border-color: var(--wp-line-mind);
+  background: var(--wp-tint-mind);
+  box-shadow: inset 0 0 0 1px var(--wp-line-mind);
+}
+
+.mood[data-focus-visible] {
+  outline: 2px solid transparent;
+  box-shadow:
+    0 0 0 2px var(--wp-canvas),
+    0 0 0 4px var(--wp-focus-ring);
+}
+
+.level {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  block-size: 1.25rem;
+}
+
+.level span {
+  inline-size: 0.25rem;
+  border-radius: 1px;
+  background: var(--wp-border-strong);
+}
+
+.level span[data-on="true"] {
+  background: var(--wp-line-mind);
+}
+
+/* Tags: toggle chips. */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-2);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wp-space-1);
+  min-block-size: 2.25rem;
+  padding-inline: var(--wp-space-3);
+  border: 1px solid var(--wp-border-strong);
+  border-radius: var(--wp-radius-round);
+  background: var(--wp-raised);
+  color: var(--wp-text);
+  font-size: var(--wp-text-small);
+  cursor: pointer;
+}
+
+.chip[data-selected] {
+  border-color: var(--wp-line-mind);
+  background: var(--wp-tint-mind);
+}
+
+.chip[data-focus-visible] {
+  outline: 2px solid var(--wp-focus-ring);
+  outline-offset: 2px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-3);
+  align-items: center;
+}
+
+.hint {
+  color: var(--wp-text-muted);
+  font-size: var(--wp-text-small);
+}
+
+/* Trend: fourteen days as a quiet bar chart. */
+.trend {
+  display: grid;
+  grid-template-columns: repeat(14, minmax(0, 1fr));
+  gap: 3px;
+  align-items: end;
+  block-size: 6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bar {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  block-size: 100%;
+}
+
+.bar span[aria-hidden] {
+  display: block;
+  border-radius: 3px 3px 1px 1px;
+  background: var(--wp-line-mind);
+  min-block-size: 3px;
+}
+
+.bar[data-empty="true"] span[aria-hidden] {
+  background: var(--wp-border-subtle);
+  block-size: 3px;
+}
+
+.bar[data-today="true"] span[aria-hidden] {
+  outline: 2px solid var(--wp-text);
+  outline-offset: 1px;
+}
+
+.trendAxis {
+  display: flex;
+  justify-content: space-between;
+  color: var(--wp-text-muted);
+  font-size: var(--wp-text-meta);
+}
+
+/* Journal */
+.entries {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.entry {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+  padding-block: var(--wp-space-4);
+}
+
+.entry + .entry {
+  border-block-start: 1px solid var(--wp-border-subtle);
+}
+
+.entryHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wp-space-2);
+}
+
+.entryBody {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.entryPrompt {
+  color: var(--wp-text-secondary);
+  font-style: italic;
+}
+
+/* Breathing */
+.breathe {
+  display: grid;
+  justify-items: center;
+  gap: var(--wp-space-4);
+  padding-block: var(--wp-space-4);
+}
+
+.circleWrap {
+  display: grid;
+  place-items: center;
+  inline-size: 12rem;
+  block-size: 12rem;
+}
+
+.circle {
+  display: grid;
+  place-items: center;
+  inline-size: 100%;
+  block-size: 100%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 40%, var(--wp-tint-mind), transparent 70%), var(--wp-tint-mind);
+  box-shadow: inset 0 0 0 2px var(--wp-line-mind);
+  transform: scale(0.55);
+  transition: transform linear;
+}
+
+.circle[data-phase="in"],
+.circle[data-phase="hold"] {
+  transform: scale(1);
+}
+
+.cue {
+  font-size: var(--wp-text-lead);
+  font-weight: var(--wp-weight-semibold);
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .circle {
+    transition: none;
+    transform: scale(0.8);
+  }
+
+  .circle[data-phase="in"],
+  .circle[data-phase="hold"] {
+    transform: scale(0.8);
+  }
+}
+
+.grounding {
+  display: grid;
+  gap: var(--wp-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.grounding li {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr);
+  gap: var(--wp-space-3);
+  align-items: center;
+}
+
+.grounding b {
+  display: grid;
+  place-items: center;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  border-radius: 50%;
+  background: var(--wp-tint-mind);
+  font-variant-numeric: tabular-nums;
+}

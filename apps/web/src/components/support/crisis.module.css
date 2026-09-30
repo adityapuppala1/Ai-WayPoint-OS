@@ -1,0 +1,114 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-4);
+  padding: var(--wp-space-5);
+  border: 1px solid color-mix(in oklch, var(--wp-support) 35%, transparent);
+  border-inline-start: 4px solid var(--wp-support);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-support-tint);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-3);
+}
+
+.mark {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  border-radius: 50%;
+  background: var(--wp-support);
+  color: var(--wp-raised);
+}
+
+.headline {
+  font-size: var(--wp-text-lead);
+  line-height: var(--wp-leading-snug);
+}
+
+.message {
+  max-inline-size: var(--wp-reading-max);
+}
+
+.primary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-2);
+}
+
+.secondary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-1) var(--wp-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+  min-block-size: var(--wp-touch-min);
+  padding-inline: var(--wp-space-2);
+  font-weight: var(--wp-weight-medium);
+}
+
+.grounding {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--wp-space-1) var(--wp-space-4);
+  align-items: center;
+  padding: var(--wp-space-4);
+  border-radius: var(--wp-radius-sm);
+  background: var(--wp-raised);
+}
+
+.groundingTitle {
+  grid-column: 1;
+  font-weight: var(--wp-weight-semibold);
+}
+
+.grounding > p:last-of-type {
+  grid-column: 1;
+}
+
+/* A slow breathing guide: 4s in, 4s hold, 6s out. */
+.breath {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  inline-size: 3.5rem;
+  block-size: 3.5rem;
+  border: 3px solid var(--wp-support);
+  border-radius: 50%;
+  animation: breathe 14s var(--wp-ease-standard) infinite;
+}
+
+@keyframes breathe {
+  0% {
+    transform: scale(0.6);
+  }
+  28% {
+    transform: scale(1);
+  }
+  57% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(0.6);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .breath {
+    animation: none;
+  }
+}
+
+.foot {
+  font-size: var(--wp-text-small);
+}

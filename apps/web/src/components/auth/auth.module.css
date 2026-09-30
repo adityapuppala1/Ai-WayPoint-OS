@@ -1,0 +1,42 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-5);
+  max-inline-size: 28rem;
+  margin-inline: auto;
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-4);
+}
+
+.alt {
+  color: var(--wp-text-secondary);
+}
+
+.agree {
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+}
+
+.forgot {
+  margin-block-start: calc(-1 * var(--wp-space-2));
+  font-size: var(--wp-text-small);
+}
+
+.small {
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+}
+
+.head h1:focus {
+  outline: none;
+}

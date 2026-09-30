@@ -1,0 +1,205 @@
+/*
+ * A printable poster for a programme: big code, big QR code, one promise about privacy.
+ * On screen it previews on a card; in print only the poster remains, dark on white.
+ */
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--wp-space-6);
+  min-block-size: 100dvh;
+  padding: var(--wp-space-6) var(--wp-space-4) var(--wp-space-12);
+  background: var(--wp-canvas);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--wp-space-4);
+  inline-size: 100%;
+  max-inline-size: 48rem;
+}
+
+.toolbarText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+  max-inline-size: 28rem;
+}
+
+.toolbarActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--wp-space-3);
+}
+
+.poster {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-6);
+  inline-size: 100%;
+  max-inline-size: 48rem;
+  padding: clamp(var(--wp-space-6), 5vw, var(--wp-space-12));
+  border: 1px solid var(--wp-border-subtle);
+  border-block-start: 0.5rem solid var(--wp-line-org);
+  border-radius: var(--wp-radius-lg);
+  background: var(--wp-raised);
+  box-shadow: var(--wp-shadow-raised);
+  color: var(--wp-text);
+}
+
+.brand {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--wp-space-3);
+  font-size: var(--wp-text-small);
+  font-weight: var(--wp-weight-semibold);
+  color: var(--wp-text-secondary);
+}
+
+.eyebrow {
+  font-size: var(--wp-text-lead);
+  color: var(--wp-text-secondary);
+}
+
+.title {
+  font-size: clamp(2rem, 1.5rem + 3vw, 3.25rem);
+  font-weight: var(--wp-weight-semibold);
+  line-height: var(--wp-leading-tight);
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+.description {
+  font-size: var(--wp-text-lead);
+  color: var(--wp-text-secondary);
+  max-inline-size: 36rem;
+}
+
+.join {
+  display: grid;
+  gap: var(--wp-space-6);
+  align-items: center;
+  padding: var(--wp-space-6);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-tint-org);
+}
+
+@media (min-width: 36rem) {
+  .join {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+}
+
+.qr {
+  display: block;
+  inline-size: 12rem;
+  block-size: 12rem;
+  padding: var(--wp-space-2);
+  border-radius: var(--wp-radius-sm);
+  background: #fff;
+}
+
+.joinText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+  min-inline-size: 0;
+}
+
+.scan {
+  font-size: var(--wp-text-h3);
+  font-weight: var(--wp-weight-semibold);
+}
+
+.or {
+  color: var(--wp-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.code {
+  font-size: clamp(2.25rem, 1.75rem + 3vw, 3.5rem);
+  font-weight: var(--wp-weight-semibold);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+}
+
+.free {
+  font-size: var(--wp-text-lead);
+  font-weight: var(--wp-weight-medium);
+}
+
+.privacy {
+  display: flex;
+  gap: var(--wp-space-3);
+  align-items: flex-start;
+  padding-block-start: var(--wp-space-4);
+  border-block-start: 1px solid var(--wp-border-subtle);
+  color: var(--wp-text-secondary);
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+
+  :global(body) {
+    background: #fff !important;
+  }
+
+  :global(.wp-skip-link) {
+    display: none !important;
+  }
+
+  .page {
+    display: block;
+    min-block-size: 0;
+    padding: 0;
+    background: #fff;
+  }
+
+  .toolbar {
+    display: none;
+  }
+
+  .poster {
+    max-inline-size: none;
+    padding: 0;
+    border: 0;
+    border-block-start: 6mm solid var(--wp-line-org);
+    border-radius: 0;
+    box-shadow: none;
+    background: #fff;
+    color: #000;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .brand,
+  .eyebrow,
+  .description,
+  .or,
+  .privacy {
+    color: #333;
+  }
+
+  .join {
+    grid-template-columns: auto minmax(0, 1fr);
+    background: #f1f0fa;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .qr {
+    inline-size: 60mm;
+    block-size: 60mm;
+  }
+}

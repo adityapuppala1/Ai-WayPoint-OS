@@ -1,0 +1,88 @@
+.library {
+  display: flex;
+  flex-direction: column;
+}
+
+.pattern {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-3);
+  padding-block-end: var(--wp-space-3);
+}
+
+.pattern h4 {
+  font-size: var(--wp-text-body);
+}
+
+.pattern ul,
+.pattern ol {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+  margin: 0;
+  padding-inline-start: var(--wp-space-5);
+}
+
+.channels {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.channels li + li {
+  padding-block-start: var(--wp-space-4);
+  border-block-start: 1px solid var(--wp-border-subtle);
+}
+
+.channelName {
+  font-weight: var(--wp-weight-semibold);
+}
+
+/* Scams reported recently (published after a moderator checked them). */
+.reported {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reported li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+  padding-block: var(--wp-space-3);
+}
+
+.reported li:first-child {
+  padding-block-start: 0;
+}
+
+.reported li:last-child {
+  padding-block-end: 0;
+}
+
+.reported li + li {
+  border-block-start: 1px solid var(--wp-border-subtle);
+}
+
+.reportedHosts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--wp-space-1) var(--wp-space-2);
+}
+
+/* Websites named in reports are shown as text, never as links. */
+.host {
+  padding-inline: var(--wp-space-2);
+  border-radius: var(--wp-radius-xs);
+  background: var(--wp-danger-tint);
+  color: var(--wp-danger);
+  font-size: var(--wp-text-meta);
+  font-weight: var(--wp-weight-medium);
+  overflow-wrap: anywhere;
+}

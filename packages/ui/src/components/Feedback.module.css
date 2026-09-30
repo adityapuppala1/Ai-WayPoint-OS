@@ -1,0 +1,99 @@
+@layer components {
+  .empty {
+    display: grid;
+    justify-items: start;
+    gap: var(--wp-space-3);
+    padding: var(--wp-space-8) var(--wp-space-4);
+  }
+
+  .emptyCentered {
+    justify-items: center;
+    text-align: center;
+  }
+
+  .emptyTitle {
+    font-size: var(--wp-text-lead);
+    font-weight: var(--wp-weight-semibold);
+  }
+
+  .emptyBody {
+    color: var(--wp-text-secondary);
+    max-inline-size: 32rem;
+  }
+
+  .skeleton {
+    display: block;
+    border-radius: var(--wp-radius-xs);
+    background: linear-gradient(
+      90deg,
+      var(--wp-sunken) 0%,
+      color-mix(in oklch, var(--wp-sunken) 60%, var(--wp-raised)) 50%,
+      var(--wp-sunken) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+
+  .spinner {
+    display: inline-block;
+    inline-size: 1.25rem;
+    block-size: 1.25rem;
+    border-radius: 50%;
+    border: 2px solid var(--wp-border-strong);
+    border-block-start-color: var(--wp-text);
+    animation: spin 700ms linear infinite;
+    vertical-align: middle;
+  }
+
+  .avatar {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    inline-size: var(--size, 2.25rem);
+    block-size: var(--size, 2.25rem);
+    border-radius: 50%;
+    background: var(--wp-tint-circles);
+    color: var(--wp-line-circles);
+    font-size: calc(var(--size, 2.25rem) * 0.4);
+    font-weight: var(--wp-weight-semibold);
+    line-height: 1;
+    user-select: none;
+  }
+
+  .stat {
+    display: grid;
+    gap: var(--wp-space-1);
+  }
+
+  .statValue {
+    font-size: var(--wp-text-h3);
+    font-weight: var(--wp-weight-semibold);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .statLabel {
+    font-size: var(--wp-text-small);
+    color: var(--wp-text-secondary);
+  }
+
+  .statNote {
+    font-size: var(--wp-text-meta);
+    color: var(--wp-text-muted);
+  }
+
+  @keyframes shimmer {
+    from {
+      background-position: 100% 0;
+    }
+    to {
+      background-position: -100% 0;
+    }
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+}

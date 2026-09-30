@@ -1,0 +1,469 @@
+/*
+ * The admin console: calm, dense, legible. Numbers are stat tiles; the one chart (AI calls
+ * per day) is a single-series column chart in the Ask line colour.
+ */
+
+/* ───────────── Section navigation ───────────── */
+.nav {
+  display: flex;
+  gap: var(--wp-space-1);
+  margin: 0;
+  padding: 0 0 var(--wp-space-1);
+  border-block-end: 1px solid var(--wp-border-subtle);
+  list-style: none;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+  min-block-size: var(--wp-touch-min);
+  padding-inline: var(--wp-space-3);
+  border-radius: var(--wp-radius-sm);
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+  font-weight: var(--wp-weight-medium);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.nav a:hover {
+  background: var(--wp-sunken);
+  color: var(--wp-text);
+}
+
+.nav a[aria-current="page"] {
+  color: var(--wp-text);
+  box-shadow: inset 0 -2px 0 var(--wp-text);
+  border-end-start-radius: 0;
+  border-end-end-radius: 0;
+}
+
+.nav a:focus-visible {
+  outline: 2px solid var(--wp-focus-ring);
+  outline-offset: -2px;
+}
+
+.badge {
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: 1.375rem;
+  block-size: 1.375rem;
+  padding-inline: var(--wp-space-1);
+  border-radius: var(--wp-radius-round);
+  background: var(--wp-caution-tint);
+  color: var(--wp-caution);
+  font-size: var(--wp-text-meta);
+  font-weight: var(--wp-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ───────────── Stat tiles ───────────── */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
+  gap: var(--wp-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+  padding: var(--wp-space-4);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-sunken);
+}
+
+.tile[data-tone="caution"] {
+  background: var(--wp-caution-tint);
+}
+
+.tile[data-tone="danger"] {
+  background: var(--wp-danger-tint);
+}
+
+.tileValue {
+  font-size: var(--wp-text-h3);
+  font-weight: var(--wp-weight-semibold);
+  line-height: var(--wp-leading-tight);
+  color: var(--wp-text);
+}
+
+.tileLabel {
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+}
+
+.tileLink {
+  margin-block-start: auto;
+  padding-block-start: var(--wp-space-1);
+  font-size: var(--wp-text-small);
+}
+
+.note {
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+}
+
+.grid2 {
+  display: grid;
+  gap: var(--wp-space-6);
+}
+
+@media (min-width: 60rem) {
+  .grid2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
+/* ───────────── Budget meter ───────────── */
+.meter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+}
+
+.meterTrack {
+  display: flex;
+  block-size: 0.75rem;
+  border-radius: var(--wp-radius-round);
+  background: var(--wp-tint-ask);
+  overflow: hidden;
+}
+
+.meterFill {
+  display: block;
+  block-size: 100%;
+  background: var(--wp-line-ask);
+}
+
+.meter[data-tone="caution"] .meterTrack {
+  background: var(--wp-caution-tint);
+}
+
+.meter[data-tone="caution"] .meterFill {
+  background: var(--wp-caution);
+}
+
+.meter[data-tone="danger"] .meterTrack {
+  background: var(--wp-danger-tint);
+}
+
+.meter[data-tone="danger"] .meterFill {
+  background: var(--wp-danger);
+}
+
+/* ───────────── Column chart (AI calls per day) ───────────── */
+.chart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: repeat(14, minmax(0, 1fr));
+  align-items: end;
+  gap: 2px;
+  block-size: 7rem;
+  margin: 0;
+  padding: 0;
+  border-block-end: 1px solid var(--wp-border-subtle);
+  list-style: none;
+}
+
+.column {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  block-size: 100%;
+  outline: none;
+}
+
+.columnBar {
+  display: block;
+  inline-size: min(100%, 24px);
+  min-block-size: 1px;
+  background: var(--wp-line-ask);
+  border-start-start-radius: 4px;
+  border-start-end-radius: 4px;
+}
+
+.column[data-zero="true"] .columnBar {
+  background: var(--wp-border-subtle);
+}
+
+/* Hover detail. Not rendered until hovered, so it never widens the page; the columns near
+   either edge anchor their tip to that edge so it stays on screen. */
+.tip {
+  position: absolute;
+  inset-block-end: calc(100% + var(--wp-space-1));
+  inset-inline-start: 50%;
+  z-index: 1;
+  display: none;
+  padding: var(--wp-space-1) var(--wp-space-2);
+  border-radius: var(--wp-radius-sm);
+  background: var(--wp-sign);
+  color: var(--wp-sign-text);
+  font-size: var(--wp-text-meta);
+  white-space: nowrap;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+:global([dir="rtl"]) .tip {
+  transform: translateX(50%);
+}
+
+.column:nth-child(-n + 4) .tip {
+  inset-inline-start: 0;
+  transform: none;
+}
+
+.column:nth-last-child(-n + 4) .tip {
+  inset-inline-start: auto;
+  inset-inline-end: 0;
+  transform: none;
+}
+
+.column:hover .tip {
+  display: block;
+}
+
+.axis {
+  display: flex;
+  justify-content: space-between;
+  color: var(--wp-text-muted);
+  font-size: var(--wp-text-meta);
+}
+
+/* ───────────── Key–value rows ───────────── */
+.rows {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--wp-space-1) var(--wp-space-4);
+  padding-block: var(--wp-space-2);
+  font-size: var(--wp-text-small);
+}
+
+.row + .row {
+  border-block-start: 1px solid var(--wp-border-subtle);
+}
+
+.rowValue {
+  color: var(--wp-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.row[data-stale="true"] .rowValue {
+  color: var(--wp-caution);
+  font-weight: var(--wp-weight-medium);
+}
+
+/* A channel and whether it is answering: a dot and a word, never the colour alone. */
+.status {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--wp-space-1) var(--wp-space-2);
+}
+
+.status::before {
+  content: "";
+  align-self: center;
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  border-radius: var(--wp-radius-round);
+  background: var(--wp-border-strong);
+}
+
+.status[data-on="true"]::before {
+  background: var(--wp-safe);
+}
+
+.statusText {
+  color: var(--wp-text-secondary);
+}
+
+.status[data-on="true"] .statusText {
+  color: var(--wp-safe);
+  font-weight: var(--wp-weight-medium);
+}
+
+/* ───────────── Queue items (moderation, scam reports) ───────────── */
+.items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-3);
+  padding: var(--wp-space-4) var(--wp-space-5);
+  border: 1px solid var(--wp-border-subtle);
+  border-inline-start: 4px solid var(--wp-border-strong);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-raised);
+  box-shadow: var(--wp-shadow-raised);
+}
+
+.item[data-tone="caution"] {
+  border-inline-start-color: var(--wp-caution);
+}
+
+.item[data-tone="danger"] {
+  border-inline-start-color: var(--wp-danger);
+}
+
+.itemHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--wp-space-1) var(--wp-space-3);
+  color: var(--wp-text-muted);
+  font-size: var(--wp-text-meta);
+}
+
+.body {
+  padding: var(--wp-space-3) var(--wp-space-4);
+  border-radius: var(--wp-radius-sm);
+  background: var(--wp-sunken);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.host {
+  padding-inline: var(--wp-space-2);
+  border-radius: var(--wp-radius-xs);
+  background: var(--wp-danger-tint);
+  color: var(--wp-danger);
+  font-size: var(--wp-text-meta);
+  font-weight: var(--wp-weight-medium);
+  overflow-wrap: anywhere;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.filters a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+  min-block-size: 2.25rem;
+  padding-inline: var(--wp-space-3);
+  border: 1px solid var(--wp-border-subtle);
+  border-radius: var(--wp-radius-round);
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+  text-decoration: none;
+}
+
+.filters a[aria-current="page"] {
+  border-color: var(--wp-text);
+  background: var(--wp-text);
+  color: var(--wp-canvas);
+}
+
+/* ───────────── Activity log ───────────── */
+.log {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.entry {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--wp-space-1) var(--wp-space-4);
+  padding-block: var(--wp-space-3);
+  font-size: var(--wp-text-small);
+}
+
+.entry + .entry {
+  border-block-start: 1px solid var(--wp-border-subtle);
+}
+
+.entryWhat {
+  font-weight: var(--wp-weight-medium);
+}
+
+.entryWho {
+  grid-column: 1 / -1;
+  color: var(--wp-text-muted);
+  font-size: var(--wp-text-meta);
+  overflow-wrap: anywhere;
+}
+
+.entryWhen {
+  color: var(--wp-text-muted);
+  font-size: var(--wp-text-meta);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.table {
+  inline-size: 100%;
+  margin-block-start: var(--wp-space-2);
+  border-collapse: collapse;
+  font-size: var(--wp-text-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.table th,
+.table td {
+  padding: var(--wp-space-1) var(--wp-space-2);
+  border-block-end: 1px solid var(--wp-border-subtle);
+  text-align: start;
+}
+
+.table thead th {
+  color: var(--wp-text-muted);
+  font-weight: var(--wp-weight-medium);
+}
+
+.table td {
+  text-align: end;
+}
+
+.table tbody th {
+  font-weight: var(--wp-weight-regular);
+}

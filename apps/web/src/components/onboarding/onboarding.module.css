@@ -1,0 +1,114 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-6);
+  max-inline-size: 40rem;
+  margin-inline: auto;
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-5);
+  padding: var(--wp-space-5);
+  border: 1px solid var(--wp-border-subtle);
+  border-radius: var(--wp-radius-lg);
+  background: var(--wp-raised);
+  box-shadow: var(--wp-shadow-raised);
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-5);
+}
+
+.step h2 {
+  font-size: var(--wp-text-h4);
+  outline: none;
+}
+
+.pair {
+  display: grid;
+  gap: var(--wp-space-4);
+}
+
+@media (min-width: 40rem) {
+  .card {
+    padding: var(--wp-space-8);
+  }
+
+  .pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.subhead {
+  margin-block-end: var(--wp-space-2);
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+  font-weight: var(--wp-weight-medium);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.picked {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--wp-border-subtle);
+  border-radius: var(--wp-radius-md);
+  list-style: none;
+}
+
+.pickedRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--wp-space-3);
+  padding: var(--wp-space-3);
+}
+
+.pickedRow + .pickedRow {
+  border-block-start: 1px solid var(--wp-border-subtle);
+}
+
+.pickedName {
+  flex: 1 1 10rem;
+  font-weight: var(--wp-weight-medium);
+}
+
+.switches {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-4);
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wp-space-3);
+  padding-block-start: var(--wp-space-4);
+  border-block-start: 1px solid var(--wp-border-subtle);
+}
+
+.agree {
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+}

@@ -1,0 +1,58 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-4);
+}
+
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-5);
+}
+
+.resultTitle {
+  font-size: var(--wp-text-h4);
+  outline: none;
+}
+
+.signs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.signs li + li {
+  padding-block-start: var(--wp-space-4);
+  border-block-start: 1px solid var(--wp-border-subtle);
+}
+
+.signTitle {
+  font-weight: var(--wp-weight-semibold);
+}
+
+.host {
+  font-weight: var(--wp-weight-medium);
+  overflow-wrap: anywhere;
+}
+
+.danger {
+  color: var(--wp-danger);
+  font-weight: var(--wp-weight-medium);
+}
+
+.urgent {
+  color: var(--wp-caution);
+  font-size: var(--wp-text-small);
+  font-weight: var(--wp-weight-semibold);
+}
+
+.advice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+  margin: 0;
+  padding-inline-start: var(--wp-space-5);
+}

@@ -1,0 +1,320 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-8);
+  inline-size: 100%;
+  max-inline-size: 64rem;
+  margin-inline: auto;
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-3);
+  max-inline-size: var(--wp-reading-max);
+}
+
+.head h1 {
+  font-size: clamp(var(--wp-text-h2), 1.5rem + 1.6vw, var(--wp-text-h1));
+  line-height: var(--wp-leading-tight);
+}
+
+/* Who runs this Waypoint: the first thing a notice has to say. */
+.who {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--wp-space-3);
+  align-items: start;
+  max-inline-size: var(--wp-reading-max);
+  padding: var(--wp-space-4) var(--wp-space-5);
+  border: 1px solid var(--wp-border-subtle);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-raised);
+}
+
+.who > svg {
+  margin-block-start: 0.1em;
+  color: var(--wp-text-secondary);
+}
+
+.who p + p {
+  margin-block-start: var(--wp-space-1);
+}
+
+/* The short version is the page's one Sign: slate, with the signal-yellow edge. */
+.short {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-5);
+  padding: var(--wp-space-6);
+  border-inline-start: 6px solid var(--wp-signal);
+  border-radius: var(--wp-radius-lg);
+  background: var(--wp-sign);
+  color: var(--wp-sign-text);
+}
+
+.short h2 {
+  color: var(--wp-sign-text);
+  font-size: var(--wp-text-lead);
+}
+
+.short ul {
+  display: grid;
+  gap: var(--wp-space-4) var(--wp-space-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.short li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--wp-space-3);
+  align-items: start;
+  line-height: var(--wp-leading-snug);
+}
+
+.short li > svg {
+  color: var(--wp-signal);
+}
+
+@media (min-width: 48rem) {
+  .short {
+    padding: var(--wp-space-8);
+  }
+
+  .short ul {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.layout {
+  display: grid;
+  gap: var(--wp-space-6);
+}
+
+/* Contents as a route: a line with a station for each section. */
+.stations {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-inline-start: 2px solid var(--wp-border-strong);
+}
+
+.stations a {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-block-size: 2.25rem;
+  padding-inline-start: var(--wp-space-4);
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+  line-height: var(--wp-leading-snug);
+  text-decoration: none;
+}
+
+.stations a::before {
+  position: absolute;
+  inset-inline-start: -7px;
+  inset-block-start: 50%;
+  translate: 0 -50%;
+  inline-size: 12px;
+  block-size: 12px;
+  border: 2px solid var(--wp-border-strong);
+  border-radius: 50%;
+  background: var(--wp-canvas);
+  content: "";
+}
+
+.stations a:hover {
+  color: var(--wp-text);
+}
+
+.stations a:hover::before {
+  border-color: var(--wp-signal-hover);
+  background: var(--wp-signal);
+}
+
+.tocSmall {
+  border: 1px solid var(--wp-border-subtle);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-raised);
+}
+
+.tocSmall summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-block-size: var(--wp-touch-min);
+  padding-inline: var(--wp-space-4);
+  font-weight: var(--wp-weight-medium);
+  list-style: none;
+  cursor: pointer;
+}
+
+.tocSmall summary::-webkit-details-marker {
+  display: none;
+}
+
+/* A chevron that turns when the contents open. Down and up read the same in both
+   directions, so the borders are physical, not logical. */
+.tocSmall summary::after {
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  margin-block-start: -0.25rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  rotate: 45deg;
+  transition: rotate var(--wp-duration-fast) var(--wp-ease-standard);
+  content: "";
+}
+
+.tocSmall[open] summary::after {
+  margin-block-start: 0.25rem;
+  rotate: -135deg;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tocSmall summary::after {
+    transition: none;
+  }
+}
+
+.tocSmall .stations {
+  margin: 0 var(--wp-space-4) var(--wp-space-4) var(--wp-space-5);
+}
+
+.tocWide {
+  display: none;
+}
+
+.tocTitle {
+  margin-block-end: var(--wp-space-3);
+  color: var(--wp-text-muted);
+  font-size: var(--wp-text-meta);
+  font-weight: var(--wp-weight-semibold);
+  letter-spacing: 0.04em;
+}
+
+@media (min-width: 64rem) {
+  .layout {
+    grid-template-columns: 15rem minmax(0, 1fr);
+    gap: var(--wp-space-12);
+    align-items: start;
+  }
+
+  .toc {
+    position: sticky;
+    inset-block-start: var(--wp-space-6);
+  }
+
+  .tocSmall {
+    display: none;
+  }
+
+  .tocWide {
+    display: block;
+  }
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-10);
+  max-inline-size: var(--wp-reading-max);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-3);
+  scroll-margin-block-start: var(--wp-space-6);
+}
+
+.section h2 {
+  font-size: var(--wp-text-h4);
+  line-height: var(--wp-leading-snug);
+}
+
+.section:target h2 {
+  text-decoration: underline;
+  text-decoration-color: var(--wp-signal);
+  text-decoration-thickness: 3px;
+  text-underline-offset: 0.2em;
+}
+
+.points {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+  margin: 0;
+  padding-inline-start: 1.35em;
+}
+
+.points li::marker {
+  color: var(--wp-text-muted);
+}
+
+.rows {
+  margin: 0;
+  border-block-start: 1px solid var(--wp-border-subtle);
+}
+
+.row {
+  display: grid;
+  gap: var(--wp-space-1);
+  padding-block: var(--wp-space-3);
+  border-block-end: 1px solid var(--wp-border-subtle);
+}
+
+.row dt {
+  font-weight: var(--wp-weight-semibold);
+  line-height: var(--wp-leading-snug);
+}
+
+.row dd {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+  margin: 0;
+  color: var(--wp-text-secondary);
+}
+
+@media (min-width: 40rem) {
+  .row {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    gap: var(--wp-space-5);
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-2);
+}
+
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-2) var(--wp-space-5);
+  padding-block-start: var(--wp-space-5);
+  border-block-start: 1px solid var(--wp-border-subtle);
+}
+
+@media print {
+  .toc,
+  .actions {
+    display: none;
+  }
+
+  .short {
+    border: 1px solid currentColor;
+    background: none;
+    color: inherit;
+  }
+
+  .short h2,
+  .short li > svg {
+    color: inherit;
+  }
+}

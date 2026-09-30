@@ -1,0 +1,54 @@
+@layer components {
+  .iconButton {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    inline-size: var(--wp-touch-min);
+    block-size: var(--wp-touch-min);
+    border-radius: var(--wp-radius-sm);
+    border: 1px solid transparent;
+    color: var(--wp-text-secondary);
+    background: transparent;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      background-color var(--wp-duration-fast) var(--wp-ease-out),
+      color var(--wp-duration-fast) var(--wp-ease-out);
+  }
+
+  .iconButton[data-hovered] {
+    background: color-mix(in oklch, var(--wp-text) 7%, transparent);
+    color: var(--wp-text);
+  }
+
+  .iconButton[data-pressed] {
+    background: color-mix(in oklch, var(--wp-text) 12%, transparent);
+  }
+
+  .iconButton[data-focus-visible] {
+    outline: 2px solid transparent;
+    box-shadow:
+      0 0 0 2px var(--wp-canvas),
+      0 0 0 4px var(--wp-focus-ring),
+      0 0 0 7px var(--wp-signal);
+  }
+
+  .iconButton[data-disabled] {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .outlined {
+    border-color: var(--wp-border-strong);
+    background: var(--wp-raised);
+  }
+
+  .onSign {
+    color: var(--wp-sign-muted);
+  }
+
+  .onSign[data-hovered] {
+    color: var(--wp-sign-text);
+    background: color-mix(in oklch, var(--wp-sign-text) 10%, transparent);
+  }
+}

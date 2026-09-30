@@ -1,0 +1,32 @@
+{
+  "name": "@waypoint/ai",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "AI gateway: model router, providers, guardrails, prompts, tools, cost tracking, offline fallback and eval harness.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./prompts": "./src/prompts/index.ts",
+    "./evals": "./src/evals/index.ts"
+  },
+  "scripts": {
+    "eval": "tsx src/evals/cli.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "4.0.68",
+    "@ai-sdk/google": "4.0.85",
+    "@ai-sdk/openai": "4.0.80",
+    "@ai-sdk/openai-compatible": "3.0.59",
+    "@waypoint/content": "workspace:*",
+    "@waypoint/core": "workspace:*",
+    "@waypoint/db": "workspace:*",
+    "@waypoint/i18n": "workspace:*",
+    "ai": "7.0.122",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "tsx": "4.23.15"
+  }
+}

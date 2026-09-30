@@ -1,0 +1,102 @@
+.frame {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 100dvh;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wp-space-3);
+  padding-block: calc(var(--wp-space-3) + env(safe-area-inset-top)) var(--wp-space-3);
+  padding-inline: var(--wp-space-4);
+  border-block-end: 1px solid var(--wp-border-subtle);
+  background: var(--wp-raised);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+  min-block-size: var(--wp-touch-min);
+  color: var(--wp-text);
+  font-size: var(--wp-text-lead);
+  font-weight: var(--wp-weight-semibold);
+  letter-spacing: -0.01em;
+  text-decoration: none;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--wp-space-2);
+}
+
+.language {
+  min-inline-size: 9rem;
+}
+
+.help {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wp-space-1);
+  min-block-size: 2.5rem;
+  padding-inline: var(--wp-space-3);
+  border-radius: var(--wp-radius-round);
+  background: var(--wp-support-tint);
+  color: var(--wp-support);
+  font-size: var(--wp-text-small);
+  font-weight: var(--wp-weight-medium);
+  text-decoration: none;
+}
+
+.signIn {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 2.5rem;
+  padding-inline: var(--wp-space-3);
+  font-weight: var(--wp-weight-medium);
+}
+
+.main {
+  flex: 1;
+  padding-block: var(--wp-space-8) var(--wp-space-16);
+  padding-inline: max(var(--wp-space-4), env(safe-area-inset-left))
+    max(var(--wp-space-4), env(safe-area-inset-right));
+  outline: none;
+}
+
+/* Footer: the privacy notice and terms, reachable from every public page. */
+.footer {
+  padding-block: var(--wp-space-5) calc(var(--wp-space-5) + env(safe-area-inset-bottom));
+  padding-inline: var(--wp-space-4);
+  border-block-start: 1px solid var(--wp-border-subtle);
+}
+
+.legal {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--wp-space-2) var(--wp-space-6);
+  font-size: var(--wp-text-small);
+}
+
+.legal a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 2.25rem;
+  color: var(--wp-text-secondary);
+}
+
+@media (min-width: 60rem) {
+  .header {
+    padding-inline: var(--wp-space-8);
+  }
+
+  .main {
+    padding-block: var(--wp-space-12) var(--wp-space-20);
+  }
+}

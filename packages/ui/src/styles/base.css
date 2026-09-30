@@ -1,0 +1,165 @@
+/* Base typography, colour and interaction defaults. */
+html {
+  font-family: var(--wp-font-sans);
+  font-size: 100%;
+  background: var(--wp-canvas);
+  color: var(--wp-text);
+  scrollbar-gutter: stable;
+  accent-color: var(--wp-text);
+}
+
+body {
+  font-size: var(--wp-text-body);
+  line-height: var(--wp-leading-body);
+  font-weight: var(--wp-weight-regular);
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  background: var(--wp-canvas);
+  color: var(--wp-text);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-weight: var(--wp-weight-semibold);
+  line-height: var(--wp-leading-snug);
+  text-wrap: balance;
+  color: var(--wp-text);
+}
+
+h1 {
+  font-size: clamp(var(--wp-text-h3), 1.3rem + 2vw, var(--wp-text-h1));
+  line-height: var(--wp-leading-tight);
+  letter-spacing: -0.015em;
+}
+
+h2 {
+  font-size: clamp(var(--wp-text-h4), 1.2rem + 1.2vw, var(--wp-text-h2));
+  line-height: var(--wp-leading-tight);
+  letter-spacing: -0.01em;
+}
+
+h3 {
+  font-size: var(--wp-text-h4);
+}
+
+h4 {
+  font-size: var(--wp-text-lead);
+}
+
+p,
+li,
+dd {
+  text-wrap: pretty;
+}
+
+small {
+  font-size: var(--wp-text-meta);
+  line-height: var(--wp-leading-meta);
+}
+
+strong,
+b {
+  font-weight: var(--wp-weight-semibold);
+}
+
+/* Links: slate text + underline; hover and focus borrow the signal yellow (never yellow text). */
+a {
+  color: inherit;
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+  text-decoration-color: color-mix(in oklch, currentColor 45%, transparent);
+  border-radius: 2px;
+  transition:
+    background-color var(--wp-duration-fast) var(--wp-ease-out),
+    text-decoration-color var(--wp-duration-fast) var(--wp-ease-out);
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+  text-decoration-color: currentColor;
+}
+
+/* One focus treatment everywhere: slate ring + signal-yellow halo, visible on every surface. */
+:focus-visible {
+  outline: 2px solid transparent; /* keeps a visible outline in Windows forced-colours mode */
+  outline-offset: 2px;
+  box-shadow:
+    0 0 0 2px var(--wp-canvas),
+    0 0 0 4px var(--wp-focus-ring),
+    0 0 0 7px var(--wp-signal);
+}
+
+a:focus-visible {
+  background: var(--wp-signal);
+  color: var(--wp-signal-ink);
+  text-decoration-color: var(--wp-signal-ink);
+  box-shadow: 0 3px 0 var(--wp-focus-ring);
+}
+
+::selection {
+  background: var(--wp-signal);
+  color: var(--wp-signal-ink);
+}
+
+hr {
+  border: 0;
+  border-block-start: 1px solid var(--wp-border-subtle);
+}
+
+code,
+kbd,
+samp {
+  font-family: var(--wp-font-system);
+  font-size: 0.9375em;
+}
+
+kbd {
+  padding-inline: 0.35em;
+  padding-block: 0.05em;
+  border: 1px solid var(--wp-border-strong);
+  border-block-end-width: 2px;
+  border-radius: var(--wp-radius-xs);
+  background: var(--wp-raised);
+  font-size: var(--wp-text-meta);
+}
+
+/* Lite mode: system fonts, no motion — for slow connections and older phones. */
+:root[data-lite="true"] {
+  --wp-font-sans: var(--wp-font-system);
+}
+
+:root[data-lite="true"] *,
+:root[data-lite="true"] *::before,
+:root[data-lite="true"] *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (forced-colors: active) {
+  :focus-visible {
+    outline: 3px solid CanvasText;
+  }
+}
+
+/* Icons never shrink inside tight flex rows (headers, buttons, list rows). */
+button svg,
+a svg,
+[role="button"] svg {
+  flex-shrink: 0;
+}

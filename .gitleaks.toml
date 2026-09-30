@@ -1,0 +1,18 @@
+# Secret scanning (see .github/workflows/security.yml). Uses gitleaks' built-in rules, with
+# an allow-list for the values that are public on purpose: test-only secrets used by CI and
+# the end-to-end tests, and the placeholders in .env.example. None of them works anywhere else
+# (a production server refuses to start with them).
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Test-only and placeholder values"
+regexes = [
+  '''ci-only-secret-not-for-production-use-0+''',
+  '''e2e-only-secret-never-use-in-production-0+''',
+  '''MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=''',
+]
+paths = [
+  '''\.env\.example$''',
+  '''pnpm-lock\.yaml$''',
+]

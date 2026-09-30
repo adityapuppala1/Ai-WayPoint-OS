@@ -15,7 +15,8 @@ import {
 } from '@waypoint/auth';
 import { countryOfNumber, toE164 } from '@waypoint/core/channels';
 import { getEnv } from '@waypoint/core/env';
-import { dbReady, getDb } from '@waypoint/db';
+import { isInternalPath } from '@waypoint/core/paths';
+import { dbReady, getDb, sql } from '@waypoint/db';
 import { isLocale, LOCALE_COOKIE, resolveLocale } from '@waypoint/i18n';
 import { bodyLimit } from 'hono/body-limit';
 import { getCookie } from 'hono/cookie';
@@ -24,7 +25,7 @@ import { csrf } from 'hono/csrf';
 import { HTTPException } from 'hono/http-exception';
 import { errorFields, log } from './lib/log';
 import { ApiError, problemResponse } from './lib/problem';
-import { clientAddress, ipHash, keyedHash, rateLimit } from './lib/request';
+import { clientAddress, clientIp, ipHash, keyedHash, rateLimit, withinLimit } from './lib/request';
 import { withSession } from './middleware';
 import admin from './routes/admin';
 import ask from './routes/ask';
@@ -88,7 +89,8 @@ function sameText(a: string, b: string): boolean {
 
 /** A path on this site ("/reset-password"), or a full address on one of its own origins. */
 function onThisSite(target: string, origins: string[]): boolean {
-  if (/^\/(?![/\\])/.test(target)) return true;
+  // Written plainly: no tabs, line breaks or backslashes that a browser would read as "//".
+  if (target.startsWith('/')) return isInternalPath(target);
   try {
     const url = new URL(target);
     return (url.protocol === 'https:' || url.protocol === 'http:') && origins.includes(url.origin);
@@ -207,13 +209,24 @@ export function createApp() {
     const db = c.get('db');
     const number = keyedHash(e164, 'otp');
     if (sending) {
-      // One visitor can ask for codes for a handful of numbers a day. Without this, a single
-      // address working through a list of numbers could use up the ceiling everyone shares
-      // (and with it, phone sign-in for everyone) within the hour.
-      await rateLimit(db, `otp-send-visitor:${ipHash(c.req.raw.headers)}`, {
-        windowSeconds: 86_400,
-        max: 10,
-      });
+      // One visitor address can ask for codes for 60 different numbers a day. Without this, a
+      // single address working through a list of numbers could use up the ceiling everyone
+      // shares (and with it, phone sign-in for everyone) within the hour. Numbers are counted,
+      // not codes: a phone network or an office puts many people behind one address, and each
+      // of them asking again for their own number costs their neighbours nothing.
+      const visitor = clientIp(c.req.raw.headers);
+      if (visitor !== 'unknown') {
+        const who = keyedHash(visitor, 'ip');
+        const first = `otp-number:${who}:${number}`;
+        if (await withinLimit(db, first, { windowSeconds: 86_400, max: 1 }))
+          await rateLimit(db, `otp-numbers:${who}`, { windowSeconds: 86_400, max: 60 }).catch(
+            async (err) => {
+              // Refused: this number was not counted, so it is not remembered as counted.
+              await db.execute(sql`delete from rate_limits where key = ${`api:${first}`}`);
+              throw err;
+            },
+          );
+      }
       await rateLimit(db, `otp-send:${number}`, { windowSeconds: 3600, max: 3 });
       await rateLimit(db, `otp-send-day:${number}`, { windowSeconds: 86_400, max: 6 });
       try {

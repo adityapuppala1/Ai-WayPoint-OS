@@ -320,6 +320,90 @@ describe('SMS through Twilio', () => {
       await db.getDb().execute(db.sql`delete from rate_limits where key like 'api:ch-out%'`);
     }
   });
+
+  it('keeps the record that someone was in danger even when nothing more can be sent', async () => {
+    const { resetEnvForTests } = await import('@waypoint/core/env');
+    await db.getDb().execute(db.sql`delete from rate_limits where key like 'api:ch-out%'`);
+    process.env.WAYPOINT_TEXT_REPLIES_PER_HOUR = '1';
+    resetEnvForTests();
+    try {
+      const before = await rows<{ n: number }>(
+        db.sql`select count(*)::int as n from crisis_events where channel = 'sms'`,
+      );
+      let answered = 0;
+      for (let i = 0; i < 3; i++)
+        if (
+          replies((await twilio('sms', `+1555777005${i}`, 'I want to end my life tonight')).xml)
+            .length
+        )
+          answered++;
+      expect(answered).toBe(1);
+      const after = await rows<{ n: number }>(
+        db.sql`select count(*)::int as n from crisis_events where channel = 'sms'`,
+      );
+      expect(after[0]?.n).toBe((before[0]?.n ?? 0) + 3);
+    } finally {
+      delete process.env.WAYPOINT_TEXT_REPLIES_PER_HOUR;
+      resetEnvForTests();
+      await db.getDb().execute(db.sql`delete from rate_limits where key like 'api:ch-out%'`);
+    }
+  });
+
+  it('answers a message again when the first try failed part-way', async () => {
+    const sid = 'SMfailedonce0123456789abcdef012345';
+    // The database fails while the message is being handled…
+    await db.getDb().execute(db.sql`alter table channel_identities rename to channel_identities_x`);
+    const failed = await twilio('sms', '+15557770060', 'HELP', true, sid).catch(() => null);
+    await db.getDb().execute(db.sql`alter table channel_identities_x rename to channel_identities`);
+    expect(failed?.res.status ?? 500).toBe(500);
+    // …so the provider delivers it again: that is not a repeat to be ignored.
+    const retry = await twilio('sms', '+15557770060', 'HELP', true, sid);
+    expect(retry.res.status).toBe(200);
+    expect(replies(retry.xml).length).toBeGreaterThan(0);
+  });
+
+  it('answers people in danger from unserved countries from a small allowance of its own', async () => {
+    await db.getDb().execute(db.sql`delete from rate_limits where key like 'api:ch-out%'`);
+    const crisisBefore = await rows<{ count: number }>(
+      db.sql`select count from rate_limits where key = 'api:ch-out-crisis-hour'`,
+    );
+    let answered = 0;
+    for (let i = 0; i < 25; i++)
+      if (
+        replies(
+          (
+            await twilio(
+              'sms',
+              `+88812340${String(i).padStart(2, '0')}`,
+              'I want to kill myself tonight',
+            )
+          ).xml,
+        ).length
+      )
+        answered++;
+    // Made-up senders in countries Waypoint does not serve cannot make it send without end…
+    expect(answered).toBe(20);
+    // …or use up the allowance kept for people in danger in the countries it does serve.
+    const crisisAfter = await rows<{ count: number }>(
+      db.sql`select count from rate_limits where key = 'api:ch-out-crisis-hour'`,
+    );
+    expect(Number(crisisAfter[0]?.count ?? 0)).toBe(Number(crisisBefore[0]?.count ?? 0));
+  });
+
+  it('takes STOP from a number that is over its limit, and then stays silent', async () => {
+    const number = '+15557770061';
+    for (let i = 0; i < 31; i++) await twilio('sms', number, 'MENU');
+    const stop = await twilio('sms', number, 'STOP');
+    expect(replies(stop.xml)).toHaveLength(0);
+    const [identity] = await rows<{ opted_out_at: string | null }>(
+      db.sql`select opted_out_at from channel_identities where address_hash = ${service.addressHash(number)}`,
+    );
+    expect(identity?.opted_out_at).not.toBeNull();
+    // No "please slow down" for someone who asked for no more messages.
+    await db.getDb().execute(db.sql`delete from rate_limits where key like 'api:ch-slow:%'`);
+    const more = await twilio('sms', number, 'hello again');
+    expect(replies(more.xml)).toHaveLength(0);
+  });
 });
 
 // ─────────────────────────────── WhatsApp Cloud API ───────────────────────────────

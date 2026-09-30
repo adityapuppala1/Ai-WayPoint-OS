@@ -205,6 +205,21 @@ describe('replies by text message', () => {
       });
   });
 
+  it('never takes words that may be a cry for help for an opt-out', () => {
+    // "end", "quit" and "cancel" are opt-out words on their own; with anything after them they
+    // are a sentence, and some of those sentences are the ones that matter most.
+    for (const text of ['END IT', 'end it now', 'QUIT NOW', 'cancel it', 'end it all']) {
+      const r = channelReply(text, person(), sms);
+      expect(r.intent, text).not.toBe('stop');
+      expect(r.update?.optedOut, text).toBeUndefined();
+    }
+    const clear = channelReply('end it all, I want to die', person(), sms);
+    expect(clear.intent).toBe('crisis');
+    // A plain STOP with the usual extra word still opts out.
+    expect(channelReply('stop now', person(), sms).intent).toBe('stop');
+    expect(channelReply('STOP I want to die', person(), sms).intent).toBe('crisis');
+  });
+
   it('checks messages for scams, asked or forwarded', () => {
     const asked = channelReply(
       'CHECK Your parcel is held at customs. Pay the fee now: http://bit.ly/pay-now',

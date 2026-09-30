@@ -515,7 +515,8 @@ type ProgrammeRow = typeof orgProgrammes.$inferSelect;
  *
  * - The cut-off is the start of the week, not the moment the totals happen to be taken: whether
  *   someone who chose recently appears never depends on when staff look.
- * - Only people with an account and a confirmed email address count. A guest session costs
+ * - Only people with an account and a confirmed email address (or a phone number proved with a
+ *   code) count. A guest session costs
  *   nothing to create, so counting guests would let an organisation fill a group with made-up
  *   people and then watch for the one real person who joins. A guest's choice is kept and
  *   starts to count once they have an account.
@@ -528,7 +529,8 @@ function countedPeople(programmeId: string, week: string) {
     select e.user_id from org_enrolments e
     join consents c on c.user_id = e.user_id and c.purpose = 'org_aggregates' and c.granted = true
     join users u on u.id = e.user_id
-      and coalesce(u.is_anonymous, false) = false and u.email_verified = true
+      and coalesce(u.is_anonymous, false) = false
+      and (u.email_verified = true or coalesce(u.phone_number_verified, false) = true)
     where e.programme_id = ${programmeId} and e.counted = true
       and e.counted_since <= ${chosenBy}::timestamptz`;
 }
@@ -1530,6 +1532,9 @@ export async function respondToInvitation(
   if (status !== 'pending')
     throw new ApiError(409, status, 'This invitation can no longer be answered.');
   await db.transaction(async (tx) => {
+    // One change to a team at a time: a removal that withdraws this invitation and an answer
+    // to it cannot pass each other.
+    await lockOrganisation(tx, i.organizationId);
     // Only a still-pending invitation can be answered, once (a cancellation may have just won).
     const answered = await tx
       .update(invitations)

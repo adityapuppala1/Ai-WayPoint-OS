@@ -37,6 +37,7 @@ import {
   abandonUsage,
   checkBudget,
   estimateTokens,
+  failUsage,
   recordUsage,
   reserveUsage,
   settleUsage,
@@ -284,11 +285,10 @@ export async function askResponse(input: AskInput): Promise<Response> {
         },
         onError: async () => {
           reportProviderFailure(choice.provider);
-          await settleUsage(db, reservation.id, {
+          await failUsage(db, reservation.id, {
             provider: choice.provider,
             model: choice.modelId,
             latencyMs: Date.now() - started,
-            status: 'error',
           }).catch(() => undefined);
         },
         // The person left before the answer finished: what was generated was still paid

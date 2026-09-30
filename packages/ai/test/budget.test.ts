@@ -154,6 +154,26 @@ describe('what an AI answer costs', () => {
     expect(rows[0]).toMatchObject({ status: 'ok', inputTokens: 120, outputTokens: 30 });
     expect(rows[0]?.costUsd).toBeCloseTo(ai.estimateCostUsd('anthropic', 'mock-large', 120, 30));
   });
+
+  it('still counts what was sent when the provider fails part-way', async () => {
+    const userId = await person();
+    const failing = new MockLanguageModelV4({
+      provider: 'mock',
+      modelId: 'mock-large',
+      doStream: async () => {
+        throw new Error('The provider stopped answering');
+      },
+    });
+    ai.overrideModelsForTests(external(failing));
+    await chunksOf(await ask(userId, 'Hello'));
+    const rows = await db.getDb().select().from(db.aiUsage).where(db.eq(db.aiUsage.userId, userId));
+    expect(rows).toHaveLength(1);
+    // The prompt was sent (and may be billed); no answer came back.
+    expect(rows[0]?.status).toBe('error');
+    expect(rows[0]?.inputTokens).toBeGreaterThan(0);
+    expect(rows[0]?.outputTokens).toBe(0);
+    expect(rows[0]?.costUsd).toBeGreaterThan(0);
+  });
 });
 
 describe('the monthly budget', () => {

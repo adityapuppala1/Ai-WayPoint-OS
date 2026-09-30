@@ -33,6 +33,7 @@ import {
   gte,
   inArray,
   isNull,
+  ne,
   nudges,
   or,
   profiles,
@@ -699,10 +700,23 @@ export async function deletePost(db: Database, userId: string, postId: string): 
     if (post.authorId !== userId && member.role !== 'host' && member.role !== 'moderator')
       throw forbidden();
   }
-  // Replies go with the post they answer.
-  await db
-    .delete(circlePosts)
-    .where(or(eq(circlePosts.id, postId), eq(circlePosts.parentId, postId)));
+  // Replies go with the post they answer — except one held because its writer may be in
+  // danger: only they can see it, and it stays theirs (as when a moderator removes a post).
+  await db.transaction(async (tx) => {
+    await tx
+      .update(circlePosts)
+      .set({ parentId: null })
+      .where(
+        and(
+          eq(circlePosts.parentId, postId),
+          eq(circlePosts.hiddenReason, 'crisis'),
+          ne(circlePosts.authorId, userId),
+        ),
+      );
+    await tx
+      .delete(circlePosts)
+      .where(or(eq(circlePosts.id, postId), eq(circlePosts.parentId, postId)));
+  });
 }
 
 /** Toggle a reaction; returns whether it is now on. */

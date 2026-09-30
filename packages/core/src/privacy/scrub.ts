@@ -92,8 +92,22 @@ const WEB_ADDRESSES: RegExp[] = [
 
 const oneLine = (text: string) => text.replace(INVISIBLE, ' ').replace(/\s+/g, ' ').trim();
 
-/** Whether a name or title contains a link or a web address, however it is written. */
+/**
+ * Nothing longer than this is a name. The patterns above take time that grows with the square
+ * of the length on text such as "a-a-a-…", so longer input is never searched: a request with
+ * a quarter of a megabyte in a name field would otherwise keep the server busy for minutes.
+ */
+const LONGEST_NAME = 300;
+
+/** A full stop between two letters ("Bank.Cam", "банк.рф"): what a mail app turns into a link. */
+const DOT_BETWEEN_LETTERS = new RegExp(String.raw`(?<=\p{L})(${DOT})(?=\p{L})`, 'gu');
+
+/**
+ * Whether a name or title contains a link or a web address, however it is written. Text too
+ * long to be a name counts as one (it is refused either way).
+ */
 export function hasWebAddress(text: string | null | undefined): boolean {
+  if ((text ?? '').length > LONGEST_NAME) return true;
   const line = oneLine(text ?? '');
   return WEB_ADDRESSES.some((re) => {
     re.lastIndex = 0;
@@ -107,8 +121,11 @@ export function hasWebAddress(text: string | null | undefined): boolean {
  * a way to send people somewhere else from Waypoint's address.
  */
 export function plainName(name: string | null | undefined, max = 60): string {
-  let noLinks = oneLine(name ?? '');
+  let noLinks = oneLine((name ?? '').slice(0, LONGEST_NAME));
   for (const re of WEB_ADDRESSES) noLinks = noLinks.replace(re, '…');
-  noLinks = noLinks.replace(/\s+/g, ' ').trim();
+  // No list of endings can keep up with every domain, in every alphabet. So whatever is left
+  // with a full stop between two letters gets a space after it: "Secure-Bank.Cam" becomes
+  // "Secure-Bank. Cam", which no mail app links — and "Dr.Smith" reads "Dr. Smith".
+  noLinks = noLinks.replace(DOT_BETWEEN_LETTERS, '$1 ').replace(/\s+/g, ' ').trim();
   return noLinks.length > max ? `${noLinks.slice(0, max - 1).trimEnd()}…` : noLinks;
 }

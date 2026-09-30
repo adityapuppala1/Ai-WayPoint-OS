@@ -11,7 +11,14 @@ import {
   reportProviderSuccess,
   type Tier,
 } from './providers';
-import { type AiFeature, checkBudget, recordUsage, reserveUsage, settleUsage } from './usage';
+import {
+  type AiFeature,
+  checkBudget,
+  failUsage,
+  recordUsage,
+  reserveUsage,
+  settleUsage,
+} from './usage';
 
 export interface RunOptions {
   db: Database;
@@ -81,7 +88,9 @@ export async function runModel<T>(
       };
       return (
         reservation
-          ? settleUsage(opts.db, reservation, actual)
+          ? status === 'error'
+            ? failUsage(opts.db, reservation, actual)
+            : settleUsage(opts.db, reservation, actual)
           : recordUsage(opts.db, { userId: opts.userId, feature: opts.feature, ...actual })
       ).catch(() => undefined);
     };

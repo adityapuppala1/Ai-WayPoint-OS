@@ -21,12 +21,13 @@ import {
 } from '@waypoint/core';
 import { otpText } from '@waypoint/core/channels';
 import { getEnv } from '@waypoint/core/env';
-import { openWithKek } from '@waypoint/core/privacy';
+import { getKeyring, openWithKek, rewrapIfNeeded, sealWithKek } from '@waypoint/core/privacy';
 import {
   and,
   asc,
   type ClaimedMessage,
   cancelOutbox,
+  channelIdentities,
   claimOutbox,
   crisisEvents,
   type Database,
@@ -114,30 +115,35 @@ export async function crisisFollowUps(db: Database, now = new Date()): Promise<n
       ? (p?.locale as Locale)
       : 'en';
     const copy = FOLLOW_UP[locale];
-    await db.transaction(async (tx) => {
-      await tx.insert(nudges).values({
-        userId: e.userId as string,
-        module: 'today',
-        // Safety-critical: it is not held back by the daily budget (someone who asked for no
-        // other messages still gets this one) — but it waits for their quiet hours to end.
-        priority: 'critical',
-        title: copy.title,
-        body: copy.body,
-        href: '/support',
-        dedupeKey: 'crisis-follow-up',
-        deliverAfter: quietHoursEnd(now, {
-          timezone: p?.timezone ?? 'UTC',
-          quietHours:
-            p?.quietStart && p?.quietEnd ? { start: p.quietStart, end: p.quietEnd } : undefined,
-        }),
-        expiresAt: new Date(now.getTime() + 3 * 86_400_000),
+    // One row that cannot be handled must not hold up everyone behind it, round after round.
+    try {
+      await db.transaction(async (tx) => {
+        await tx.insert(nudges).values({
+          userId: e.userId as string,
+          module: 'today',
+          // Safety-critical: it is not held back by the daily budget (someone who asked for no
+          // other messages still gets this one) — but it waits for their quiet hours to end.
+          priority: 'critical',
+          title: copy.title,
+          body: copy.body,
+          href: '/support',
+          dedupeKey: 'crisis-follow-up',
+          deliverAfter: quietHoursEnd(now, {
+            timezone: p?.timezone ?? 'UTC',
+            quietHours:
+              p?.quietStart && p?.quietEnd ? { start: p.quietStart, end: p.quietEnd } : undefined,
+          }),
+          expiresAt: new Date(now.getTime() + 3 * 86_400_000),
+        });
+        await tx
+          .update(crisisEvents)
+          .set({ followUpStatus: 'sent' })
+          .where(eq(crisisEvents.id, e.id));
       });
-      await tx
-        .update(crisisEvents)
-        .set({ followUpStatus: 'sent' })
-        .where(eq(crisisEvents.id, e.id));
-    });
-    created += 1;
+      created += 1;
+    } catch (err) {
+      log.error('check-in not created for one person', errorFields(err));
+    }
   }
   return created;
 }
@@ -330,6 +336,8 @@ export async function retention(db: Database): Promise<{
   stats: number;
   codes: number;
   safety: number;
+  /** Key rotation: what was re-wrapped this run, and what is still under an older key. */
+  keys: { dataKeys: number; numbers: number; unreadable: number; remaining: number };
 }> {
   const convos = await db.execute<{ id: string }>(sql`
     delete from conversations c
@@ -420,6 +428,7 @@ export async function retention(db: Database): Promise<{
     stats: stats.rows.length,
     codes: codes.rows.length,
     safety: safety.rows.length,
+    keys: await rewrapKeys(db),
   };
 }
 
@@ -543,6 +552,81 @@ export async function dispatchOutbox(
     handled += batch.length;
     if (batch.length < OUTBOX_BATCH || Date.now() - started >= budgetMs) return handled;
   }
+}
+
+/**
+ * After the server key is rotated (a new WAYPOINT_KEK, the old one in WAYPOINT_KEK_PREVIOUS):
+ * wrap everything still under the old key with the new one — each person's data key, and the
+ * sealed phone numbers of people who text. When `remaining` reaches 0 nothing needs the old
+ * key any more and WAYPOINT_KEK_PREVIOUS can be removed. Runs with the retention job; safe to
+ * repeat, and safe with several workers (each row is only replaced if it has not changed).
+ */
+export async function rewrapKeys(
+  db: Database,
+  limit = 500,
+): Promise<{ dataKeys: number; numbers: number; unreadable: number; remaining: number }> {
+  const current = `${getKeyring().currentId}:%`;
+  let dataKeys = 0;
+  let numbers = 0;
+  let unreadable = 0;
+  const staleKeys = await db
+    .select({ userId: profiles.userId, dekWrapped: profiles.dekWrapped })
+    .from(profiles)
+    .where(and(isNotNull(profiles.dekWrapped), sql`${profiles.dekWrapped} not like ${current}`))
+    .limit(limit);
+  for (const row of staleKeys) {
+    if (!row.dekWrapped) continue;
+    try {
+      const next = rewrapIfNeeded(row.dekWrapped);
+      if (!next) continue;
+      const done = await db
+        .update(profiles)
+        .set({ dekWrapped: next })
+        .where(and(eq(profiles.userId, row.userId), eq(profiles.dekWrapped, row.dekWrapped)))
+        .returning({ userId: profiles.userId });
+      dataKeys += done.length;
+    } catch {
+      // Wrapped with a key this server does not have: what it protects cannot be read.
+      unreadable += 1;
+    }
+  }
+  const staleNumbers = await db
+    .select({ id: channelIdentities.id, addressCt: channelIdentities.addressCt })
+    .from(channelIdentities)
+    .where(sql`${channelIdentities.addressCt} not like ${current}`)
+    .limit(limit);
+  for (const row of staleNumbers) {
+    try {
+      const next = sealWithKek(openWithKek(row.addressCt, 'channel'), 'channel');
+      const done = await db
+        .update(channelIdentities)
+        .set({ addressCt: next })
+        .where(
+          and(eq(channelIdentities.id, row.id), eq(channelIdentities.addressCt, row.addressCt)),
+        )
+        .returning({ id: channelIdentities.id });
+      numbers += done.length;
+    } catch {
+      unreadable += 1;
+    }
+  }
+  const [[keysLeft], [numbersLeft]] = await Promise.all([
+    db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(profiles)
+      .where(and(isNotNull(profiles.dekWrapped), sql`${profiles.dekWrapped} not like ${current}`)),
+    db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(channelIdentities)
+      .where(sql`${channelIdentities.addressCt} not like ${current}`),
+  ]);
+  const remaining = Number(keysLeft?.n ?? 0) + Number(numbersLeft?.n ?? 0);
+  if (unreadable)
+    log.error('some keys are wrapped with a server key that is not configured', {
+      unreadable,
+      hint: 'Set WAYPOINT_KEK_PREVIOUS to the key that was in use before the last rotation.',
+    });
+  return { dataKeys, numbers, unreadable, remaining };
 }
 
 /** This week's totals for every programme that has none yet (see takeWeeklySnapshots). */

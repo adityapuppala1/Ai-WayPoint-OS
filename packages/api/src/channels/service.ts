@@ -217,18 +217,6 @@ export interface TextResult {
   identityId?: string;
 }
 
-/**
- * The first time a provider's message id is seen in a day. Providers redeliver when an answer
- * is slow, and a signed request can be replayed by anyone who captured it: either way the
- * person gets one reply, and one is paid for. Only a keyed hash of the id is kept.
- */
-async function firstDelivery(db: Database, provider: Provider, id: string): Promise<boolean> {
-  return withinLimit(db, `ch-seen:${keyedHash(`${provider}:${id}`, 'channel-message')}`, {
-    max: 1,
-    windowSeconds: 86_400,
-  });
-}
-
 /** Numbers Waypoint answers: from a country it has help lines for, or the operator's own list. */
 export function servedNumber(e164: string): boolean {
   const country = countryOfNumber(e164);
@@ -269,6 +257,10 @@ async function serviceHasRoom(db: Database, crisis: boolean): Promise<boolean> {
 /** Replies to someone in danger past their number's limit: a few an hour, never unlimited. */
 const CRISIS_PER_HOUR = 5;
 
+/** Support cards an hour, and a day, for numbers from countries Waypoint does not serve. */
+const UNSERVED_CRISIS_PER_HOUR = 20;
+const UNSERVED_CRISIS_PER_DAY = 100;
+
 export async function handleText(
   db: Database,
   input: {
@@ -282,11 +274,33 @@ export async function handleText(
 ): Promise<TextResult> {
   const e164 = toE164(input.from);
   if (!e164) return { replies: [] };
-  if (input.messageId && !(await firstDelivery(db, input.provider, input.messageId)))
+  const seen = input.messageId
+    ? `ch-seen:${keyedHash(`${input.provider}:${input.messageId}`, 'channel-message')}`
+    : null;
+  if (seen && !(await withinLimit(db, seen, { max: 1, windowSeconds: 86_400 })))
     return { replies: [] };
+  try {
+    return await answerText(db, input, e164);
+  } catch (err) {
+    // The message was not answered: when the provider delivers it again, that is not a
+    // repeat to ignore (the person may be in danger and has heard nothing yet).
+    if (seen)
+      await db
+        .execute(sql`delete from rate_limits where key = ${`api:${seen}`}`)
+        .catch(() => undefined);
+    throw err;
+  }
+}
+
+async function answerText(
+  db: Database,
+  input: { channel: TextChannel; provider: Provider; text: string | null },
+  e164: string,
+): Promise<TextResult> {
   const text = input.text === null ? null : input.text.slice(0, 1600);
 
-  if (!servedNumber(e164)) {
+  const served = servedNumber(e164);
+  if (!served) {
     // A number from somewhere Waypoint does not serve is not recorded and not answered —
     // unless the person is in danger: then they get the support card with global directories.
     await countMessage(db, input.channel, 'in', 'unserved').catch(() => undefined);
@@ -304,6 +318,18 @@ export async function handleText(
       localAi: false,
     });
     if (!danger.crisis || danger.crisis.assessment.tier < 2) return { replies: [] };
+    // A small allowance of its own: made-up senders from anywhere in the world cannot make
+    // Waypoint send without end, or use up what is kept for people in the countries it serves.
+    const room =
+      (await withinLimit(db, 'ch-out-unserved-hour', {
+        max: UNSERVED_CRISIS_PER_HOUR,
+        windowSeconds: 3600,
+      })) &&
+      (await withinLimit(db, 'ch-out-unserved-day', {
+        max: UNSERVED_CRISIS_PER_DAY,
+        windowSeconds: 86_400,
+      }));
+    if (!room) return { replies: [] };
   }
 
   const { row, isNew } = await identityFor(db, input.channel, e164);
@@ -311,8 +337,9 @@ export async function handleText(
   const copy = CHANNEL_COPY[who.locale ?? 'en'];
   const limited = !(await withinLimits(db, row.id));
   const slowDown = async (): Promise<TextResult> => ({
+    // Someone who asked for no more messages gets none, not even "please slow down".
     replies:
-      (await slowDownNotice(db, row.id)) && (await serviceHasRoom(db, false))
+      !who.optedOut && (await slowDownNotice(db, row.id)) && (await serviceHasRoom(db, false))
         ? [fitForChannel(copy.slowDown, input.channel)]
         : [],
     e164,
@@ -332,20 +359,8 @@ export async function handleText(
   // Safety is decided before any limit: a number over its limit (or one somebody else flooded)
   // still gets the support card, from a small allowance of its own.
   const reply = channelReply(text, who, setupFor(input.channel));
-  if (limited) {
-    const mayAnswer =
-      reply.crisis &&
-      (await withinLimit(db, `ch-crisis:${row.id}`, { max: CRISIS_PER_HOUR, windowSeconds: 3600 }));
-    if (!mayAnswer) return slowDown();
-    reply.ask = undefined;
-  }
-  if (reply.messages.length > 0 && !(await serviceHasRoom(db, Boolean(reply.crisis)))) {
-    await countMessage(db, input.channel, 'in', 'capped').catch(() => undefined);
-    // STOP and the person's other choices are still remembered; nothing is sent.
-    await remember(db, row.id, reply.update);
-    return { replies: [], e164, identityId: row.id };
-  }
-  await remember(db, row.id, reply.update);
+  // That someone was in danger is recorded (tier and rule ids, never the words) whether or
+  // not a reply can still be sent.
   if (reply.crisis) {
     const { assessment, plan } = reply.crisis;
     await db.insert(crisisEvents).values({
@@ -361,9 +376,30 @@ export async function handleText(
       actionKinds: plan.actions.map((a) => a.kind),
     });
   }
+  if (limited) {
+    // STOP and START are always taken, however many messages came before them.
+    if (reply.intent === 'stop' || reply.intent === 'start') {
+      await remember(db, row.id, reply.update);
+      return { replies: [], e164, identityId: row.id };
+    }
+    const mayAnswer =
+      reply.crisis &&
+      (await withinLimit(db, `ch-crisis:${row.id}`, { max: CRISIS_PER_HOUR, windowSeconds: 3600 }));
+    if (!mayAnswer) return slowDown();
+    reply.ask = undefined;
+  }
+  // The allowance for unserved numbers was drawn on above; everyone else draws on the
+  // ceiling for the whole service (people in danger on their own part of it).
+  if (served && reply.messages.length > 0 && !(await serviceHasRoom(db, Boolean(reply.crisis)))) {
+    await countMessage(db, input.channel, 'in', 'capped').catch(() => undefined);
+    // STOP and the person's other choices are still remembered; nothing is sent.
+    await remember(db, row.id, reply.update);
+    return { replies: [], e164, identityId: row.id };
+  }
+  await remember(db, row.id, reply.update);
   await countMessage(db, input.channel, 'in', reply.intent).catch(() => undefined);
 
-  const ask = reply.ask;
+  const ask = served ? reply.ask : undefined;
   const country = reply.update?.country ?? who.country;
   return {
     replies: reply.messages,

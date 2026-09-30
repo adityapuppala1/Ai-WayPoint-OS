@@ -428,15 +428,71 @@ describe('signing in', () => {
   it('limits sign-in codes per visitor, so one address cannot use up everyone’s', async () => {
     const { keyedHash } = await import('../src/lib/request');
     const ip = newIp();
-    await db.getDb().execute(db.sql`
-      insert into rate_limits (id, key, count, last_request)
-      values (gen_random_uuid(), ${`api:otp-send-visitor:${keyedHash(ip, 'ip')}`}, 10, ${Date.now()})`);
-    const res = await req('/api/auth/phone-number/send-otp', {
-      method: 'POST',
-      json: { phoneNumber: '+15557771234' },
-      ip,
-    });
-    expect(res.status).toBe(429);
+    const key = `api:otp-numbers:${keyedHash(ip, 'ip')}`;
+    const sendTo = (phoneNumber: string, from = ip) =>
+      req('/api/auth/phone-number/send-otp', { method: 'POST', json: { phoneNumber }, ip: from });
+    const counted = async () =>
+      Number(
+        (await rows<{ count: number }>(db.sql`select count from rate_limits where key = ${key}`))[0]
+          ?.count ?? 0,
+      );
+    // What is counted is how many different numbers an address asks codes for — not how many
+    // codes: many people share one address (a phone network, an office), and each of them asking
+    // again for their own number must not use up their neighbours' chances.
+    expect((await sendTo('+15557771234')).status).toBe(200);
+    expect(await counted()).toBe(1);
+    await db.getDb().execute(db.sql`delete from rate_limits where key like 'api:otp-send:%'`);
+    await sendTo('+15557771234', newIp());
+    await sendTo('+15557771234');
+    expect(await counted()).toBe(1);
+    // Sixty different numbers a day from one address, then no more.
+    await db
+      .getDb()
+      .execute(
+        db.sql`update rate_limits set count = 60, last_request = ${Date.now()} where key = ${key}`,
+      );
+    expect((await sendTo('+15557775678')).status).toBe(429);
+    // …which costs the number itself nothing: its own allowance is untouched.
+    const spent = await rows<{ n: number }>(
+      db.sql`select count(*)::int as n from rate_limits where key = ${`api:otp-send:${keyedHash('+15557775678', 'otp')}`}`,
+    );
+    expect(spent[0]?.n).toBe(0);
+  });
+
+  it('applies its limits to the one spelling of each address, and knows no others', async () => {
+    const email = `spell-${crypto.randomUUID().slice(0, 8)}@example.org`;
+    for (const path of [
+      '/api/auth/sign-in/email/',
+      '/api/auth//sign-in/email',
+      '/api/auth/Sign-In/Email',
+      '/api/auth/sign-in/%65mail',
+      '/api/auth/sign-in/email;x=1',
+    ]) {
+      const res = await req(path, {
+        method: 'POST',
+        json: { email, password: 'not the password' },
+        ip: newIp(),
+      });
+      expect(res.status, path).toBe(404);
+    }
+    // A reset link must lead to a path on this site, written plainly.
+    const me = await account('Tab');
+    for (const redirectTo of [
+      '/\t/evil.example',
+      '/\n/evil.example',
+      '/ok\\evil',
+      '/%2f%2fevil.example',
+    ])
+      expect(
+        (
+          await req('/api/auth/request-password-reset', {
+            method: 'POST',
+            json: { email: me.email, redirectTo },
+            ip: newIp(),
+          })
+        ).status,
+        JSON.stringify(redirectTo),
+      ).toBe(400);
   });
 
   it('refuses a cross-site request whatever its body', async () => {
@@ -875,6 +931,30 @@ describe('circles', () => {
     expect(seated[0]?.n).toBe(6);
   });
 
+  it('keep a reply held for its writer’s safety when the post above it is deleted', async () => {
+    const writer = await member('Tola');
+    const replier = await member('Uma');
+    const circleId = await circleFor(writer.cookie, 'new-country');
+    await join(writer.cookie, circleId);
+    await join(replier.cookie, circleId);
+    const postId = await post(writer.cookie, circleId, 'Some days are hard here.');
+    const held = await req(`/api/circles/${circleId}/posts`, {
+      method: 'POST',
+      cookie: replier.cookie,
+      json: { body: 'I want to end my life tonight', parentId: postId },
+    });
+    expect(held.status).toBe(201);
+    const heldId = ((await held.json()) as { post: { id: string; held: string | null } }).post.id;
+    expect(
+      (await req(`/api/circles/posts/${postId}`, { method: 'DELETE', cookie: writer.cookie }))
+        .status,
+    ).toBe(200);
+    const left = await rows<{ id: string; parent_id: string | null; hidden_reason: string }>(
+      db.sql`select id, parent_id, hidden_reason from circle_posts where id = ${heldId}`,
+    );
+    expect(left).toEqual([{ id: heldId, parent_id: null, hidden_reason: 'crisis' }]);
+  });
+
   it('let someone who left still take down what they wrote', async () => {
     const writer = await member('Lena');
     const circleId = await circleFor(writer.cookie, 'new-country');
@@ -947,7 +1027,7 @@ describe('organisations', () => {
   async function enrol(
     programmeId: string,
     n: number,
-    who: { chose: Date; guest?: boolean; confirmed?: boolean },
+    who: { chose: Date; guest?: boolean; confirmed?: boolean; phone?: boolean },
   ) {
     for (let i = 0; i < n; i++) {
       const id = crypto.randomUUID();
@@ -960,6 +1040,12 @@ describe('organisations', () => {
           email: `${id}@people.example.org`,
           emailVerified: who.confirmed ?? true,
           isAnonymous: who.guest ?? false,
+          ...(who.phone
+            ? {
+                phoneNumber: `+2547${String(Math.floor(Math.random() * 1e8)).padStart(8, '0')}`,
+                phoneNumberVerified: true,
+              }
+            : {}),
         });
       await db.getDb().insert(db.orgEnrolments).values({
         programmeId,
@@ -994,8 +1080,10 @@ describe('organisations', () => {
     await enrol(programmeId, 12, { chose: longAgo });
     await enrol(programmeId, 30, { chose: longAgo, guest: true });
     await enrol(programmeId, 30, { chose: longAgo, confirmed: false });
+    // Someone who signed up with a phone number proved it with a code: they count as well.
+    await enrol(programmeId, 3, { chose: longAgo, confirmed: false, phone: true });
     await req(`/api/org/${orgId}/programmes/${programmeId}`, { cookie: owner.cookie });
-    expect(await countedIn(programmeId)).toBe(12);
+    expect(await countedIn(programmeId)).toBe(15);
   });
 
   it('take each week’s totals as of the start of the week, whenever anyone first looks', async () => {
@@ -1199,5 +1287,54 @@ describe('deleting an account', () => {
         db.sql`select count(*)::int as n from outbox where payload->>'userId' = ${me.id}`,
       ),
     ).toBe(0);
+  });
+});
+
+describe('rotating the server key', () => {
+  it('re-wraps everything under the new key, so the old one can be retired', async () => {
+    const { jobs } = await import('../src');
+    const privacy = await import('@waypoint/core/privacy');
+    const { resetEnvForTests } = await import('@waypoint/core/env');
+    const me = await account('Kezia');
+    const made = await req('/api/goals', {
+      method: 'POST',
+      cookie: me.cookie,
+      json: { title: 'Keep this readable', area: 'path' },
+    });
+    expect(made.status).toBe(201);
+    const readable = async () =>
+      JSON.stringify(await (await req('/api/goals', { cookie: me.cookie })).json());
+    expect(await readable()).toContain('Keep this readable');
+
+    const before = { kek: process.env.WAYPOINT_KEK, previous: process.env.WAYPOINT_KEK_PREVIOUS };
+    const oldKey = privacy.getKeyring().current.toString('base64');
+    const newKey = Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString('base64');
+    const use = (kek: string, previous?: string) => {
+      process.env.WAYPOINT_KEK = kek;
+      if (previous) process.env.WAYPOINT_KEK_PREVIOUS = previous;
+      else delete process.env.WAYPOINT_KEK_PREVIOUS;
+      resetEnvForTests();
+      privacy.resetKeyringForTests();
+    };
+    try {
+      // The operator installs a new key and keeps the old one alongside it.
+      use(newKey, oldKey);
+      expect(await readable()).toContain('Keep this readable');
+      const first = await jobs.rewrapKeys(db.getDb());
+      expect(first.dataKeys).toBeGreaterThanOrEqual(1);
+      expect(first.remaining).toBe(0);
+      expect((await jobs.rewrapKeys(db.getDb())).dataKeys).toBe(0);
+      const stale = await rows<{ n: number }>(
+        db.sql`select count(*)::int as n from profiles
+               where dek_wrapped is not null and dek_wrapped not like ${`${privacy.getKeyring().currentId}:%`}`,
+      );
+      expect(stale[0]?.n).toBe(0);
+      // Nothing needs the old key any more: it can be taken away.
+      use(newKey);
+      expect(await readable()).toContain('Keep this readable');
+    } finally {
+      if (before.kek === undefined) use(newKey);
+      else use(before.kek, before.previous);
+    }
   });
 });

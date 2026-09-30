@@ -5,10 +5,16 @@ import { forbidden, unauthorized } from './lib/problem';
 import { limitVisitor } from './lib/request';
 import type { ApiUser, AppEnv } from './types';
 
+/** The session cookies Better Auth sets (with or without the `__Secure-` prefix). */
+const SESSION_COOKIE = /(?:^|;\s*)(?:__Secure-)?waypoint\.session_(?:token|data)=/;
+
 /** Reads the Better Auth session (cookie cache keeps this cheap) and sets `user`. */
 export const withSession = createMiddleware<AppEnv>(async (c, next) => {
   c.set('user', null);
   c.set('sessionId', null);
+  // No session cookie, no session: most public requests (help lines, scam checks, health
+  // probes) carry none, and asking the auth library anyway costs more than the request itself.
+  if (!SESSION_COOKIE.test(c.req.header('cookie') ?? '')) return next();
   const session = await getAuth()
     .api.getSession({ headers: c.req.raw.headers })
     .catch(() => null);

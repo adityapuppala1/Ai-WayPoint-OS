@@ -199,7 +199,7 @@ describe('text for logs and for emails to other people', () => {
       'My-Bank.Co.Uk team',
     ])
       expect(hasWebAddress(name), name).toBe(true);
-    // Ordinary names, with their titles, initials and company endings, are left alone.
+    // Ordinary names, with their titles, initials and company endings, are not addresses…
     for (const name of [
       'Dr. J. R. Okafor',
       'Dr.Smith',
@@ -210,10 +210,33 @@ describe('text for logs and for emails to other people', () => {
       'Amina K.',
       'Node.js Meetup',
       '\u0645\u0624\u0633\u0633\u0629 \u0627\u0644\u0623\u0645\u0644',
-    ]) {
+    ])
       expect(hasWebAddress(name), name).toBe(false);
+    // …and in an email they read as they were typed.
+    for (const name of ['Dr. J. R. Okafor', 'Riverside Works Ltd.', 'Amina K.'])
       expect(plainName(name), name).toBe(name);
+  });
+
+  it('cannot be slowed to a crawl by a very long name', async () => {
+    const { hasWebAddress, plainName } = await import('../src/privacy');
+    for (const long of ['a-'.repeat(120_000), 'a.'.repeat(120_000), `${'x'.repeat(200_000)}.com`]) {
+      const started = performance.now();
+      // Nothing that long is a name: it is refused without being searched.
+      expect(hasWebAddress(long)).toBe(true);
+      expect(plainName(long).length).toBeLessThanOrEqual(60);
+      expect(performance.now() - started).toBeLessThan(250);
     }
+  });
+
+  it('leaves nothing in an emailed name that a mail app would turn into a link', async () => {
+    const { plainName } = await import('../src/privacy');
+    // Endings no list could keep up with, and other alphabets: the dot itself is opened up.
+    expect(plainName('Secure-Bank.Cam')).toBe('Secure-Bank. Cam');
+    expect(plainName('Pay.Rocks today')).toBe('Pay. Rocks today');
+    expect(plainName('банк.рф')).toBe('банк. рф');
+    expect(plainName('Dr.Smith')).toBe('Dr. Smith');
+    expect(plainName('Version 2.5 Club')).toBe('Version 2.5 Club');
+    expect(plainName('Dr. J. R. Okafor')).toBe('Dr. J. R. Okafor');
   });
 
   it('removes phone numbers wherever they sit in a line', () => {

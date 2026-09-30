@@ -205,6 +205,28 @@ export async function settleUsage(
   spendCache = undefined;
 }
 
+/**
+ * The call failed. The prompt was sent and may well be billed, so the estimate for the input
+ * stands; nothing came back, so nothing is counted for output.
+ */
+export async function failUsage(
+  db: Database,
+  id: string,
+  call: { provider: string; model: string; latencyMs?: number },
+): Promise<void> {
+  const [row] = await db
+    .select({ inputTokens: aiUsage.inputTokens })
+    .from(aiUsage)
+    .where(eq(aiUsage.id, id))
+    .limit(1);
+  await settleUsage(db, id, {
+    ...call,
+    inputTokens: row?.inputTokens ?? 0,
+    outputTokens: 0,
+    status: 'error',
+  });
+}
+
 /** The person left mid-answer: keep the estimate (what was generated was paid for). */
 export async function abandonUsage(db: Database, id: string, latencyMs: number): Promise<void> {
   await db

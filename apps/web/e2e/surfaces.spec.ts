@@ -463,6 +463,19 @@ test('staff edit an open forecast and add a translation; a verdict waits for a s
   await expect(page.getByText('Forecast details changed').first()).toBeVisible();
 });
 
+/**
+ * Chooses what the feedback is about. The option is chosen with the keyboard, and the list is
+ * gone before anything else is pressed: while it slides in or fades out it sits over the
+ * form, and a press by position could land on the wrong option or on the list itself.
+ */
+async function chooseTopic(page: Page, topic: string) {
+  await page.getByRole('button', { name: /What is it about\?/ }).click();
+  const list = page.getByRole('listbox');
+  await list.getByRole('option', { name: topic }).press('Enter');
+  await expect(list).toBeHidden();
+  await expect(page.getByRole('button', { name: /What is it about\?/ })).toContainText(topic);
+}
+
 test('anyone can tell us what worked or what didn’t, from Settings', async ({
   page,
   context,
@@ -484,8 +497,7 @@ test('anyone can tell us what worked or what didn’t, from Settings', async ({
     'Write a few words or choose a number first.',
   );
 
-  await page.getByRole('button', { name: /What is it about\?/ }).click();
-  await page.getByRole('option', { name: 'Shield' }).click();
+  await chooseTopic(page, 'Shield');
   await page.getByRole('radio', { name: '2', exact: true }).check({ force: true });
   await page.getByLabel('What happened?').fill('The scam check took a long time on my phone.');
   expect(await noSidewaysScroll(page)).toBe(true);
@@ -504,8 +516,7 @@ test('anyone can tell us what worked or what didn’t, from Settings', async ({
   await snap(page, testInfo, 'feedback-form-ar-dark');
   await inArabicAndDark(context, baseURL ?? '', false);
   await page.goto('/settings/feedback');
-  await page.getByRole('button', { name: /What is it about\?/ }).click();
-  await page.getByRole('option', { name: 'Shield' }).click();
+  await chooseTopic(page, 'Shield');
   await page.getByRole('radio', { name: '2', exact: true }).check({ force: true });
   await page.getByLabel('What happened?').fill('The scam check took a long time on my phone.');
   await page.getByRole('button', { name: 'Send feedback' }).click();

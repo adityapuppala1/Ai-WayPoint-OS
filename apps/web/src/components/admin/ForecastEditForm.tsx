@@ -115,9 +115,10 @@ export function ForecastEditForm({
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     const sources = parseSources(values.sources);
-    // A translation counts once its question is written; an untouched language is left out.
+    // A translation counts once any of its fields is written, so one started without its
+    // question is checked (and refused) rather than dropped. An untouched language is left out.
     const written = Object.entries(translations).filter(
-      ([language, w]) => saved(language) || w.question.trim(),
+      ([language, w]) => saved(language) || Object.values(w).some((v) => v.trim()),
     );
     const ready =
       long(values.whatToDo) &&

@@ -1,6 +1,8 @@
 /**
  * Things the AI package must not be able to do at all, checked by what it contains.
  */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 let ai: typeof import('../src');
@@ -57,5 +59,25 @@ describe('the evaluations', () => {
       else process.env.TYPESAFE_API_KEY = before;
       env.resetEnvForTests();
     }
+  });
+});
+
+describe('the browser tests', () => {
+  it('start their server with every outside AI key blanked, the judge’s included', () => {
+    // An empty value wins over a key in .env.local or the shell; a missing one does not.
+    const config = readFileSync(
+      join(env.findRepoRoot(), 'apps', 'web', 'playwright.config.ts'),
+      'utf8',
+    );
+    for (const key of [
+      'TYPESAFE_API_KEY',
+      'AI_JUDGE_MODEL',
+      'AI_JUDGE_LOCALES',
+      'ANTHROPIC_API_KEY',
+      'OPENAI_API_KEY',
+      'GOOGLE_GENERATIVE_AI_API_KEY',
+      'OLLAMA_BASE_URL',
+    ])
+      expect(config, key).toMatch(new RegExp(`^\\s*${key}: '',$`, 'm'));
   });
 });

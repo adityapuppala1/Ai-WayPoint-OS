@@ -83,7 +83,7 @@ test('someone who lost their job sees their checklist on the sign; “not now”
   await page.reload();
   await expect(sign(page).getByRole('heading', { level: 2 })).toHaveText(second);
   const kept = (await context.cookies()).find((c) => c.name === 'wp-not-now');
-  expect(kept?.value).toMatch(/^\d{4}-\d{2}-\d{2}:[0-9a-z]{6,12}$/);
+  expect(kept?.value).toMatch(/^\d{4}-\d{2}-\d{2}:[\w-]{16}$/);
 
   // Done: the item is ticked on the checklist itself, and the sign moves on.
   await sign(page).getByRole('button', { name: 'Mark as done' }).click();

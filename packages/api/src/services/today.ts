@@ -39,6 +39,7 @@ import {
   weeklyReviews,
 } from '@waypoint/db';
 import { englishMessages, type Messages } from '@waypoint/i18n';
+import { keyedHash } from '../lib/request';
 import { type ChecklistView, checklistFor } from './civic';
 import { reminderTitles } from './health';
 import { helpCountry, type Profile } from './me';
@@ -67,7 +68,10 @@ export const NextStepSchema = z
     from: z.string().nullable(),
     /** The language the title and detail are written in, when it is not the reader's. */
     titleLang: z.string().nullable(),
-    /** Stands for this step when the person says "not now". It says nothing about the step. */
+    /**
+     * Stands for this step when the person says "not now": a keyed hash that says nothing
+     * about the step, and means nothing for anyone else signed in on the same device.
+     */
     key: z.string(),
     /** Whether another step waits behind this one, so "not now" has somewhere to go. */
     canDefer: z.boolean(),
@@ -275,6 +279,7 @@ export async function today(
     reviewedThisWeek: reviewRows.length > 0,
   };
 
+  // Each step's key is keyed again for this person before it reaches the browser.
   const ranked = rankNextSteps({
     onboarded,
     situation: profile.situation,
@@ -303,7 +308,7 @@ export async function today(
     checkedInToday: Boolean(
       lastCheckin[0] && localDayKey(lastCheckin[0].at, profile.timezone) === day,
     ),
-  });
+  }).map((c) => ({ ...c, key: notNowKey(userId, c.key) }));
   const { step, canDefer } = chooseNextStep(ranked, parseNotNow(opts.notNow, day));
 
   const signalList = await relevantSignals(
@@ -454,6 +459,17 @@ function describe(
     case 'explore':
       return { ...base, ...copy.explore, why: whyLast };
   }
+}
+
+/**
+ * The key "not now" remembers for a step. The ladder's own keys are plain hashes of a short,
+ * public list ("money:critical", a checklist item), so anyone who read the browser's cookie
+ * could look them up, and they are the same for everyone, so whoever signs in next on a shared
+ * device would find their own steps set aside. Keyed with the server's secret and the person's
+ * id, it tells nobody anything and holds for this person only.
+ */
+function notNowKey(userId: string, stepKey: string): string {
+  return keyedHash(`${userId}:${stepKey}`, 'not-now').slice(0, 16);
 }
 
 /** The reminder a due-reminder note is about (`reminder:<id>:<when>`), if it is one. */

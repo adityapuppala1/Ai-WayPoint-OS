@@ -147,7 +147,39 @@ describe('Today’s next step', () => {
     });
     expect(view.nextStep.detail).toBeTruthy();
     // The key is what "not now" remembers; it gives nothing away.
-    expect(view.nextStep.key).toMatch(/^[0-9a-z]{6,12}$/);
+    expect(view.nextStep.key).toMatch(/^[\w-]{16}$/);
+  });
+
+  it('a “not now” key holds for one person only, and no list of steps turns it back', async () => {
+    const a = await person('lost-job');
+    const b = await person('lost-job');
+    const mine = await today(a);
+    const theirs = await today(b);
+    expect(theirs.nextStep.title).toBe(mine.nextStep.title);
+    expect(theirs.nextStep.key).not.toBe(mine.nextStep.key);
+    // On a shared phone, what one person set aside today does not hide the next person's step.
+    expect((await today(b, notNow(mine, mine.nextStep.key))).nextStep.title).toBe(
+      mine.nextStep.title,
+    );
+
+    // The key is not a plain hash of the step: hashing every step there is for this situation
+    // (the ladder is public) finds nothing that matches it.
+    const done = mine.nextStep.done;
+    if (done?.type !== 'checklist-item') throw new Error('expected a checklist item');
+    const { rankNextSteps } = await import('@waypoint/core');
+    const everyStep = rankNextSteps({
+      onboarded: true,
+      situation: 'lost-job',
+      safetyNotes: [],
+      dueReminders: [],
+      checklist: { event: 'job-loss', open: [{ id: done.itemId, urgency: 'now' }] },
+      money: { stress: 'critical' },
+      plan: null,
+      goals: { active: 1, reviewedThisWeek: false },
+      checkedInToday: false,
+    }).map((c) => c.key);
+    expect(everyStep.length).toBeGreaterThan(4);
+    expect(everyStep).not.toContain(mine.nextStep.key);
   });
 
   it('“not now” moves to the next step for the rest of the day, and only that day', async () => {

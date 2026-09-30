@@ -14,7 +14,6 @@ export {
   channelAnswer,
   digestArticle,
   embedText,
-  forecastProbability,
   personalisePlan,
   plainChannelText,
   type SignalDigest,

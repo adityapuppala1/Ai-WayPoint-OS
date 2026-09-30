@@ -1,6 +1,7 @@
 /**
- * Structured AI features: Shield second opinion, plan wording, signal digests, forecasts and
- * embeddings. Each one degrades gracefully to the deterministic engine when AI is unavailable.
+ * Structured AI features: Shield second opinion, plan wording, signal digests and embeddings.
+ * Each one degrades gracefully to the deterministic engine when AI is unavailable. There is
+ * nothing here for forecasts, on purpose: no model writes, publishes or changes one.
  */
 import type { ScamCategory } from '@waypoint/content/types';
 import type { AiOpinion, PlanDraft, RiskLevel } from '@waypoint/core';
@@ -10,7 +11,6 @@ import { embed, generateText, Output } from 'ai';
 import { z } from 'zod';
 import {
   channelInstructions,
-  FORECAST_INSTRUCTIONS,
   LANGUAGE_NAMES,
   PLAN_INSTRUCTIONS,
   SHIELD_INSTRUCTIONS,
@@ -285,33 +285,6 @@ export async function digestArticle(
     },
   );
   return out.ok ? out.value : null;
-}
-
-const ForecastSchema = z.object({
-  probability: z.number().min(0.03).max(0.97),
-  rationale: z.string().max(600),
-});
-
-export async function forecastProbability(
-  db: Database,
-  q: { question: string; resolutionCriteria: string; resolvesAt: Date; evidence: string[] },
-): Promise<{ probability: number; rationale: string; model: string } | null> {
-  const out = await runModel({ db, tier: 'large', feature: 'forecast' }, async ({ model }) => {
-    const res = await generateText({
-      model,
-      instructions: FORECAST_INSTRUCTIONS,
-      prompt: `QUESTION: ${q.question}\nRESOLVES YES IF: ${q.resolutionCriteria}\nRESOLUTION DATE: ${q.resolvesAt.toISOString().slice(0, 10)}\n\nEVIDENCE (untrusted):\n${q.evidence
-        .slice(0, 10)
-        .map((e, i) => `${i + 1}. ${e}`)
-        .join('\n')}`,
-      output: Output.object({ schema: ForecastSchema, name: 'forecast' }),
-      temperature: 0,
-      maxOutputTokens: 500,
-      maxRetries: 1,
-    });
-    return { value: res.output, usage: res.totalUsage };
-  });
-  return out.ok ? { ...out.value, model: out.choice.modelId } : null;
 }
 
 /** Embed a short text for semantic search (768 dimensions), or null when embeddings are off. */

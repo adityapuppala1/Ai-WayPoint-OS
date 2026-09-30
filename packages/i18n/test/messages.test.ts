@@ -57,6 +57,19 @@ describe('messages', () => {
         expect(args(translated), `${l}: placeholders differ in ${k}`).toEqual(args(source));
       }
     });
+
+    it(`${l}: translates every message (only names and number formats may fall back)`, () => {
+      // The same in every language, so English is the translation.
+      const sameEverywhere = new Set([
+        'meta.title',
+        'common.appName',
+        'common.aiLabel',
+        'common.percent',
+      ]);
+      const m = new Set(keys(read(l)));
+      const missing = [...enKeys].filter((k) => !m.has(k) && !sameEverywhere.has(k));
+      expect(missing, `${l}: untranslated`).toEqual([]);
+    });
   }
 
   it('every message is valid ICU and renders with sample values in its own language', () => {

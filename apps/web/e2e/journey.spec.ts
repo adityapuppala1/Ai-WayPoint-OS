@@ -69,12 +69,27 @@ test('a guest gets started, asks for help, keeps their choices and creates an ac
   await expect(page.getByText(/moves into your account the first time you sign in/)).toBeVisible();
   await snap(page, testInfo, 'check-email');
 
-  // Signing in before confirming says so (and sends a fresh link).
+  // Signing in before confirming answers exactly like a wrong password (anything else would
+  // show whether the address already had an account) and says what to do if the account is
+  // new: with the right password, a fresh link is emailed.
+  const signIn = async (withPassword: string) => {
+    await page.getByLabel('Email').fill(email);
+    await page.getByLabel('Password').fill(withPassword);
+    await Promise.all([
+      page.waitForResponse((r) => r.url().includes('/api/auth/sign-in/email')),
+      page.getByRole('main').getByRole('button', { name: 'Sign in' }).click(),
+    ]);
+  };
   await page.goto('/sign-in');
-  await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Password').fill(password);
-  await page.getByRole('main').getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByText(/Please confirm your email address first/)).toBeVisible();
+  await signIn(password);
+  const answer = page.getByRole('main').getByRole('alert');
+  await expect(answer).toContainText('We couldn’t sign you in with that email and password.');
+  await expect(answer).toContainText('Please confirm your email address first.');
+  await expect(answer).toContainText(`a new link is on its way to ${email}`);
+  const beforeConfirming = await answer.innerText();
+  await signIn('not the password at all');
+  await expect(answer).toBeVisible();
+  expect(await answer.innerText()).toBe(beforeConfirming);
 
   // The link in the email confirms the address, and says what happens next.
   await page.goto(await linkFromEmail(email, '/api/auth/verify-email'));

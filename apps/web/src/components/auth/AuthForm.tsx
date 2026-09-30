@@ -41,7 +41,11 @@ export function AuthForm({
   const [password, setPassword] = useState('');
   const [keepGuest, setKeepGuest] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<{ text: string; tone: 'danger' | 'caution' } | null>(null);
+  const [error, setError] = useState<{
+    text: string;
+    help?: string;
+    tone: 'danger' | 'caution';
+  } | null>(null);
   const [sentTo, setSentTo] = useState<string | null>(null);
   const signUp = mode === 'sign-up';
   const signInPath = `/sign-in?next=${encodeURIComponent(next)}`;
@@ -87,15 +91,16 @@ export function AuthForm({
       .catch(() => ({ error: { status: 0 } as Failure }));
     if (res.error) {
       setBusy(false);
-      const { status, code } = res.error;
+      const { status } = res.error;
+      // A wrong password, an unknown address and an address not confirmed yet get the same
+      // answer from the API (otherwise signing in would show whether an address already had an
+      // account), so the message covers all three: the last one also emails a fresh link.
       setError(
-        status === 403 || code === 'EMAIL_NOT_VERIFIED'
-          ? { text: t('notConfirmed', { email: address }), tone: 'caution' }
-          : status === 429
-            ? { text: errors('tooMany'), tone: 'danger' }
-            : status === 401
-              ? { text: t('failed'), tone: 'danger' }
-              : { text: errors('generic'), tone: 'danger' },
+        status === 429
+          ? { text: errors('tooMany'), tone: 'danger' }
+          : status === 401
+            ? { text: t('failed'), help: t('failedHelp', { email: address }), tone: 'caution' }
+            : { text: errors('generic'), tone: 'danger' },
       );
       return;
     }
@@ -188,7 +193,11 @@ export function AuthForm({
               {t('guestKeep')}
             </Checkbox>
           ) : null}
-          {error ? <Notice tone={error.tone} role="alert" title={error.text} /> : null}
+          {error ? (
+            <Notice tone={error.tone} role="alert" title={error.text}>
+              {error.help ? <p>{error.help}</p> : null}
+            </Notice>
+          ) : null}
           <Button
             type="submit"
             variant="primary"

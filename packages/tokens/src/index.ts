@@ -428,6 +428,27 @@ export function contrastReport(mode: 'light' | 'dark'): ContrastCheck[] {
       report.push({ pair: `${tone} / ${tone}Tint on raised`, ratio, min: 4.5, pass: ratio >= 4.5 });
     }
   }
+  // A module page's header is a band of that module's tint lying on the page, holding the
+  // heading, a lead and the module's mark (the line colour, filled, with the pictogram cut
+  // out in the panel colour). In the dark the tint is see-through, so it is mixed first.
+  const bands: Array<[string, Oklch, Oklch]> = [
+    ...(Object.keys(MODULE_LINES) as ModuleLine[]).map(
+      (m) => [m, moduleLine(m, mode), moduleTint(m, mode)] as [string, Oklch, Oklch],
+    ),
+    ['support', r.support, r.supportTint],
+  ];
+  for (const [m, line, tint] of bands) {
+    const onBand: Array<[string, number, number]> = [
+      [`text / band:${m}`, contrastOnTint(r.text, tint, r.canvas), 4.5],
+      [`textSecondary / band:${m}`, contrastOnTint(r.textSecondary, tint, r.canvas), 4.5],
+      [`line:${m} / band:${m}`, contrastOnTint(line, tint, r.canvas), 3],
+      [`raised / line:${m}`, contrast(r.raised, line), 3],
+    ];
+    for (const [pair, value, min] of onBand) {
+      const ratio = round(value);
+      report.push({ pair, ratio, min, pass: ratio >= min });
+    }
+  }
   // Focus is a ring and a halo in two colours; on each surface the clearer of the two counts.
   const focusOn: Array<[string, Oklch, Oklch]> = [
     ['canvas', r.canvas, r.focusRing],

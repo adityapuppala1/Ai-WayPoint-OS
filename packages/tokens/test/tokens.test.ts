@@ -9,6 +9,7 @@ import {
   focus,
   fontSize,
   light,
+  MODULE_LINES,
   motion,
   type Oklch,
   signEdge,
@@ -48,6 +49,25 @@ describe('design tokens', () => {
         'focus / sign',
       ])
         expect(pairs, pair).toContain(pair);
+    });
+
+    it(`checks a module page's header band in ${mode} mode: its text and its mark`, () => {
+      // PageHeader lays a module's tint over the page and puts the h1, the lead and the
+      // module's mark (its line colour, filled) on it.
+      const report = contrastReport(mode);
+      const modules = [...Object.keys(MODULE_LINES), 'support'];
+      for (const m of modules) {
+        for (const [pair, min] of [
+          [`text / band:${m}`, 4.5],
+          [`textSecondary / band:${m}`, 4.5],
+          [`line:${m} / band:${m}`, 3],
+          [`raised / line:${m}`, 3],
+        ] as const) {
+          const check = report.find((c) => c.pair === pair);
+          expect(check, pair).toBeDefined();
+          expect(check?.min, pair).toBe(min);
+        }
+      }
     });
 
     it(`keeps the Sign the boldest thing on the page in ${mode} mode`, () => {

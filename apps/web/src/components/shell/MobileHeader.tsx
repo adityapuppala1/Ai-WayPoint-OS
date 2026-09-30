@@ -1,6 +1,6 @@
 'use client';
 
-import { Icon } from '@waypoint/ui';
+import { cn, Icon, viewTransition } from '@waypoint/ui';
 import type { Route } from 'next';
 import Link from 'next/link';
 import { LogoMark } from '@/components/Logo';
@@ -17,7 +17,7 @@ export function MobileHeader({
   helpLabel: string;
 }) {
   return (
-    <header className={styles.mobileHeader}>
+    <header className={cn(styles.mobileHeader, viewTransition.header)}>
       <Link href="/" className={styles.brand} aria-label="Waypoint">
         <span className={styles.brandMark} aria-hidden>
           <LogoMark size={28} />

@@ -31,11 +31,23 @@
   color: var(--wp-text-secondary);
   font-weight: var(--wp-weight-medium);
   text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--wp-duration-fast) var(--wp-ease-out),
+    color var(--wp-duration-fast) var(--wp-ease-out),
+    scale var(--wp-duration-fast) var(--wp-ease-out);
 }
 
-.filters a:hover {
-  background: var(--wp-sunken);
-  color: var(--wp-text);
+@media (hover: hover) {
+  .filters a:hover {
+    background: var(--wp-fill-hover);
+    color: var(--wp-text);
+  }
+}
+
+.filters a:active {
+  background: var(--wp-fill-pressed);
+  scale: var(--wp-press-scale);
 }
 
 .filters a[aria-current="page"] {
@@ -44,7 +56,14 @@
   color: var(--wp-canvas);
 }
 
+/* A chip, not a link in a sentence: the ring, without the signal highlight behind it. */
 .filters a:focus-visible {
-  outline: 2px solid var(--wp-focus-ring);
-  outline-offset: 2px;
+  background: transparent;
+  color: var(--wp-text);
+  box-shadow: var(--wp-focus-shadow);
+}
+
+.filters a[aria-current="page"]:focus-visible {
+  background: var(--wp-text);
+  color: var(--wp-canvas);
 }

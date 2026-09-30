@@ -157,7 +157,14 @@
     "offline": "You’re offline. Help lines still work.",
     "organisations": "Organisations",
     "admin": "Admin",
-    "oldBrowser": "This browser is too old to show Waypoint properly. Update it, or open Waypoint in a newer one. The help numbers still work here."
+    "oldBrowser": "This browser is too old to show Waypoint properly. Update it, or open Waypoint in a newer one. The help numbers still work here.",
+    "goTo": "Go to",
+    "goToSearch": "Search Waypoint",
+    "goToPlaceholder": "A module, a page or a question",
+    "goToPlaces": "More places",
+    "goToNoMatch": "Nothing in Waypoint matches that.",
+    "goToAsk": "Talk it through: “{query}”",
+    "goToCount": "{count, plural, one {# result} other {# results}}"
   },
   "welcome": {
     "title": "See what’s coming. Know your next step. Never take it alone.",

@@ -45,6 +45,20 @@
   cursor: pointer;
   overflow-wrap: anywhere;
   -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--wp-duration-fast) var(--wp-ease-out),
+    border-color var(--wp-duration-fast) var(--wp-ease-out),
+    scale var(--wp-duration-fast) var(--wp-ease-out);
+}
+
+@media (hover: hover) {
+  .mood[data-hovered]:not([data-selected]) {
+    background: var(--wp-fill-hover);
+  }
+}
+
+.mood[data-pressed] {
+  scale: var(--wp-press-scale);
 }
 
 .mood[data-selected] {
@@ -55,9 +69,13 @@
 
 .mood[data-focus-visible] {
   outline: 2px solid transparent;
+  box-shadow: var(--wp-focus-shadow);
+}
+
+.mood[data-selected][data-focus-visible] {
   box-shadow:
-    0 0 0 2px var(--wp-canvas),
-    0 0 0 4px var(--wp-focus-ring);
+    inset 0 0 0 1px var(--wp-line-mind),
+    var(--wp-focus-shadow);
 }
 
 .level {
@@ -96,6 +114,20 @@
   color: var(--wp-text);
   font-size: var(--wp-text-small);
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--wp-duration-fast) var(--wp-ease-out),
+    scale var(--wp-duration-fast) var(--wp-ease-out);
+}
+
+@media (hover: hover) {
+  .chip[data-hovered]:not([data-selected]) {
+    background: var(--wp-fill-hover);
+  }
+}
+
+.chip[data-pressed] {
+  scale: var(--wp-press-scale);
 }
 
 .chip[data-selected] {
@@ -104,8 +136,8 @@
 }
 
 .chip[data-focus-visible] {
-  outline: 2px solid var(--wp-focus-ring);
-  outline-offset: 2px;
+  outline: 2px solid transparent;
+  box-shadow: var(--wp-focus-shadow);
 }
 
 .actions {

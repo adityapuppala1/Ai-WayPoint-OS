@@ -15,10 +15,24 @@
   font-weight: var(--wp-weight-medium);
   text-align: start;
   cursor: pointer;
+  outline: 2px solid transparent;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--wp-duration-fast) var(--wp-ease-out);
 }
 
-.toggle:hover {
-  background: color-mix(in oklch, var(--wp-text) 4%, transparent);
+@media (hover: hover) {
+  .toggle:hover {
+    background: var(--wp-fill-hover);
+  }
+}
+
+.toggle:active {
+  background: var(--wp-fill-pressed);
+}
+
+/* Flush at the foot of the panel: the ring is drawn inside the row. */
+.toggle:focus-visible {
+  box-shadow: var(--wp-focus-shadow-inset);
 }
 
 /* One fact to a line in a row's description (the weather row: the place, then the air). */

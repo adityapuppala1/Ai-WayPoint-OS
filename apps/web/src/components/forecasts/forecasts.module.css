@@ -4,7 +4,7 @@
 /* One row in every language: on a narrow phone it scrolls sideways rather than wrapping. */
 .tabs {
   display: flex;
-  gap: var(--wp-space-4);
+  gap: 0;
   margin: 0;
   padding: 0;
   border-block-end: 1px solid var(--wp-border-subtle);
@@ -14,29 +14,52 @@
   white-space: nowrap;
 }
 
+/* Safari before 18.2 and older Chrome do not know scrollbar-width. */
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
 .tabs a {
   display: inline-flex;
   align-items: center;
   min-block-size: var(--wp-touch-min);
+  /* Room for the ring drawn inside the tab (the tabs themselves sit edge to edge). */
+  padding-inline: var(--wp-space-2);
   /* The marker sits on the rule underneath; the text does not move when it appears. */
   border-block-end: 3px solid transparent;
+  border-start-start-radius: var(--wp-radius-sm);
+  border-start-end-radius: var(--wp-radius-sm);
   color: var(--wp-text-secondary);
   font-weight: var(--wp-weight-medium);
   text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--wp-duration-fast) var(--wp-ease-out),
+    color var(--wp-duration-fast) var(--wp-ease-out);
 }
 
-.tabs a:hover {
+@media (hover: hover) {
+  .tabs a:hover {
+    color: var(--wp-text);
+  }
+}
+
+.tabs a:active {
+  background: var(--wp-fill-hover);
   color: var(--wp-text);
 }
 
+/* The marker: one colour, --wp-marker, at 3:1 on every surface (signal yellow is not). */
 .tabs a[aria-current="page"] {
-  border-block-end-color: var(--wp-signal);
+  border-block-end-color: var(--wp-marker);
   color: var(--wp-text);
 }
 
+/* Flush against the rule, so the ring is drawn inside the tab. */
 .tabs a:focus-visible {
-  outline: 2px solid var(--wp-focus-ring);
-  outline-offset: -2px;
+  background: var(--wp-signal-tint);
+  color: var(--wp-text);
+  box-shadow: var(--wp-focus-shadow-inset);
 }
 
 .honest {

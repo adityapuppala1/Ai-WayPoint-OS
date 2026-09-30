@@ -153,7 +153,14 @@
     "offline": "Você está sem conexão. As linhas de apoio continuam funcionando.",
     "organisations": "Organizações",
     "admin": "Administração",
-    "oldBrowser": "Este navegador é antigo demais para mostrar o Waypoint corretamente. Atualize-o ou abra o Waypoint em um mais recente. Os números de ajuda continuam funcionando aqui."
+    "oldBrowser": "Este navegador é antigo demais para mostrar o Waypoint corretamente. Atualize-o ou abra o Waypoint em um mais recente. Os números de ajuda continuam funcionando aqui.",
+    "goTo": "Ir para",
+    "goToSearch": "Pesquisar no Waypoint",
+    "goToPlaceholder": "Um módulo, uma página ou uma pergunta",
+    "goToPlaces": "Mais lugares",
+    "goToNoMatch": "Nada no Waypoint corresponde a isso.",
+    "goToAsk": "Conversar: “{query}”",
+    "goToCount": "{count, plural, one {# resultado} other {# resultados}}"
   },
   "welcome": {
     "title": "Veja o que vem aí. Saiba seu próximo passo. Nunca siga sozinho.",

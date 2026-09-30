@@ -29,8 +29,10 @@ export function QuickExit({ compact }: { compact?: boolean | 'narrow' }) {
       presses = [...presses.filter((p) => now - p < 1200), now];
       if (presses.length >= 3) quickExit();
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    // Heard on the way in (capture), before anything else: a dialog or a search field uses
+    // Escape itself (to clear, then to close) and stops it there, and those presses count too.
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
   }, []);
   return (
     <Button

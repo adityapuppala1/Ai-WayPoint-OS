@@ -2,7 +2,13 @@
 .shell {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  min-block-size: 100dvh;
+  min-block-size: 100vh;
+}
+
+@supports (height: 100dvh) {
+  .shell {
+    min-block-size: 100dvh;
+  }
 }
 
 .column {
@@ -30,18 +36,11 @@
   display: none;
 }
 
+/* The design system's placeholder waits a moment before it shows; the frame has already
+   waited (see pending.tsx), so it fades in at once and there is no blank moment between the
+   page that leaves and the placeholder. */
 .placeholder {
-  gap: var(--wp-space-8);
-}
-
-.placeholderPanel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--wp-space-3);
-  padding: var(--wp-space-4);
-  border: 1px solid var(--wp-border-subtle);
-  border-radius: var(--wp-radius-md);
-  background: var(--wp-raised);
+  animation-delay: 0s;
 }
 
 /* Offline notice: lines up with the page column, and takes no room while online. */
@@ -67,6 +66,13 @@
   text-decoration: none;
 }
 
+/* The name is not a link in running text: the ring, without the signal highlight behind it. */
+.brand:focus-visible {
+  background: transparent;
+  color: var(--wp-text);
+  box-shadow: var(--wp-focus-shadow);
+}
+
 .brandMark {
   display: inline-flex;
   flex-shrink: 0;
@@ -78,17 +84,102 @@
   letter-spacing: -0.01em;
 }
 
+/* ───────────── Go to (the palette's button) ───────────── */
+.railSearch {
+  flex: none;
+  margin-block-start: var(--wp-space-3);
+}
+
+/* Shaped like a search field, so it reads as "type to find" before it is pressed. */
+.goTo {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+  inline-size: 100%;
+  min-block-size: var(--wp-touch-min);
+  padding-inline: var(--wp-space-3) var(--wp-space-2);
+  border: 1px solid var(--wp-border-strong);
+  border-radius: var(--wp-radius-sm);
+  background: var(--wp-canvas);
+  color: var(--wp-text-secondary);
+  font: inherit;
+  font-size: var(--wp-text-small);
+  text-align: start;
+  cursor: pointer;
+  outline: 2px solid transparent;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--wp-duration-fast) var(--wp-ease-out),
+    color var(--wp-duration-fast) var(--wp-ease-out),
+    scale var(--wp-duration-fast) var(--wp-ease-out);
+}
+
+@media (hover: hover) {
+  .goTo:hover {
+    background: var(--wp-fill-hover);
+    color: var(--wp-text);
+  }
+}
+
+.goTo:active {
+  background: var(--wp-fill-pressed);
+  color: var(--wp-text);
+  scale: var(--wp-press-scale);
+}
+
+.goTo:focus-visible {
+  box-shadow: var(--wp-focus-shadow);
+}
+
+.goToLabel {
+  flex: 1;
+  min-inline-size: 0;
+  line-height: var(--wp-leading-snug);
+}
+
+/* The keys, as a small label: never monospace, and always left to right. */
+.goToKeys {
+  flex: none;
+  padding: 0.0625rem var(--wp-space-1);
+  border: 1px solid var(--wp-border-subtle);
+  border-radius: var(--wp-radius-xs);
+  background: var(--wp-raised);
+  color: var(--wp-text-muted);
+  font-family: inherit;
+  font-size: var(--wp-text-meta);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--wp-leading-meta);
+}
+
+.goToKeys kbd {
+  font: inherit;
+}
+
+/* At the top of the More sheet, above the places. */
+.sheetSearch {
+  margin-block-end: var(--wp-space-3);
+}
+
 /* ───────────── Rail (≥ 60rem) ───────────── */
 .rail {
   display: none;
 }
 
+/* On a short screen the list of places scrolls by itself, so "Get help now" and the account
+   below it never leave the screen. It reaches the rail's edges, so the marker at the edge
+   stays in view. */
 .railList {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: 2px;
-  margin-block-start: var(--wp-space-6);
-  padding: 0;
+  min-block-size: 0;
+  margin-block: var(--wp-space-3) 0;
+  margin-inline: calc(-1 * var(--wp-space-3));
+  padding: var(--wp-space-1) var(--wp-space-3);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
   list-style: none;
 }
 
@@ -103,20 +194,40 @@
   color: var(--wp-text-secondary);
   font-weight: var(--wp-weight-medium);
   text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--wp-duration-fast) var(--wp-ease-out),
+    color var(--wp-duration-fast) var(--wp-ease-out);
 }
 
-.railLink:hover {
-  background: var(--wp-sunken);
-  color: var(--wp-text);
+@media (hover: hover) {
+  .railLink:hover {
+    background: var(--wp-fill-hover);
+    color: var(--wp-text);
+  }
 }
 
 .railLink.active {
-  background: var(--wp-sunken);
+  background: var(--wp-fill-hover);
   color: var(--wp-text);
 }
 
-/* The active marker is the signal-yellow bar, like the "you are here" arrow on a sign. A
-   pressed link shows it at once, before its page has arrived. */
+/* Pressed: a shade at once, before the next page has arrived. */
+.railLink:active {
+  background: var(--wp-fill-pressed);
+  color: var(--wp-text);
+}
+
+/* The list scrolls, so the ring is drawn inside the link, where nothing clips it. */
+.railLink:focus-visible {
+  background: var(--wp-signal-tint);
+  color: var(--wp-text);
+  box-shadow: var(--wp-focus-shadow-inset);
+}
+
+/* The active marker, like the "you are here" arrow on a sign: --wp-marker, which stands out
+   at 3:1 on every surface (signal yellow alone does not on a light page). A pressed link
+   shows it at once, before its page has arrived. */
 .railLink.active::before,
 .railLink .pendingMark[data-pending] {
   content: "";
@@ -126,25 +237,27 @@
   inline-size: 4px;
   border-start-end-radius: 4px;
   border-end-end-radius: 4px;
-  background: var(--wp-signal);
+  background: var(--wp-marker);
 }
 
 .moreMark {
   display: inline-grid;
   place-items: center;
+  flex: none;
   inline-size: 28px;
   block-size: 28px;
   border-radius: var(--wp-radius-sm);
-  background: var(--wp-sunken);
+  background: var(--wp-fill-hover);
   color: var(--wp-text-secondary);
 }
 
 .railFoot {
   display: flex;
+  flex: none;
   flex-direction: column;
   gap: var(--wp-space-2);
   margin-block-start: auto;
-  padding-block-start: var(--wp-space-4);
+  padding-block-start: var(--wp-space-3);
   border-block-start: 1px solid var(--wp-border-subtle);
 }
 
@@ -154,17 +267,43 @@
   gap: var(--wp-space-3);
   min-block-size: var(--wp-touch-min);
   padding-inline: var(--wp-space-3);
-  border: 1px solid color-mix(in oklch, var(--wp-support) 30%, transparent);
+  border: 1px solid var(--wp-border-subtle);
   border-radius: var(--wp-radius-sm);
   background: var(--wp-support-tint);
   color: var(--wp-support);
   font-weight: var(--wp-weight-medium);
   text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color var(--wp-duration-fast) var(--wp-ease-out),
+    scale var(--wp-duration-fast) var(--wp-ease-out);
 }
 
-.helpLink:hover,
+@supports (color: color-mix(in oklch, red, blue)) {
+  .helpLink {
+    border-color: color-mix(in oklch, var(--wp-support) 30%, transparent);
+  }
+}
+
+@media (hover: hover) {
+  .helpLink:hover {
+    border-color: var(--wp-support);
+  }
+}
+
 .helpLink.active {
   border-color: var(--wp-support);
+}
+
+.helpLink:active {
+  border-color: var(--wp-support);
+  scale: var(--wp-press-scale);
+}
+
+.helpLink:focus-visible {
+  background: var(--wp-support-tint);
+  color: var(--wp-support);
+  box-shadow: var(--wp-focus-shadow);
 }
 
 .accountButton {
@@ -181,19 +320,23 @@
   font: inherit;
   text-align: start;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--wp-duration-fast) var(--wp-ease-out);
 }
 
-.accountButton:hover,
-.accountButton[data-hovered] {
-  background: var(--wp-sunken);
+@media (hover: hover) {
+  .accountButton[data-hovered] {
+    background: var(--wp-fill-hover);
+  }
+}
+
+.accountButton[data-pressed] {
+  background: var(--wp-fill-pressed);
 }
 
 .accountButton[data-focus-visible] {
   outline: 2px solid transparent;
-  box-shadow:
-    0 0 0 2px var(--wp-canvas),
-    0 0 0 4px var(--wp-focus-ring),
-    0 0 0 7px var(--wp-signal);
+  box-shadow: var(--wp-focus-shadow);
 }
 
 .accountText {
@@ -282,6 +425,18 @@
   text-decoration: none;
   white-space: nowrap;
   min-inline-size: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: scale var(--wp-duration-fast) var(--wp-ease-out);
+}
+
+.helpChip:active {
+  scale: var(--wp-press-scale);
+}
+
+.helpChip:focus-visible {
+  background: var(--wp-support-tint);
+  color: var(--wp-support);
+  box-shadow: var(--wp-focus-shadow);
 }
 
 .helpChip span {
@@ -334,10 +489,43 @@
   font-weight: var(--wp-weight-medium);
   text-decoration: none;
   cursor: pointer;
+  outline: 2px solid transparent;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--wp-duration-fast) var(--wp-ease-out),
+    color var(--wp-duration-fast) var(--wp-ease-out);
+}
+
+/* The mark gives a little under the thumb; the label stays where it is. */
+.tab > :first-child {
+  transition: scale var(--wp-duration-fast) var(--wp-ease-out);
+}
+
+.tab:active {
+  background: var(--wp-fill-pressed);
+  color: var(--wp-text);
+}
+
+.tab:active > :first-child {
+  scale: var(--wp-press-scale);
+}
+
+@media (hover: hover) {
+  .tab:hover {
+    background: var(--wp-fill-hover);
+    color: var(--wp-text);
+  }
 }
 
 .tab.active {
   color: var(--wp-text);
+}
+
+/* The tabs sit flush in the bar, so the ring is drawn inside the tab. */
+.tab:focus-visible {
+  background: var(--wp-signal-tint);
+  color: var(--wp-text);
+  box-shadow: var(--wp-focus-shadow-inset);
 }
 
 .tab.active::before,
@@ -349,7 +537,7 @@
   block-size: 3px;
   border-end-start-radius: 3px;
   border-end-end-radius: 3px;
-  background: var(--wp-signal);
+  background: var(--wp-marker);
 }
 
 /* One marker at a time: it leaves the page you are on as it appears on the one you pressed. */
@@ -377,6 +565,8 @@
   border-radius: var(--wp-radius-sm);
   color: var(--wp-text);
   text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--wp-duration-fast) var(--wp-ease-out);
 }
 
 .sheetLink > :first-child {
@@ -406,9 +596,24 @@
   font-size: var(--wp-text-small);
 }
 
-.sheetLink:hover,
+@media (hover: hover) {
+  .sheetLink:hover {
+    background: var(--wp-fill-hover);
+  }
+}
+
 .sheetLink[aria-current="page"] {
-  background: var(--wp-sunken);
+  background: var(--wp-fill-hover);
+}
+
+.sheetLink:active {
+  background: var(--wp-fill-pressed);
+}
+
+.sheetLink:focus-visible {
+  background: var(--wp-signal-tint);
+  color: var(--wp-text);
+  box-shadow: var(--wp-focus-shadow-inset);
 }
 
 @media (min-width: 60rem) {
@@ -421,11 +626,17 @@
     inset-block-start: 0;
     display: flex;
     flex-direction: column;
-    block-size: 100dvh;
+    block-size: 100vh;
     overflow-y: auto;
     padding: var(--wp-space-4) var(--wp-space-3);
     border-inline-end: 1px solid var(--wp-border-subtle);
     background: var(--wp-raised);
+  }
+
+  @supports (height: 100dvh) {
+    .rail {
+      block-size: 100dvh;
+    }
   }
 
   .mobileHeader,

@@ -153,7 +153,14 @@
     "offline": "Huko mtandaoni. Nambari za msaada bado zinafanya kazi.",
     "organisations": "Mashirika",
     "admin": "Usimamizi",
-    "oldBrowser": "Kivinjari hiki ni cha zamani mno kuonyesha Waypoint ipasavyo. Kisasishe, au fungua Waypoint katika kivinjari kipya zaidi. Nambari za msaada bado zinafanya kazi hapa."
+    "oldBrowser": "Kivinjari hiki ni cha zamani mno kuonyesha Waypoint ipasavyo. Kisasishe, au fungua Waypoint katika kivinjari kipya zaidi. Nambari za msaada bado zinafanya kazi hapa.",
+    "goTo": "Nenda kwa",
+    "goToSearch": "Tafuta katika Waypoint",
+    "goToPlaceholder": "Sehemu, ukurasa au swali",
+    "goToPlaces": "Mahali pengine",
+    "goToNoMatch": "Hakuna kitu katika Waypoint kinacholingana na hilo.",
+    "goToAsk": "Zungumza kuhusu jambo: “{query}”",
+    "goToCount": "{count, plural, one {tokeo #} other {matokeo #}}"
   },
   "welcome": {
     "title": "Ona kinachokuja. Jua hatua yako inayofuata. Hutaipiga peke yako.",

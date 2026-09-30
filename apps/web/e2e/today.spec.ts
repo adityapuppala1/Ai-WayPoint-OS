@@ -122,12 +122,15 @@ test('one tap, kept quiet or taken back: the Mind line checks in on Today, and a
   await expect(open).toHaveAttribute('aria-expanded', 'true');
   const moods = tools.getByRole('group', { name: 'How are you today?' });
   await expect(moods.getByRole('button')).toHaveCount(5);
-  await moods.getByRole('button', { name: 'Okay' }).click();
+  // Chosen with the keyboard: the moods close, and the keyboard is back on "Check in" rather
+  // than lost with the button that went.
+  await moods.getByRole('button', { name: 'Okay' }).press('Enter');
   await expect(
     page.getByRole('alertdialog').filter({ hasText: 'Checked in. Thank you for taking a moment.' }),
   ).toBeVisible();
   // Closed again, and nothing on Today says how the person felt.
   await expect(moods).toBeHidden();
+  await expect(open).toBeFocused();
   await expect(open).toHaveAttribute('aria-expanded', 'false');
   await expect(page.getByRole('main').getByText('Okay', { exact: true })).toBeHidden();
   // It is kept in Mind.

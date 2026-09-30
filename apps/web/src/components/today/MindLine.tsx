@@ -6,7 +6,7 @@ import type { Route } from 'next';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useId, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { CrisisCard } from '@/components/support/CrisisCard';
 import { api } from '@/lib/api';
 import styles from './MindLine.module.css';
@@ -26,6 +26,7 @@ export function MindLine({ title, description }: { title: string; description: s
   const [saving, setSaving] = useState<string | null>(null);
   const [crisis, setCrisis] = useState<CrisisResponsePlan | null>(null);
   const panelId = useId();
+  const head = useRef<HTMLDivElement>(null);
 
   const save = async (mood: string) => {
     setSaving(mood);
@@ -35,6 +36,9 @@ export function MindLine({ title, description }: { title: string; description: s
         { json: { mood: Number(mood), tags: [] } },
       );
       setOpen(false);
+      // The mood that was pressed is hidden with the row: the keyboard goes back to "Check in"
+      // rather than to the top of the page.
+      head.current?.querySelector('button')?.focus();
       if (res.screening.plan) setCrisis(res.screening.plan);
       else toast({ title: t('checkedIn'), tone: 'safe' });
       // The sign may have been asking for this check-in.
@@ -48,7 +52,7 @@ export function MindLine({ title, description }: { title: string; description: s
 
   return (
     <li className={styles.line}>
-      <div className={styles.head}>
+      <div className={styles.head} ref={head}>
         <Link href={'/mind' as Route} className={styles.link}>
           <ModuleMark module="mind" size="sm" />
           <span className={styles.text}>

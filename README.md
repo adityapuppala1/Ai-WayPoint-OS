@@ -100,7 +100,7 @@ card, bank and ID numbers removed).
 | `pnpm worker` | Background worker for Postgres deployments |
 | `pnpm eval` | Run the safety evaluation sets against the classifiers, and the assistant guardrail cases (no AI key needed) |
 | `pnpm check` | Lint, types and every unit test in one go (what CI runs) |
-| `pnpm --filter @waypoint/web build` then `pnpm test:e2e` | Browser tests against the built app, at phone and desktop widths (first time: `pnpm --filter @waypoint/web exec playwright install chromium`) |
+| `pnpm --filter @waypoint/web build` then `pnpm test:e2e` | Browser tests against the built app in Chrome, Firefox and Safari's engine (WebKit), at phone and desktop widths (first time: `pnpm --filter @waypoint/web exec playwright install`; one browser only: add `--project=desktop`, `phone`, `firefox`, `safari` or `iphone`) |
 | `node infra/load/run.mjs` | The load test, against a server you name ([infra/load/README.md](infra/load/README.md) has the recorded baseline) |
 | `pnpm --filter @waypoint/mobile dev` | Start the phone app (open it in Expo Go; see [docs/MOBILE.md](docs/MOBILE.md)) |
 

@@ -1,13 +1,16 @@
 /**
- * End-to-end tests: the real app, in a real browser, at phone and desktop widths.
+ * End-to-end tests: the real app, in real browsers, at phone and desktop widths. Five
+ * projects: `desktop` and `phone` (Chrome), `firefox`, and `safari` and `iphone` (WebKit, the
+ * engine of Safari and of every browser on an iPhone).
  *
  *   pnpm --filter @waypoint/web build      # once (or E2E_DEV=1 to test `next dev` instead)
- *   pnpm test:e2e
+ *   pnpm --filter @waypoint/web exec playwright install      # once: the three browsers
+ *   pnpm test:e2e                          # all five, or add --project=firefox for one
  *
  * The server starts with a fresh embedded database in the system temp folder (never your own
  * `.data/`), no AI provider or texting provider, and email caught by a local mail catcher, so
- * every run starts from the same place and nothing leaves the machine. Set E2E_BASE_URL to test a server that is already
- * running (for example a staging copy) instead.
+ * every run starts from the same place and nothing leaves the machine. Set E2E_BASE_URL to
+ * test a server that is already running (for example a staging copy) instead.
  */
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';

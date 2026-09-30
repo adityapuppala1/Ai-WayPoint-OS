@@ -487,8 +487,20 @@ test('a guest is told once where what they saved lives, and “Not now” is rem
   // It is a note, not a wall: the page underneath is all there.
   await expect(sign(page).getByRole('heading', { level: 2 })).toBeVisible();
 
+  // The server sets the cookie that remembers it, for a year: one the page wrote itself,
+  // Safari and every iPhone browser would forget after seven days, and the note would return.
+  const answer = page.waitForResponse(
+    (res) =>
+      res.url().endsWith('/api/preferences') &&
+      res.request().method() === 'POST' &&
+      (res.request().postDataJSON() as { guestNote?: string } | null)?.guestNote === 'off',
+    { timeout: 30_000 },
+  );
   await note.getByRole('button', { name: 'Not now' }).click();
   await expect(note).toHaveCount(0);
+  const setCookie = ((await (await answer).headerValue('set-cookie')) ?? '').toLowerCase();
+  expect(setCookie).toContain('wp-guest-note=off');
+  expect(setCookie).toContain('max-age=31536000');
   // Remembered as a display choice in this browser; it does not come back.
   await page.reload();
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();

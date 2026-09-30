@@ -46,6 +46,8 @@ const PreferencesSchema = z
     theme: z.enum(['system', 'light', 'dark']),
     lite: z.boolean(),
     timezone: z.string().max(64).refine(isTimeZone, 'Unknown time zone'),
+    /** A guest said "Not now" to the note about keeping their things with an account. */
+    guestNote: z.literal('off'),
   })
   .partial()
   .refine((choices) => Object.keys(choices).length > 0, 'Nothing to save')
@@ -58,7 +60,7 @@ app.openapi(
     tags: ['System'],
     summary: 'Remember a language, theme, lite mode or time zone on this device',
     description:
-      'Public: guests choose a language and a theme too. Nothing is stored on the server. The answer sets a cookie for each choice sent (NEXT_LOCALE, wp-theme, wp-lite, wp-tz), which pages are drawn from before anyone is known.',
+      'Public: guests choose a language and a theme too. Nothing is stored on the server. The answer sets a cookie for each choice sent (NEXT_LOCALE, wp-theme, wp-lite, wp-tz, and wp-guest-note when a guest says "Not now" to the note about an account), which pages are drawn from before anyone is known.',
     middleware: [limit('preferences', 120, 60)] as const,
     request: jsonBody(PreferencesSchema),
     responses: { 200: jsonContent(OkSchema), 422: errors[422], 429: errors[429] },
@@ -81,6 +83,8 @@ app.openapi(
     if (choices.theme) setCookie(c, 'wp-theme', choices.theme, keep);
     if (choices.lite !== undefined) setCookie(c, 'wp-lite', choices.lite ? '1' : '0', keep);
     if (choices.timezone) setCookie(c, 'wp-tz', choices.timezone, keep);
+    // "Not now" means the note does not come back — also after Safari's seven days.
+    if (choices.guestNote) setCookie(c, GUEST_NOTE_COOKIE, choices.guestNote, keep);
     return c.json({ ok: true as const }, 200, { 'Cache-Control': 'no-store' });
   },
 );

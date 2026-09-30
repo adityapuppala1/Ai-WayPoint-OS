@@ -99,6 +99,18 @@ describe('POST /api/preferences', () => {
     expect(lite['wp-lite']?.value).toBe('0');
   });
 
+  it('remembers a guest’s “Not now” on the account note for as long as the other choices', async () => {
+    // Written by the page, Safari and every iPhone browser would forget it after seven days,
+    // and the note would come back every week.
+    const res = await save({ guestNote: 'off' });
+    expect(res.status).toBe(200);
+    const cookies = cookiesOf(res);
+    expect(Object.keys(cookies)).toEqual(['wp-guest-note']);
+    expect(cookies['wp-guest-note']?.value).toBe('off');
+    expect(cookies['wp-guest-note']?.attributes).toContain('max-age=31536000');
+    expect(cookies['wp-guest-note']?.attributes).toContain('path=/');
+  });
+
   it('refuses anything outside the lists, and sets no cookie at all', async () => {
     for (const body of [
       { locale: 'xx' },
@@ -108,9 +120,11 @@ describe('POST /api/preferences', () => {
       { timezone: '+05:00' },
       { timezone: 'Mars/Olympus_Mons' },
       { timezone: 'Africa/Nairobi\r\nSet-Cookie: x=y' },
+      // "Not now" is the only thing the account note remembers.
+      { guestNote: 'on' },
       // One bad value refuses the good ones sent with it.
       { locale: 'fr', theme: 'pink' },
-      // Only these four cookies can be set.
+      // Only these five cookies can be set.
       { 'waypoint.session_token': 'abc' },
       {},
     ]) {

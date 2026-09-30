@@ -69,6 +69,28 @@ describe('what the judge may read, with only English switched on', () => {
       expect(judgeReads(text, 'en'), text).toBe(false);
   });
 
+  it('answers at once for text made to slow it down, such as a long run of "!" or "-"', () => {
+    for (const text of [
+      '!'.repeat(50_000),
+      `a${'-'.repeat(50_000)}a`,
+      `we ${'a-'.repeat(25_000)}`,
+      `we are a${"'".repeat(50_000)}b`,
+    ]) {
+      const started = performance.now();
+      judgeReads(text, 'en');
+      expect(performance.now() - started, text.slice(0, 12)).toBeLessThan(250);
+    }
+  });
+
+  it('does not count the words inside links, emails and web addresses, wherever they sit', () => {
+    for (const text of [
+      'www.we-are-the-bank.com you@are-the.one https://it-is.for/you/and/me',
+      '(we-are-the-bank.com/login) "you-and-me.co.uk", it-is-for.you.',
+    ])
+      expect(judgeReads(text, 'en'), text).toBe(false);
+    expect(judgeReads('We have sent it to you, see bank.com. It is on the way.', 'en')).toBe(true);
+  });
+
   it('reads no message of the golden set that is not in English', () => {
     const sent = golden.filter((c) => c.lang !== 'en' && judgeReads(c.text, 'en'));
     expect(sent.map((c) => `${c.lang}: ${c.text}`)).toEqual([]);

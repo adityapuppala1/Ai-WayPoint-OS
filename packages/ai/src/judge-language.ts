@@ -22,8 +22,19 @@ import { foldText, LANGUAGE_MARKERS } from '@waypoint/core/text';
 /** Undetermined: not clearly any language. The judge is never asked about it. */
 const UNDETERMINED = 'und';
 
-/** Web addresses, bare domains and email addresses. */
-const NOT_WORDS = /\S+@\S+|https?:\/\/\S+|www\.\S+|(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/\S*)?/gi;
+/**
+ * A piece of text that is an address, not words: an email, a link, a web address or a bare
+ * domain ("bank-help.co.uk/login"). It is tested on whole pieces: a pattern searched through
+ * the whole text started again at every character of a long run of "!" or "-", and took
+ * seconds on text anyone can paste.
+ */
+const ADDRESS = /@|:\/\/|^www\.|\.[a-z]{2,}(?:[/?#:]|[.,;:!?]*$)/i;
+
+/** Where an address ends: spaces, brackets and quotes ("(see bank.com)"). */
+const AROUND_ADDRESSES = /[\s()[\]{}<>"«»“”]+/;
+
+/** Words: letters, with an apostrophe only inside ("don't", not "'quoted'"). */
+const WORDS = /[a-z]+(?:'[a-z]+)*/g;
 
 const SCRIPTS = [
   ['latin', /\p{Script=Latin}/u],
@@ -197,7 +208,10 @@ type Reading =
 
 /** The script that holds nine letters in ten, and for Latin, each list's common words. */
 function read(text: string): Reading {
-  const plain = text.replace(NOT_WORDS, ' ');
+  const plain = text
+    .split(AROUND_ADDRESSES)
+    .filter((piece) => !ADDRESS.test(piece))
+    .join(' ');
   const letters = plain.match(/\p{L}/gu) ?? [];
   if (!letters.length) return null;
   const counts = SCRIPTS.map(
@@ -207,10 +221,7 @@ function read(text: string): Reading {
   if (most < letters.length * ONE_SCRIPT) return null;
   if (script !== 'latin') return { script };
 
-  const words = foldText(plain)
-    .split(/[^a-z']+/)
-    .map((w) => w.replace(/^'+|'+$/g, ''))
-    .filter(Boolean);
+  const words = foldText(plain).match(WORDS) ?? [];
   // Different words: one word said twice ("has … has") is still one.
   const scores = LISTS.map(
     ([lang, set]) => [lang, new Set(words.filter((w) => set.has(w))).size] as const,

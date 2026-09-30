@@ -72,6 +72,26 @@ describe('toast', () => {
     expect(toastQueue.visibleToasts.map((t) => t.key)).not.toContain(key);
   });
 
+  it('removes a toast anyway if its exit animation never finishes', () => {
+    vi.useFakeTimers();
+    try {
+      const element = {
+        setAttribute: () => {},
+        // For example an animation paused in a background tab.
+        getAnimations: () => [{ finished: new Promise<void>(() => {}) }],
+      };
+      const key = toast({ title: 'Saved' });
+      vi.stubGlobal('document', { querySelector: () => element });
+      vi.stubGlobal('getComputedStyle', () => ({ animationName: 'toastOut' }));
+      toastQueue.close(key);
+      expect(toastQueue.visibleToasts.map((t) => t.key)).toContain(key);
+      vi.advanceTimersByTime(1000);
+      expect(toastQueue.visibleToasts.map((t) => t.key)).not.toContain(key);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('removes a toast at once when motion is off and nothing animates', () => {
     const attributes: Record<string, string> = {};
     const element = {

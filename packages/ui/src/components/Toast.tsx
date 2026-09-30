@@ -69,9 +69,13 @@ class AnimatedToastQueue extends ToastQueue<ToastContentValue> {
     }
     this.leaving.add(key);
     const remove = () => {
-      this.leaving.delete(key);
+      if (!this.leaving.delete(key)) return;
+      clearTimeout(giveUp);
       super.close(key);
     };
+    // The exit takes 120ms. If the animation never reports its end (a paused or background
+    // tab), the toast must still go.
+    const giveUp = setTimeout(remove, 1000);
     Promise.all(running.map((animation) => animation.finished)).then(remove, remove);
   }
 

@@ -110,8 +110,14 @@ question. [PRIVACY.md](PRIVACY.md#what-leaves-waypoint) lists it use by use.
 
 `AI_JUDGE_LOCALES` lists the languages the judge is asked in. Both the reader's language and
 the language the text is written in must be on the list: someone reading in English can paste a
-message in Swahili, and it is the text Jev is weaker on. (The guess at a text's language is
-rough: script, then a few common words.)
+message in Swahili, and it is the text Jev is weaker on. The text's language must be clear, not
+guessed (`judgeTextLanguage` in `judge-language.ts`): links and addresses are left out, one
+script must hold nine letters in ten and be one Waypoint has words for (Cyrillic, Chinese and
+other scripts are never sent), and Latin-script text needs at least two common words of one
+language, ahead of every other. Text that is not clearly in a language on the list is not
+sent, so a short English message with few common words is rated without the judge. (Core's
+`detectLanguage`, which the crisis check and texting use, still falls back to English; the
+judge does not use it.)
 
 To switch a language on:
 

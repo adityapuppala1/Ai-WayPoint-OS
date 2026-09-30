@@ -35,7 +35,7 @@
  * plan's rewritten wording (features.ts), and what a question in guided mode is about
  * (offline.ts). Nowhere else: see docs/AI.md for what it is never used for, and why.
  */
-import { assessCrisis, detectLanguage } from '@waypoint/core';
+import { assessCrisis } from '@waypoint/core';
 import { getEnv } from '@waypoint/core/env';
 import type { CallerContext } from './features';
 import {
@@ -46,6 +46,7 @@ import {
   JudgeError,
   parseJevResponse,
 } from './judge-client';
+import { judgeTextLanguage } from './judge-language';
 import {
   type JudgeAnswers,
   type JudgeQuestion,
@@ -141,12 +142,12 @@ export function judgeLanguageEnabled(locale: string): boolean {
 /**
  * Whether the judge may be asked about this text: the language it is written in must be
  * switched on, as well as the reader's. Someone reading in English can paste a message in
- * Swahili, and it is the text Jev is weaker on, not the person. The guess is rough (script,
- * then a few common words): a language Waypoint has no words for reads as English, and text
- * in a script it does not know is not sent.
+ * Swahili, and it is the text Jev is weaker on, not the person. The text's language must be
+ * clear (`judgeTextLanguage`): text in a script Waypoint has no words for, or with too few
+ * common words of any one language, is not sent.
  */
 export function judgeReads(text: string, locale: string): boolean {
-  return judgeLanguageEnabled(locale) && judgeLanguageEnabled(detectLanguage(text));
+  return judgeLanguageEnabled(locale) && judgeLanguageEnabled(judgeTextLanguage(text));
 }
 
 /**

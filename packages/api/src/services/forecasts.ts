@@ -275,7 +275,8 @@ function view(
     resolvedAt: row.resolvedAt?.toISOString() ?? null,
     resolutionNote: row.resolutionNote,
     resolutionSourceUrl: safeExternalHref(row.resolutionSourceUrl),
-    doubleChecked: JUDGED.includes(row.status) ? checked.has(row.id) : null,
+    // Example rows were never judged by anyone: there is no check to report on them.
+    doubleChecked: JUDGED.includes(row.status) && !row.isDemo ? checked.has(row.id) : null,
     score: score?.brier ?? null,
     isDemo: row.isDemo,
     reasons,

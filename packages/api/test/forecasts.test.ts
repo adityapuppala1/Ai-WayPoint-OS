@@ -167,9 +167,14 @@ describe('before anything is published', () => {
     const all = [...shown.open, ...shown.awaiting, ...shown.judged];
     expect(all.length).toBeGreaterThan(0);
     for (const f of all) expect(f.isDemo).toBe(true);
+    // An example was never judged by anyone, so it says nothing about a second check, and
+    // the record does not count it as waiting for one.
+    expect(shown.judged.length).toBeGreaterThan(0);
+    for (const f of shown.judged) expect(f.doubleChecked).toBeNull();
+    expect((await record()).unchecked).toBe(0);
     // Staff never see them among the forecasts they manage.
     staff = await account('Editor', 'admin');
-    for (const state of ['open', 'awaiting', 'resolved', 'annulled']) {
+    for (const state of ['open', 'awaiting', 'unchecked', 'resolved', 'annulled']) {
       const managed = (await (
         await req(`/api/admin/forecasts?state=${state}`, { cookie: staff.cookie })
       ).json()) as { items: View[] };

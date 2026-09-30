@@ -27,9 +27,12 @@ Purpose-specific and revocable (`consents` table, full history in `consent_event
   and deleted by the retention setting. They are protected by access control, not by a
   per-person key: choose a short retention (Settings → Privacy) for sensitive conversations, and
   encrypt the database disk. Plan steps take a status only — no free-text note.
-- Journal entries, check-in notes and health notes are screened for signs of danger as they are saved (the
-  same deterministic rules as Ask). If something is flagged, the support card appears straight
-  away and a safety record is kept — tier and rule ids only, never the words.
+- Everything a person writes privately is screened for signs of danger as it is saved (the
+  same deterministic rules as Ask, no AI): journal entries, check-in notes, health notes, a
+  goal and why it matters, and the answers of the weekly review. The words are saved either
+  way. If something is flagged, the support card appears straight away and a safety record is
+  kept — tier and rule ids only, never the words. Not screened, because they are labels
+  rather than writing: a reminder's title, a trusted contact's details, money figures.
 - Deleting an account deletes the wrapped key first (crypto-shredding), then every row that
   belongs to the person, including feedback they wrote, scam reports nobody has published and
   messages still waiting to be sent to them. What stays, with nothing linking it to them:

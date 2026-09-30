@@ -51,6 +51,51 @@ select {
   letter-spacing: inherit;
 }
 
+/* An iPhone zooms the whole page when a field with text under 16px takes the focus. */
+input,
+textarea,
+select {
+  font-size: max(1em, 1rem);
+}
+
+/*
+ * Date, time and search fields keep each browser's own picker and keyboard, and lose only the
+ * look it paints over the page's border and background: Safari's pill-shaped search field and
+ * grey date button, and the rounded, shaded box an iPhone draws.
+ */
+input:where(
+  [type="date"],
+  [type="time"],
+  [type="datetime-local"],
+  [type="month"],
+  [type="week"],
+  [type="search"]
+) {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* An iPhone centres the value, and gives an empty field no height of its own. */
+input::-webkit-date-and-time-value {
+  min-block-size: 1.5em;
+  text-align: start;
+}
+
+/* Chrome and Safari pad the parts of a date inside the field's own padding, which makes a date
+   or time field in Chrome a pixel taller than the text field beside it. */
+input::-webkit-datetime-edit,
+input::-webkit-datetime-edit-fields-wrapper {
+  padding: 0;
+}
+
+/* Their own magnifier and "clear" cross in a search field: Firefox has neither. */
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}
+
 button {
   background: none;
   border: 0;

@@ -1,6 +1,7 @@
 import '@waypoint/ui/styles.css';
 import './app.css';
 import { SERVER_ONLY_NAMESPACES, textDirection } from '@waypoint/i18n';
+import { hexRoles } from '@waypoint/tokens';
 import type { Metadata, Viewport } from 'next';
 import { headers } from 'next/headers';
 import { NextIntlClientProvider } from 'next-intl';
@@ -26,9 +27,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export const viewport: Viewport = {
+  // The page background (the canvas token), so the browser's own bars match the page.
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#f2f5f6' },
-    { media: '(prefers-color-scheme: dark)', color: '#0e141c' },
+    { media: '(prefers-color-scheme: light)', color: hexRoles('light').canvas },
+    { media: '(prefers-color-scheme: dark)', color: hexRoles('dark').canvas },
   ],
   colorScheme: 'light dark',
   viewportFit: 'cover',

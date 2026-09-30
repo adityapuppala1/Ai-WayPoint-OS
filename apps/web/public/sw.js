@@ -12,7 +12,7 @@
  * Every answer given here settles: a worker that lets a request fail with an error of its own
  * shows up as a broken page. When there is neither a network nor a saved copy, the answer is
  * the plain "no connection" the browser would have given by itself. */
-const VERSION = 'wp-v3';
+const VERSION = 'wp-v4';
 const STATIC = `${VERSION}-static`;
 const PAGES = `${VERSION}-pages`;
 const PRECACHE = ['/offline.html', '/icons/icon-192.png', '/manifest.webmanifest'];

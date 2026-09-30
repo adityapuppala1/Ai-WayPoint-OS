@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { type ReactNode, useEffect, useLayoutEffect, useState } from 'react';
 import { I18nProvider, RouterProvider } from 'react-aria-components';
 import { keepEarlyInput } from '@/lib/early-input';
+import { alreadySaved, type Preferences, savePreferences } from '@/lib/preferences';
 
 declare module 'react-aria-components' {
   interface RouterConfig {
@@ -18,10 +19,13 @@ export function Providers({
   children,
   locale,
   closeLabel,
+  restore,
 }: {
   children: ReactNode;
   locale: string;
   closeLabel: string;
+  /** Choices the server took from the saved profile because their cookie was missing. */
+  restore: Pick<Preferences, 'locale' | 'theme' | 'lite'>;
 }) {
   const router = useRouter();
   // Before the first paint after React takes over, so a field never flashes empty.
@@ -31,18 +35,23 @@ export function Providers({
   useEffect(() => {
     document.documentElement.setAttribute('data-ready', 'true');
   }, []);
-  // Remember the device time zone so reminders and greetings use local time.
+  // Remember the device time zone so reminders and greetings use local time, and put back
+  // the cookies for choices the server had to take from the saved profile. One request, and
+  // only when something is missing: the server sets the cookies, so they last the year.
+  const { locale: savedLocale, theme, lite } = restore;
   useEffect(() => {
+    const missing: Preferences = {};
+    if (savedLocale) missing.locale = savedLocale;
+    if (theme) missing.theme = theme;
+    if (lite !== undefined) missing.lite = lite;
     try {
-      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      if (tz && !document.cookie.split('; ').some((c) => c === `wp-tz=${encodeURIComponent(tz)}`)) {
-        // biome-ignore lint/suspicious/noDocumentCookie: a plain preference cookie read on the server
-        document.cookie = `wp-tz=${encodeURIComponent(tz)}; path=/; max-age=31536000; samesite=lax`;
-      }
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (timezone && !alreadySaved({ timezone })) missing.timezone = timezone;
     } catch {
-      // Intl or cookies unavailable: the server falls back to UTC.
+      // Intl unavailable: the server falls back to the saved time zone, then UTC.
     }
-  }, []);
+    if (Object.keys(missing).length) void savePreferences(missing);
+  }, [savedLocale, theme, lite]);
   const [queryClient] = useState(
     () =>
       new QueryClient({

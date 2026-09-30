@@ -2,12 +2,13 @@ import '@waypoint/ui/styles.css';
 import './app.css';
 import { SERVER_ONLY_NAMESPACES, textDirection } from '@waypoint/i18n';
 import type { Metadata, Viewport } from 'next';
-import { cookies, headers } from 'next/headers';
+import { headers } from 'next/headers';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages, getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { ServiceWorker } from '@/components/ServiceWorker';
 import { EARLY_INPUT_SCRIPT } from '@/lib/early-input';
+import { savedPreferences } from '@/lib/saved-preferences';
 import { Providers } from './providers';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -37,9 +38,7 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const locale = await getLocale();
-  const store = await cookies();
-  const theme = store.get('wp-theme')?.value;
-  const lite = store.get('wp-lite')?.value === '1';
+  const { theme, lite, restore } = await savedPreferences();
   const t = await getTranslations('a11y');
   const common = await getTranslations('common');
   // The per-request CSP nonce (src/proxy.ts). React Aria reads it from this meta tag for the
@@ -54,7 +53,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     <html
       lang={locale}
       dir={textDirection(locale)}
-      data-theme={theme === 'light' || theme === 'dark' ? theme : undefined}
+      data-theme={theme === 'system' ? undefined : theme}
       data-lite={lite ? 'true' : undefined}
       suppressHydrationWarning
     >
@@ -72,7 +71,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           {t('skipToContent')}
         </a>
         <NextIntlClientProvider messages={messages}>
-          <Providers locale={locale} closeLabel={common('close')}>
+          <Providers locale={locale} closeLabel={common('close')} restore={restore}>
             {children}
           </Providers>
         </NextIntlClientProvider>

@@ -13,7 +13,7 @@ missing string never breaks a screen or hides a warning.
 
 | Layer | Where it lives | How it is chosen |
 | --- | --- | --- |
-| Interface text (≈650 strings) | `packages/i18n/messages/*.json` | `next-intl` on the web; the language cookie, then `Accept-Language` |
+| Interface text (≈650 strings) | `packages/i18n/messages/*.json` | `next-intl` on the web; the language cookie (set by the server, so Safari keeps it), then the signed-in person's saved language, then `Accept-Language` |
 | Scam Shield warning signs and advice | `packages/core/src/shield/l10n/*.ts` | The engine returns text in the requested locale, so web, SMS, WhatsApp and guided Ask all agree |
 | Skill, role and role-family names | `packages/content/src/l10n/*.ts` | `skillName`, `roleTitle`, `localizeRole`, `localizeSkill` |
 | Plan text | Planner templates in the messages (`planTemplates`) | Plans store *how* each line was written (template key + ids), and are rendered in the reader's language every time they are shown |

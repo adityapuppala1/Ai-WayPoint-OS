@@ -98,7 +98,33 @@ function waitWhenLoaded(page: Page): void {
   };
 }
 
+/**
+ * The address a test's visitor comes from, the same on every run: one of the private 10.x
+ * addresses, chosen by the project and the test. The test server reads the visitor's address
+ * from X-Forwarded-For (no trusted proxy is set), and new guests and sign-ins are limited per
+ * address with a count that is kept while requests keep coming. Five projects on one server
+ * would otherwise share one allowance for the whole run and run out part-way through.
+ */
+export function visitorAddress(testInfo: Pick<TestInfo, 'project' | 'testId'>): string {
+  // FNV-1a, 32 bits: stable, and spread well enough that two tests rarely share an address.
+  let hash = 0x811c9dc5;
+  for (const char of `${testInfo.project.name}\n${testInfo.testId}`) {
+    hash ^= char.charCodeAt(0);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return `10.${(hash >>> 24) & 255}.${(hash >>> 16) & 255}.${1 + ((hash & 0xffff) % 254)}`;
+}
+
 export const test = base.extend<{ problems: string[]; allow: { console: RegExp[] } }>({
+  /**
+   * Every test is a visitor of its own (see visitorAddress): the header goes with the page,
+   * its `request`, and any context the test makes with `browser.newContext()` or
+   * `playwright.request.newContext()` without headers of its own. A test that sets the header
+   * itself (`page.setExtraHTTPHeaders`, or `test.use({ extraHTTPHeaders })`) keeps its own.
+   */
+  extraHTTPHeaders: async ({ extraHTTPHeaders }, use, testInfo) => {
+    await use({ 'x-forwarded-for': visitorAddress(testInfo), ...extraHTTPHeaders });
+  },
   /**
    * Console lines a single file expects on purpose, on top of the engine's own noise: set
    * with `test.use({ allow: { console: […] } })` and say why there.

@@ -166,6 +166,18 @@ test('a signal can be saved, hidden and brought back, and an empty search says s
       'aria-pressed',
       'false',
     );
+    // The toast outlives the page: its Undo, pressed on the Saved list, leaves nothing there
+    // saying the signal is kept.
+    const filters = page.getByRole('navigation', { name: 'Which signals to show' });
+    await andSaved(page, () => item.getByRole('button', { name: `Save: ${title}` }).click());
+    await filters.getByRole('link', { name: 'Saved' }).click();
+    await expect(page).toHaveURL(/saved=1/);
+    await expect(item.getByRole('heading', { name: title })).toBeVisible();
+    await andSaved(page, () => said.getByRole('button', { name: 'Undo' }).click());
+    await expect(item).toHaveCount(0);
+    await expect(page.getByText('You haven’t saved any signals yet.')).toBeVisible();
+    await filters.getByRole('link', { name: 'All' }).click();
+    await expect(page).toHaveURL(/\/signals$/);
     await andSaved(page, () => item.getByRole('button', { name: `Save: ${title}` }).click());
     await expect(item.getByRole('button', { name: `Saved: ${title}` })).toHaveAttribute(
       'aria-pressed',
@@ -188,7 +200,6 @@ test('a signal can be saved, hidden and brought back, and an empty search says s
     await inArabicAndDark(context, baseURL ?? '', false);
     await page.goto('/signals');
 
-    const filters = page.getByRole('navigation', { name: 'Which signals to show' });
     await filters.getByRole('link', { name: 'Saved' }).click();
     await expect(page).toHaveURL(/saved=1/);
     await expect(filters.getByRole('link', { name: 'Saved' })).toHaveAttribute(

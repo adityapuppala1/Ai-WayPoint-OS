@@ -44,9 +44,23 @@ function isTyping(target: unknown): boolean {
 }
 
 /**
+ * Inside another open dialog (the phone's More sheet, a confirmation): the palette is not
+ * stacked on top of it. A toast is an alert dialog too, but one that says it is not modal.
+ */
+function inDialog(target: unknown): boolean {
+  if (!target || typeof target !== 'object') return false;
+  const element = target as {
+    closest?: (selector: string) => { getAttribute(name: string): string | null } | null;
+  };
+  if (typeof element.closest !== 'function') return false;
+  const dialog = element.closest('[role="dialog"], [role="alertdialog"]');
+  return Boolean(dialog) && dialog?.getAttribute('aria-modal') !== 'false';
+}
+
+/**
  * Whether a key press is the palette's shortcut: Ctrl+K, or Cmd+K on a Mac (`letter` can
- * change the K). Not while typing in a field, not with Shift or Alt also held, and not for
- * a key that is being held down or was already handled.
+ * change the K). Not while typing in a field or inside another dialog, not with Shift or Alt
+ * also held, and not for a key that is being held down or was already handled.
  */
 export function isCommandShortcut(event: ShortcutEvent, letter = 'k'): boolean {
   if (event.defaultPrevented || event.repeat || event.isComposing) return false;
@@ -60,7 +74,7 @@ export function isCommandShortcut(event: ShortcutEvent, letter = 'k'): boolean {
       ? event.code.slice(3).toLowerCase()
       : '';
   if (typed !== letter.toLowerCase()) return false;
-  return !isTyping(event.target);
+  return !isTyping(event.target) && !inDialog(event.target);
 }
 
 /** How the shortcut is written on this device: "⌘K" on Apple keyboards, "Ctrl+K" elsewhere. */

@@ -46,7 +46,7 @@ import {
   JudgeError,
   parseJevResponse,
 } from './judge-client';
-import { judgeTextLanguage } from './judge-language';
+import { judgeTextLanguage, judgeWrittenLanguage } from './judge-language';
 import {
   type JudgeAnswers,
   type JudgeQuestion,
@@ -148,6 +148,16 @@ export function judgeLanguageEnabled(locale: string): boolean {
  */
 export function judgeReads(text: string, locale: string): boolean {
   return judgeLanguageEnabled(locale) && judgeLanguageEnabled(judgeTextLanguage(text));
+}
+
+/**
+ * The same for text Waypoint's own model wrote for this reader (an answer, a reworded plan):
+ * it is read unless it is clearly in another language or script (`judgeWrittenLanguage`). A
+ * model's clipped answers can have too few common words to name their language, and turning
+ * the check off for them would let exactly the terse dose it looks for through.
+ */
+export function judgeReadsWritten(text: string, locale: string): boolean {
+  return judgeLanguageEnabled(locale) && judgeLanguageEnabled(judgeWrittenLanguage(text, locale));
 }
 
 /**

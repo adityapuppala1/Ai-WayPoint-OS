@@ -106,6 +106,20 @@ describe('the keyboard shortcut', () => {
     expect(isCommandShortcut(press({ target: null }))).toBe(true);
   });
 
+  it('does not stack the palette on another open dialog, but a toast is not one', () => {
+    // What `closest` finds from the focused element: the dialog around it, or nothing.
+    const inside = (dialog: { modal?: string } | null) => ({
+      tagName: 'A',
+      closest: () =>
+        dialog && { getAttribute: (name: string) => (name === 'aria-modal' ? dialog.modal : null) },
+    });
+    expect(isCommandShortcut(press({ target: inside({}) }))).toBe(false);
+    expect(isCommandShortcut(press({ target: inside({ modal: 'true' }) }))).toBe(false);
+    // React Aria's toasts are alert dialogs that say they are not modal.
+    expect(isCommandShortcut(press({ target: inside({ modal: 'false' }) }))).toBe(true);
+    expect(isCommandShortcut(press({ target: inside(null) }))).toBe(true);
+  });
+
   it('ignores a held key, a key already handled and a letter still being composed', () => {
     expect(isCommandShortcut(press({ repeat: true }))).toBe(false);
     expect(isCommandShortcut(press({ defaultPrevented: true }))).toBe(false);

@@ -62,7 +62,7 @@ const Mark = ({ place }: { place: GoToPlace }) =>
 
 /**
  * The "go to" palette for the whole app: Ctrl+K (Cmd+K on a Mac) anywhere except while
- * typing, or a visible button. It offers every module and the main places inside them. What
+ * typing or in another dialog, or a visible button. It offers every module and the main places inside them. What
  * was typed can also go to Ask as the start of a message: filled in, never sent, and never
  * put in an address.
  */

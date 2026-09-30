@@ -269,11 +269,23 @@ test('date, time and search fields look the same in every browser', async ({
         background: token.backgroundColor,
       };
       probe.remove();
+      // The height the page's own styles give it: its line, padding and border, and at least
+      // its minimum. An engine that sizes the field by itself ends up somewhere else.
+      const px = (value: string) => Number.parseFloat(value) || 0;
+      const styled = Math.max(
+        px(s.minHeight),
+        px(s.lineHeight) +
+          px(s.paddingTop) +
+          px(s.paddingBottom) +
+          px(s.borderTopWidth) +
+          px(s.borderBottomWidth),
+      );
       return {
         appearance: s.getPropertyValue('appearance') || s.getPropertyValue('-webkit-appearance'),
         fontSize: s.fontSize,
         height: Math.round(box.height),
         expectedHeight: Math.round(expected.height),
+        styledHeight: Math.round(styled),
         radius: s.borderTopLeftRadius,
         expectedRadius: expected.radius,
         background: s.backgroundColor,
@@ -321,10 +333,17 @@ test('date, time and search fields look the same in every browser', async ({
   await date.scrollIntoViewIfNeeded();
   await snap(page, testInfo, 'native-date');
 
-  // Searching the signals: a search field.
+  // Searching the signals: the design system's search field. It is as tall as the design
+  // system's other text fields (their line and padding, above the touch minimum), not exactly
+  // the minimum as the plain date and time fields are: the same in every engine, never smaller
+  // than a thumb, with the same corners and background.
   await page.goto('/signals');
   const search = page.getByRole('searchbox', { name: 'Search signals' });
-  same(await look(search), 'search');
+  const found = await look(search);
+  same({ ...found, expectedHeight: found.styledHeight }, 'search');
+  expect(found.height, 'search: at least the touch minimum').toBeGreaterThanOrEqual(
+    found.expectedHeight,
+  );
   await search.fill('rent');
   if (browserName !== 'firefox') {
     // Chrome and Safari add a "clear" cross of their own once there is text; Firefox has none.

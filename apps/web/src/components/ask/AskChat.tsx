@@ -210,7 +210,9 @@ export function AskChat({
   const onKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault();
-      send(input);
+      // A key held down repeats. Only a press sends: an Enter still held from choosing
+      // "Talk it through" in the go-to palette must not send the words it filled in.
+      if (!e.repeat) send(input);
     }
   };
 

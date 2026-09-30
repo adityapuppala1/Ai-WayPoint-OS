@@ -17,8 +17,16 @@ import { redactPII } from '@waypoint/core/privacy';
 import type { Database } from '@waypoint/db';
 import { embed, generateText, Output } from 'ai';
 import { z } from 'zod';
-import { judgeAvailable, judgeBarredByCrisis, judgeReads, runJudge } from './judge';
+import {
+  judgeAvailable,
+  judgeBarredByCrisis,
+  judgeLanguageEnabled,
+  judgeReads,
+  judgeReadsWritten,
+  runJudge,
+} from './judge';
 import { PLAN_REWRITE_CHECKS, planRewriteFlagged, REPLY_CHECKS, replyFlags } from './judge-checks';
+import { judgeTextLanguage } from './judge-language';
 import { judgeCouldRaise, readShieldSigns, SHIELD_SIGNS } from './judge-shield';
 import {
   channelInstructions,
@@ -161,12 +169,19 @@ export async function channelAnswer(
  * Only ever adds caution: with no judge, no consent, a language that is not switched on or a
  * failure, the answer goes out exactly as it did before. The judge sees the answer (with
  * personal details removed), never the question itself, though the answer can repeat it.
+ *
+ * The answer is the model's, written for this reader, so a clipped one is still read
+ * (`judgeReadsWritten`). But someone who wrote in a language that is not switched on is
+ * answered in theirs, however few of its common words the answer has: then it is not.
  */
 async function replyFlagged(
   ctx: CallerContext,
   input: { reply: string; question: string; locale: string },
 ): Promise<boolean> {
-  if (judgeBarredByCrisis(input.question) || !judgeReads(input.reply, input.locale)) return false;
+  if (judgeBarredByCrisis(input.question) || !judgeReadsWritten(input.reply, input.locale))
+    return false;
+  const asked = judgeTextLanguage(input.question);
+  if (asked !== 'und' && !judgeLanguageEnabled(asked)) return false;
   const out = await runJudge(
     {
       db: ctx.db,
@@ -377,7 +392,7 @@ async function rewriteFlagged(
   // Wording the model left alone is the planner's own: there is nothing to check in it.
   const pieces = all.filter((p) => p.rewritten.trim() && p.rewritten !== p.original);
   const rewritten = pieces.map((p) => p.rewritten).join('\n');
-  if (judgeBarredByCrisis(about.goal) || !judgeReads(rewritten, about.locale)) return false;
+  if (judgeBarredByCrisis(about.goal) || !judgeReadsWritten(rewritten, about.locale)) return false;
   for (let i = 0; i < pieces.length; i += PLAN_CHECKS_AT_ONCE) {
     const answers = await Promise.all(
       pieces.slice(i, i + PLAN_CHECKS_AT_ONCE).map((piece) =>

@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { findRepoRoot, resetEnvForTests } from '@waypoint/core/env';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
-import { judgeReads } from '../src/judge';
+import { judgeReads, judgeReadsWritten } from '../src/judge';
 
 const before = process.env.AI_JUDGE_LOCALES;
 const switchOn = (locales: string) => {
@@ -46,6 +46,19 @@ describe('what the judge may read, with only English switched on', () => {
       expect(judgeReads(text, 'en'), text).toBe(false);
   });
 
+  it('does not read Spanish that says “has”, nor Dutch or German, which share short words with English', () => {
+    for (const text of [
+      // "has" is Spanish too (haber), and a word said twice is still one word.
+      '¿Has visto el correo? Ya has recibido la factura de este mes.',
+      'Has ganado un premio. Has sido elegido entre miles de clientes.',
+      'Has sido seleccionado. Has recibido un bono de 500 euros.',
+      // "is", "we", "of", "was" and "am" are everyday Dutch and German words.
+      'Uw pakket is onderweg. We hebben uw adres nodig, klik op de link of bel ons.',
+      'Ihr Paket ist da. Was wollen Sie tun? Wir rufen Sie am Montag an.',
+    ])
+      expect(judgeReads(text, 'en'), text).toBe(false);
+  });
+
   it('does not read a script it has no words for, whatever link or brand it carries', () => {
     for (const text of [
       'Ваш аккаунт заблокирован. Срочно перейдите по ссылке http://sberbank-secure.xyz',
@@ -69,6 +82,35 @@ describe('what the judge may read, with only English switched on', () => {
 
   it('never reads anything for a reader whose language is not switched on', () => {
     expect(judgeReads('Hello, we saw your profile. We have a role for you.', 'sw')).toBe(false);
+  });
+});
+
+describe('what the judge may read of text Waypoint’s own model wrote', () => {
+  // Told to write in the reader's language, a model's short answers can be too clipped to name
+  // a language by their common words alone.
+  const terse = [
+    'Paracetamol 1g every 6 hours, max 4g daily. Rest, drink water. Clinic if fever lasts 3+ days.',
+    'Likely malaria. Artemether-lumefantrine 4 tablets twice daily, 3 days. Clinic test first.',
+  ];
+
+  it('reads a terse answer written for its reader, which a pasted message would not be', () => {
+    for (const text of terse) {
+      expect(judgeReads(text, 'en'), text).toBe(false);
+      expect(judgeReadsWritten(text, 'en'), text).toBe(true);
+    }
+  });
+
+  it('does not read one that is clearly in another language, or in another script', () => {
+    for (const text of [
+      'Puede tomar paracetamol para la fiebre, pero no más de 4 g al día. Descanse hoy.',
+      'Neem paracetamol voor de koorts. U kunt niet meer dan 4 gram per dag nemen.',
+      'Примите парацетамол 1 г каждые 6 часов, не больше 4 г в день.',
+    ])
+      expect(judgeReadsWritten(text, 'en'), text).toBe(false);
+  });
+
+  it('never reads anything for a reader whose language is not switched on', () => {
+    expect(judgeReadsWritten(terse[0] as string, 'sw')).toBe(false);
   });
 });
 

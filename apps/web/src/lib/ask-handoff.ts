@@ -6,6 +6,10 @@
  * Ask's message box is its composer form's text area. The words go in as if typed, so Ask's
  * own state (and its Send button) follows. A box someone has already started writing in is
  * left alone.
+ *
+ * The words fill one box, once: the new box that going to Ask puts on the page. After that
+ * they are the person's. If they clear them, start a new conversation, or leave Ask and come
+ * back, nothing brings the words back.
  */
 
 /** How long the words wait for Ask's page to arrive. */
@@ -13,6 +17,8 @@ const WAIT_MS = 8000;
 
 const valueSetter = () =>
   Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set;
+
+const composer = () => document.querySelector<HTMLTextAreaElement>('main form textarea');
 
 /** Focus the box once no dialog is open, so the one that just closed does not take it back. */
 function focusWhenFree(box: HTMLTextAreaElement) {
@@ -29,20 +35,23 @@ function focusWhenFree(box: HTMLTextAreaElement) {
 
 export function prefillAsk(text: string): void {
   if (typeof document === 'undefined' || !text.trim()) return;
-  const filled = new WeakSet<HTMLTextAreaElement>();
-  const fill = () => {
+  // Ask may already be open: going there again replaces its box with a new conversation's,
+  // and that one gets the words.
+  const before = composer();
+  const observer = new MutationObserver(() => {
     if (window.location.pathname !== '/ask') return;
-    const box = document.querySelector<HTMLTextAreaElement>('main form textarea');
-    if (!box || filled.has(box)) return;
-    filled.add(box);
+    const box = composer();
+    if (!box || box === before) return;
+    stop();
     if (box.value.trim()) return;
     valueSetter()?.call(box, text);
     box.dispatchEvent(new Event('input', { bubbles: true }));
     focusWhenFree(box);
+  });
+  const timer = window.setTimeout(() => observer.disconnect(), WAIT_MS);
+  const stop = () => {
+    observer.disconnect();
+    window.clearTimeout(timer);
   };
-  // Ask may already be open (a new conversation replaces its box) or still on its way.
-  const observer = new MutationObserver(fill);
   observer.observe(document.body, { childList: true, subtree: true });
-  window.setTimeout(() => observer.disconnect(), WAIT_MS);
-  fill();
 }

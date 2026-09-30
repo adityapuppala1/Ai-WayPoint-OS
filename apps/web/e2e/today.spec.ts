@@ -122,12 +122,15 @@ test('one tap, kept quiet or taken back: the Mind line checks in on Today, and a
   await expect(open).toHaveAttribute('aria-expanded', 'true');
   const moods = tools.getByRole('group', { name: 'How are you today?' });
   await expect(moods.getByRole('button')).toHaveCount(5);
-  await moods.getByRole('button', { name: 'Okay' }).click();
+  // Chosen with the keyboard: the moods close, and the keyboard is back on "Check in" rather
+  // than lost with the button that went.
+  await moods.getByRole('button', { name: 'Okay' }).press('Enter');
   await expect(
     page.getByRole('alertdialog').filter({ hasText: 'Checked in. Thank you for taking a moment.' }),
   ).toBeVisible();
   // Closed again, and nothing on Today says how the person felt.
   await expect(moods).toBeHidden();
+  await expect(open).toBeFocused();
   await expect(open).toHaveAttribute('aria-expanded', 'false');
   await expect(page.getByRole('main').getByText('Okay', { exact: true })).toBeHidden();
   // It is kept in Mind.
@@ -249,6 +252,44 @@ test('Today links to all twelve modules, beside the sign on a laptop and under i
   await expect(page).toHaveURL(/\/signals$/);
 });
 
+test('a step on Today’s route is a target a thumb can find: the whole station opens it', async ({
+  page,
+}) => {
+  await startAsGuest(page);
+  const made = await page.request.post('/api/path/plans', {
+    data: { hoursPerWeek: 6, horizonWeeks: 4 },
+  });
+  expect(made.status()).toBe(201);
+  await page.goto('/');
+  const stations = page.getByRole('list', { name: 'This week’s steps' }).getByRole('listitem');
+  await expect(stations.first()).toBeVisible();
+  expect(await stations.count()).toBeGreaterThan(1);
+  // Each station is at least 44px tall, and a press on its dot, beside its title or on the
+  // line under it lands on the link to its step.
+  const found = await stations.evaluateAll((items) =>
+    items.map((li) => {
+      li.scrollIntoView({ block: 'center' });
+      const link = li.querySelector('a');
+      const box = li.getBoundingClientRect();
+      const lands = (x: number, y: number) =>
+        document.elementFromPoint(x, y)?.closest('a') === link;
+      return {
+        href: link?.getAttribute('href') ?? '',
+        height: Math.round(box.height),
+        everywhere:
+          lands(box.left + 6, box.top + box.height / 2) &&
+          lands(box.right - 6, box.top + 4) &&
+          lands(box.left + box.width / 2, box.bottom - 4),
+      };
+    }),
+  );
+  for (const station of found) {
+    expect(station.href, 'leads to its step').toMatch(/^\/path\/plans\/[^#]+#step-/);
+    expect(station.height, station.href).toBeGreaterThanOrEqual(44);
+    expect(station.everywhere, station.href).toBe(true);
+  }
+});
+
 test('in Arabic the module list moves to the other side of the sign @desktop', async ({
   page,
   context,
@@ -298,6 +339,20 @@ test('on a phone, More is a directory that reaches every place that is not a tab
   await sheet.getByRole('link', { name: /Join a programme/ }).click();
   await expect(page).toHaveURL(/\/join$/);
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+
+  // The sheet belongs to the page it was opened on: going back closes it too. And while it
+  // is open, a keyboard's Ctrl+K does not stack the go-to palette on top of it.
+  await more.click();
+  await expect(sheet).toBeVisible();
+  await page.goBack();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(sheet).toBeHidden();
+  await more.click();
+  await expect(sheet).toBeVisible();
+  await page.keyboard.press('Control+k');
+  await expect(page.getByRole('dialog', { name: 'Go to' })).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await expect(sheet).toBeHidden();
 
   await more.click();
   await page

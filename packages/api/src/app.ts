@@ -227,6 +227,17 @@ export function createApp() {
     }
     return next();
   });
+  // Guest sessions are free to create, and each has allowances of its own (AI answers, scam
+  // checks…): an address can start a few hundred a day — a school sharing one address has
+  // room — but not an endless supply.
+  app.use('/auth/sign-in/anonymous', async (c, next) => {
+    if (c.req.method === 'POST')
+      await rateLimit(c.get('db'), `guest-day:${ipHash(c.req.raw.headers)}`, {
+        windowSeconds: 86_400,
+        max: 300,
+      });
+    return next();
+  });
   // Waypoint's own apps send JSON. The auth library would also read a form, which the checks
   // below (they read the address from the JSON body) would not see: anything else is refused.
   app.use('/auth/*', async (c, next) => {

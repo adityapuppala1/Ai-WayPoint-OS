@@ -278,7 +278,15 @@ export function companionTools(ctx: ToolContext) {
       execute: async ({ content, kind }) => {
         if (!ctx.canRemember)
           return { saved: false, reason: 'Memory is turned off in Privacy settings.' };
-        await ctx.db.insert(memories).values({ userId: ctx.userId, kind, content });
+        // Sealed with the person's own data key, like goals: never readable in the database.
+        const id = newId();
+        const dek = await dataKeyFor(ctx.db, ctx.userId);
+        await ctx.db.insert(memories).values({
+          id,
+          userId: ctx.userId,
+          kind,
+          contentCt: sealFor(dek, content, SEALED.memory, ctx.userId, id),
+        });
         return { saved: true };
       },
     }),

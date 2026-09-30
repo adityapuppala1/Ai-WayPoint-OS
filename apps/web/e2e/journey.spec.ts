@@ -84,7 +84,7 @@ test('a guest gets started, asks for help, keeps their choices and creates an ac
   await signIn(password);
   const answer = page.getByRole('main').getByRole('alert');
   await expect(answer).toContainText('We couldn’t sign you in with that email and password.');
-  await expect(answer).toContainText('Please confirm your email address first.');
+  await expect(answer).toContainText('Please confirm your email address first');
   await expect(answer).toContainText(`open the link we emailed to ${email}`);
   const beforeConfirming = await answer.innerText();
   await signIn('not the password at all');

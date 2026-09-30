@@ -59,6 +59,8 @@ export interface CallerContext {
   isGuest?: boolean;
   /** The person consented to sending redacted text to external AI providers. */
   allowExternal: boolean;
+  /** Asked once before a model is used; false means this visitor's allowance is used up. */
+  gate?: () => Promise<boolean>;
 }
 
 /**
@@ -149,6 +151,8 @@ export async function shieldOpinion(
       userId: ctx.userId,
       isGuest: ctx.isGuest,
       localOnly: !ctx.allowExternal,
+      gate: ctx.gate,
+      estimate: { inputTokens: 600 + Math.ceil(text.length / 3), outputTokens: 400 },
     },
     async ({ model }) => {
       const res = await generateText({

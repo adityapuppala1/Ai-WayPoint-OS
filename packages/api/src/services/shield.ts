@@ -152,6 +152,10 @@ export async function runShieldCheck(
     channel: 'web' | 'sms' | 'whatsapp' | 'ussd' | 'api';
     /** The person has the standing `ai_external` consent. */
     aiExternalConsent: boolean;
+    /** Whether AI may be asked at all (the website requires a session). Default: yes. */
+    aiAllowed?: boolean;
+    /** Asked once before a model is used; false means this visitor's allowance is used up. */
+    aiGate?: () => Promise<boolean>;
   },
 ): Promise<ShieldCheck> {
   let result: ShieldResult = checkMessage({
@@ -164,10 +168,12 @@ export async function runShieldCheck(
   let ai: ShieldCheck['ai'] = { used: false, reason: 'unavailable' };
   if (result.level === 'very-high') {
     ai = { used: false, reason: 'skipped-certain' };
+  } else if (input.aiAllowed === false) {
+    ai = { used: false, reason: 'unavailable' };
   } else {
     const allowExternal = input.aiExternalConsent || input.aiConsent === true;
     const opinion = await shieldOpinion(
-      { db, userId: input.userId, isGuest: input.isGuest, allowExternal },
+      { db, userId: input.userId, isGuest: input.isGuest, allowExternal, gate: input.aiGate },
       { text: input.text, country: input.country, locale: input.locale ?? 'en' },
     ).catch(() => null);
     if (opinion) {

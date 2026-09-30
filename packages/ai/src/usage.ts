@@ -54,7 +54,16 @@ export type AiFeature =
   | 'moderation'
   | 'embedding'
   | 'eval';
-export type AiStatus = 'ok' | 'error' | 'fallback' | 'blocked' | 'offline';
+export type AiStatus =
+  | 'ok'
+  | 'error'
+  | 'fallback'
+  | 'blocked'
+  | 'offline'
+  /** Counted before the call was made, at its estimated cost; settled when the call ends. */
+  | 'reserved'
+  /** The person left before the answer finished: the estimate stands. */
+  | 'aborted';
 
 export async function recordUsage(
   db: Database,
@@ -89,15 +98,137 @@ export async function recordUsage(
 
 let spendCache: { at: number; value: number } | undefined;
 
-export async function monthSpendUsd(db: Database): Promise<number> {
-  if (spendCache && Date.now() - spendCache.at < 60_000) return spendCache.value;
+function monthStart(): Date {
   const start = new Date();
   start.setUTCDate(1);
   start.setUTCHours(0, 0, 0, 0);
+  return start;
+}
+
+/**
+ * The share of the monthly budget guests can use. A guest session costs nothing to create, so
+ * without this a few scripts could spend the whole budget and leave everyone in guided mode;
+ * the rest is kept for people with accounts.
+ */
+export const GUEST_BUDGET_SHARE = 0.7;
+
+function monthlyLimit(isGuest?: boolean): number {
+  const budget = getEnv().AI_MONTHLY_BUDGET_USD;
+  return isGuest ? budget * GUEST_BUDGET_SHARE : budget;
+}
+
+/** Any fixed number: every reservation takes the same lock, so they are made one at a time. */
+const BUDGET_LOCK = 7_291_055;
+
+export interface UsageEstimate {
+  userId?: string | null;
+  isGuest?: boolean;
+  feature: AiFeature;
+  provider: string;
+  model: string;
+  /** What the call is expected to use at most (prompt size, output limit). */
+  inputTokens: number;
+  outputTokens: number;
+}
+
+/**
+ * Count a model call before it is made, at its estimated cost. Checking the budget first and
+ * recording afterwards let a burst of requests all pass the check before any of them was
+ * counted, and an answer that was cut off was never counted at all. Near the limit the check
+ * and the reservation happen under one lock, so the budget cannot be overshot; the row is
+ * settled at the real cost when the call ends, and stands as it is if it never does.
+ */
+export async function reserveUsage(
+  db: Database,
+  r: UsageEstimate,
+): Promise<{ ok: true; id: string } | { ok: false; reason: 'monthly-budget' }> {
+  const cost = estimateCostUsd(r.provider, r.model, r.inputTokens, r.outputTokens);
+  const values = {
+    userId: r.userId ?? null,
+    feature: r.feature,
+    provider: r.provider,
+    model: r.model,
+    inputTokens: r.inputTokens,
+    outputTokens: r.outputTokens,
+    costUsd: cost,
+    status: 'reserved' satisfies AiStatus,
+  };
+  const budget = getEnv().AI_MONTHLY_BUDGET_USD;
+  const limit = monthlyLimit(r.isGuest);
+  // Far from the limit (or nothing to pay, or no budget set) there is nothing to guard.
+  if (budget <= 0 || cost === 0 || (await monthSpendUsd(db)) + cost < limit * 0.9) {
+    const [row] = await db.insert(aiUsage).values(values).returning({ id: aiUsage.id });
+    if (!row) throw new Error('Could not record AI usage');
+    spendCache = undefined;
+    return { ok: true, id: row.id };
+  }
+  return db.transaction(async (tx) => {
+    await tx.execute(sql`select pg_advisory_xact_lock(${BUDGET_LOCK})`);
+    const [spent] = await tx
+      .select({ total: sql<number>`coalesce(sum(${aiUsage.costUsd}), 0)::float8` })
+      .from(aiUsage)
+      .where(gte(aiUsage.createdAt, monthStart()));
+    if (Number(spent?.total ?? 0) + cost > limit)
+      return { ok: false as const, reason: 'monthly-budget' as const };
+    const [row] = await tx.insert(aiUsage).values(values).returning({ id: aiUsage.id });
+    if (!row) throw new Error('Could not record AI usage');
+    spendCache = undefined;
+    return { ok: true as const, id: row.id };
+  });
+}
+
+/** Replace a reservation's estimate with what the call really used. */
+export async function settleUsage(
+  db: Database,
+  id: string,
+  actual: {
+    provider: string;
+    model: string;
+    inputTokens?: number;
+    outputTokens?: number;
+    latencyMs?: number;
+    status: AiStatus;
+  },
+): Promise<void> {
+  const inputTokens = actual.inputTokens ?? 0;
+  const outputTokens = actual.outputTokens ?? 0;
+  await db
+    .update(aiUsage)
+    .set({
+      inputTokens,
+      outputTokens,
+      costUsd: estimateCostUsd(actual.provider, actual.model, inputTokens, outputTokens),
+      latencyMs: actual.latencyMs,
+      status: actual.status,
+    })
+    .where(eq(aiUsage.id, id));
+  spendCache = undefined;
+}
+
+/** The person left mid-answer: keep the estimate (what was generated was paid for). */
+export async function abandonUsage(db: Database, id: string, latencyMs: number): Promise<void> {
+  await db
+    .update(aiUsage)
+    .set({ status: 'aborted' satisfies AiStatus, latencyMs })
+    .where(and(eq(aiUsage.id, id), eq(aiUsage.status, 'reserved')));
+}
+
+/** A rough token count for a prompt: about three characters to a token, rounded up. */
+export function estimateTokens(text: string): number {
+  return Math.ceil(text.length / 3);
+}
+
+/** Test helper: forget the cached monthly total. */
+export function resetSpendCacheForTests(): void {
+  spendCache = undefined;
+}
+
+export async function monthSpendUsd(db: Database): Promise<number> {
+  if (spendCache && Date.now() - spendCache.at < 60_000) return spendCache.value;
   const [row] = await db
     .select({ total: sql<number>`coalesce(sum(${aiUsage.costUsd}), 0)::float8` })
     .from(aiUsage)
-    .where(gte(aiUsage.createdAt, start));
+    .where(gte(aiUsage.createdAt, monthStart()));
   const value = Number(row?.total ?? 0);
   spendCache = { at: Date.now(), value };
   return value;
@@ -116,7 +247,7 @@ export async function checkBudget(
   who: { userId?: string | null; isGuest?: boolean },
 ): Promise<BudgetDecision> {
   const env = getEnv();
-  if (env.AI_MONTHLY_BUDGET_USD > 0 && (await monthSpendUsd(db)) >= env.AI_MONTHLY_BUDGET_USD) {
+  if (env.AI_MONTHLY_BUDGET_USD > 0 && (await monthSpendUsd(db)) >= monthlyLimit(who.isGuest)) {
     return { ok: false, reason: 'monthly-budget' };
   }
   if (who.userId) {

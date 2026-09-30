@@ -41,6 +41,10 @@ export {
   checkBudget,
   DAILY_LIMITS,
   estimateCostUsd,
+  GUEST_BUDGET_SHARE,
   monthSpendUsd,
   recordUsage,
+  reserveUsage,
+  resetSpendCacheForTests,
+  settleUsage,
 } from './usage';

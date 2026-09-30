@@ -33,7 +33,14 @@ import { offlineReply } from './offline';
 import { companionInstructions } from './prompts';
 import { aiAvailable, pickModel, reportProviderFailure, reportProviderSuccess } from './providers';
 import { companionTools } from './tools';
-import { checkBudget, recordUsage } from './usage';
+import {
+  abandonUsage,
+  checkBudget,
+  estimateTokens,
+  recordUsage,
+  reserveUsage,
+  settleUsage,
+} from './usage';
 
 export type AskMode = 'ai' | 'safe' | 'guided';
 
@@ -63,6 +70,12 @@ export interface AskInput {
   };
   messages: AskUIMessage[];
   abortSignal?: AbortSignal;
+  /**
+   * Asked once, just before a model would be used: false sends the answer to guided mode.
+   * The API uses it to give each visitor address a daily allowance of AI answers, so free
+   * guest sessions cannot be used to spend the budget.
+   */
+  aiGate?: () => Promise<boolean>;
   onCrisis?: (assessment: CrisisAssessment, plan: CrisisResponsePlan) => Promise<void>;
   onFinish?: (
     messages: AskUIMessage[],
@@ -164,16 +177,8 @@ export async function askResponse(input: AskInput): Promise<Response> {
         return;
       }
 
-      const budget = await checkBudget(db, { userId: user.id, isGuest: user.isGuest });
-      const choice = budget.ok
-        ? pickModel(tier >= 1 ? 'large' : 'small', { localOnly: !input.consents.aiExternal })
-        : null;
-      if (!choice) {
-        const reason = !budget.ok
-          ? budget.reason
-          : !aiAvailable() || input.consents.aiExternal
-            ? 'no-provider'
-            : 'no-consent';
+      /** Waypoint's own guidance, when no model can or may answer. */
+      const guided = async (reason: string | undefined) => {
         writer.write({ type: 'data-mode', id: 'mode', data: { mode: 'guided', reason } });
         writeText(offlineReply(lastText, { locale, country: profile.country, crisisTier: tier }));
         await recordUsage(db, {
@@ -183,35 +188,70 @@ export async function askResponse(input: AskInput): Promise<Response> {
           model: 'guided',
           status: 'offline',
         }).catch(() => undefined);
-        return;
-      }
+      };
+
+      const budget = await checkBudget(db, { userId: user.id, isGuest: user.isGuest });
+      const choice = budget.ok
+        ? pickModel(tier >= 1 ? 'large' : 'small', { localOnly: !input.consents.aiExternal })
+        : null;
+      if (!choice)
+        return guided(
+          !budget.ok
+            ? budget.reason
+            : !aiAvailable() || input.consents.aiExternal
+              ? 'no-provider'
+              : 'no-consent',
+        );
+      // The visitor's own allowance is drawn on only now that a model would really be used.
+      if (input.aiGate && !(await input.aiGate())) return guided('daily-limit');
 
       const safe = tier >= 2;
+      const modelMessages = await convertToModelMessages(input.messages.slice(-24), {
+        ignoreIncompleteToolCalls: true,
+      });
+      // What Waypoint knows about the person goes to an outside provider with personal
+      // details removed, exactly like their messages. A model on Waypoint's own servers
+      // sees it whole.
+      const shared = (text: string) => (choice.local ? text : redactPII(text).text);
+      const instructions = companionInstructions({
+        locale,
+        country: profile.country,
+        countryName: getCountry(profile.country)?.name,
+        situation: profile.situation,
+        lifeStage: profile.lifeStage,
+        currentPlan: input.context?.currentPlan ? shared(input.context.currentPlan) : null,
+        goals: input.context?.goals?.map(shared),
+        memories: input.consents.memory ? input.context?.memories?.map(shared) : undefined,
+        crisisTier: tier,
+        today: new Date().toISOString().slice(0, 10),
+      });
+      const messages = choice.local ? modelMessages : redactMessages(modelMessages);
+      const maxOutputTokens = safe ? 400 : 1000;
+
+      // Counted before the call, at what it could cost: a burst of requests cannot overshoot
+      // the budget, and an answer that is cut off is still counted.
+      const reservation = await reserveUsage(db, {
+        userId: user.id,
+        isGuest: user.isGuest,
+        feature: 'ask',
+        provider: choice.provider,
+        model: choice.modelId,
+        inputTokens: estimateTokens(instructions) + estimateTokens(JSON.stringify(messages)),
+        outputTokens: maxOutputTokens,
+      });
+      if (!reservation.ok) return guided(reservation.reason);
+
       writer.write({
         type: 'data-mode',
         id: 'mode',
         data: { mode: safe ? 'safe' : 'ai', model: choice.modelId },
       });
 
-      const modelMessages = await convertToModelMessages(input.messages.slice(-24), {
-        ignoreIncompleteToolCalls: true,
-      });
       const started = Date.now();
       const result = streamText({
         model: choice.model,
-        instructions: companionInstructions({
-          locale,
-          country: profile.country,
-          countryName: getCountry(profile.country)?.name,
-          situation: profile.situation,
-          lifeStage: profile.lifeStage,
-          currentPlan: input.context?.currentPlan,
-          goals: input.context?.goals,
-          memories: input.consents.memory ? input.context?.memories : undefined,
-          crisisTier: tier,
-          today: new Date().toISOString().slice(0, 10),
-        }),
-        messages: choice.local ? modelMessages : redactMessages(modelMessages),
+        instructions,
+        messages,
         tools: companionTools({
           db,
           userId: user.id,
@@ -229,13 +269,11 @@ export async function askResponse(input: AskInput): Promise<Response> {
         experimental_toolApprovalSecret: toolApprovalSecret(),
         stopWhen: isStepCount(safe ? 2 : 5),
         temperature: safe ? 0.2 : 0.5,
-        maxOutputTokens: safe ? 400 : 1000,
+        maxOutputTokens,
         abortSignal: input.abortSignal,
         onEnd: async (event) => {
           reportProviderSuccess(choice.provider);
-          await recordUsage(db, {
-            userId: user.id,
-            feature: 'ask',
+          await settleUsage(db, reservation.id, {
             provider: choice.provider,
             model: choice.modelId,
             inputTokens: event.totalUsage.inputTokens ?? 0,
@@ -246,14 +284,17 @@ export async function askResponse(input: AskInput): Promise<Response> {
         },
         onError: async () => {
           reportProviderFailure(choice.provider);
-          await recordUsage(db, {
-            userId: user.id,
-            feature: 'ask',
+          await settleUsage(db, reservation.id, {
             provider: choice.provider,
             model: choice.modelId,
             latencyMs: Date.now() - started,
             status: 'error',
           }).catch(() => undefined);
+        },
+        // The person left before the answer finished: what was generated was still paid
+        // for, so the estimate stands.
+        onAbort: async () => {
+          await abandonUsage(db, reservation.id, Date.now() - started).catch(() => undefined);
         },
       });
       writer.merge(result.toUIMessageStream({ sendReasoning: false, sendSources: true }));

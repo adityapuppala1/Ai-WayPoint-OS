@@ -1,5 +1,6 @@
 import { createRoute, z } from '@hono/zod-openapi';
 import { CountryQuery, errors, jsonBody, jsonContent, router } from '../lib/openapi';
+import { guestAiGate } from '../lib/request';
 import { limit, noStore } from '../middleware';
 import { ReportedScamsSchema, reportedScams } from '../services/admin';
 import { getConsents, getProfile } from '../services/me';
@@ -51,6 +52,10 @@ app.openapi(
       isGuest: user?.isGuest ?? true,
       channel: 'web',
       aiExternalConsent: aiExternal,
+      // A second opinion from AI needs a session (a guest's will do), so each person has a
+      // daily allowance; guests at one address share a further one.
+      aiAllowed: Boolean(user),
+      aiGate: user?.isGuest ? guestAiGate(db, c.req.raw.headers) : undefined,
     });
     return c.json(result, 200);
   },

@@ -33,7 +33,7 @@ import {
 import { toLocale } from '../email/render';
 import { errorFields, log } from '../lib/log';
 import { ApiError } from '../lib/problem';
-import { keyedHash, rateLimit } from '../lib/request';
+import { keyedHash, rateLimit, withinLimit } from '../lib/request';
 import type { Provider, TextChannel } from './providers';
 
 type ChannelName = TextChannel | 'ussd';
@@ -217,28 +217,13 @@ export interface TextResult {
   identityId?: string;
 }
 
-/** Whether a counter still has room (a 429 from the limiter means it does not). */
-async function allowed(
-  db: Database,
-  key: string,
-  opts: { max: number; windowSeconds: number },
-): Promise<boolean> {
-  try {
-    await rateLimit(db, key, opts);
-    return true;
-  } catch (err) {
-    if (err instanceof ApiError && err.status === 429) return false;
-    throw err;
-  }
-}
-
 /**
  * The first time a provider's message id is seen in a day. Providers redeliver when an answer
  * is slow, and a signed request can be replayed by anyone who captured it: either way the
  * person gets one reply, and one is paid for. Only a keyed hash of the id is kept.
  */
 async function firstDelivery(db: Database, provider: Provider, id: string): Promise<boolean> {
-  return allowed(db, `ch-seen:${keyedHash(`${provider}:${id}`, 'channel-message')}`, {
+  return withinLimit(db, `ch-seen:${keyedHash(`${provider}:${id}`, 'channel-message')}`, {
     max: 1,
     windowSeconds: 86_400,
   });
@@ -264,15 +249,15 @@ export function servedNumber(e164: string): boolean {
 async function serviceHasRoom(db: Database, crisis: boolean): Promise<boolean> {
   const env = getEnv();
   const name = crisis ? 'ch-out-crisis' : 'ch-out';
-  const hour = await allowed(db, `${name}-hour`, {
+  const hour = await withinLimit(db, `${name}-hour`, {
     max: env.WAYPOINT_TEXT_REPLIES_PER_HOUR,
     windowSeconds: 3600,
   });
-  const day = await allowed(db, `${name}-day`, {
+  const day = await withinLimit(db, `${name}-day`, {
     max: env.WAYPOINT_TEXT_REPLIES_PER_DAY,
     windowSeconds: 86_400,
   });
-  if (!(hour && day) && (await allowed(db, `${name}-warned`, { max: 1, windowSeconds: 3600 })))
+  if (!(hour && day) && (await withinLimit(db, `${name}-warned`, { max: 1, windowSeconds: 3600 })))
     log.warn('text replies paused: the ceiling for the whole service was reached', {
       crisis,
       perHour: env.WAYPOINT_TEXT_REPLIES_PER_HOUR,
@@ -350,7 +335,7 @@ export async function handleText(
   if (limited) {
     const mayAnswer =
       reply.crisis &&
-      (await allowed(db, `ch-crisis:${row.id}`, { max: CRISIS_PER_HOUR, windowSeconds: 3600 }));
+      (await withinLimit(db, `ch-crisis:${row.id}`, { max: CRISIS_PER_HOUR, windowSeconds: 3600 }));
     if (!mayAnswer) return slowDown();
     reply.ask = undefined;
   }

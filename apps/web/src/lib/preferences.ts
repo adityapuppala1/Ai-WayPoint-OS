@@ -49,6 +49,9 @@ export async function savePreferences(choices: Preferences): Promise<void> {
       // Still sent when the person moves to another page straight away.
       keepalive: true,
     });
+    // Read to the end, short as it is: Chrome counts an answer nobody read as still arriving,
+    // and a page with a request still arriving never counts as settled.
+    await res.text();
     if (res.ok) return;
   } catch {
     // As above: the page writes them itself.

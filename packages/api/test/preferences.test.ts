@@ -156,3 +156,59 @@ describe('POST /api/preferences', () => {
     expect((await save({ theme: 'dark' }, { ip: '203.0.113.8' })).status).toBe(200);
   });
 });
+
+describe('leaving a shared device', () => {
+  /** What one person leaves in the browser: their language, display choices and day. */
+  const PERSONAL = ['NEXT_LOCALE', 'wp-guest-note', 'wp-lite', 'wp-not-now', 'wp-theme'];
+  const LEFT =
+    'NEXT_LOCALE=ar; wp-theme=dark; wp-lite=1; wp-not-now=2026-09-30:abc; wp-tz=Asia%2FDubai';
+
+  /** A request as the website sends it, from a guest session of its own. */
+  const signedIn = async () => {
+    const res = await app.request(`${SITE}/api/auth/sign-in/anonymous`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', origin: SITE, 'x-real-ip': '192.0.2.9' },
+      body: '{}',
+    });
+    expect(res.status).toBe(200);
+    const session = res.headers
+      .getSetCookie()
+      .map((c) => c.split(';')[0])
+      .join('; ');
+    return (path: string, method: string, body: unknown = {}) =>
+      app.request(`${SITE}${path}`, {
+        method,
+        headers: {
+          'content-type': 'application/json',
+          origin: SITE,
+          cookie: `${session}; ${LEFT}`,
+        },
+        body: JSON.stringify(body),
+      });
+  };
+
+  const expectForgotten = (res: Response) => {
+    const cookies = cookiesOf(res);
+    for (const name of PERSONAL) {
+      expect(cookies[name]?.value, name).toBe('');
+      expect(cookies[name]?.attributes, name).toContain('max-age=0');
+      expect(cookies[name]?.attributes, name).toContain('path=/');
+    }
+    // The time zone is the device's, not the person's: the next person is in the same place.
+    expect(cookies['wp-tz']).toBeUndefined();
+  };
+
+  it('signing out forgets the language, display choices and steps set aside', async () => {
+    const send = await signedIn();
+    const res = await send('/api/auth/sign-out', 'POST');
+    expect(res.status).toBe(200);
+    expectForgotten(res);
+  });
+
+  it('deleting the account forgets them too', async () => {
+    const send = await signedIn();
+    const res = await send('/api/me', 'DELETE', { confirm: 'DELETE' });
+    expect(res.status).toBe(200);
+    expectForgotten(res);
+  });
+});

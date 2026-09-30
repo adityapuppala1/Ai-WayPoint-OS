@@ -40,7 +40,7 @@ import mind from './routes/mind';
 import money from './routes/money';
 import org from './routes/org';
 import path from './routes/path';
-import preferences from './routes/preferences';
+import preferences, { forgetPersonalCookies } from './routes/preferences';
 import shield from './routes/shield';
 import signals from './routes/signals';
 import support from './routes/support';
@@ -325,6 +325,18 @@ export function createApp() {
       const floor = signIn ? SIGN_IN_FAILURE_FLOOR_MS : AUTH_ANSWER_FLOOR_MS;
       const wait = floor - (performance.now() - started);
       if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
+    }
+
+    // Signing out leaves nothing of the person's on the device: their language, display
+    // choices and the steps they set aside go with the session, whatever answer Better Auth
+    // gave (a session that had already ended is still a person leaving).
+    if (post && endpoint === '/sign-out') {
+      const left = new Response(response.body, {
+        status: response.status,
+        headers: new Headers(response.headers),
+      });
+      forgetPersonalCookies(left.headers);
+      return left;
     }
 
     // A device that signs in gets a cookie saying it has been trusted with this account

@@ -1,4 +1,5 @@
 import { createRoute, z } from '@hono/zod-openapi';
+import { NOT_NOW_COOKIE } from '@waypoint/core';
 import { getEnv } from '@waypoint/core/env';
 import { LOCALE_COOKIE, locales } from '@waypoint/i18n';
 import { setCookie } from 'hono/cookie';
@@ -10,6 +11,34 @@ const app = router();
 
 /** A year: what the page's own script used to ask for. */
 const ONE_YEAR_SECONDS = 31_536_000;
+
+/** A guest's "Not now" on the note about keeping their things (the website reads the same name). */
+const GUEST_NOTE_COOKIE = 'wp-guest-note';
+
+/**
+ * The cookies that belong to a person rather than to the device: their language, theme and
+ * lite mode (put back from their profile whenever they sign in), the steps they set aside
+ * today, and a guest's "Not now" on the note about an account. The time zone is not among
+ * them: it is the device's own, and the next person is in the same place.
+ */
+const PERSONAL_COOKIES = [
+  LOCALE_COOKIE,
+  'wp-theme',
+  'wp-lite',
+  NOT_NOW_COOKIE,
+  GUEST_NOTE_COOKIE,
+] as const;
+
+/**
+ * Expires the person's cookies on this device. Signing out and deleting an account call it, so
+ * whoever uses a shared device next does not meet the last person's language or choices — on
+ * every way out, whichever app or button started it.
+ */
+export function forgetPersonalCookies(headers: Headers): void {
+  const secure = getEnv().WAYPOINT_URL.startsWith('https://') ? '; Secure' : '';
+  for (const name of PERSONAL_COOKIES)
+    headers.append('Set-Cookie', `${name}=; Path=/; Max-Age=0; SameSite=Lax${secure}`);
+}
 
 const PreferencesSchema = z
   .strictObject({

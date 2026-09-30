@@ -88,7 +88,9 @@ const crisisEventsOf = (userId: string) =>
 
 describe('plans', () => {
   it('a plan saved with the old proof links opens pages that exist', async () => {
-    const me = await person();
+    // A situation with no checklist, so the plan step is the next step on Today (checklist
+    // items with a deadline come before a plan).
+    const me = await person({ situation: 'changing-career' });
     const overview = (await (await req('/api/path', { cookie: me.cookie })).json()) as {
       suggestions: Array<{ roleId: string }>;
     };

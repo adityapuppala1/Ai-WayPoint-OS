@@ -88,6 +88,5 @@ describe('the worker’s settings', () => {
     expect(workerIntervalMs('-5')).toBe(30_000);
     expect(workerIntervalMs('5')).toBe(1_000);
     expect(workerIntervalMs('60000')).toBe(60_000);
-    // Loading the jobs loads most of the API: seconds on a machine busy with other builds.
   }, 60_000);
 });

@@ -4,11 +4,21 @@
  * nothing here for forecasts, on purpose: no model writes, publishes or changes one.
  */
 import type { ScamCategory } from '@waypoint/content/types';
-import type { AiOpinion, PlanDraft, RiskLevel } from '@waypoint/core';
+import {
+  type AiOpinion,
+  LOCALES,
+  type Locale,
+  type PlanDraft,
+  type RiskLevel,
+  shieldSignalTitle,
+} from '@waypoint/core';
 import { redactPII } from '@waypoint/core/privacy';
 import type { Database } from '@waypoint/db';
 import { embed, generateText, Output } from 'ai';
 import { z } from 'zod';
+import { judgeAvailable, judgeBarredByCrisis, judgeReads, runJudge } from './judge';
+import { PLAN_REWRITE_CHECKS, planRewriteFlagged, REPLY_CHECKS, replyFlags } from './judge-checks';
+import { readShieldSigns, SHIELD_SIGNS } from './judge-shield';
 import {
   channelInstructions,
   LANGUAGE_NAMES,
@@ -134,13 +144,137 @@ export async function channelAnswer(
   );
   if (!out.ok) return null;
   const answer = plainChannelText(out.value, input.maxChars);
-  return answer.length >= 2 ? answer : null;
+  if (answer.length < 2) return null;
+  // No answer is an answer the caller already has: it sends Waypoint's own guided text.
+  if (await replyFlagged(ctx, { reply: answer, question: input.text, locale: input.locale }))
+    return null;
+  return answer;
 }
 
-/** A second opinion on a message. Text is redacted before it leaves Waypoint. */
+/**
+ * A second look, by the judge, at an answer a model wrote for a text message: does it give a
+ * diagnosis or a dose, say what a court will decide, pick a financial product, promise an
+ * outcome or describe a method of self-harm? The prompt forbids all five, but a prompt is a
+ * request. True means "do not send this".
+ *
+ * Only ever adds caution: with no judge, no consent, a language that is not switched on or a
+ * failure, the answer goes out exactly as it did before. The judge sees the answer (with
+ * personal details removed), never the question.
+ */
+async function replyFlagged(
+  ctx: CallerContext,
+  input: { reply: string; question: string; locale: string },
+): Promise<boolean> {
+  if (judgeBarredByCrisis(input.question) || !judgeReads(input.reply, input.locale)) return false;
+  const out = await runJudge(
+    {
+      db: ctx.db,
+      userId: ctx.userId,
+      isGuest: ctx.isGuest,
+      allowExternal: ctx.allowExternal,
+      locale: input.locale,
+      feature: 'judge-reply',
+      // Nobody is waiting on a page: the answer is sent when it is ready.
+      pace: 'background',
+    },
+    { reply: input.reply },
+    REPLY_CHECKS,
+  );
+  return out.ok && replyFlags(out.answers).length > 0;
+}
+
+const LEVELS: RiskLevel[] = ['low', 'unclear', 'high', 'very-high'];
+
+interface ShieldOpinionInput {
+  text: string;
+  country?: string | null;
+  locale: string;
+  /**
+   * What the rules found. When they are already certain nobody is asked, and a reason the
+   * rules already gave is not given twice.
+   */
+  rules?: { level: RiskLevel; signals: ReadonlyArray<{ id: string }> };
+}
+
+/**
+ * A second opinion on a message, for the raise-only merge (`mergeAiOpinion`). Text is
+ * redacted before it leaves Waypoint.
+ *
+ * The judge is asked first when it may be (a key, consent, a language that is switched on).
+ * The language model is asked when there is no judge, when the judge fails, and when the
+ * judge is unsure; with both, the higher level stands. Whoever answered is named in `model`.
+ *
+ * When the judge is sure (it found a clear scam, or every sign clearly absent) the language
+ * model is not asked: that is the saving, and its cost is that a scam only the language
+ * model would have caught is then rated by the rules alone.
+ */
 export async function shieldOpinion(
   ctx: CallerContext,
-  input: { text: string; country?: string | null; locale: string },
+  input: ShieldOpinionInput,
+): Promise<AiOpinion | null> {
+  if (input.rules?.level === 'very-high') return null;
+  const judged = await shieldJudgeOpinion(ctx, input);
+  if (judged && !judged.unsure) return judged.opinion;
+  const written = await shieldModelOpinion(ctx, input);
+  if (!judged || !written) return judged?.opinion ?? written;
+  // Both answered. Neither can take away what the other saw: the higher level stands, and its
+  // reasons come first.
+  const [first, second] =
+    LEVELS.indexOf(written.level) > LEVELS.indexOf(judged.opinion.level)
+      ? [written, judged.opinion]
+      : [judged.opinion, written];
+  return {
+    level: first.level,
+    categories: [...new Set([...first.categories, ...second.categories])].slice(0, 3),
+    reasons: [...first.reasons, ...second.reasons],
+    model: `${judged.opinion.model}+${written.model}`,
+  };
+}
+
+const isLocale = (v: string): v is Locale => (LOCALES as readonly string[]).includes(v);
+
+/** The judge's opinion, or nothing when it may not be asked or gives no usable answer. */
+async function shieldJudgeOpinion(
+  ctx: CallerContext,
+  input: ShieldOpinionInput,
+): Promise<{ opinion: AiOpinion; unsure: boolean } | null> {
+  const text = input.text.slice(0, 4000);
+  if (judgeBarredByCrisis(text) || !judgeReads(text, input.locale)) return null;
+  const out = await runJudge(
+    {
+      db: ctx.db,
+      userId: ctx.userId,
+      isGuest: ctx.isGuest,
+      allowExternal: ctx.allowExternal,
+      locale: input.locale,
+      feature: 'judge-shield',
+    },
+    { message: text },
+    SHIELD_SIGNS,
+  );
+  if (!out.ok) return null;
+  const judged = readShieldSigns(out.answers);
+  const known = new Set(input.rules?.signals.map((s) => s.id));
+  const locale = isLocale(input.locale) ? input.locale : 'en';
+  return {
+    unsure: judged.unsure,
+    opinion: {
+      level: judged.level,
+      categories: judged.categories.slice(0, 3),
+      // Jev writes nothing: a reason is the title of the warning sign it saw, as translated.
+      reasons: judged.seen
+        .filter((rule) => !known.has(rule))
+        .flatMap((rule) => shieldSignalTitle(rule, locale) ?? [])
+        .slice(0, 3),
+      model: out.model,
+    },
+  };
+}
+
+/** The language model's opinion: it reads the whole message and writes its own reasons. */
+async function shieldModelOpinion(
+  ctx: CallerContext,
+  input: ShieldOpinionInput,
 ): Promise<AiOpinion | null> {
   const { text } = redactPII(input.text.slice(0, 4000));
   const out = await runModel(
@@ -188,7 +322,75 @@ const PlanTextSchema = z.object({
   ),
 });
 
-/** Rewrites a template plan's wording for the person. Structure, minutes and resources never change. */
+/** How many pieces of a plan are checked by the judge at once (it allows 40 requests a second). */
+const PLAN_CHECKS_AT_ONCE = 6;
+
+/**
+ * Whether the judge finds, in any piece of a rewritten plan, a promise the template did not
+ * make or a course, site, organisation or number it did not name. One flag refuses the whole
+ * rewrite: the template's wording is plainer, and it is known.
+ *
+ * Each step is asked about on its own, next to its own original, because Jev compares two
+ * short texts far better than it searches a long one. The person's goal is not sent: the
+ * questions are about the wording, not about them.
+ *
+ * Only ever adds caution: with no judge, no consent, a language that is not switched on or a
+ * failure, the rewrite is accepted exactly as it was before.
+ */
+async function rewriteFlagged(
+  ctx: CallerContext,
+  draft: PlanDraft,
+  text: z.infer<typeof PlanTextSchema>,
+  about: { locale: string; goal?: string | null },
+): Promise<boolean> {
+  if (!judgeAvailable() || !ctx.allowExternal) return false;
+  const lines = (...parts: string[]) => parts.join('\n');
+  const all = [
+    // The plan's own title and summary, and the heading of each week.
+    {
+      original: lines(draft.title, draft.summary, ...draft.weeks.map((w) => w.focus)),
+      rewritten: lines(text.title, text.summary, ...text.weeks.map((w) => w.focus)),
+    },
+    ...draft.weeks.flatMap((w, i) =>
+      w.steps.map((s, j) => ({
+        original: lines(s.title, s.detail),
+        rewritten: lines(
+          text.weeks[i]?.steps[j]?.title ?? '',
+          text.weeks[i]?.steps[j]?.detail ?? '',
+        ),
+      })),
+    ),
+  ];
+  // Wording the model left alone is the planner's own: there is nothing to check in it.
+  const pieces = all.filter((p) => p.rewritten.trim() && p.rewritten !== p.original);
+  const rewritten = pieces.map((p) => p.rewritten).join('\n');
+  if (judgeBarredByCrisis(about.goal) || !judgeReads(rewritten, about.locale)) return false;
+  for (let i = 0; i < pieces.length; i += PLAN_CHECKS_AT_ONCE) {
+    const answers = await Promise.all(
+      pieces.slice(i, i + PLAN_CHECKS_AT_ONCE).map((piece) =>
+        runJudge(
+          {
+            db: ctx.db,
+            userId: ctx.userId,
+            isGuest: ctx.isGuest,
+            allowExternal: ctx.allowExternal,
+            locale: about.locale,
+            feature: 'judge-plan',
+          },
+          piece,
+          PLAN_REWRITE_CHECKS,
+        ),
+      ),
+    );
+    if (answers.some((out) => out.ok && planRewriteFlagged(out.answers))) return true;
+  }
+  return false;
+}
+
+/**
+ * Rewrites a template plan's wording for the person. Structure, minutes and resources never
+ * change, and where the judge is available the new wording is checked before it is used.
+ */
 export async function personalisePlan(
   ctx: CallerContext,
   draft: PlanDraft,
@@ -233,6 +435,9 @@ export async function personalisePlan(
     text.weeks.length === draft.weeks.length &&
     text.weeks.every((w, i) => w.steps.length === draft.weeks[i]?.steps.length);
   if (!sameShape) return draft;
+  // The shape says nothing about the words. Where the judge may be asked, a rewrite that
+  // promises a result, or names a course or a site the planner did not, is not used.
+  if (await rewriteFlagged(ctx, draft, text, about)) return draft;
   return {
     ...draft,
     title: text.title,

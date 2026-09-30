@@ -29,6 +29,7 @@
  * remove it. Text written to steer Jev "can move the answer" by TypeSafe's own account, so no
  * answer may lower a crisis tier or a Shield level, and none decides anything on its own.
  */
+import { assessCrisis, detectLanguage } from '@waypoint/core';
 import { getEnv } from '@waypoint/core/env';
 import type { CallerContext } from './features';
 import {
@@ -129,6 +130,25 @@ export function judgeAvailable(): boolean {
 export function judgeLanguageEnabled(locale: string): boolean {
   const language = locale.trim().toLowerCase().split(/[-_]/)[0] ?? '';
   return getEnv().AI_JUDGE_LOCALES.includes(language);
+}
+
+/**
+ * Whether the judge may be asked about this text: the language it is written in must be
+ * switched on, as well as the reader's. Someone reading in English can paste a message in
+ * Swahili, and it is the text Jev is weaker on, not the person. The guess is rough (script,
+ * then a few common words): a language Waypoint has no words for reads as English, and text
+ * in a script it does not know is not sent.
+ */
+export function judgeReads(text: string, locale: string): boolean {
+  return judgeLanguageEnabled(locale) && judgeLanguageEnabled(detectLanguage(text));
+}
+
+/**
+ * Imminent danger (crisis tier 3): nothing about that moment goes to the judge, as nothing
+ * goes to a model. The check is Waypoint's own rules, on the person's own words.
+ */
+export function judgeBarredByCrisis(personsWords: string | null | undefined): boolean {
+  return Boolean(personsWords) && assessCrisis(personsWords ?? '').tier >= 3;
 }
 
 /**

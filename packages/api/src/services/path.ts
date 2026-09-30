@@ -499,6 +499,10 @@ export async function createPlan(
     templates: await templatesFor(locale),
   });
   if (input.personalise && consents.personalization) {
+    // A model may reword the plan; it cannot change its steps. Where the judge may be asked
+    // (ai_external consent, a language switched on for it) the new wording is checked, and a
+    // rewrite that promises a result or names a course the planner did not comes back as
+    // the template, unchanged.
     draft = await personalisePlan(
       { db, userId: who.userId, isGuest: who.isGuest, allowExternal: consents.ai_external },
       draft,

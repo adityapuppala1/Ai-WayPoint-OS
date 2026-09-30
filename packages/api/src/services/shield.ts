@@ -1,9 +1,11 @@
 /**
  * Scam Shield: deterministic rules first, optional AI second opinion (which can only raise
- * the level), and a record of the check that never contains what the person pasted.
+ * the level), and a record of the check that never contains what the person pasted. The
+ * second opinion comes from the judge, the language model, or both; which one answered is
+ * recorded with the check.
  */
 import { z } from '@hono/zod-openapi';
-import { aiAvailable, modelCandidates, shieldOpinion } from '@waypoint/ai';
+import { aiAvailable, judgeAvailable, modelCandidates, shieldOpinion } from '@waypoint/ai';
 import {
   getReportChannels,
   getScamPatterns,
@@ -172,15 +174,20 @@ export async function runShieldCheck(
     ai = { used: false, reason: 'unavailable' };
   } else {
     const allowExternal = input.aiExternalConsent || input.aiConsent === true;
+    // The judge (TypeSafe's Jev) when it may be asked, the language model when there is no
+    // judge or it is unsure: see shieldOpinion. Either way the opinion goes through the same
+    // merge, which can only raise the level, and a failure leaves the rules' result as it is.
     const opinion = await shieldOpinion(
       { db, userId: input.userId, isGuest: input.isGuest, allowExternal, gate: input.aiGate },
-      { text: input.text, country: input.country, locale: input.locale ?? 'en' },
+      { text: input.text, country: input.country, locale: input.locale ?? 'en', rules: result },
     ).catch(() => null);
     if (opinion) {
       result = mergeAiOpinion(result, opinion, input.country, input.locale);
       ai = { used: true, reason: 'used', model: opinion.model };
     } else {
-      const anyModel = aiAvailable();
+      // The judge is always an outside service, so with only a judge set up the missing piece
+      // is consent too.
+      const anyModel = aiAvailable() || judgeAvailable();
       const localModel = modelCandidates('small', { localOnly: true }).length > 0;
       ai = {
         used: false,

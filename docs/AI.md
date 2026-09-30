@@ -166,7 +166,9 @@ Change a number in the code, then run `pnpm check`, `pnpm eval` and `eval:judge`
 
 `AI_JUDGE_MODEL` (default `jev-1.13.0`) is an exact version, never an alias: `jev-latest`
 moves when TypeSafe ships a release, and every threshold above means something only for the
-version it was measured on. The version that answered is recorded with each Shield check
+version it was measured on. The server refuses to start with a value that does not end in a
+full version number, so `jev-latest`, `jev-preview` and `jev-1.13` are all refused, and
+`pnpm doctor` says so. The version that answered is recorded with each Shield check
 (`shield_checks.ai_model`) and each usage row. Before moving it, run `eval:judge` on the new
 version.
 
@@ -236,7 +238,8 @@ reasons for caution, not as measurements of Waypoint; re-read them before quotin
   and a question may only point at a named field of the state with a backticked path
   (`` `message` ``). Anything typed or pasted travels in the state and nowhere else.
 - **One pinned version.** `AI_JUDGE_MODEL` (default `jev-1.13.0`), never an alias: an alias
-  changes when TypeSafe ships a release. The version that answered is returned and recorded.
+  changes when TypeSafe ships a release, so the server does not start with one. The version
+  that answered is returned and recorded.
 - **Only exact answers.** A reply is checked against the questions asked before anything uses
   it: every question answered, as its own kind, probabilities between 0 and 1, a choice that
   was one of the options, a score within its levels. Anything else is a failure, not a value.

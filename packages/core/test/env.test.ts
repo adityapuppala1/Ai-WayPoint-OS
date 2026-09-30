@@ -150,6 +150,13 @@ describe('the judge (TypeSafe Jev) settings', () => {
     expect(env.AI_JUDGE_LOCALES).toEqual(['en']);
   });
 
+  it('refuses an alias or a partial version: every threshold was set against one version', () => {
+    // An alias moves whenever TypeSafe ships a release; "jev-1.13" could be any 1.13.x.
+    for (const alias of ['jev-latest', 'jev-preview', 'jev-1.13', 'jev'])
+      expect(() => judge({ AI_JUDGE_MODEL: alias }), alias).toThrow(/AI_JUDGE_MODEL/);
+    expect(judge({ AI_JUDGE_MODEL: 'jev-2.0.10' }).AI_JUDGE_MODEL).toBe('jev-2.0.10');
+  });
+
   it('refuses a model name or a language list that cannot be one', () => {
     expect(() => judge({ AI_JUDGE_MODEL: 'jev 1.13' })).toThrow(/AI_JUDGE_MODEL/);
     expect(() => judge({ AI_JUDGE_LOCALES: 'english, please' })).toThrow(/AI_JUDGE_LOCALES/);

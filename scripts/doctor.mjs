@@ -92,15 +92,16 @@ if (ai.length)
 else warn('No AI provider configured — Ask runs in guided mode. Safety features work without AI.');
 
 // The judge is optional and is not an AI provider: it gives typed second opinions, no answers.
-if (env.TYPESAFE_API_KEY) {
-  const model = env.AI_JUDGE_MODEL || 'jev-1.13.0';
-  ok(
-    `Judge: TypeSafe Jev ${model}, asked in: ${env.AI_JUDGE_LOCALES || 'en'} (an outside service; the privacy notice names it)`,
+// Its version must be exact (packages/core/src/env.ts): the server refuses to start otherwise.
+const judgeModel = env.AI_JUDGE_MODEL?.trim() || 'jev-1.13.0';
+if (!/^[A-Za-z][A-Za-z0-9-]{0,40}-\d{1,4}\.\d{1,4}\.\d{1,6}$/.test(judgeModel))
+  bad(
+    `AI_JUDGE_MODEL is ${judgeModel}, not an exact version — Waypoint will not start. An alias such as jev-latest changes whenever TypeSafe ships a release: pin a version such as jev-1.13.0.`,
   );
-  if (/^jev-(latest|preview)$/.test(model))
-    warn(
-      `AI_JUDGE_MODEL is ${model}, which changes whenever TypeSafe ships a release — pin a version such as jev-1.13.0.`,
-    );
+if (env.TYPESAFE_API_KEY) {
+  ok(
+    `Judge: TypeSafe Jev ${judgeModel}, asked in: ${env.AI_JUDGE_LOCALES || 'en'} (an outside service; the privacy notice names it)`,
+  );
   // The thresholds in the code are starting values: nothing here can know whether they were
   // measured on this installation's languages, so say how to find out every time.
   warn(

@@ -160,9 +160,17 @@ const EnvSchema = z.object({
   TYPESAFE_API_KEY: optionalString,
   /**
    * The exact version asked, never an alias such as jev-latest: an alias moves when TypeSafe
-   * ships a release, and the thresholds in the code were set against one version.
+   * ships a release, and the thresholds in the code were set against one version. So a name
+   * must end in a full version number (jev-1.13.0); an alias or "jev-1.13" stops the start.
    */
-  AI_JUDGE_MODEL: textOr('jev-1.13.0').pipe(z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/)),
+  AI_JUDGE_MODEL: textOr('jev-1.13.0').pipe(
+    z
+      .string()
+      .regex(
+        /^[A-Za-z][A-Za-z0-9-]{0,40}-\d{1,4}\.\d{1,4}\.\d{1,6}$/,
+        'an exact version such as jev-1.13.0, never an alias such as jev-latest',
+      ),
+  ),
   /**
    * Languages the judge may be asked in ("en,es"). English only by default: TypeSafe says Jev
    * is weaker in other languages, so each one is switched on only after it has been measured.

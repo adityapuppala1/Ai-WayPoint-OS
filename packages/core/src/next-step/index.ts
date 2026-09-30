@@ -83,9 +83,11 @@ export interface NextStepFacts {
 
 interface StepBase {
   /**
-   * Stands for this step when the person says "not now". Letters and digits only, and it
-   * says nothing about the step: it is kept in the browser, where a name such as
-   * "job-loss" would tell anyone who looked what is going on in this person's life.
+   * Stands for this step when the person says "not now". Short and unreadable, but only a
+   * plain hash of the step, which anyone with a list of steps could look up: the server keys
+   * it again for the person (with its own secret) before it goes anywhere near the browser,
+   * where "money: critical" or "job-loss" would tell anyone who looked what is going on in
+   * this person's life.
    */
   key: string;
   rung: NextStepRung;
@@ -167,7 +169,10 @@ const URGENCY_ORDER: Record<Urgency, number> = {
   later: 3,
 };
 
-/** FNV-1a, 32 bits, in base 36: short, stable, and unreadable. Not a secret, not security. */
+/**
+ * FNV-1a, 32 bits, in base 36: short, stable, and unreadable at a glance. Not a secret, not
+ * security: the steps are a public list, so whoever shows a key keys it again first.
+ */
 function stepKey(id: string): string {
   let h = 0x811c9dc5;
   for (let i = 0; i < id.length; i++) {
@@ -384,12 +389,14 @@ export function chooseNextStep(
 
 /**
  * The cookie that remembers which steps the person set aside today. It holds the day and
- * the steps' keys — nothing readable — and is only ever read for that day.
+ * the keys the server gave those steps — keyed hashes that mean nothing without the server's
+ * secret, and nothing for anyone else signed in on the device — and is only read for that day.
  */
 export const NOT_NOW_COOKIE = 'wp-not-now';
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
-const KEY = /^[0-9a-z]{1,16}$/;
+/** Letters, digits, "-" and "_" (a keyed hash in base64url), 16 at most. */
+const KEY = /^[\w-]{1,16}$/;
 /** More than anyone could set aside in a day; keeps the stored value small. */
 const MAX_NOT_NOW = 40;
 

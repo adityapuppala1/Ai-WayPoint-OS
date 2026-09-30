@@ -219,6 +219,16 @@ reskilling cohort, a school leavers' year) that people join with a code, link or
 - **A device that has signed in** keeps a small cookie (a random value and its signature — it
   names nobody). It lets that device keep signing in while someone else is guessing the
   account's password, instead of being locked out with them.
+- **What else the browser keeps**, all set by the server (a cookie a page writes itself lasts
+  seven days in Safari and on an iPhone): the language, theme and lite mode (`NEXT_LOCALE`,
+  `wp-theme`, `wp-lite`, put back from the profile at sign-in), the device's time zone
+  (`wp-tz`), the steps set aside with "Not now" today (`wp-not-now`, HttpOnly: the date and a
+  keyed hash of the person and each step, so nobody can look a step up from it and it means
+  nothing for anyone else signed in on the device), and a guest's "Not now" on the note about
+  an account (`wp-guest-note`). **Signing out or deleting the account expires all of them but
+  the time zone** (it is the device's), in the server's answer, whichever app or button did
+  it, so the next person on a shared device doesn't meet the last one's language or choices;
+  the offline copy of the help numbers goes too.
 - **Nobody can find out who uses Waypoint by trying addresses.** Creating an account answers
   exactly the same — status, body, no cookie — whether the address is new or already has an
   account. The owner of an existing account gets a "you already have an account" email instead,

@@ -413,6 +413,12 @@ describe('not now', () => {
     expect(parseNotNow('2026-09-28:abc123.$$$.def456', '2026-09-28')).toEqual(['abc123', 'def456']);
   });
 
+  it('keeps the keys the server gives (a keyed hash in base64url), and nothing longer', () => {
+    const value = addNotNow(undefined, '2026-09-28', 'aB3_x-9QwErTyUiO');
+    expect(parseNotNow(value, '2026-09-28')).toEqual(['aB3_x-9QwErTyUiO']);
+    expect(parseNotNow('2026-09-28:aB3_x-9QwErTyUiOp', '2026-09-28')).toEqual([]);
+  });
+
   it('keeps the list short however often it is pressed', () => {
     let value: string | undefined;
     for (let i = 0; i < 200; i++) value = addNotNow(value, '2026-09-28', `key${i}`);

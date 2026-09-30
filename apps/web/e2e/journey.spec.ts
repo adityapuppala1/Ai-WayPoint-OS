@@ -106,10 +106,26 @@ test('a guest gets started, asks for help, keeps their choices and creates an ac
   await page.goto('/ask');
   await expect(page.getByText('I lost my job last week').first()).toBeVisible();
 
-  // Signing out, then back in.
+  // Signing out, then back in. Signing out leaves nothing of theirs for whoever uses the device
+  // next: not their language or display choices (the profile puts them back at sign-in), not
+  // the steps they set aside today. The device's time zone stays.
+  const url = new URL(page.url()).origin;
+  await page.context().addCookies(
+    [
+      ['NEXT_LOCALE', 'en'],
+      ['wp-theme', 'light'],
+      ['wp-lite', '0'],
+      ['wp-not-now', '2026-09-30:abc'],
+      ['wp-tz', 'Africa%2FNairobi'],
+    ].map(([name = '', value = '']) => ({ name, value, url })),
+  );
   await page.getByRole('button', { name: /Amani/ }).first().click();
   await page.getByRole('menuitem', { name: 'Sign out' }).click();
   await expect(page).toHaveURL(/\/welcome/);
+  const left = (await page.context().cookies()).map((c) => c.name);
+  for (const name of ['NEXT_LOCALE', 'wp-theme', 'wp-lite', 'wp-not-now'])
+    expect(left, name).not.toContain(name);
+  expect(left).toContain('wp-tz');
   await page.goto('/sign-in');
   await page.getByLabel('Email').fill(email);
   await page.getByLabel('Password').fill(password);

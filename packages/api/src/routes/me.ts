@@ -26,6 +26,7 @@ import {
   listMemories,
   MemorySchema,
 } from '../services/privacy';
+import { forgetPersonalCookies } from './preferences';
 
 const app = router();
 app.use('/me', requireUser, noStore);
@@ -216,8 +217,10 @@ app.openapi(
   async (c) => {
     if (c.req.valid('json').confirm !== 'DELETE') throw badRequest('Type DELETE to confirm.');
     await deleteAccount(c.get('db'), c.get('user')!.id);
-    // Expire the session cookies (the session rows are already gone).
+    // Expire the session cookies (the session rows are already gone), and the person's own
+    // choices on this device.
     const res = c.json({ ok: true as const }, 200);
+    forgetPersonalCookies(res.headers);
     for (const name of [
       'waypoint.session_token',
       '__Secure-waypoint.session_token',

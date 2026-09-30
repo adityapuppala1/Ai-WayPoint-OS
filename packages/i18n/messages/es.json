@@ -456,7 +456,8 @@
       "plan": "Es el próximo paso pendiente de tu plan.",
       "situation": "Le dijiste a Waypoint: «{situation}».",
       "review": "Tienes una meta, y el repaso de esta semana sigue pendiente.",
-      "nothingElse": "Hoy no hay nada más esperándote."
+      "nothingElse": "Hoy no hay nada más esperándote.",
+      "setAside": "Hoy dejaste de lado los demás pasos."
     },
     "nudgeDismissed": "Nota descartada."
   },
@@ -2182,14 +2183,16 @@
         "phone": "Tu número de teléfono, si lo añades (comprobado con un código) o si escribes a Waypoint por mensaje",
         "phoneWhy": "Para responderte por SMS o WhatsApp y enviarte códigos de acceso.",
         "security": "Una cookie que mantiene tu sesión abierta y versiones codificadas de las direcciones de red (IP)",
-        "securityWhy": "Para proteger tu cuenta y frenar abusos. Nunca guardamos las direcciones en sí."
+        "securityWhy": "Para proteger tu cuenta y frenar abusos. Nunca guardamos las direcciones en sí.",
+        "feedback": "Los comentarios que envías desde Ajustes: de qué tratan, una puntuación si la das y tu mensaje",
+        "feedbackWhy": "Para mejorar Waypoint. Antes de guardarlo se quitan de tu mensaje los números de teléfono, los correos y los números de tarjeta o de documento. Quienes lo leen no ven quién lo envió, salvo que pidas una respuesta: entonces ven tu correo, para poder contestarte."
       },
       "never": {
         "title": "Lo que nunca guardamos",
         "scam": "Los mensajes que revisas con el Escudo antiestafas. Solo guardamos una huella del texto, el resultado, las señales de alerta que coincidieron y los nombres de las webs a las que enlaza: lo justo para detectar estafas que circulan.",
         "crisis": "Las palabras que hicieron que Waypoint mostrara ayuda en crisis. Solo guardamos que ocurrió, lo grave que parecía y qué regla coincidió.",
         "location": "Dónde estás. El tiempo y la calidad del aire llegan a tu navegador directamente del servicio de pronósticos, para un lugar redondeado a aproximadamente 1 km, y el lugar que eliges se queda en tu dispositivo.",
-        "tracking": "Cookies publicitarias o de rastreo, ni analíticas que te sigan. Nuestras únicas cookies mantienen tu sesión, recuerdan que este dispositivo ya inició sesión antes (para que alguien que intente adivinar tu contraseña no pueda bloquearte) y recuerdan tu idioma, tu zona horaria, cómo prefieres ver la app y qué pasos dejaste hoy para otro momento."
+        "tracking": "Cookies publicitarias o de rastreo, ni analíticas que te sigan. Nuestras únicas cookies mantienen tu sesión, recuerdan que este dispositivo ya inició sesión antes (para que alguien que intente adivinar tu contraseña no pueda bloquearte) y recuerdan tu idioma, tu zona horaria, cómo prefieres ver la app, qué pasos dejaste hoy para otro momento (como códigos que no dicen nada de ellos) y, si usas Waypoint como invitado, que respondiste «Ahora no» a la nota sobre crear una cuenta. Al cerrar sesión o eliminar tu cuenta se borran del dispositivo tu idioma, cómo prefieres ver la app, los pasos que dejaste para otro momento y ese «Ahora no», para que quien lo use después no los vea."
       },
       "choices": {
         "title": "Lo que puedes elegir",
@@ -2254,7 +2257,7 @@
         "encryption": "Las notas privadas, los datos de salud y de dinero, las metas y las personas de confianza se cifran en la base de datos con una clave creada para ti. Al borrar tu cuenta se destruye primero esa clave, así que ya nunca se podrán leer.",
         "transport": "Todo viaja por conexiones cifradas (HTTPS).",
         "sessions": "Tu sesión se cierra tras 30 días sin usar Waypoint, y las sesiones no registran desde dónde te conectas.",
-        "staff": "Las herramientas del equipo muestran solo lo que el equipo necesita —publicaciones retenidas para revisión, denuncias de estafas y recuentos generales—, nunca tus conversaciones, notas ni datos de salud o dinero. Lo que hace el equipo queda registrado."
+        "staff": "Las herramientas del equipo muestran solo lo que el equipo necesita —publicaciones retenidas para revisión, denuncias de estafas, los comentarios que envías (sin números personales, y con tu correo solo si pediste una respuesta) y recuentos generales—. Nunca muestran tus conversaciones ni tus notas, ni los datos de salud o dinero que guardas en Waypoint. Lo que hace el equipo queda registrado."
       },
       "rights": {
         "title": "Tus derechos",

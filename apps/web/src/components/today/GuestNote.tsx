@@ -4,7 +4,7 @@ import { Button, LinkButton, Notice } from '@waypoint/ui';
 import type { Route } from 'next';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { GUEST_NOTE_COOKIE } from './guest-note';
+import { savePreferences } from '@/lib/preferences';
 
 /**
  * One honest note for a guest, once they have saved something of their own: it is kept with
@@ -18,10 +18,10 @@ export function GuestNote() {
   if (gone) return null;
 
   const notNow = () => {
-    // As long as a browser will keep it (400 days): for a guest, that is for good.
-    // biome-ignore lint/suspicious/noDocumentCookie: a small display choice the server page reads (like wp-theme)
-    document.cookie = `${GUEST_NOTE_COOKIE}=off; path=/; max-age=34560000; samesite=lax`;
     setGone(true);
+    // The server sets the cookie, for a year: one the page wrote itself, Safari and every
+    // browser on an iPhone would forget after seven days, and the note would come back.
+    void savePreferences({ guestNote: 'off' });
   };
 
   return (

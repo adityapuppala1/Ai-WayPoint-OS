@@ -1,16 +1,20 @@
 /**
- * The choices a page is drawn from before anyone is known: language, theme, lite mode and the
- * device's time zone. They are cookies, and the server sets them (POST /api/preferences): a
- * cookie written by a page's own script is forgotten after seven days by Safari and by every
- * browser on an iPhone, while one the server sent is kept for the year it asks for.
+ * The choices a page is drawn from before anyone is known: language, theme, lite mode, the
+ * device's time zone, and a guest's "Not now" on the note about an account. They are cookies,
+ * and the server sets them (POST /api/preferences): a cookie written by a page's own script is
+ * forgotten after seven days by Safari and by every browser on an iPhone, while one the server
+ * sent is kept for the year it asks for.
  */
 import { LOCALE_COOKIE, type Locale } from '@waypoint/i18n';
+import { GUEST_NOTE_COOKIE } from '@/components/today/guest-note';
 
 export interface Preferences {
   locale?: Locale;
   theme?: 'system' | 'light' | 'dark';
   lite?: boolean;
   timezone?: string;
+  /** A guest said "Not now" to the note about keeping their things with an account. */
+  guestNote?: 'off';
 }
 
 /** Each choice as the cookie the server would set: the same names, the same values. */
@@ -20,6 +24,7 @@ function asCookies(choices: Preferences): Array<[name: string, value: string]> {
   if (choices.theme) cookies.push(['wp-theme', choices.theme]);
   if (choices.lite !== undefined) cookies.push(['wp-lite', choices.lite ? '1' : '0']);
   if (choices.timezone) cookies.push(['wp-tz', encodeURIComponent(choices.timezone)]);
+  if (choices.guestNote) cookies.push([GUEST_NOTE_COOKIE, choices.guestNote]);
   return cookies;
 }
 

@@ -147,7 +147,39 @@ describe('Today’s next step', () => {
     });
     expect(view.nextStep.detail).toBeTruthy();
     // The key is what "not now" remembers; it gives nothing away.
-    expect(view.nextStep.key).toMatch(/^[0-9a-z]{6,12}$/);
+    expect(view.nextStep.key).toMatch(/^[\w-]{16}$/);
+  });
+
+  it('a “not now” key holds for one person only, and no list of steps turns it back', async () => {
+    const a = await person('lost-job');
+    const b = await person('lost-job');
+    const mine = await today(a);
+    const theirs = await today(b);
+    expect(theirs.nextStep.title).toBe(mine.nextStep.title);
+    expect(theirs.nextStep.key).not.toBe(mine.nextStep.key);
+    // On a shared phone, what one person set aside today does not hide the next person's step.
+    expect((await today(b, notNow(mine, mine.nextStep.key))).nextStep.title).toBe(
+      mine.nextStep.title,
+    );
+
+    // The key is not a plain hash of the step: hashing every step there is for this situation
+    // (the ladder is public) finds nothing that matches it.
+    const done = mine.nextStep.done;
+    if (done?.type !== 'checklist-item') throw new Error('expected a checklist item');
+    const { rankNextSteps } = await import('@waypoint/core');
+    const everyStep = rankNextSteps({
+      onboarded: true,
+      situation: 'lost-job',
+      safetyNotes: [],
+      dueReminders: [],
+      checklist: { event: 'job-loss', open: [{ id: done.itemId, urgency: 'now' }] },
+      money: { stress: 'critical' },
+      plan: null,
+      goals: { active: 1, reviewedThisWeek: false },
+      checkedInToday: false,
+    }).map((c) => c.key);
+    expect(everyStep.length).toBeGreaterThan(4);
+    expect(everyStep).not.toContain(mine.nextStep.key);
   });
 
   it('“not now” moves to the next step for the rest of the day, and only that day', async () => {
@@ -180,11 +212,74 @@ describe('Today’s next step', () => {
       'check-in',
       'explore',
     ]);
+    // Those steps are still waiting: the sign says they were set aside, not that there are none.
     expect(view.nextStep).toMatchObject({
       kind: 'explore',
       canDefer: false,
+      why: 'You set the other steps aside for today.',
+    });
+  });
+
+  it('says nothing else is waiting only when that is true', async () => {
+    const cookie = await person('steady');
+    expect((await today(cookie)).nextStep).toMatchObject({
+      kind: 'explore',
       why: 'Nothing else is waiting for you today.',
     });
+    // A note that is not a step (someone in a circle is thinking of you) is listed right under
+    // the sign, so the sign does not say that nothing is waiting.
+    await db
+      .getDb()
+      .insert(db.nudges)
+      .values({
+        userId: await userId(cookie),
+        module: 'circles',
+        priority: 'high',
+        title: 'Someone in your circle is thinking of you',
+        href: '/support',
+      });
+    const view = await today(cookie);
+    expect(view.nudges.map((n) => n.title)).toContain('Someone in your circle is thinking of you');
+    expect(view.nextStep).toMatchObject({ kind: 'explore', why: null });
+  });
+
+  it('“not now” is kept for the day it is pressed, not the day the page was drawn', async () => {
+    const cookie = await person('lost-job');
+    const first = await today(cookie);
+    const press = (stored: string) =>
+      req('/api/today/not-now', {
+        method: 'POST',
+        cookie: `${cookie}; wp-not-now=${stored}`,
+        json: { key: first.nextStep.key },
+      });
+    const kept = (res: Response) =>
+      res.headers.getSetCookie().find((line) => line.startsWith('wp-not-now=')) ?? '';
+
+    // Added to what today already holds (another tab set something aside too).
+    const res = await press(`${first.day}:aaaaaaaaaaaaaaaa`);
+    expect(res.status).toBe(200);
+    const line = kept(res);
+    expect(line).toContain(`wp-not-now=${first.day}:aaaaaaaaaaaaaaaa.${first.nextStep.key};`);
+    expect(line.toLowerCase()).toContain('max-age=129600');
+    expect(line.toLowerCase()).toContain('path=/');
+    // Nothing on the page needs to read it.
+    expect(line.toLowerCase()).toContain('httponly');
+
+    // A list from another day is not added to: the day is the person's own, worked out now.
+    expect(kept(await press('2001-01-01:bbbbbbbbbbbbbbbb'))).toContain(
+      `wp-not-now=${first.day}:${first.nextStep.key};`,
+    );
+    const after = await today(cookie, `wp-not-now=${first.day}:${first.nextStep.key}`);
+    expect(after.nextStep.title).not.toBe(first.nextStep.title);
+
+    // Only a key Today gave.
+    const bad = await req('/api/today/not-now', {
+      method: 'POST',
+      cookie,
+      json: { key: 'not a key; Path=/x' },
+    });
+    expect(bad.status).toBe(422);
+    expect(bad.headers.getSetCookie()).toEqual([]);
   });
 
   it('marking the checklist item done moves on for good', async () => {
@@ -386,6 +481,50 @@ describe('Today’s next step', () => {
     // Not now is allowed here too, and the checklist is what waits behind it.
     const next = await today(cookie, notNow(view, view.nextStep.key));
     expect(next.nextStep.kind).toBe('checklist');
+  });
+
+  it('a safety note stays first, however many newer notes arrive after it', async () => {
+    const cookie = await person('lost-job');
+    await db
+      .getDb()
+      .insert(db.nudges)
+      .values({
+        userId: await userId(cookie),
+        module: 'today',
+        priority: 'critical',
+        title: 'Checking in on you',
+        body: 'Last time we talked, things were hard. How are you doing now?',
+        href: '/support',
+        dedupeKey: 'crisis-follow-up',
+        status: 'delivered',
+        createdAt: new Date(Date.now() - 3_600_000),
+      });
+    // Three reminders fall due after it, and each leaves a newer note.
+    const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+    for (const title of ['Morning pills', 'Noon pills', 'Evening pills']) {
+      const created = await req('/api/wellbeing/reminders', {
+        method: 'POST',
+        cookie,
+        json: { title, repeat: 'once', date: tomorrow, time: '09:00' },
+      });
+      expect(created.status).toBe(201);
+      const reminder = (await created.json()) as { id: string };
+      await db
+        .getDb()
+        .update(db.reminders)
+        .set({ nextAt: new Date(Date.now() - 60_000) })
+        .where(db.eq(db.reminders.id, reminder.id));
+    }
+    const { dueReminders } = await import('../src/jobs');
+    expect(await dueReminders(db.getDb())).toBeGreaterThanOrEqual(3);
+
+    const view = await today(cookie);
+    expect(view.nextStep).toMatchObject({
+      kind: 'safety-note',
+      title: 'Checking in on you',
+      detail: 'Last time we talked, things were hard. How are you doing now?',
+    });
+    expect(view.nudges.map((n) => n.title)).toContain('Checking in on you');
   });
 
   it('with a plan, things with a deadline still come first; then the plan’s own step', async () => {

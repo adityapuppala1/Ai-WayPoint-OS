@@ -187,7 +187,6 @@ export default async function TodayPage() {
         <div className={styles.main}>
           <NextStepSign
             step={step}
-            day={view.day}
             context={
               step.kind === 'plan-step' && view.plan
                 ? t('planContext', {

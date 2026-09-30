@@ -456,7 +456,8 @@
       "plan": "É o próximo passo em aberto do seu plano.",
       "situation": "Você disse ao Waypoint: “{situation}”.",
       "review": "Você tem uma meta, e a revisão da semana ainda está em aberto.",
-      "nothingElse": "Hoje não há mais nada esperando por você."
+      "nothingElse": "Hoje não há mais nada esperando por você.",
+      "setAside": "Você deixou os outros passos de lado por hoje."
     },
     "nudgeDismissed": "Nota dispensada."
   },
@@ -2182,14 +2183,16 @@
         "phone": "Seu número de telefone, se você adicionar (confirmado com um código) ou mandar mensagem para o Waypoint",
         "phoneWhy": "Para responder por SMS ou WhatsApp e enviar códigos de acesso.",
         "security": "Um cookie que mantém você conectado e versões embaralhadas dos endereços de rede (IP)",
-        "securityWhy": "Para proteger sua conta e impedir abusos. Nunca guardamos os endereços em si."
+        "securityWhy": "Para proteger sua conta e impedir abusos. Nunca guardamos os endereços em si.",
+        "feedback": "Os comentários que você envia pelas Configurações: sobre o que são, uma nota se você der, e sua mensagem",
+        "feedbackWhy": "Para melhorar o Waypoint. Números de telefone, e-mails e números de cartão ou de documento são retirados da sua mensagem antes de ser guardada. Quem a lê não vê quem enviou, a menos que você peça uma resposta: aí vê seu e-mail, para poder responder você."
       },
       "never": {
         "title": "O que nunca guardamos",
         "scam": "As mensagens que você verifica com o Escudo contra golpes. Guardamos só uma impressão digital do texto, o resultado, os sinais de alerta encontrados e os nomes dos sites para os quais ele aponta — o suficiente para identificar golpes em circulação.",
         "crisis": "As palavras que fizeram o Waypoint mostrar apoio em crise. Guardamos só que isso aconteceu, a gravidade aparente e qual regra foi acionada.",
         "location": "Onde você está. O clima e a qualidade do ar chegam ao seu navegador direto do serviço de previsão, para um local arredondado para cerca de 1 km, e o local que você escolhe fica no seu aparelho.",
-        "tracking": "Cookies de publicidade, cookies de rastreamento ou análises que seguem você. Nossos únicos cookies mantêm você conectado, lembram que este aparelho já entrou antes (para que alguém tentando adivinhar sua senha não consiga bloquear você) e lembram seu idioma, fuso horário, preferências de exibição e quais passos você deixou para depois hoje."
+        "tracking": "Cookies de publicidade, cookies de rastreamento ou análises que seguem você. Nossos únicos cookies mantêm você conectado, lembram que este aparelho já entrou antes (para que alguém tentando adivinhar sua senha não consiga bloquear você) e lembram seu idioma, fuso horário, preferências de exibição, quais passos você deixou para depois hoje (como códigos que não dizem nada sobre eles) e, se você é visitante, que respondeu “Agora não” ao aviso sobre criar uma conta. Ao sair ou excluir sua conta, seu idioma, suas preferências de exibição, os passos deixados para depois e esse “Agora não” são apagados do aparelho, para que quem o usar depois não os veja."
       },
       "choices": {
         "title": "Suas escolhas",
@@ -2254,7 +2257,7 @@
         "encryption": "Anotações privadas, dados de saúde e financeiros, metas e pessoas de confiança são criptografados no banco de dados com uma chave criada para você. Excluir sua conta destrói essa chave primeiro, para que nunca mais possam ser lidos.",
         "transport": "Tudo trafega por conexões criptografadas (HTTPS).",
         "sessions": "Você é desconectado após 30 dias sem usar o Waypoint, e as sessões não registram de onde você se conecta.",
-        "staff": "As ferramentas da equipe mostram só o que a equipe precisa — publicações retidas para revisão, denúncias de golpe e contagens gerais —, nunca suas conversas, anotações ou dados de saúde e financeiros. O que a equipe faz fica registrado."
+        "staff": "As ferramentas da equipe mostram só o que a equipe precisa — publicações retidas para revisão, denúncias de golpe, os comentários que você envia (sem números pessoais, e com seu e-mail só se você pediu uma resposta) e contagens gerais. Elas nunca mostram suas conversas ou anotações, nem os dados de saúde e financeiros que você guarda no Waypoint. O que a equipe faz fica registrado."
       },
       "rights": {
         "title": "Seus direitos",

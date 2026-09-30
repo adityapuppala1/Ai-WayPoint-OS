@@ -35,9 +35,11 @@ import {
   moodCheckins,
   nudges,
   or,
+  sql,
   weeklyReviews,
 } from '@waypoint/db';
 import { englishMessages, type Messages } from '@waypoint/i18n';
+import { keyedHash } from '../lib/request';
 import { type ChecklistView, checklistFor } from './civic';
 import { reminderTitles } from './health';
 import { helpCountry, type Profile } from './me';
@@ -66,7 +68,10 @@ export const NextStepSchema = z
     from: z.string().nullable(),
     /** The language the title and detail are written in, when it is not the reader's. */
     titleLang: z.string().nullable(),
-    /** Stands for this step when the person says "not now". It says nothing about the step. */
+    /**
+     * Stands for this step when the person says "not now": a keyed hash that says nothing
+     * about the step, and means nothing for anyone else signed in on the same device.
+     */
     key: z.string(),
     /** Whether another step waits behind this one, so "not now" has somewhere to go. */
     canDefer: z.boolean(),
@@ -161,6 +166,7 @@ export interface TodayCopy {
     situation: string;
     review: string;
     nothingElse: string;
+    setAside: string;
   };
 }
 
@@ -222,7 +228,9 @@ export async function today(
             or(isNull(nudges.expiresAt), gt(nudges.expiresAt, now)),
           ),
         )
-        .orderBy(desc(nudges.createdAt))
+        // A safety note is read before the limit, not after it: however many newer notes
+        // arrive (a reminder three times a day), the check-in after a hard moment stays first.
+        .orderBy(sql`(${nudges.priority} = 'critical') desc`, desc(nudges.createdAt))
         .limit(3),
       // The life-event checklist that matches the person's situation, with their progress.
       event && getChecklist(event, profile.country)
@@ -271,6 +279,7 @@ export async function today(
     reviewedThisWeek: reviewRows.length > 0,
   };
 
+  // Each step's key is keyed again for this person before it reaches the browser.
   const ranked = rankNextSteps({
     onboarded,
     situation: profile.situation,
@@ -299,7 +308,7 @@ export async function today(
     checkedInToday: Boolean(
       lastCheckin[0] && localDayKey(lastCheckin[0].at, profile.timezone) === day,
     ),
-  });
+  }).map((c) => ({ ...c, key: notNowKey(userId, c.key) }));
   const { step, canDefer } = chooseNextStep(ranked, parseNotNow(opts.notNow, day));
 
   const signalList = await relevantSignals(
@@ -320,6 +329,9 @@ export async function today(
         notes,
         list,
         plan: active,
+        // Read only for the last step (explore, talk). It is chosen while the ladder holds more
+        // only when everything above it was set aside today.
+        rest: ranked.length > 1 ? 'set-aside' : notes.length ? 'notes' : 'nothing',
       }),
       key: step.key,
       rung: step.rung,
@@ -361,6 +373,8 @@ function describe(
     notes: TodayView['nudges'];
     list: ChecklistView | null;
     plan: Awaited<ReturnType<typeof activePlanWithNextStep>>;
+    /** Behind the last step: steps set aside today, notes listed under the sign, or nothing. */
+    rest: 'set-aside' | 'notes' | 'nothing';
   },
 ): Described {
   const { copy } = known;
@@ -378,6 +392,14 @@ function describe(
   // "You told Waypoint: …" — only when the situation has words; otherwise say nothing.
   const said = known.situation ? copy.situations[known.situation] : undefined;
   const becauseOfSituation = said ? copy.why.situation.replace('{situation}', said) : null;
+  // "Nothing else is waiting" only when that is true: steps set aside for today still wait,
+  // and so do notes listed right under the sign (those say what they are themselves).
+  const whyLast =
+    known.rest === 'set-aside'
+      ? copy.why.setAside
+      : known.rest === 'nothing'
+        ? copy.why.nothingElse
+        : null;
 
   switch (step.kind) {
     case 'safety-note':
@@ -434,10 +456,21 @@ function describe(
     case 'review':
       return { ...base, ...copy.review, why: copy.why.review };
     case 'talk':
-      return { ...base, ...copy.talk, why: copy.why.nothingElse };
+      return { ...base, ...copy.talk, why: whyLast };
     case 'explore':
-      return { ...base, ...copy.explore, why: copy.why.nothingElse };
+      return { ...base, ...copy.explore, why: whyLast };
   }
+}
+
+/**
+ * The key "not now" remembers for a step. The ladder's own keys are plain hashes of a short,
+ * public list ("money:critical", a checklist item), so anyone who read the browser's cookie
+ * could look them up, and they are the same for everyone, so whoever signs in next on a shared
+ * device would find their own steps set aside. Keyed with the server's secret and the person's
+ * id, it tells nobody anything and holds for this person only.
+ */
+function notNowKey(userId: string, stepKey: string): string {
+  return keyedHash(`${userId}:${stepKey}`, 'not-now').slice(0, 16);
 }
 
 /** The reminder a due-reminder note is about (`reminder:<id>:<when>`), if it is one. */

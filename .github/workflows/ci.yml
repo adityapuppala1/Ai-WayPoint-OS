@@ -68,11 +68,14 @@ jobs:
   # accessibility, the first pages in light, dark and Arabic, the staff console and the offline
   # page. One job per browser engine, each with its own build, server and empty database: a
   # problem in one engine never hides behind another, and no job waits for the other two.
-  # WebKit is the engine of Safari and of every browser on an iPhone.
+  # WebKit is the engine of Safari and of every browser on an iPhone. It is also the slowest of
+  # the three under test (its desktop project alone took 14.5 minutes on a busy Windows
+  # machine, against 5 for both of Chrome's), so the limit leaves room for it, the build and
+  # a retry.
   browser:
     name: Browser tests, ${{ matrix.name }}
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:

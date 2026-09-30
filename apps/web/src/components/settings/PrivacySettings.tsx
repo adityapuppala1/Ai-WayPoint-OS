@@ -1,6 +1,6 @@
 'use client';
 
-import type { Consents, MyProgrammes, TrustedContact } from '@waypoint/api/client';
+import type { Consents, Memory, MyProgrammes, TrustedContact } from '@waypoint/api/client';
 import {
   Button,
   ConfirmDialog,
@@ -19,18 +19,22 @@ import { type FormEvent, useState } from 'react';
 import { ApiProblem, api } from '@/lib/api';
 import { forgetOfflineCopy } from '@/lib/offline';
 import { OFFERED_CONSENTS } from '@/lib/options';
+import { MemoryPanel } from './MemoryPanel';
 import { ProgrammesPanel } from './ProgrammesPanel';
 import styles from './settings.module.css';
 
 export function PrivacySettings({
   consents: initial,
   contacts: initialContacts,
+  memories,
   retention,
   programmes,
   lostOrganisations,
 }: {
   consents: Consents;
   contacts: TrustedContact[];
+  /** What the assistant was asked to remember, newest first. */
+  memories: Memory[];
   retention: number | null;
   programmes: MyProgrammes;
   /** Organisations with no other owner or admin: deleting the account deletes them too. */
@@ -200,6 +204,8 @@ export function PrivacySettings({
           ) : null}
         </div>
       </Panel>
+
+      <MemoryPanel memories={memories} memoryOn={consents.memory} />
 
       <Panel title={t('retentionTitle')} as="section">
         <SelectField

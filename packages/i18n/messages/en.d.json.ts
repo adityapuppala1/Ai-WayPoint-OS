@@ -787,7 +787,16 @@ declare const messages: {
     "emailUnconfirmed": "Confirm your email address",
     "emailUnconfirmedBody": "We sent you a link when you signed up. Confirming lets you answer invitations to an organisation’s team — and invite people, if you run one.",
     "deleteOrganisations": "{count, plural, one {This organisation has} other {These organisations have}} no other owner or admin, so {count, plural, one {it} other {they}} will be deleted with your account: {names}.",
-    "trustedOff": "To see these contacts when Waypoint shows you help lines, switch on “{setting}” above."
+    "trustedOff": "To see these contacts when Waypoint shows you help lines, switch on “{setting}” above.",
+    "memoryTitle": "What Waypoint remembers",
+    "memoryLead": "Things you asked it to remember in Ask, each saved only after you approved it. Stored encrypted.",
+    "memoryEmpty": "Nothing is remembered.",
+    "memoryOff": "Memory is switched off (“{setting}” above). Waypoint saves nothing new and uses nothing listed here. Anything listed stays until you delete it.",
+    "memorySavedOn": "Saved {date}",
+    "memoryUnreadable": "This one could not be opened. You can still delete it.",
+    "memoryForgetAll": "Forget everything",
+    "memoryForgetAllConfirm": "Delete everything Waypoint remembers from Ask? Your conversations, goals and plans stay. This can’t be undone.",
+    "memoryDeleted": "Deleted"
   },
   "explore": {
     "title": "All modules",
@@ -2149,7 +2158,8 @@ declare const messages: {
         "correct": "Correct it: change your details in Settings at any time.",
         "delete": "Delete it: Settings → Privacy & data → Delete my account. It’s immediate and can’t be undone.",
         "withdraw": "Change your mind: switch any choice off, and it stops from then on.",
-        "complain": "Complain: write to us, or to the data protection authority where you live."
+        "complain": "Complain: write to us, or to the data protection authority where you live.",
+        "memory": "See what Waypoint was asked to remember, and delete any of it: Settings → Privacy & data → What Waypoint remembers. Switching memory off stops it being used or added to; what is there stays until you delete it."
       },
       "children": {
         "title": "Children and young people",

@@ -780,7 +780,16 @@
     "emailUnconfirmed": "Confirmez votre adresse e-mail",
     "emailUnconfirmedBody": "Nous vous avons envoyé un lien lors de votre inscription. Confirmer votre adresse vous permet de répondre aux invitations à rejoindre l’équipe d’une organisation — et d’inviter des personnes si vous en gérez une.",
     "deleteOrganisations": "{count, plural, one {Cette organisation n’a pas d’autre propriétaire ni administrateur ; elle sera supprimée} other {Ces organisations n’ont pas d’autre propriétaire ni administrateur ; elles seront supprimées}} avec votre compte : {names}.",
-    "trustedOff": "Pour voir ces personnes quand Waypoint vous montre des lignes d’écoute, activez « {setting} » plus haut."
+    "trustedOff": "Pour voir ces personnes quand Waypoint vous montre des lignes d’écoute, activez « {setting} » plus haut.",
+    "memoryTitle": "Ce que Waypoint retient",
+    "memoryLead": "Ce que vous lui avez demandé de retenir dans Parler, chaque élément n’étant enregistré qu’après votre accord. Conservé chiffré.",
+    "memoryEmpty": "Rien n’est retenu.",
+    "memoryOff": "La mémoire est désactivée (« {setting} », plus haut). Waypoint n’enregistre rien de nouveau et n’utilise rien de ce qui figure ici. Ce qui figure ici y reste jusqu’à ce que vous le supprimiez.",
+    "memorySavedOn": "Enregistré le {date}",
+    "memoryUnreadable": "Cet élément n’a pas pu être ouvert. Vous pouvez tout de même le supprimer.",
+    "memoryForgetAll": "Tout oublier",
+    "memoryForgetAllConfirm": "Supprimer tout ce que Waypoint retient de Parler ? Vos conversations, objectifs et plans restent. C’est définitif.",
+    "memoryDeleted": "Supprimé"
   },
   "explore": {
     "title": "Tous les modules",
@@ -2142,7 +2151,8 @@
         "correct": "Les corriger : modifiez vos informations dans Réglages à tout moment.",
         "delete": "Les supprimer : Réglages → Confidentialité et données → Supprimer mon compte. C’est immédiat et irréversible.",
         "withdraw": "Changer d’avis : désactivez n’importe quel choix, et il cesse de s’appliquer dès ce moment.",
-        "complain": "Porter plainte : écrivez-nous, ou adressez-vous à l’autorité de protection des données du pays où vous vivez."
+        "complain": "Porter plainte : écrivez-nous, ou adressez-vous à l’autorité de protection des données du pays où vous vivez.",
+        "memory": "Consulter ce que Waypoint a été chargé de retenir et en supprimer ce que vous voulez : Réglages → Confidentialité et données → Ce que Waypoint retient. Désactiver la mémoire fait qu’elle n’est plus utilisée ni complétée ; ce qui s’y trouve reste jusqu’à ce que vous le supprimiez."
       },
       "children": {
         "title": "Enfants et jeunes",

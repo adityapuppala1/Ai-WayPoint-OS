@@ -780,7 +780,16 @@
     "emailUnconfirmed": "Confirme seu endereço de e-mail",
     "emailUnconfirmedBody": "Enviamos um link quando você criou a conta. Confirmar permite responder a convites para a equipe de uma organização — e convidar pessoas, se você administrar uma.",
     "deleteOrganisations": "{count, plural, one {Esta organização não tem outro dono nem administrador, então será excluída} other {Estas organizações não têm outro dono nem administrador, então serão excluídas}} junto com sua conta: {names}.",
-    "trustedOff": "Para ver essas pessoas quando o Waypoint mostrar linhas de apoio, ligue “{setting}” acima."
+    "trustedOff": "Para ver essas pessoas quando o Waypoint mostrar linhas de apoio, ligue “{setting}” acima.",
+    "memoryTitle": "O que o Waypoint lembra",
+    "memoryLead": "O que você pediu para lembrar em Conversar; cada item só foi salvo depois da sua aprovação. Guardado com criptografia.",
+    "memoryEmpty": "Nada está lembrado.",
+    "memoryOff": "A memória está desligada (“{setting}”, acima). O Waypoint não salva nada novo nem usa o que está listado aqui. O que está listado fica até você excluir.",
+    "memorySavedOn": "Salvo em {date}",
+    "memoryUnreadable": "Este item não pôde ser aberto. Mesmo assim, você pode excluir.",
+    "memoryForgetAll": "Esquecer tudo",
+    "memoryForgetAllConfirm": "Excluir tudo o que o Waypoint lembra de Conversar? Suas conversas, metas e planos ficam. Não dá para desfazer.",
+    "memoryDeleted": "Excluído"
   },
   "explore": {
     "title": "Todos os módulos",
@@ -2142,7 +2151,8 @@
         "correct": "Corrigir: altere seus dados em Configurações quando quiser.",
         "delete": "Apagar: Configurações → Privacidade e dados → Excluir minha conta. É imediato e não dá para desfazer.",
         "withdraw": "Mudar de ideia: desligue qualquer opção e ela deixa de valer a partir daí.",
-        "complain": "Reclamar: escreva para nós, ou para a autoridade de proteção de dados de onde você mora."
+        "complain": "Reclamar: escreva para nós, ou para a autoridade de proteção de dados de onde você mora.",
+        "memory": "Ver o que foi pedido para o Waypoint lembrar e excluir o que quiser: Configurações → Privacidade e dados → O que o Waypoint lembra. Desligar a memória faz com que ela deixe de ser usada e de receber itens novos; o que já está lá fica até você excluir."
       },
       "children": {
         "title": "Crianças e jovens",

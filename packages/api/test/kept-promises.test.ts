@@ -318,3 +318,166 @@ describe('trusted contacts on the support card', () => {
     expect(JSON.stringify(rows)).not.toContain('700 000 001');
   });
 });
+
+describe('what Waypoint remembers', () => {
+  /** A memory saved the way the assistant saves one after approval: sealed with the owner's key. */
+  async function remember(userId: string, content: string, when: string): Promise<string> {
+    const { sealFor, SEALED } = await import('@waypoint/core/privacy');
+    const { newId } = await import('@waypoint/core/ids');
+    const id = newId();
+    const dek = await db.dataKeyFor(db.getDb(), userId);
+    await db
+      .getDb()
+      .insert(db.memories)
+      .values({
+        id,
+        userId,
+        kind: 'fact',
+        contentCt: sealFor(dek, content, SEALED.memory, userId, id),
+        createdAt: new Date(when),
+      });
+    return id;
+  }
+  type Memory = { id: string; kind: string; content: string | null; createdAt: string };
+  const list = async (cookie: string) =>
+    (await (await req('/api/me/memories', { cookie })).json()) as Memory[];
+
+  it('needs a session', async () => {
+    expect((await req('/api/me/memories')).status).toBe(401);
+    expect((await req('/api/me/memories', { method: 'DELETE' })).status).toBe(401);
+  });
+
+  it('shows the owner what was remembered and when, newest first', async () => {
+    const me = await person({}, { memory: true });
+    expect(await list(me.cookie)).toEqual([]);
+    const older = await remember(me.id, 'I study best before work', '2026-09-01T08:00:00Z');
+    const newer = await remember(me.id, 'My sister Asha is helping me', '2026-09-20T08:00:00Z');
+    // One saved before memories were sealed: still shown, so it can be deleted.
+    const [plain] = await db
+      .getDb()
+      .insert(db.memories)
+      .values({
+        userId: me.id,
+        kind: 'preference',
+        content: 'Prefers short answers',
+        createdAt: new Date('2026-08-01T08:00:00Z'),
+      })
+      .returning({ id: db.memories.id });
+
+    const mine = await list(me.cookie);
+    expect(mine.map((m) => m.id)).toEqual([newer, older, plain!.id]);
+    expect(mine[0]).toEqual({
+      id: newer,
+      kind: 'fact',
+      content: 'My sister Asha is helping me',
+      createdAt: '2026-09-20T08:00:00.000Z',
+    });
+    expect(mine[2]!.content).toBe('Prefers short answers');
+    // Sealed at rest.
+    const rows = await db.getDb().select().from(db.memories).where(db.eq(db.memories.id, newer));
+    expect(JSON.stringify(rows)).not.toContain('Asha');
+  });
+
+  it('never lets anyone read or delete another person’s memories', async () => {
+    const me = await person({}, { memory: true });
+    const stranger = await person({}, { memory: true });
+    const mine = await remember(me.id, 'I am saving for a bicycle', '2026-09-10T08:00:00Z');
+    const theirs = await remember(stranger.id, 'I live in Kisumu', '2026-09-11T08:00:00Z');
+
+    // Read: a stranger's list holds only their own.
+    expect((await list(stranger.cookie)).map((m) => m.id)).toEqual([theirs]);
+    expect(JSON.stringify(await list(stranger.cookie))).not.toContain('bicycle');
+
+    // Delete by id: "not found", exactly as for an id that never existed, and nothing is lost.
+    const tried = await req(`/api/me/memories/${mine}`, {
+      method: 'DELETE',
+      cookie: stranger.cookie,
+    });
+    expect(tried.status).toBe(404);
+    const missing = await req('/api/me/memories/0190a3c2-1111-7000-8000-000000000000', {
+      method: 'DELETE',
+      cookie: stranger.cookie,
+    });
+    expect(missing.status).toBe(404);
+    // (Every answer carries its own request id; everything else is the same.)
+    const said = async (res: Response) => ({ ...(await res.json()), requestId: null });
+    expect(await said(tried)).toEqual(await said(missing));
+    expect((await list(me.cookie)).map((m) => m.id)).toEqual([mine]);
+
+    // "Forget everything" for one person touches nobody else.
+    const all = await req('/api/me/memories', { method: 'DELETE', cookie: stranger.cookie });
+    expect(all.status).toBe(200);
+    expect(await all.json()).toEqual({ ok: true, deleted: 1 });
+    expect(await list(stranger.cookie)).toEqual([]);
+    expect((await list(me.cookie)).map((m) => m.id)).toEqual([mine]);
+
+    // The owner deletes their own, once.
+    const gone = await req(`/api/me/memories/${mine}`, { method: 'DELETE', cookie: me.cookie });
+    expect(gone.status).toBe(200);
+    expect(await list(me.cookie)).toEqual([]);
+    const again = await req(`/api/me/memories/${mine}`, { method: 'DELETE', cookie: me.cookie });
+    expect(again.status).toBe(404);
+    expect(await db.getDb().select().from(db.memories).where(db.eq(db.memories.id, mine))).toEqual(
+      [],
+    );
+  });
+
+  it('keeps memories when the choice is switched off, until the person deletes them', async () => {
+    const me = await person({}, { memory: true });
+    await remember(me.id, 'I am allergic to penicillin', '2026-09-12T08:00:00Z');
+    await remember(me.id, 'I am learning SQL', '2026-09-13T08:00:00Z');
+
+    const off = await req('/api/me/consents', {
+      method: 'PUT',
+      cookie: me.cookie,
+      json: { memory: false },
+    });
+    expect(((await off.json()) as { memory: boolean }).memory).toBe(false);
+    // Switching off stops Waypoint using and saving them. It deletes nothing: they are still
+    // listed, still in the export, and still the person's to delete.
+    expect((await list(me.cookie)).map((m) => m.content)).toEqual([
+      'I am learning SQL',
+      'I am allergic to penicillin',
+    ]);
+    const exported = (await (await req('/api/me/export', { cookie: me.cookie })).json()) as {
+      memories: Array<{ content: string }>;
+    };
+    expect(exported.memories.map((m) => m.content).sort()).toEqual([
+      'I am allergic to penicillin',
+      'I am learning SQL',
+    ]);
+
+    const all = await req('/api/me/memories', { method: 'DELETE', cookie: me.cookie });
+    expect(await all.json()).toEqual({ ok: true, deleted: 2 });
+    expect(await list(me.cookie)).toEqual([]);
+    const after = (await (await req('/api/me/export', { cookie: me.cookie })).json()) as {
+      memories: unknown[];
+    };
+    expect(after.memories).toEqual([]);
+  });
+});
+
+describe('a choice that is no longer offered', () => {
+  it('keeps an answer given before, in the account and in the export', async () => {
+    // "Include me in public trend reports" is hidden until a report exists; the purpose and
+    // what people already answered stay.
+    const me = await person();
+    const set = await req('/api/me/consents', {
+      method: 'PUT',
+      cookie: me.cookie,
+      json: { research_aggregates: true },
+    });
+    expect(set.status).toBe(200);
+    expect(((await set.json()) as Record<string, boolean>).research_aggregates).toBe(true);
+    const exported = (await (await req('/api/me/export', { cookie: me.cookie })).json()) as {
+      consents: Record<string, boolean>;
+      consentHistory: Array<{ purpose: string; granted: boolean }>;
+    };
+    expect(exported.consents.research_aggregates).toBe(true);
+    expect(exported.consentHistory).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ purpose: 'research_aggregates', granted: true }),
+      ]),
+    );
+  });
+});

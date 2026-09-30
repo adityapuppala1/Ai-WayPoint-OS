@@ -240,10 +240,12 @@ export default async function PrivacyNoticePage() {
         <>
           <p>{t('rights.lead')}</p>
           <Points
-            items={(['see', 'correct', 'delete', 'withdraw', 'complain'] as const).map((id) => ({
-              id,
-              text: t(`rights.${id}`),
-            }))}
+            items={(['see', 'memory', 'correct', 'delete', 'withdraw', 'complain'] as const).map(
+              (id) => ({
+                id,
+                text: t(`rights.${id}`),
+              }),
+            )}
           />
           <p className="wp-meta">{common('appNote')}</p>
           <Actions>

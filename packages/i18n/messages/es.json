@@ -780,7 +780,16 @@
     "emailUnconfirmed": "Confirma tu dirección de correo",
     "emailUnconfirmedBody": "Te enviamos un enlace al registrarte. Al confirmarla podrás responder a invitaciones al equipo de una organización, y también invitar a otras personas si diriges una.",
     "deleteOrganisations": "{count, plural, one {Esta organización no tiene otra persona propietaria ni administradora, así que se eliminará} other {Estas organizaciones no tienen otra persona propietaria ni administradora, así que se eliminarán}} con tu cuenta: {names}.",
-    "trustedOff": "Para ver a estas personas cuando Waypoint te muestre líneas de ayuda, activa «{setting}» más arriba."
+    "trustedOff": "Para ver a estas personas cuando Waypoint te muestre líneas de ayuda, activa «{setting}» más arriba.",
+    "memoryTitle": "Lo que Waypoint recuerda",
+    "memoryLead": "Lo que le pediste recordar en Pregunta; cada cosa se guardó solo después de que la aprobaste. Se guarda cifrado.",
+    "memoryEmpty": "No hay nada recordado.",
+    "memoryOff": "La memoria está desactivada («{setting}», más arriba). Waypoint no guarda nada nuevo ni usa nada de lo que aparece aquí. Lo que aparece aquí se queda hasta que lo elimines.",
+    "memorySavedOn": "Guardado el {date}",
+    "memoryUnreadable": "Este no se pudo abrir. Aun así puedes eliminarlo.",
+    "memoryForgetAll": "Olvidar todo",
+    "memoryForgetAllConfirm": "¿Eliminar todo lo que Waypoint recuerda de Pregunta? Tus conversaciones, metas y planes se quedan. No se puede deshacer.",
+    "memoryDeleted": "Eliminado"
   },
   "explore": {
     "title": "Todos los módulos",
@@ -2142,7 +2151,8 @@
         "correct": "Corregirlo: cambia tus datos en Ajustes cuando quieras.",
         "delete": "Borrarlo: Ajustes → Privacidad y datos → Eliminar mi cuenta. Es inmediato y no se puede deshacer.",
         "withdraw": "Cambiar de opinión: desactiva cualquier opción y deja de aplicarse desde ese momento.",
-        "complain": "Reclamar: escríbenos, o dirígete a la autoridad de protección de datos del lugar donde vives."
+        "complain": "Reclamar: escríbenos, o dirígete a la autoridad de protección de datos del lugar donde vives.",
+        "memory": "Ver lo que se le pidió recordar a Waypoint y eliminar lo que quieras: Ajustes → Privacidad y datos → Lo que Waypoint recuerda. Desactivar la memoria hace que deje de usarse y de ampliarse; lo que ya hay se queda hasta que lo elimines."
       },
       "children": {
         "title": "Niños y jóvenes",

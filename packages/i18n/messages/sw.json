@@ -780,7 +780,16 @@
     "emailUnconfirmed": "Thibitisha anwani yako ya barua pepe",
     "emailUnconfirmedBody": "Tulikutumia kiungo ulipojisajili. Kuthibitisha kunakuwezesha kujibu mialiko ya kujiunga na timu ya shirika — na kuwaalika watu ikiwa unaendesha shirika.",
     "deleteOrganisations": "{count, plural, one {Shirika hili halina mmiliki wala msimamizi mwingine, kwa hiyo litafutwa} other {Mashirika haya hayana mmiliki wala msimamizi mwingine, kwa hiyo yatafutwa}} pamoja na akaunti yako: {names}.",
-    "trustedOff": "Ili kuwaona watu hawa Waypoint inapokuonyesha nambari za msaada, washa “{setting}” hapo juu."
+    "trustedOff": "Ili kuwaona watu hawa Waypoint inapokuonyesha nambari za msaada, washa “{setting}” hapo juu.",
+    "memoryTitle": "Mambo ambayo Waypoint inakumbuka",
+    "memoryLead": "Mambo uliyoiomba ikumbuke katika Uliza; kila moja lilihifadhiwa tu baada ya wewe kukubali. Huhifadhiwa kwa usimbaji.",
+    "memoryEmpty": "Hakuna kinachokumbukwa.",
+    "memoryOff": "Kumbukumbu imezimwa (“{setting}” hapo juu). Waypoint haihifadhi jambo jipya wala haitumii chochote kilichoorodheshwa hapa. Kilichoorodheshwa kinabaki hadi utakapokifuta.",
+    "memorySavedOn": "Ilihifadhiwa {date}",
+    "memoryUnreadable": "Hili halikuweza kufunguliwa. Bado unaweza kulifuta.",
+    "memoryForgetAll": "Sahau kila kitu",
+    "memoryForgetAllConfirm": "Ufute kila kitu ambacho Waypoint inakumbuka kutoka Uliza? Mazungumzo, malengo na mipango yako vinabaki. Hili haliwezi kutenduliwa.",
+    "memoryDeleted": "Imefutwa"
   },
   "explore": {
     "title": "Sehemu zote",
@@ -2142,7 +2151,8 @@
         "correct": "Kurekebisha: badilisha taarifa zako katika Mipangilio wakati wowote.",
         "delete": "Kufuta: Mipangilio → Faragha na data → Futa akaunti yangu. Hufanyika mara moja na haiwezi kutenduliwa.",
         "withdraw": "Kubadilisha nia: zima chaguo lolote, nalo husimama kuanzia hapo.",
-        "complain": "Kulalamika: tuandikie, au iandikie mamlaka ya ulinzi wa data mahali unapoishi."
+        "complain": "Kulalamika: tuandikie, au iandikie mamlaka ya ulinzi wa data mahali unapoishi.",
+        "memory": "Kuona mambo ambayo Waypoint iliombwa ikumbuke, na kufuta lolote kati yake: Mipangilio → Faragha na data → Mambo ambayo Waypoint inakumbuka. Kuzima kumbukumbu kunasimamisha kutumiwa kwake na kuongezwa kwa mapya; yaliyopo yanabaki hadi utakapoyafuta."
       },
       "children": {
         "title": "Watoto na vijana",

@@ -9,6 +9,22 @@ Purpose-specific and revocable (`consents` table, full history in `consent_event
 `personalization`, `foresight_matching`, `memory`, `ai_external`, `circle_matching`,
 `trusted_contact`, `org_aggregates`, `research_aggregates`. All start **off**.
 
+- **Only choices that change something are offered.** `research_aggregates` ("include me in
+  anonymised public trend reports") is a purpose the code knows, but no such report exists and
+  nothing reads the answer, so Privacy settings, the phone app and the public notice do not
+  show it. Answers given before it was hidden stay stored and appear in the export. Offer it
+  again only together with the report, under a new notice version, and ask afresh: an old
+  "yes" was given for a report nobody could describe. A test
+  (`packages/api/test/consents-offered.test.ts`) fails if the website or the phone app offers
+  a choice the server never reads.
+- **Switching `memory` off deletes nothing.** It stops Waypoint using what it remembers and
+  saving anything new, from then on. What was already remembered stays, listed in Settings →
+  Privacy → "What Waypoint remembers" with a plain note that it is kept but unused, until the
+  person deletes one entry or presses "Forget everything". A switch is easy to flip by
+  mistake; deleting is a separate, confirmed step.
+- **`trusted_contact`** decides whether the support card shows the person's own contacts.
+  Saving a contact without switching it on shows nothing on the card, and Settings says so.
+
 ## Encryption
 
 - Envelope encryption (`packages/core/src/privacy`): each person has a random 256-bit data
@@ -229,6 +245,11 @@ document: change them together.
 ## Your rights, built in
 
 - **Export**: Settings → Privacy → Download my data (complete JSON, decrypted for you).
+- **What Waypoint remembers**: Settings → Privacy lists everything the assistant was asked to
+  remember (each saved only after the person approved it), with the day it was saved, a delete
+  button for each and "Forget everything". The routes (`GET /me/memories`,
+  `DELETE /me/memories/{id}`, `DELETE /me/memories`) only ever touch the caller's own rows:
+  someone else's id answers "not found", exactly like an id that never existed.
 - **Delete**: Settings → Privacy → Delete my account (immediate and permanent).
 - **Retention**: choose how long conversations are kept (7 days to forever); idle guest
   accounts are removed after 180 days, and accounts whose address is never confirmed after 7.

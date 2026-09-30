@@ -1,4 +1,4 @@
-import { me, org } from '@waypoint/api';
+import { me, org, privacy } from '@waypoint/api';
 import type { Metadata } from 'next';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { LegalLinks } from '@/components/legal/LegalLinks';
@@ -13,8 +13,9 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function PrivacyPage() {
   const viewer = await requireViewer('/settings/privacy');
   const t = await getTranslations('settings');
-  const [contacts, programmes, lostOrganisations] = await Promise.all([
+  const [contacts, memories, programmes, lostOrganisations] = await Promise.all([
     me.listTrustedContacts(viewer.db, viewer.user.id),
+    privacy.listMemories(viewer.db, viewer.user.id),
     org.myProgrammes(viewer.db, viewer.user.id, await getLocale()),
     org.organisationsLostWithAccount(viewer.db, viewer.user.id),
   ]);
@@ -27,6 +28,7 @@ export default async function PrivacyPage() {
       <PrivacySettings
         consents={viewer.consents}
         contacts={contacts}
+        memories={memories}
         retention={viewer.profile.conversationRetentionDays}
         programmes={programmes}
         lostOrganisations={lostOrganisations}

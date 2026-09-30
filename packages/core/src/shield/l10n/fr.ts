@@ -266,6 +266,11 @@ export const fr: ShieldText = {
       explanation:
         'Les messages d’emploi ou de gain venant de numéros étrangers inattendus sont un schéma d’arnaque courant.',
     },
+    'hidden-instructions': {
+      title: 'Contient des instructions destinées à un outil de vérification, pas à vous',
+      explanation:
+        'Un vrai message est écrit pour la personne qui le lit. Un texte qui dit à un ordinateur comment évaluer le message cherche à échapper aux vérifications.',
+    },
   },
   advice: {
     'check-anyway':

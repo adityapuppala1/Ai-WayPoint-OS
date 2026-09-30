@@ -59,9 +59,9 @@ is switched on for it, from the language model otherwise or when the judge is un
 from both when both answered: the higher level stands. The judge is asked about one warning
 sign at a time and cannot write, so each reason it adds is the title of a sign the rules
 already have words for, in the reader's language. It never says "very high", so it is asked
-only about messages the rules rated low or unclear, and its "nothing found" counts for nothing: a message
-that tells the checker it is safe is rated by the rules as if the judge were not there, and
-that attempt is itself shown as a warning sign. Which model answered is stored with the check
+only about messages the rules rated low or unclear, and its "nothing found" counts for
+nothing: a message that tells the checker it is safe is rated by the rules as if the judge
+were not there, and that attempt is itself shown as a warning sign. Which model answered is stored with the check
 ([AI.md](AI.md#typed-decisions-jev)).
 
 - **Every language, not just English.** Each rule carries cues in English, Hindi (Devanagari
@@ -261,10 +261,10 @@ key, the judge's included, so an evaluation can never send anything anywhere.
 
 The judge has cases of its own, with a scripted stand-in for the service: it is not called at
 crisis tier 3, without consent, for a reader or a message in a language that is not switched
-on, or when Shield's rules already say high or very high; it is sent only redacted text, and only in the
-state; a judge that says "nothing wrong" never lowers a rules verdict; a judge that fails or
-times out gives the rules-only result; a flagged answer by text is replaced by the guided
-text and a flagged plan rewrite is refused. Each was broken on purpose once to see its case
+on, or when Shield's rules already say high or very high; it is sent only redacted text, and
+only in the state; a judge that says "nothing wrong" never lowers a rules verdict; a judge
+that fails or times out gives the rules-only result; a flagged answer by text is replaced by
+the guided text and a flagged plan rewrite is refused. Each was broken on purpose once to see its case
 fail.
 
 Whether the real judge is any good is a separate question with its own command:

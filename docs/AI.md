@@ -72,8 +72,9 @@ In Scam Shield the order is: rules, then the judge, then the language model only
 no judge, it fails, or it is unsure (some sign in the middle of its range, or the message
 talks to whoever is checking it). The judge is asked only about messages the rules rated low
 or unclear: "high" is the most it can say, so a message already rated high or very high is
-not sent to it (very high is sent to nobody; high goes to the language model, as before). With both, the higher level stands and both are recorded as
-the model that answered (`jev-1.13.0+claude-haiku-4-5`). When the judge is sure — a clear scam,
+not sent to it (very high is sent to nobody; high goes to the language model, as before).
+With both, the higher level stands and both are recorded as the model that answered
+(`jev-1.13.0+claude-haiku-4-5`). When the judge is sure — a clear scam,
 or every sign clearly absent — the language model is not asked. That is the saving, and its
 price: a scam that only the language model would have caught is then rated by the rules alone.
 The rules are still never lowered.

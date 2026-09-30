@@ -2071,7 +2071,10 @@ declare const messages: {
     "feedbackEmpty": "No feedback yet.",
     "feedbackRated": "Rated {rating, number} of 5",
     "feedbackNoMessage": "No message.",
-    "feedbackReplyTo": "Would like a reply at <link>{email}</link>"
+    "feedbackReplyTo": "Would like a reply at <link>{email}</link>",
+    "cAlready": "Someone else has already confirmed this outcome.",
+    "cOwnVerdict": "You recorded this outcome, so someone else has to confirm it.",
+    "cNotJudged": "There is no outcome to confirm yet."
   },
   "byText": {
     "title": "Waypoint by text",

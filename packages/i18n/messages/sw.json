@@ -2064,7 +2064,10 @@
     "feedbackEmpty": "Bado hakuna maoni.",
     "feedbackRated": "Alama: {rating, number} kati ya 5",
     "feedbackNoMessage": "Hakuna ujumbe.",
-    "feedbackReplyTo": "Angependa jibu kupitia <link>{email}</link>"
+    "feedbackReplyTo": "Angependa jibu kupitia <link>{email}</link>",
+    "cAlready": "Mtu mwingine ameshathibitisha matokeo haya.",
+    "cOwnVerdict": "Wewe ndiye uliyeandika matokeo haya, kwa hiyo mtu mwingine ndiye anapaswa kuyathibitisha.",
+    "cNotJudged": "Bado hakuna matokeo ya kuthibitisha."
   },
   "byText": {
     "title": "Waypoint kwa ujumbe",

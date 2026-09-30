@@ -2064,7 +2064,10 @@
     "feedbackEmpty": "Aucun avis pour l’instant.",
     "feedbackRated": "Note : {rating, number} sur 5",
     "feedbackNoMessage": "Aucun message.",
-    "feedbackReplyTo": "Souhaite une réponse à <link>{email}</link>"
+    "feedbackReplyTo": "Souhaite une réponse à <link>{email}</link>",
+    "cAlready": "Quelqu’un d’autre a déjà confirmé ce résultat.",
+    "cOwnVerdict": "Vous avez enregistré ce résultat : c’est à quelqu’un d’autre de le confirmer.",
+    "cNotJudged": "Il n’y a pas encore de résultat à confirmer."
   },
   "byText": {
     "title": "Waypoint par message",

@@ -9,6 +9,7 @@ import {
   motion,
   toHex,
 } from '@waypoint/tokens';
+import { PageHeader } from '@waypoint/ui';
 import type { Metadata } from 'next';
 import styles from './design.module.css';
 import { DesignShowcase } from './showcase';
@@ -71,14 +72,11 @@ export default function DesignPage() {
   const failures = [...lightReport, ...darkReport].filter((r) => !r.pass);
   return (
     <main id="main" className={styles.page}>
-      <header className={styles.header}>
-        <h1>Design system</h1>
-        <p className="wp-lead wp-measure">
-          Wayfinding signage and transit route lines, for people reading in a second language on a
-          small screen in bright light. One sign per screen. Routes only for real sequences. Colour
-          always paired with words.
-        </p>
-      </header>
+      <PageHeader
+        module="today"
+        title="Design system"
+        lead="Wayfinding signage and transit route lines, for people reading in a second language on a small screen in bright light. One sign per screen. Routes only for real sequences. Colour always paired with words."
+      />
 
       <section className={styles.section} aria-labelledby="colour">
         <h2 id="colour">Colour roles</h2>

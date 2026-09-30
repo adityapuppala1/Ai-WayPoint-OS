@@ -1,13 +1,17 @@
 'use client';
 
 import {
+  AnimatedNumber,
   Avatar,
   Button,
   Checkbox,
+  CommandPalette,
+  type CommandSection,
   ConfirmDialog,
   Dialog,
   Disclosure,
   EmptyState,
+  Icon,
   IconButton,
   LinkButton,
   List,
@@ -22,6 +26,7 @@ import {
   PageSkeleton,
   Panel,
   Probability,
+  ProgressRing,
   Radio,
   RadioGroup,
   type RiskLevel,
@@ -33,9 +38,11 @@ import {
   Sign,
   Skeleton,
   SliderField,
+  Sparkline,
   Spinner,
   Stat,
   type Station,
+  StatStrip,
   Stepper,
   Switch,
   Tab,
@@ -45,6 +52,7 @@ import {
   TextField,
   Tooltip,
   toast,
+  useCommandShortcut,
 } from '@waypoint/ui';
 import { useEffect, useState } from 'react';
 import styles from './design.module.css';
@@ -79,6 +87,43 @@ const RISK: Array<{ id: RiskLevel; label: string; verdict: string }> = [
   { id: 'very-high', label: 'Very likely', verdict: 'Very likely a scam' },
 ];
 
+/** Each module's name and one line about it, as the go-to palette lists them. */
+const MODULE_LINES: Array<{ id: ModuleKey; label: string; description: string }> = [
+  { id: 'today', label: 'Today', description: 'Your next step, and what changed for you.' },
+  { id: 'path', label: 'Your path', description: 'Roles that fit you, and a plan to get there.' },
+  { id: 'shield', label: 'Scam Shield', description: 'Check a message before you reply or pay.' },
+  { id: 'ask', label: 'Talk it through', description: 'Ask anything, in your own words.' },
+  { id: 'signals', label: 'Signals', description: 'What is changing for your work and city.' },
+  { id: 'circles', label: 'Circles', description: 'People going through the same change.' },
+  { id: 'money', label: 'Money', description: 'Budget, runway and money safety.' },
+  { id: 'mind', label: 'Mind', description: 'A ten-second check-in, and help on hard days.' },
+  { id: 'health', label: 'Health', description: 'Sleep, movement and reminders.' },
+  { id: 'civic', label: 'Services', description: 'Benefits, paperwork and who to call.' },
+  { id: 'surroundings', label: 'Surroundings', description: 'Weather and air where you are.' },
+  { id: 'goals', label: 'Goals', description: 'A few things that matter, reviewed weekly.' },
+];
+
+/** The sections of this page, for the palette's first group. */
+const ON_THIS_PAGE: Array<{ id: string; label: string }> = [
+  { id: 'sign', label: 'The sign and the route' },
+  { id: 'actions', label: 'Actions' },
+  { id: 'palette', label: 'Go to' },
+  { id: 'forms', label: 'Forms' },
+  { id: 'feedback', label: 'Status and honesty' },
+  { id: 'figures', label: 'Figures' },
+  { id: 'lists', label: 'Lists and panels' },
+  { id: 'loading', label: 'Loading' },
+];
+
+/** Savings at the end of each of the last six weeks. */
+const SAVINGS = [400, 520, 610, 800, 1020, 1250];
+
+// The app passes its own formatter (next-intl). Here: English, and Arabic with its own digits.
+const english = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 0 });
+const arabic = new Intl.NumberFormat('ar-EG', { maximumFractionDigits: 0 });
+const inEnglish = (n: number) => english.format(n);
+const inArabic = (n: number) => arabic.format(n);
+
 type Theme = 'light' | 'dark' | 'system';
 
 export function DesignShowcase() {
@@ -94,6 +139,12 @@ export function DesignShowcase() {
   const [chance, setChance] = useState(0.68);
   const [hours, setHours] = useState(Number.NaN);
   const [skeleton, setSkeleton] = useState(true);
+  const [palette, setPalette] = useState(false);
+  const [savings, setSavings] = useState(SAVINGS);
+  const [stepsDone, setStepsDone] = useState(3);
+  // Ctrl+K (Cmd+K on a Mac) anywhere on the page, except while typing in a field.
+  const shortcut = useCommandShortcut(() => setPalette(true));
+  const saved = savings[savings.length - 1] ?? 0;
 
   // Start from what the page was rendered with (the person's own theme and lite mode).
   useEffect(() => {
@@ -116,6 +167,86 @@ export function DesignShowcase() {
     if (next) document.documentElement.setAttribute('data-lite', 'true');
     else document.documentElement.removeAttribute('data-lite');
   };
+
+  // What the palette offers: places on this page, the other page, every module, two actions.
+  // Every label is the caller's own text; the last group shows that matching works in scripts
+  // that have no lower case.
+  const commands: CommandSection[] = [
+    {
+      id: 'here',
+      title: 'On this page',
+      items: ON_THIS_PAGE.map((s) => ({
+        id: `here-${s.id}`,
+        label: s.label,
+        href: `#${s.id}`,
+        mark: <Icon name="forward" size={18} />,
+      })),
+    },
+    {
+      id: 'pages',
+      title: 'Pages',
+      items: [
+        {
+          id: 'example',
+          label: 'An example module page',
+          description: 'A header band, two columns and next stops.',
+          href: '/design/module',
+          mark: <Icon name="external" size={18} />,
+        },
+      ],
+    },
+    {
+      id: 'modules',
+      title: 'Modules',
+      items: MODULE_LINES.map((m) => ({
+        id: `module-${m.id}`,
+        label: m.label,
+        description: m.description,
+        href: `/design/module?module=${m.id}`,
+        mark: <ModuleMark module={m.id} size="sm" />,
+      })),
+    },
+    {
+      id: 'do',
+      title: 'Actions',
+      items: [
+        {
+          id: 'do-toast',
+          label: 'Show a toast',
+          keywords: ['message', 'confirm'],
+          onAction: () => toast({ title: 'Opened from the palette', tone: 'info' }),
+          mark: <Icon name="info" size={18} />,
+        },
+        {
+          id: 'do-dark',
+          label: theme === 'dark' ? 'Switch to light' : 'Switch to dark',
+          keywords: ['theme', 'appearance'],
+          onAction: () => showTheme(theme === 'dark' ? 'light' : 'dark'),
+          mark: <Icon name={theme === 'dark' ? 'light' : 'dark'} size={18} />,
+        },
+      ],
+    },
+    {
+      id: 'scripts',
+      title: 'In other scripts',
+      items: [
+        {
+          id: 'script-ar',
+          label: 'المال',
+          description: 'الميزانية والمدخرات',
+          href: '/design/module?module=money',
+          mark: <ModuleMark module="money" size="sm" />,
+        },
+        {
+          id: 'script-hi',
+          label: 'पैसा',
+          description: 'बजट और बचत',
+          href: '/design/module?module=money',
+          mark: <ModuleMark module="money" size="sm" />,
+        },
+      ],
+    },
+  ];
 
   const done = Math.min(step, STEPS.length);
   const current = STEPS[done] ?? null;
@@ -328,6 +459,22 @@ export function DesignShowcase() {
         </div>
       </section>
 
+      <section className={styles.section} aria-labelledby="palette">
+        <h2 id="palette">Go to</h2>
+        <p className="wp-secondary wp-measure">
+          One dialog for getting anywhere: type a few letters, choose with the arrow keys and Enter.
+          It matches in the reader's own language, so accents and case never matter and Arabic and
+          Hindi work as well as English. On a phone it is a sheet that rests on the keyboard. It
+          opens from a button that anyone can see, and from the keyboard.
+        </p>
+        <div className="wp-cluster">
+          <Button variant="secondary" icon="search" onPress={() => setPalette(true)}>
+            Go to a section
+          </Button>
+          {shortcut ? <kbd data-testid="palette-shortcut">{shortcut}</kbd> : null}
+        </div>
+      </section>
+
       <section className={styles.section} aria-labelledby="overlays">
         <h2 id="overlays">Dialogs, sheets and toasts</h2>
         <p className="wp-secondary wp-measure">
@@ -517,6 +664,121 @@ export function DesignShowcase() {
         </div>
       </section>
 
+      <section className={styles.section} aria-labelledby="figures">
+        <h2 id="figures">Figures</h2>
+        <p className="wp-secondary wp-measure">
+          Small drawings beside a number, never instead of it, and each one says in words what it
+          shows. No chart library: a few lines of SVG in the colour of the text or of a module line.
+          A line of values runs from left to right in every language; a ring runs clockwise from the
+          top. A number counts to its new value when it changes, in the digits of the reader's
+          language.
+        </p>
+        <div className={styles.swatchGroups}>
+          <Panel
+            title="Savings"
+            description="A line of values with the last one marked."
+            mark={<ModuleMark module="money" />}
+          >
+            <div className="wp-stack">
+              <div className={styles.figure}>
+                <Stat
+                  value={
+                    <span data-testid="demo-number">
+                      <AnimatedNumber value={saved} format={inEnglish} />
+                    </span>
+                  }
+                  label="Saved so far"
+                />
+                <Stat
+                  value={
+                    <span data-testid="demo-number-arabic" lang="ar">
+                      <AnimatedNumber value={saved} format={inArabic} />
+                    </span>
+                  }
+                  label="The same, in Arabic digits"
+                />
+                <Sparkline
+                  values={savings}
+                  module="money"
+                  width={160}
+                  height={40}
+                  label={`Savings over ${savings.length} weeks: from ${inEnglish(
+                    savings[0] ?? 0,
+                  )} to ${inEnglish(saved)}`}
+                />
+              </div>
+              <div>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onPress={() => setSavings((s) => [...s.slice(1), (s[s.length - 1] ?? 0) + 250])}
+                >
+                  Add this week's saving
+                </Button>
+              </div>
+            </div>
+          </Panel>
+          <Panel
+            title="Steps this week"
+            description="A value out of a total, with the number in the middle."
+            mark={<ModuleMark module="path" />}
+          >
+            <div className="wp-stack">
+              <div className="wp-cluster">
+                <ProgressRing
+                  value={stepsDone}
+                  total={5}
+                  module="path"
+                  label="Steps done this week"
+                  valueText={`${stepsDone} of 5`}
+                  size="lg"
+                />
+                <ProgressRing
+                  value={stepsDone}
+                  total={5}
+                  module="path"
+                  label="Steps done this week, as a share"
+                />
+                <ProgressRing
+                  value={stepsDone}
+                  total={5}
+                  label="Steps done this week, small"
+                  valueText={`${stepsDone}/5`}
+                  size="sm"
+                />
+              </div>
+              <div>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onPress={() => setStepsDone((n) => (n >= 5 ? 0 : n + 1))}
+                >
+                  Complete a step
+                </Button>
+              </div>
+            </div>
+          </Panel>
+        </div>
+        <StatStrip label="Our forecasting record">
+          <Stat value="42" label="Forecasts resolved" note="Since January" />
+          <Stat value="0.18" label="Brier score" note="Lower is better" />
+          <Stat value="31" label="Came true" />
+          <Stat
+            value={
+              <span className={styles.figure}>
+                74%
+                <Sparkline
+                  values={[61, 66, 64, 70, 72, 74]}
+                  series={1}
+                  label="Share that came true, last six months: from 61% to 74%"
+                />
+              </span>
+            }
+            label="Share that came true"
+          />
+        </StatStrip>
+      </section>
+
       <section className={styles.section} aria-labelledby="lists">
         <h2 id="lists">Lists and panels</h2>
         <Panel title="Signals for you" description="Based on your city, role and plan." flush>
@@ -620,6 +882,32 @@ export function DesignShowcase() {
         ) : null}
       </section>
 
+      <section className={styles.section} aria-labelledby="pages">
+        <h2 id="pages">Pages</h2>
+        <p className="wp-secondary wp-measure">
+          A module page starts with a band in the module's tint (this page has one at the top), uses
+          two columns on a wide screen, and ends with up to three places to go next. Going from one
+          page to the other, the old page fades out and the new one rises in, while the bar at the
+          top stays where it is. Lite mode and a request for less motion switch that off.
+        </p>
+        <div className="wp-cluster">
+          <LinkButton href="/design/module" variant="secondary" icon="forward">
+            Open the example page
+          </LinkButton>
+        </div>
+      </section>
+
+      <CommandPalette
+        isOpen={palette}
+        onOpenChange={setPalette}
+        title="Go to"
+        searchLabel="Search the design system"
+        placeholder="Type a name"
+        emptyLabel="Nothing matches. Try another word."
+        closeLabel="Close"
+        countLabel={(n) => (n === 1 ? '1 result' : `${n} results`)}
+        sections={commands}
+      />
       <Dialog
         isOpen={sheet}
         onOpenChange={setSheet}

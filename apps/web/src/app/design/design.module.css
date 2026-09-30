@@ -6,11 +6,6 @@
   gap: var(--wp-space-12);
 }
 
-.header {
-  display: grid;
-  gap: var(--wp-space-3);
-}
-
 .kicker {
   font-weight: var(--wp-weight-medium);
   color: var(--wp-text-secondary);
@@ -190,4 +185,47 @@
   padding: var(--wp-space-5) var(--wp-space-4);
   border: 1px dashed var(--wp-border-strong);
   border-radius: var(--wp-radius-md);
+}
+
+/* The bar above both pages: it stays where it is while the page under it changes. */
+.bar {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: var(--wp-z-header);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--wp-space-1) var(--wp-space-5);
+  min-block-size: var(--wp-touch-min);
+  padding: var(--wp-space-2) var(--wp-space-4);
+  border-block-end: 1px solid var(--wp-border-subtle);
+  background: var(--wp-raised);
+  font-size: var(--wp-text-small);
+  font-weight: var(--wp-weight-medium);
+}
+
+.bar a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--wp-touch-min);
+}
+
+/* The example page sits in the same space the app's frame gives a page. */
+.example {
+  padding: var(--wp-space-6) var(--wp-space-4) var(--wp-space-20);
+}
+
+/* A number with its small drawing beside it; they wrap when the panel is narrow. */
+.figure {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wp-space-4) var(--wp-space-6);
+}
+
+@media (min-width: 60rem) {
+  .example {
+    padding: var(--wp-space-12) var(--wp-space-8) var(--wp-space-20);
+  }
 }

@@ -10,7 +10,7 @@ AI makes Waypoint warmer and smarter; it is never required for safety.
 | Scam Shield second opinion (structured output) | small | Rules engine only |
 | Plan wording in the person's language | large | Deterministic planner's templates |
 | Signal digests and tagging (worker) | small | Curated signals only |
-| Forecast probabilities (worker) | large | Editor forecasts only |
+| Forecasts ("What’s next?") | none | Staff write, publish and judge every forecast. No model publishes or changes one ([SAFETY.md](SAFETY.md#forecasts)) |
 | Embeddings for memory/signal search | embedding model | Full-text search |
 
 ## Providers and routing
@@ -69,6 +69,7 @@ Rules in a prompt are a request; these hold whatever a model does:
 | An outside model is never called without consent, and never sent phone numbers, emails, card, bank or ID numbers — in messages or in what Waypoint knows about the person | `ask.ts`, `core/privacy/redact.ts` |
 | Every call is counted before it is made; budgets and daily allowances cannot be overshot | `usage.ts` |
 | Answers by text message are stripped of links and phone numbers | `features.ts` |
+| Forecasts come only from staff, with a source, between 1% and 99%; the question and its date cannot change once published | `services/forecasts.ts` |
 
 `pnpm eval` checks all of them with a **scripted stand-in model** — one that asks to save
 things nobody approved, and obeys instructions hidden in a pasted message or a tool result —

@@ -3,7 +3,8 @@
 ## Now (this version)
 
 Today, onboarding, Path (skills, roles, plans), Scam Shield, Ask (AI + guided mode), Get help
-now, crisis protocol with follow-ups, Services checklists, Signals, Settings & Privacy
+now, crisis protocol with follow-ups, Services checklists, Signals, What’s next? (forecasts
+with a public record), Settings & Privacy
 (consents, trusted contacts, export, delete), guest-first accounts, PWA + offline help page,
 OpenAPI, background jobs, safety evaluations, and a plain-language privacy notice and terms of
 use in every language, filled in from each installation's own configuration.
@@ -22,7 +23,11 @@ use in every language, filled in from each installation's own configuration.
 6. **Health** — done: daily log, weekly view, private reminders and where to get care
    (checked lines for GB, AU, NZ, DE, PT and IN so far; more countries need sourcing). **Surroundings** —
    done: weather, air and UV advice fetched by the browser from Open-Meteo, offline fallback.
-7. **Signals & forecasts** — ingestion worker, forecasts with a public accuracy scoreboard.
+7. **Signals & forecasts** — done: forecasts that staff publish and judge, each with its
+   chance in a number and in words, sources, what to do and the day it is judged; a public
+   record (time-weighted Brier score after 10 judged forecasts, calibration after 30).
+   Still to do: an ingestion worker for signals, reminders to staff when a forecast is due,
+   editing translations after publishing, and forecasts in the phone app and by text.
 8. **Organisation console** — done: organisations with teams and roles, programmes with join
    codes, links, QR codes and printable posters, k-anonymous insights (rounded, noisy, small
    groups suppressed), audit log. **Admin console** — done: moderation queue for Circles, scam
@@ -38,11 +43,21 @@ use in every language, filled in from each installation's own configuration.
     choices. Still to do: signed-in website pages inside the app, push notifications for
     reminders and follow-ups, an app lock for shared phones, and native Money, Goals and Mind
     ([MOBILE.md](MOBILE.md)).
-12. **Deployment** — Docker, Kubernetes manifests, CI.
+12. **Deployment** — done: a Docker Compose stack behind a reverse proxy, Kubernetes
+    manifests (probes, resources, autoscaling, disruption budget, worker, migration job), a
+    repeatable load test with a recorded baseline, CI that runs the race tests on real
+    Postgres and validates the manifests ([DEPLOYMENT.md](DEPLOYMENT.md)). Still to do: run
+    the manifests in a real cluster, and a load test on production-sized hardware.
+13. **Security and AI guardrails** — done: an internal security review with a test for every
+    finding and an independent re-check, a reporting policy ([SECURITY.md](../SECURITY.md)) and
+    `/.well-known/security.txt`, and guardrail evaluations that run without a model
+    ([AI.md](AI.md)). Still to do: a penetration test by an outside firm.
 
 ## Before public launch
 
 Clinical and legal review of crisis flows per country, legal review of the privacy notice and
 terms for each country served (with any data protection registration they need), help-line
-verification with each service, security review and penetration test, load testing,
-accessibility audit with assistive-technology users, and a pilot with a partner organisation.
+verification with each service, a penetration test by an outside firm (the internal review is
+done), a load test on the hardware you will run on (the baseline in `infra/load` is from one
+laptop), accessibility audit with assistive-technology users, an editorial policy for who may
+publish forecasts and how they are checked, and a pilot with a partner organisation.

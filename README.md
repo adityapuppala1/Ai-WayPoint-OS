@@ -68,6 +68,7 @@ card, bank and ID numbers removed).
 | **Crisis protocol** — multilingual detection before any AI call, calm support card, gentle follow-up | ✅ |
 | **Services** — life-event checklists (job loss, moving country, new baby…) with official links | ✅ |
 | **Signals** — sourced changes ranked for you, with "Why am I seeing this?" | ✅ |
+| **What’s next?** — forecasts that staff publish and judge: each shows its chance as a number and in words (never 0% or 100%), its sources, what you can do either way and the day it will be judged. A public record shows how they turned out, with a score only once enough have been judged. Nothing is generated: with none published, the page says so | ✅ |
 | **Settings & Privacy** — consents, trusted contacts (encrypted), export all data, delete account | ✅ |
 | **Accounts** — guest sessions, email sign-up (guest data moves across), passkeys ready | ✅ |
 | **Money** — runway on a cautious income, pressure level, the five most useful next steps, money-safety tips; numbers encrypted | ✅ |
@@ -97,7 +98,10 @@ card, bank and ID numbers removed).
 | `pnpm build` then `pnpm start` | Production build and server |
 | `pnpm db:seed --demo` | Add clearly-labelled example data (stop `pnpm dev` first) |
 | `pnpm worker` | Background worker for Postgres deployments |
-| `pnpm eval` | Run the safety evaluation sets against the classifiers |
+| `pnpm eval` | Run the safety evaluation sets against the classifiers, and the assistant guardrail cases (no AI key needed) |
+| `pnpm check` | Lint, types and every unit test in one go (what CI runs) |
+| `pnpm --filter @waypoint/web build` then `pnpm test:e2e` | Browser tests against the built app, at phone and desktop widths (first time: `pnpm --filter @waypoint/web exec playwright install chromium`) |
+| `node infra/load/run.mjs` | The load test, against a server you name ([infra/load/README.md](infra/load/README.md) has the recorded baseline) |
 | `pnpm --filter @waypoint/mobile dev` | Start the phone app (open it in Expo Go; see [docs/MOBILE.md](docs/MOBILE.md)) |
 
 API documentation: http://localhost:3000/api/openapi.json (auth endpoints: `/api/auth/reference`).
@@ -134,6 +138,7 @@ More: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/SAFETY.md](docs/SAFE
 [docs/PRIVACY.md](docs/PRIVACY.md) · [docs/AI.md](docs/AI.md) ·
 [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) · [docs/LOCALIZATION.md](docs/LOCALIZATION.md) ·
 [docs/CHANNELS.md](docs/CHANNELS.md) · [docs/MOBILE.md](docs/MOBILE.md) ·
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) · [SECURITY.md](SECURITY.md) ·
 [docs/ROADMAP.md](docs/ROADMAP.md)
 
 ---
@@ -146,8 +151,14 @@ More: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/SAFETY.md](docs/SAFE
 - **Admin** — put `WAYPOINT_ADMIN_EMAIL` and `WAYPOINT_ADMIN_PASSWORD` (10+ characters) in
   `.env.local` before starting; that account is created on start (an existing account with that
   address is only promoted once its email is confirmed). Sign in with it and open **Admin** from
-  the account menu (`/admin`) for moderation, scam reports, AI spend, message delivery and the
-  activity log. Everyone else gets a plain "not found" there.
+  the account menu (`/admin`) for moderation, scam reports, forecasts, AI spend, message
+  delivery and the activity log. Everyone else gets a plain "not found" there.
+- **Forecasts** — staff publish them at `/admin/forecasts`: a yes-or-no question, the chance
+  (1 to 99%), why, at least one source, what people can do, and the day it will be judged.
+  The question, how it is judged and the date cannot change afterwards; the chance can, and
+  every chance it showed is scored. On the day, staff record what happened with a link anyone
+  can check. People read them at `/signals/forecasts`; the record is at
+  `/signals/forecasts/record` ([how it is scored](docs/SAFETY.md#forecasts)).
 - **Confirming email addresses** — needed to invite colleagues and to answer an invitation.
   Set `EMAIL_FROM` and either `RESEND_API_KEY` or `SMTP_URL` to send real email. Without them,
   development prints the confirmation link (like password-reset links) in the terminal running
@@ -159,6 +170,11 @@ More: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/SAFETY.md](docs/SAFE
   (`cf-connecting-ip` behind Cloudflare, `x-real-ip` behind nginx), or keep X-Forwarded-For and
   list your proxies in `TRUSTED_PROXIES`, so rate limits apply to each visitor rather than to
   everyone at once — and cannot be dodged by sending a made-up header.
+  [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) is the full guide: Docker Compose behind a reverse
+  proxy, Kubernetes manifests (`infra/k8s/base`), migrations, backups, scaling and what the
+  operator must do before opening to the public.
+- **Security** — how to report a problem is in [SECURITY.md](SECURITY.md) and at
+  `/.well-known/security.txt` (set `WAYPOINT_SECURITY_CONTACT`).
 - **Privacy notice and terms** — `/privacy` and `/terms` are written in plain words in all seven
   languages and describe this installation: set `WAYPOINT_OPERATOR` (who runs it) and
   `WAYPOINT_CONTACT_EMAIL` so they name you, and `WAYPOINT_DATA_LOCATION` and

@@ -87,6 +87,36 @@ Nothing pasted is stored — only a hash, the verdict and the rule ids.
   categories, WHO UV advice, and gale-force gusts (62 km/h+). Advice is general and phrased as
   what to do, never as a forecast guarantee.
 
+## Forecasts
+
+"What’s next?" tells people what may happen so they can prepare. A forecast that sounds
+certain, or that nobody checks afterwards, does harm. So:
+
+- **Published by staff, never generated.** No model writes, publishes or changes a forecast.
+  With none published the page says so and shows nothing else. Example rows (`pnpm db:seed
+  --demo`) are labelled, never scored, and not shown in production.
+- **Never certain.** A chance is between 1% and 99% — the API refuses anything else — and is
+  always shown as a number and in words ("Likely"), with how often that kind of thing usually
+  happens when staff know it.
+- **Always sourced, always useful.** A forecast cannot be published without a source
+  (`https://` only), a reason for the chance, what someone can do whichever way it goes, and
+  exactly what will count as "yes" on which day.
+- **The question cannot move.** The question, how it is judged and the date are fixed once
+  published. A wrong question is withdrawn — listed with the reason, not scored — and
+  published again.
+- **Judged in public.** On the day, staff record yes or no with a link anyone can open.
+  It is recorded once. Every publication, change of chance and judgement is in the audit log.
+- **Scored honestly.** Each forecast gets a Brier score weighted by how long each chance was
+  shown, so moving the number on the last day counts for little. The record shows no score
+  until 10 forecasts have been judged and no calibration table until 30 (5 per band): before
+  that the numbers say more about luck than about skill (`packages/core/src/foresight`).
+- **Words are staff's own.** Forecasts are not machine-translated. Where staff have not
+  written a translation, people see the original with its language named.
+
+Before launch, decide who may publish, how a second person checks each forecast and its
+outcome, and which topics are out of bounds (nothing about an individual's health, a court
+case, an election result or a price someone could trade on).
+
 ## Circles (peer groups)
 
 Peers are not crisis responders, and a group of people who just lost work is a favourite target

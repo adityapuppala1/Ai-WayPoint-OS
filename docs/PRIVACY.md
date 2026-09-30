@@ -62,6 +62,10 @@ Purpose-specific and revocable (`consents` table, full history in `consent_event
   coordinates rounded to about 1 km. The chosen place and the last forecast are kept in the
   browser's local storage only, so Waypoint's servers never see a location.
 
+Forecasts ("What’s next?") are the same for everyone. Signed in, the ones about your country
+come first — and, only with the `foresight_matching` consent, the ones about your region and
+sector. Nothing is recorded about which forecasts a person saw.
+
 ## What is never stored
 
 - Text pasted into Scam Shield (only a hash, the verdict, the rule ids and the host names of any

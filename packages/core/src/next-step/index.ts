@@ -379,6 +379,12 @@ export function chooseNextStep(
   return { step, canDefer: remaining.length > 1 };
 }
 
+/**
+ * The cookie that remembers which steps the person set aside today. It holds the day and
+ * the steps' keys — nothing readable — and is only ever read for that day.
+ */
+export const NOT_NOW_COOKIE = 'wp-not-now';
+
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 const KEY = /^[0-9a-z]{1,16}$/;
 /** More than anyone could set aside in a day; keeps the stored value small. */
@@ -409,8 +415,11 @@ export function addNotNow(value: string | null | undefined, day: string, key: st
 
 // ───────────────────────────── Module order ─────────────────────────────
 
-/** Every module except Today itself and the organisation console, in navigation order. */
-const MODULES: ModuleId[] = [
+/** A module Today lists: every one except Today itself and the organisation console. */
+export type ListedModule = Exclude<ModuleId, 'today' | 'org'>;
+
+/** The listed modules in navigation order. */
+const MODULES: ListedModule[] = [
   'path',
   'shield',
   'ask',
@@ -425,7 +434,7 @@ const MODULES: ModuleId[] = [
 ];
 
 /** The four modules that matter most in each situation. A fixed table, not a guess. */
-const FIRST: Record<Situation, ModuleId[]> = {
+const FIRST: Record<Situation, ListedModule[]> = {
   'first-job': ['path', 'civic', 'shield', 'money'],
   'lost-job': ['money', 'civic', 'path', 'shield'],
   'changing-career': ['path', 'signals', 'money', 'goals'],
@@ -443,7 +452,7 @@ const FIRST: Record<Situation, ModuleId[]> = {
  * The modules in the order Today lists them for a situation: the four that matter most,
  * then the rest as they appear in the navigation. With no situation, navigation order.
  */
-export function moduleOrder(situation: string | null | undefined): ModuleId[] {
+export function moduleOrder(situation: string | null | undefined): ListedModule[] {
   const s = asSituation(situation);
   const first = s ? FIRST[s] : [];
   return [...first, ...MODULES.filter((m) => !first.includes(m))];

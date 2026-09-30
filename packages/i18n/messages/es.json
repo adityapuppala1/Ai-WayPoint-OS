@@ -173,7 +173,8 @@
     "point2Body": "Planes semana a semana con habilidades reales y cursos gratuitos, a la medida de las horas que de verdad tienes.",
     "point3Title": "Tus datos siguen siendo tuyos",
     "point3Body": "Lo privado va cifrado, nada opcional viene activado y puedes exportar o borrar todo cuando quieras.",
-    "freeNote": "Gratis para personas. Funciona en teléfonos económicos y con conexiones lentas."
+    "freeNote": "Gratis para personas. Funciona en teléfonos económicos y con conexiones lentas.",
+    "noAccountTitle": "Funciona sin cuenta"
   },
   "situations": {
     "first-job": "Busco mi primer empleo",
@@ -439,7 +440,16 @@
     "toolWeather": "El tiempo y el aire hoy",
     "toolWeatherHint": "Elige tu lugar en Entorno",
     "weatherNow": "{temp} · {kind}",
-    "weatherAir": "Aire: {level}"
+    "weatherAir": "Aire: {level}",
+    "why": {
+      "start": "Para que los pasos que Waypoint sugiere se ajusten a tu situación.",
+      "checklist": "Está en la lista para tu situación, en «{urgency}».",
+      "money": "Las cifras que ingresaste muestran que el dinero está bajo presión.",
+      "plan": "Es el próximo paso pendiente de tu plan.",
+      "situation": "Le dijiste a Waypoint: «{situation}».",
+      "review": "Tienes una meta, y el repaso de esta semana sigue pendiente.",
+      "nothingElse": "Hoy no hay nada más esperándote."
+    }
   },
   "support": {
     "title": "Pedir ayuda ahora",

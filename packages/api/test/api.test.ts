@@ -248,12 +248,29 @@ describe('a guest’s first session', () => {
     expect(body.consents.ai_external).toBe(false);
   });
 
-  it('suggests making a plan on Today, then builds one', async () => {
-    const t1 = (await (await req('/api/today', { cookie })).json()) as {
-      nextStep: { kind: string };
+  it('starts Today with the job-loss checklist, then builds a plan', async () => {
+    type Today = {
+      day: string;
+      nextStep: { kind: string; href: string; key: string; stepId: string | null };
       emergencyNumber: string;
     };
-    expect(t1.nextStep.kind).toBe('make-plan');
+    /** Today with the urgent checklist steps set aside ("not now"), to see what is behind them. */
+    const afterChecklist = async (): Promise<Today> => {
+      const keys: string[] = [];
+      for (;;) {
+        const view = (await (
+          await req('/api/today', {
+            cookie: keys.length ? `${cookie}; wp-not-now=${t1.day}:${keys.join('.')}` : cookie,
+          })
+        ).json()) as Today;
+        if (view.nextStep.kind !== 'checklist') return view;
+        keys.push(view.nextStep.key);
+      }
+    };
+    const t1 = (await (await req('/api/today', { cookie })).json()) as Today;
+    // What has a deadline comes before choosing a direction.
+    expect(t1.nextStep).toMatchObject({ kind: 'checklist', href: '/civic/job-loss' });
+    expect((await afterChecklist()).nextStep.kind).toBe('make-plan');
     expect(t1.emergencyNumber).toBe('112');
 
     const overview = (await (await req('/api/path', { cookie })).json()) as {
@@ -286,9 +303,7 @@ describe('a guest’s first session', () => {
     });
     expect(((await updated.json()) as { progress: { done: number } }).progress.done).toBe(1);
 
-    const t2 = (await (await req('/api/today', { cookie })).json()) as {
-      nextStep: { kind: string; stepId: string };
-    };
+    const t2 = await afterChecklist();
     expect(t2.nextStep.kind).toBe('plan-step');
     expect(t2.nextStep.stepId).not.toBe(first.id);
   });

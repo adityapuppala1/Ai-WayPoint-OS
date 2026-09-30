@@ -1,0 +1,58 @@
+/* "All modules": a row-sized button that opens the rest of the list on phones. */
+.toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wp-space-3);
+  inline-size: 100%;
+  min-block-size: 3.5rem;
+  padding: var(--wp-space-3) var(--wp-panel-gutter, var(--wp-space-4));
+  border: 0;
+  border-block-start: 1px solid var(--wp-border-subtle);
+  background: transparent;
+  color: var(--wp-text);
+  font: inherit;
+  font-weight: var(--wp-weight-medium);
+  text-align: start;
+  cursor: pointer;
+}
+
+.toggle:hover {
+  background: color-mix(in oklch, var(--wp-text) 4%, transparent);
+}
+
+.chevron {
+  flex: none;
+  color: var(--wp-text-muted);
+  transition: transform var(--wp-duration-base) var(--wp-ease-out);
+}
+
+.toggle[aria-expanded="true"] .chevron {
+  transform: rotate(180deg);
+}
+
+.rest {
+  display: none;
+  border-block-start: 1px solid var(--wp-border-subtle);
+}
+
+.rest[data-open] {
+  display: block;
+}
+
+/* Wider screens have the room: every line shows and there is nothing to open. */
+@media (min-width: 48rem) {
+  .toggle {
+    display: none;
+  }
+
+  .rest {
+    display: block;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chevron {
+    transition: none;
+  }
+}

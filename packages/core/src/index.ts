@@ -101,6 +101,7 @@ export {
 export {
   addNotNow,
   chooseNextStep,
+  type ListedModule,
   lifeEventFor,
   moduleOrder,
   NEXT_STEP_KINDS,
@@ -111,6 +112,7 @@ export {
   type NextStepKind,
   type NextStepReason,
   type NextStepRung,
+  NOT_NOW_COOKIE,
   parseNotNow,
   rankNextSteps,
 } from './next-step';

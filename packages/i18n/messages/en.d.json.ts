@@ -180,7 +180,8 @@ declare const messages: {
     "point2Body": "Week-by-week plans built from real skills and free courses, sized to the hours you actually have.",
     "point3Title": "Your data stays yours",
     "point3Body": "Private things are encrypted, nothing optional is on by default, and you can export or delete everything at any time.",
-    "freeNote": "Free for individuals. Works on low-cost phones and slow connections."
+    "freeNote": "Free for individuals. Works on low-cost phones and slow connections.",
+    "noAccountTitle": "Works without an account"
   },
   "situations": {
     "first-job": "Looking for my first job",
@@ -446,7 +447,16 @@ declare const messages: {
     "toolWeather": "Weather and air today",
     "toolWeatherHint": "Choose your place in Surroundings",
     "weatherNow": "{temp} · {kind}",
-    "weatherAir": "Air: {level}"
+    "weatherAir": "Air: {level}",
+    "why": {
+      "start": "So the steps Waypoint suggests fit where you are.",
+      "checklist": "It is on the checklist for your situation, under “{urgency}”.",
+      "money": "The numbers you entered show money is under pressure.",
+      "plan": "It is the next open step in your plan.",
+      "situation": "You told Waypoint: “{situation}”.",
+      "review": "You have a goal, and this week’s review is still open.",
+      "nothingElse": "Nothing else is waiting for you today."
+    }
   },
   "support": {
     "title": "Get help now",

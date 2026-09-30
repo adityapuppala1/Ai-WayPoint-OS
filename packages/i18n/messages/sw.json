@@ -173,7 +173,8 @@
     "point2Body": "Mipango ya wiki kwa wiki iliyojengwa kwa ujuzi halisi na kozi za bure, kulingana na saa ulizo nazo kweli.",
     "point3Title": "Data yako inabaki kuwa yako",
     "point3Body": "Mambo ya faragha husimbwa, hakuna chaguo la hiari linalowashwa bila wewe, na unaweza kupakua au kufuta kila kitu wakati wowote.",
-    "freeNote": "Bure kwa watu binafsi. Inafanya kazi kwenye simu za bei nafuu na mtandao wa polepole."
+    "freeNote": "Bure kwa watu binafsi. Inafanya kazi kwenye simu za bei nafuu na mtandao wa polepole.",
+    "noAccountTitle": "Inafanya kazi bila akaunti"
   },
   "situations": {
     "first-job": "Natafuta kazi yangu ya kwanza",
@@ -439,7 +440,16 @@
     "toolWeather": "Hali ya hewa leo",
     "toolWeatherHint": "Chagua mahali pako kwenye Mazingira",
     "weatherNow": "{temp} · {kind}",
-    "weatherAir": "Hewa: {level}"
+    "weatherAir": "Hewa: {level}",
+    "why": {
+      "start": "Ili hatua ambazo Waypoint inapendekeza zilingane na hali yako.",
+      "checklist": "Iko kwenye orodha ya kukagua ya hali yako, chini ya “{urgency}”.",
+      "money": "Takwimu ulizoweka zinaonyesha pesa ziko chini ya shinikizo.",
+      "plan": "Ni hatua inayofuata ambayo bado haijafanyika katika mpango wako.",
+      "situation": "Uliiambia Waypoint: “{situation}”.",
+      "review": "Una lengo, na tathmini ya wiki hii bado iko wazi.",
+      "nothingElse": "Hakuna jingine linalokusubiri leo."
+    }
   },
   "support": {
     "title": "Pata msaada sasa",

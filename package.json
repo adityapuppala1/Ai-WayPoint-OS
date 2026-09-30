@@ -34,7 +34,7 @@
     "turbo": "2.11.5",
     "typescript": "6.0.3",
     "vitest": "5.0.2",
-    "@types/node": "22.20.4",
+    "@types/node": "26.6.3",
     "tsx": "4.23.15"
   }
 }

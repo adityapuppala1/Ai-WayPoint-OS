@@ -101,6 +101,8 @@ test('the device time zone is a cookie the server set on the first page', async 
   const answer = saved(page, 'timezone');
   await page.goto('/welcome');
   const res = await answer;
+  // The answer is read to its end: in Chrome a page with an answer nobody read never settles.
+  await page.waitForLoadState('networkidle', { timeout: 10_000 });
   // The tests run in Nairobi (playwright.config.ts).
   const line = await setCookieLine(res, 'wp-tz');
   expect(decodeURIComponent(line)).toContain('wp-tz=africa/nairobi');

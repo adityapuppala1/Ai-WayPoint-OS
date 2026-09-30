@@ -108,6 +108,55 @@ describe('who runs this Waypoint (privacy notice and terms)', () => {
   });
 });
 
+describe('the judge (TypeSafe Jev) settings', () => {
+  const JUDGE_KEYS = ['TYPESAFE_API_KEY', 'AI_JUDGE_MODEL', 'AI_JUDGE_LOCALES'] as const;
+  const before = Object.fromEntries(JUDGE_KEYS.map((k) => [k, process.env[k]]));
+  const judge = (values: Partial<Record<(typeof JUDGE_KEYS)[number], string>>) => {
+    for (const k of JUDGE_KEYS) delete process.env[k];
+    Object.assign(process.env, values);
+    resetEnvForTests();
+    return getEnv();
+  };
+  afterEach(() => {
+    for (const k of JUDGE_KEYS) {
+      if (before[k] === undefined) delete process.env[k];
+      else process.env[k] = before[k];
+    }
+    resetEnvForTests();
+  });
+
+  it('is off until a key is set, pinned to one version, and for English only', () => {
+    const env = judge({});
+    expect(env.TYPESAFE_API_KEY).toBeUndefined();
+    expect(env.AI_JUDGE_MODEL).toBe('jev-1.13.0');
+    expect(env.AI_JUDGE_LOCALES).toEqual(['en']);
+  });
+
+  it('reads the key, another pinned version and a list of languages', () => {
+    const env = judge({
+      TYPESAFE_API_KEY: ' ts_live_example ',
+      AI_JUDGE_MODEL: 'jev-1.14.2',
+      AI_JUDGE_LOCALES: 'en, ES ,sw,en',
+    });
+    expect(env.TYPESAFE_API_KEY).toBe('ts_live_example');
+    expect(env.AI_JUDGE_MODEL).toBe('jev-1.14.2');
+    expect(env.AI_JUDGE_LOCALES).toEqual(['en', 'es', 'sw']);
+  });
+
+  it('takes the defaults for values left empty, as a line in .env.example would be', () => {
+    const env = judge({ TYPESAFE_API_KEY: '', AI_JUDGE_MODEL: ' ', AI_JUDGE_LOCALES: '' });
+    expect(env.TYPESAFE_API_KEY).toBeUndefined();
+    expect(env.AI_JUDGE_MODEL).toBe('jev-1.13.0');
+    expect(env.AI_JUDGE_LOCALES).toEqual(['en']);
+  });
+
+  it('refuses a model name or a language list that cannot be one', () => {
+    expect(() => judge({ AI_JUDGE_MODEL: 'jev 1.13' })).toThrow(/AI_JUDGE_MODEL/);
+    expect(() => judge({ AI_JUDGE_LOCALES: 'english, please' })).toThrow(/AI_JUDGE_LOCALES/);
+    expect(() => judge({ AI_JUDGE_LOCALES: 'en;es' })).toThrow(/AI_JUDGE_LOCALES/);
+  });
+});
+
 describe('a production server', () => {
   const PROD_KEYS = ['NODE_ENV', 'WAYPOINT_URL', 'BETTER_AUTH_SECRET', 'WAYPOINT_KEK'] as const;
   const before = Object.fromEntries(PROD_KEYS.map((k) => [k, process.env[k]]));

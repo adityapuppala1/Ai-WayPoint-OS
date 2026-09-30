@@ -58,6 +58,36 @@ Purpose-specific and revocable (`consents` table, full history in `consent_event
   applied to what Waypoint tells the model about the person — their goals, what they asked it
   to remember and their current plan — not only to their messages.
 - A self-hosted model (`OLLAMA_BASE_URL`) keeps everything on your servers.
+- **The judge** (`TYPESAFE_API_KEY`, optional) is an outside service too: TypeSafe, hosted in
+  the United States. It is asked only under the same consent as any outside AI — `ai_external`,
+  the one-off tick in Shield, or `AI YES` by text; a private model never stands in for it —
+  and only in the languages switched on for it. The same redaction is applied to everything
+  it is sent, in one place (`packages/ai/src/judge-questions.ts`). What it is sent, and
+  nothing else:
+  - in Scam Shield, the pasted message (up to 4,000 characters), redacted — and only when the
+    rules rated it low or unclear, since the judge could not change a higher verdict;
+  - for an answer by SMS or WhatsApp, the AI's reply, redacted — not the person's question;
+  - for a plan, each reworded step and the template step it came from — not the person's
+    goal;
+  - in guided mode, the person's question (up to 1,500 characters), redacted, when no
+    keyword matched it.
+
+  Nothing about the account goes with it (no id, email address or history), and no journal
+  entry, mood note, health note, Circles post or money figure is ever sent. Names inside the
+  text are not removed, as with any AI provider. Nothing is sent about someone in immediate
+  danger (crisis tier 3). Waypoint keeps, per call, only what it keeps for any AI call: whose
+  call it was, the feature, the model version, token counts, cost and time — never the text or
+  the answers. A Scam Shield check also records which model gave the second opinion and the
+  level it gave, next to the rules' own, as it always has.
+
+  TypeSafe says requests are not used to train its model. It states **no retention period**,
+  and keeping nothing is offered to its enterprise customers only, so assume what is sent is
+  kept. Its terms, as far as we could read them, say nothing about health information, about
+  crisis or self-harm content, or about children. **Before setting the key, the operator must
+  read TypeSafe's terms, privacy policy and data-processing agreement and decide whether
+  redacted text from people who may be in crisis, or from anyone under 18, may be sent to it
+  at all** — and sign the data-processing agreement where the law requires one. Where the
+  answer is no, leave the key unset: nothing else in Waypoint depends on it.
 - Surroundings fetches weather and air quality from the browser directly (Open-Meteo), with
   coordinates rounded to about 1 km. The chosen place and the last forecast are kept in the
   browser's local storage only, so Waypoint's servers never see a location.
@@ -213,7 +243,8 @@ document: change them together.
   shown when set. The outside services named — AI providers, texting and email services — are
   read from the configuration (`packages/api/src/services/legal.ts`), so the notice never names
   a service that isn't used or leaves out one that is; only host names are shown, never keys or
-  passwords.
+  passwords. TypeSafe is named with the AI providers when, and only when, `TYPESAFE_API_KEY` is
+  set — also when it is the only one.
 - **Versions.** `packages/core/src/legal.ts` holds the "last updated" dates and
   `PRIVACY_POLICY_VERSION`, which every consent records. Change the version when the notice
   changes what Waypoint does with information.

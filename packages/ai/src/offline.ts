@@ -4,10 +4,14 @@
  * mode, still checks scams with the rules engine, and points to the right module.
  */
 import { checkMessage, foldText, LOCALES, type Locale, type RiskLevel } from '@waypoint/core';
+import type { CallerContext } from './features';
+import { judgeBarredByCrisis, judgeReads, runJudge } from './judge';
+import { type GuidedIntent, INTENT_CHOICE, readIntent } from './judge-checks';
 
 const isLocale = (v: string): v is Locale => (LOCALES as readonly string[]).includes(v);
 
-type Intent = 'scam' | 'work' | 'money' | 'civic' | 'feelings' | 'general';
+/** The same list the judge chooses from, so the two can never drift apart. */
+type Intent = GuidedIntent;
 
 interface Copy {
   intro: string;
@@ -349,6 +353,7 @@ const KEYWORDS: Record<Exclude<Intent, 'general' | 'feelings'>, string[]> = {
 const URLISH =
   /(https?:\/\/|www\.|\b[a-z0-9-]+\.(com|net|org|in|co|ke|ng|br|info|xyz|top|link|click)\b)/i;
 
+/** The keyword path: no AI, every language, always available. */
 export function detectIntent(text: string, crisisTier: number, country?: string | null): Intent {
   if (crisisTier >= 1) return 'feelings';
   const f = foldText(text);
@@ -362,16 +367,58 @@ export function detectIntent(text: string, crisisTier: number, country?: string 
   return 'general';
 }
 
+/** Shorter than this a message is a greeting, not a question: the menu is the right answer. */
+const JUDGE_MIN_WORDS = 3;
+
+/**
+ * What a message in guided mode is about. The keywords decide, exactly as before; only when
+ * they find nothing ("general") is the judge asked to pick among the same intents, with
+ * "general" as its none-of-these, and only a pick that is well ahead is used (INTENT_JUDGE).
+ *
+ * Guided mode works without any AI and still does: with no judge, no consent, a language
+ * that is not switched on, a spent budget or a failure, this is the keyword path and nothing
+ * else. Someone in distress (crisis tier 1 or more) is answered by the rules before this
+ * point, so the judge is never asked about them.
+ */
+export async function guidedIntent(
+  ctx: CallerContext & { locale: string; signal?: AbortSignal },
+  text: string,
+  opts: { crisisTier: number; country?: string | null },
+): Promise<Intent> {
+  const byKeywords = detectIntent(text, opts.crisisTier, opts.country);
+  if (byKeywords !== 'general') return byKeywords;
+  const message = text.trim().slice(0, 1500);
+  if (message.split(/\s+/).length < JUDGE_MIN_WORDS) return 'general';
+  if (judgeBarredByCrisis(message) || !judgeReads(message, ctx.locale)) return 'general';
+  const out = await runJudge(
+    {
+      db: ctx.db,
+      userId: ctx.userId,
+      isGuest: ctx.isGuest,
+      allowExternal: ctx.allowExternal,
+      locale: ctx.locale,
+      feature: 'judge-intent',
+      signal: ctx.signal,
+    },
+    { message },
+    INTENT_CHOICE,
+  );
+  return out.ok ? (readIntent(out.answers) ?? 'general') : 'general';
+}
+
 const MENU_LINKS = ['/shield', '/path', '/money', '/support'];
 const link = (label: string, href: string) => `[${label}](${href})`;
 
-/** A guided-mode reply for one message (Markdown, with in-app links). */
+/**
+ * A guided-mode reply for one message (Markdown, with in-app links). `intent` is what
+ * `guidedIntent` found, when the caller asked it; otherwise the keywords decide here.
+ */
 export function offlineReply(
   text: string,
-  opts: { locale: string; country?: string | null; crisisTier?: number },
+  opts: { locale: string; country?: string | null; crisisTier?: number; intent?: Intent },
 ): string {
   const c = COPY[opts.locale] ?? COPY.en!;
-  const intent = detectIntent(text, opts.crisisTier ?? 0, opts.country);
+  const intent = opts.intent ?? detectIntent(text, opts.crisisTier ?? 0, opts.country);
   switch (intent) {
     case 'scam': {
       const r = checkMessage({

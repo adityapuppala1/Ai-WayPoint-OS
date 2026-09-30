@@ -10,6 +10,7 @@ import { SHIELD_COMBOS, SHIELD_RULES } from '../rules';
 import {
   ADVICE,
   AI_EXPLANATION,
+  AI_SIGNALS,
   adviceFor,
   LOOKALIKE_TITLE,
   SENDER_SIGNALS,
@@ -41,7 +42,7 @@ function english(): ShieldText {
   for (const [flag, s] of Object.entries(URL_SIGNALS)) {
     signals[`link-${flag}`] = { title: s.title, explanation: s.explanation };
   }
-  for (const [id, s] of Object.entries(SENDER_SIGNALS)) {
+  for (const [id, s] of Object.entries({ ...SENDER_SIGNALS, ...AI_SIGNALS })) {
     signals[id] = { title: s.title, explanation: s.explanation };
   }
   signals['link-lookalike'] = {
@@ -64,6 +65,19 @@ export const SHIELD_TEXT: Record<Locale, ShieldText> = {
 
 /** Every signal id the engine can produce (except per-reason AI signals, `ai-1`…). */
 export const SHIELD_SIGNAL_IDS = Object.keys(SHIELD_TEXT.en.signals);
+
+/**
+ * A warning sign's title in a language (English when the translation has a gap), or nothing
+ * when the id is not a sign. This is how a second opinion that cannot write gives its reasons:
+ * it says which signs it saw, and the words are the ones people wrote and translated.
+ */
+export function shieldSignalTitle(id: string, locale?: Locale | null): string | undefined {
+  if (!SHIELD_SIGNAL_IDS.includes(id)) return undefined;
+  return (
+    (SHIELD_TEXT[locale ?? 'en'] ?? SHIELD_TEXT.en).signals[id]?.title ??
+    SHIELD_TEXT.en.signals[id]?.title
+  );
+}
 
 function localizeSignal(s: ShieldSignal, t: ShieldText, brand: string | undefined): ShieldSignal {
   if (s.id.startsWith('ai-')) return { ...s, explanation: t.aiExplanation };

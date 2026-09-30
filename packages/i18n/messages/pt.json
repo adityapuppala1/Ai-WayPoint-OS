@@ -1876,7 +1876,11 @@
       "forecast": "Previsões",
       "moderation": "Moderação",
       "embedding": "Indexação para busca",
-      "eval": "Verificações de qualidade"
+      "eval": "Verificações de qualidade",
+      "judge-shield": "Segunda verificação: Escudo",
+      "judge-plan": "Segunda verificação: texto do plano",
+      "judge-reply": "Segunda verificação: respostas por mensagem",
+      "judge-intent": "Segunda verificação: modo guiado"
     },
     "channelsTitle": "Mensagens: SMS, WhatsApp e USSD",
     "channelsLead": "Últimos 30 dias. Só guardamos contagens: nunca números, nem o que alguém escreveu.",

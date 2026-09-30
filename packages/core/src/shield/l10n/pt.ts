@@ -258,6 +258,11 @@ export const pt: ShieldText = {
       explanation:
         'Mensagens de emprego e prêmio vindas de números internacionais inesperados são um padrão comum de golpe.',
     },
+    'hidden-instructions': {
+      title: 'Contém instruções dirigidas a uma ferramenta de verificação, não a você',
+      explanation:
+        'Uma mensagem verdadeira é escrita para quem a lê. Um texto que diz a um computador como avaliar a mensagem está tentando escapar das verificações.',
+    },
   },
   advice: {
     'check-anyway':

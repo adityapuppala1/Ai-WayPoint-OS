@@ -94,6 +94,19 @@ export const SENDER_SIGNALS = {
   },
 } as const satisfies Record<string, SignalText & { weight: number }>;
 
+/**
+ * Signs only a second opinion can raise: the rules have no pattern for them. The judge cannot
+ * write, so a reason it gives is the title of a sign, from here or from a rule, already
+ * translated. It has no weight: a second opinion moves the level, never the rules' score.
+ */
+export const AI_SIGNALS = {
+  'hidden-instructions': {
+    title: 'Contains instructions aimed at a checking tool, not at you',
+    explanation:
+      'A real message is written for the person reading it. Text that tells a computer how to rate the message is trying to slip past checks.',
+  },
+} as const satisfies Record<string, SignalText>;
+
 /** Shown under each reason the AI second opinion adds. */
 export const AI_EXPLANATION =
   'Flagged by the AI check, which looks at the whole message in context.';

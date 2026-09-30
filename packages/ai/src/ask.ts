@@ -29,7 +29,7 @@ import {
   streamText,
   type UIMessage,
 } from 'ai';
-import { offlineReply } from './offline';
+import { guidedIntent, offlineReply } from './offline';
 import { companionInstructions } from './prompts';
 import { aiAvailable, pickModel, reportProviderFailure, reportProviderSuccess } from './providers';
 import { companionTools } from './tools';
@@ -181,7 +181,23 @@ export async function askResponse(input: AskInput): Promise<Response> {
       /** Waypoint's own guidance, when no model can or may answer. */
       const guided = async (reason: string | undefined) => {
         writer.write({ type: 'data-mode', id: 'mode', data: { mode: 'guided', reason } });
-        writeText(offlineReply(lastText, { locale, country: profile.country, crisisTier: tier }));
+        // Keywords first. Only when they find nothing, and only with consent, may the judge
+        // say which part of Waypoint the question is about; it writes none of the words.
+        const intent = await guidedIntent(
+          {
+            db,
+            userId: user.id,
+            isGuest: user.isGuest,
+            allowExternal: input.consents.aiExternal,
+            locale,
+            signal: input.abortSignal,
+          },
+          lastText,
+          { crisisTier: tier, country: profile.country },
+        );
+        writeText(
+          offlineReply(lastText, { locale, country: profile.country, crisisTier: tier, intent }),
+        );
         await recordUsage(db, {
           userId: user.id,
           feature: 'ask',

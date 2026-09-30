@@ -53,6 +53,15 @@ People still control their data: text only goes to an external AI provider if th
 **"Use AI providers"** in Privacy settings, and it is redacted first (emails, phone numbers,
 card, bank and ID numbers removed).
 
+A second, separate key is optional too: `TYPESAFE_API_KEY` switches on a "judge" (TypeSafe's
+Jev), which answers yes-or-no questions with probabilities and writes nothing. Waypoint uses it
+only where a second opinion can add caution: it can raise a Scam Shield warning but never
+lower one, hold back an AI answer by text, and refuse an AI rewrite of a plan. It is an
+outside service in the United States, under the same consent and redaction, off unless you
+set the key, English only until you have measured another language
+(`pnpm --filter @waypoint/ai eval:judge`), and its thresholds are untuned starting values:
+read [docs/AI.md](docs/AI.md#typed-decisions-jev) before switching it on.
+
 ---
 
 ## What works in this version

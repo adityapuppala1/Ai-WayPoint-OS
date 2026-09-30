@@ -4,7 +4,7 @@
  * Read from the configuration, so the notice never names a service that isn't used or leaves
  * out one that is.
  */
-import { configuredProviders } from '@waypoint/ai';
+import { configuredProviders, judgeConfigured } from '@waypoint/ai';
 import { getEnv } from '@waypoint/core/env';
 import { africasTalkingReady, metaReady, twilioReady } from '../channels/providers';
 
@@ -18,7 +18,10 @@ export interface LegalFacts {
   backupDays: number | null;
   /** The smallest group an organisation can ever see. */
   k: number;
-  /** Outside AI providers that receive redacted conversations, for people who allow it. */
+  /**
+   * Outside AI services that receive redacted text, for people who allow it: the providers
+   * that write answers, and TypeSafe when its judge is set up to give second opinions.
+   */
   aiProviders: string[];
   /** A model on the operator's own servers, used when outside AI is off. */
   privateModel: boolean;
@@ -57,7 +60,12 @@ export function legalFacts(): LegalFacts {
     dataLocation: env.WAYPOINT_DATA_LOCATION ?? null,
     backupDays: env.WAYPOINT_BACKUP_DAYS ?? null,
     k: env.WAYPOINT_K_ANON_MIN,
-    aiProviders: providers.filter((p) => !p.local).map((p) => AI_NAMES[p.id] ?? p.id),
+    aiProviders: [
+      ...providers.filter((p) => !p.local).map((p) => AI_NAMES[p.id] ?? p.id),
+      // The judge writes no answers and is not in the list above, but it is an outside service
+      // all the same: named whenever its key is set, even when it is the only one.
+      ...(judgeConfigured() ? ['TypeSafe'] : []),
+    ],
     privateModel: providers.some((p) => p.local),
     textingProviders: texting,
     // Resend wins when both are set (see email/send.ts).

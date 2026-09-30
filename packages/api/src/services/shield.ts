@@ -1,9 +1,11 @@
 /**
  * Scam Shield: deterministic rules first, optional AI second opinion (which can only raise
- * the level), and a record of the check that never contains what the person pasted.
+ * the level), and a record of the check that never contains what the person pasted. The
+ * second opinion comes from the judge, the language model, or both; which one answered is
+ * recorded with the check.
  */
 import { z } from '@hono/zod-openapi';
-import { aiAvailable, modelCandidates, shieldOpinion } from '@waypoint/ai';
+import { aiAvailable, judgeAvailable, modelCandidates, shieldOpinion } from '@waypoint/ai';
 import {
   getReportChannels,
   getScamPatterns,
@@ -136,6 +138,12 @@ export const ShieldCheckSchema = z
       used: z.boolean(),
       reason: z.enum(['used', 'skipped-certain', 'no-consent', 'unavailable']),
       model: z.string().optional(),
+      /**
+       * Whether the second opinion raised the level above the rules' own. It is what to go by
+       * before saying it "found more": a second opinion that saw less than the rules changes
+       * nothing, and `engine.ai.agreed` is false for it too.
+       */
+      raised: z.boolean().optional(),
     }),
     /** How many other checks of this exact message in the last 90 days (only shown when 3+). */
     seenBefore: z.number().int().nullable(),
@@ -172,15 +180,26 @@ export async function runShieldCheck(
     ai = { used: false, reason: 'unavailable' };
   } else {
     const allowExternal = input.aiExternalConsent || input.aiConsent === true;
+    // The judge (TypeSafe's Jev) when it may be asked, the language model when there is no
+    // judge or it is unsure: see shieldOpinion. Either way the opinion goes through the same
+    // merge, which can only raise the level, and a failure leaves the rules' result as it is.
     const opinion = await shieldOpinion(
       { db, userId: input.userId, isGuest: input.isGuest, allowExternal, gate: input.aiGate },
-      { text: input.text, country: input.country, locale: input.locale ?? 'en' },
+      { text: input.text, country: input.country, locale: input.locale ?? 'en', rules: result },
     ).catch(() => null);
     if (opinion) {
+      const rulesLevel = result.level;
       result = mergeAiOpinion(result, opinion, input.country, input.locale);
-      ai = { used: true, reason: 'used', model: opinion.model };
+      ai = {
+        used: true,
+        reason: 'used',
+        model: opinion.model,
+        raised: result.level !== rulesLevel,
+      };
     } else {
-      const anyModel = aiAvailable();
+      // The judge is always an outside service, so with only a judge set up the missing piece
+      // is consent too.
+      const anyModel = aiAvailable() || judgeAvailable();
       const localModel = modelCandidates('small', { localOnly: true }).length > 0;
       ai = {
         used: false,

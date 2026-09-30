@@ -154,6 +154,8 @@ export {
   localizeShieldResult,
   mergeAiOpinion,
   SHIELD_RULES_VERSION,
+  SHIELD_SIGNAL_IDS,
+  shieldSignalTitle,
 } from './shield';
 export {
   type Advice,

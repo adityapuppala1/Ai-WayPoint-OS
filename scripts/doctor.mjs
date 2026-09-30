@@ -32,7 +32,7 @@ function readEnv() {
     ...env,
     ...Object.fromEntries(
       Object.entries(process.env).filter(([k]) =>
-        /^(WAYPOINT|BETTER_AUTH|DATABASE|AI_|ANTHROPIC|OPENAI|GOOGLE|OLLAMA)/.test(k),
+        /^(WAYPOINT|BETTER_AUTH|DATABASE|AI_|ANTHROPIC|OPENAI|GOOGLE|OLLAMA|TYPESAFE)/.test(k),
       ),
     ),
   };
@@ -90,6 +90,23 @@ if (ai.length)
     `AI providers: ${ai.join(', ')} (order: ${env.AI_PROVIDER_ORDER || 'anthropic,openai,google,ollama'})`,
   );
 else warn('No AI provider configured — Ask runs in guided mode. Safety features work without AI.');
+
+// The judge is optional and is not an AI provider: it gives typed second opinions, no answers.
+if (env.TYPESAFE_API_KEY) {
+  const model = env.AI_JUDGE_MODEL || 'jev-1.13.0';
+  ok(
+    `Judge: TypeSafe Jev ${model}, asked in: ${env.AI_JUDGE_LOCALES || 'en'} (an outside service; the privacy notice names it)`,
+  );
+  if (/^jev-(latest|preview)$/.test(model))
+    warn(
+      `AI_JUDGE_MODEL is ${model}, which changes whenever TypeSafe ships a release — pin a version such as jev-1.13.0.`,
+    );
+  // The thresholds in the code are starting values: nothing here can know whether they were
+  // measured on this installation's languages, so say how to find out every time.
+  warn(
+    `The judge is only as good as its last measurement: run "pnpm --filter @waypoint/ai eval:judge" and keep in AI_JUDGE_LOCALES only the languages that pass (English included).`,
+  );
+}
 
 if (env.WAYPOINT_OPERATOR && env.WAYPOINT_CONTACT_EMAIL)
   ok(`Privacy notice and terms name ${env.WAYPOINT_OPERATOR} (${env.WAYPOINT_CONTACT_EMAIL})`);

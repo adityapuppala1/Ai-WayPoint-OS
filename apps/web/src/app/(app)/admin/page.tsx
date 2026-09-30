@@ -1,3 +1,4 @@
+import { JUDGE_FEATURES } from '@waypoint/ai';
 import { admin } from '@waypoint/api';
 import { Notice, Panel } from '@waypoint/ui';
 import type { Metadata, Route } from 'next';
@@ -15,7 +16,12 @@ export async function generateMetadata(): Promise<Metadata> {
 const CHANNELS = ['sms', 'whatsapp', 'ussd', 'email'] as const;
 const KINDS = ['safety', 'help', 'check', 'questions', 'settings', 'other'] as const;
 
-const FEATURES = [
+/**
+ * Usage names that have a label (admin.aiFeatures). "forecast" stays for rows an older version
+ * may have recorded: no model writes a forecast. The judge's names come from where they are
+ * recorded, so a new one cannot be forgotten here and shown as a code.
+ */
+const FEATURES: string[] = [
   'ask',
   'shield',
   'plan',
@@ -24,6 +30,7 @@ const FEATURES = [
   'moderation',
   'embedding',
   'eval',
+  ...JUDGE_FEATURES,
 ];
 
 function Tile({

@@ -457,6 +457,10 @@ async function aiAnswer(
   } catch {
     return guided;
   }
+  // Nothing comes back when no model can reply, and also when the judge (if one is set up, the
+  // person texted AI YES and their language is switched on for it) finds the answer gives a
+  // diagnosis or a dose, says what a court will decide, picks a financial product, promises
+  // an outcome or describes a method of self-harm. Either way the guided text is sent.
   const answer = await channelAnswer(
     { db, isGuest: true, allowExternal: q.external },
     {

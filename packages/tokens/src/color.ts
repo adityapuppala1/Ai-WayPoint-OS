@@ -99,6 +99,23 @@ export function contrast(a: Oklch, b: Oklch): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 
+/**
+ * WCAG contrast of an opaque colour against a translucent tint lying on an opaque surface
+ * (the dark theme's tints are see-through, so what a person reads against is the mix).
+ */
+export function contrastOnTint(text: Oklch, tint: Oklch, surface: Oklch): number {
+  const a = tint.a ?? 1;
+  const top = toSrgb({ ...tint, a: 1 });
+  const under = toSrgb(surface);
+  const lin = top
+    .map((v, i) => v * a + (under[i] ?? 0) * (1 - a))
+    .map((v) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+  const mixed = 0.2126 * (lin[0] ?? 0) + 0.7152 * (lin[1] ?? 0) + 0.0722 * (lin[2] ?? 0);
+  const lt = luminance(text);
+  const [hi, lo] = lt > mixed ? [lt, mixed] : [mixed, lt];
+  return (hi + 0.05) / (lo + 0.05);
+}
+
 /** Composite a translucent colour over an opaque background (in sRGB), returning opaque OKLCH-ish hex. */
 export function compositeHex(fg: Oklch, bg: Oklch): string {
   const a = fg.a ?? 1;

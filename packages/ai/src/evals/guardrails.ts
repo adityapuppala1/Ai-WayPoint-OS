@@ -118,20 +118,28 @@ async function chunksOf(res: Response): Promise<Chunk[]> {
     .map((l) => JSON.parse(l.slice(6)) as Chunk);
 }
 
-export async function runGuardrails(cases: GuardrailCase[]): Promise<GuardrailReport> {
-  // A throwaway embedded database and no real provider, whatever this machine's .env says:
-  // an empty value wins over the env files, so nothing here can reach a real database or model.
-  const dir = mkdtempSync(join(tmpdir(), 'waypoint-guardrails-'));
-  Object.assign(process.env, {
+/**
+ * A throwaway embedded database and no real provider, whatever this machine's .env says: an
+ * empty value wins over the env files, so nothing here can reach a real database, a model or
+ * the judge. A new outside AI service needs its key blanked here.
+ */
+export function evalEnvironment(dir: string): Record<string, string> {
+  return {
     WAYPOINT_DATA_DIR: dir,
     DATABASE_URL: '',
     ANTHROPIC_API_KEY: '',
     OPENAI_API_KEY: '',
     GOOGLE_GENERATIVE_AI_API_KEY: '',
     OLLAMA_BASE_URL: '',
+    TYPESAFE_API_KEY: '',
     AI_MONTHLY_BUDGET_USD: '1000',
     LOG_LEVEL: 'silent',
-  });
+  };
+}
+
+export async function runGuardrails(cases: GuardrailCase[]): Promise<GuardrailReport> {
+  const dir = mkdtempSync(join(tmpdir(), 'waypoint-guardrails-'));
+  Object.assign(process.env, evalEnvironment(dir));
   const db = await import('@waypoint/db');
   const { newWrappedDek } = await import('@waypoint/core/privacy');
   const { MockLanguageModelV4, simulateReadableStream } = await import('ai/test');

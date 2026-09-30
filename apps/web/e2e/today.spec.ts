@@ -302,6 +302,20 @@ test('on a phone, More is a directory that reaches every place that is not a tab
   await expect(page).toHaveURL(/\/join$/);
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 
+  // The sheet belongs to the page it was opened on: going back closes it too. And while it
+  // is open, a keyboard's Ctrl+K does not stack the go-to palette on top of it.
+  await more.click();
+  await expect(sheet).toBeVisible();
+  await page.goBack();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(sheet).toBeHidden();
+  await more.click();
+  await expect(sheet).toBeVisible();
+  await page.keyboard.press('Control+k');
+  await expect(page.getByRole('dialog', { name: 'Go to' })).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await expect(sheet).toBeHidden();
+
   await more.click();
   await page
     .getByRole('dialog', { name: 'All modules' })

@@ -104,7 +104,11 @@ export function BottomBar({ directory }: { directory: DirectoryRow[] }) {
   const a11y = useTranslations('a11y');
   const shell = useTranslations('shell');
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
+  // The sheet belongs to the page it was opened on: any way of leaving that page (a row here,
+  // the go-to palette, the browser's Back) closes it.
+  const [openOn, setOpenOn] = useState<string | null>(null);
+  const open = openOn === pathname;
+  const setOpen = (next: boolean) => setOpenOn(next ? pathname : null);
   const primary = NAV.filter((n) => PRIMARY_TABS.includes(n.key));
   const moreActive = !primary.some((n) => isActive(pathname, n.href));
   // "What's next?" lives under Signals: only the closest match is the current page.

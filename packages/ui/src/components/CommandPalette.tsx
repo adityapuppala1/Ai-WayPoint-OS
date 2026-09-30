@@ -181,8 +181,9 @@ function CommandList({
 /**
  * Listens for the palette's shortcut (Ctrl+K, or Cmd+K on a Mac) anywhere on the page and
  * calls `onTrigger`. It does not fire while the person is typing in a field, where those
- * keys belong to the text. Returns how the shortcut is written on this device ("⌘K",
- * "Ctrl+K") once the page is running, to show beside the button that opens the palette.
+ * keys belong to the text, or while they are in another dialog. Returns how the shortcut is
+ * written on this device ("⌘K", "Ctrl+K") once the page is running, to show beside the
+ * button that opens the palette.
  */
 export function useCommandShortcut(
   onTrigger: () => void,

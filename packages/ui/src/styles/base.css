@@ -163,6 +163,26 @@ kbd {
   }
 }
 
+/*
+ * A page transition (PageTransition) is drawn by the browser on pseudo-elements of the page
+ * itself, which "*" above does not reach. The same two switches, for those: none in lite
+ * mode, instant when less motion is asked for.
+ */
+:root[data-lite="true"]::view-transition-group(*),
+:root[data-lite="true"]::view-transition-old(*),
+:root[data-lite="true"]::view-transition-new(*) {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 1ms !important;
+    animation-delay: 0s !important;
+  }
+}
+
 @media (forced-colors: active) {
   :focus-visible {
     outline: 3px solid CanvasText;

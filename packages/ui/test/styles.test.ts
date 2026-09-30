@@ -174,6 +174,69 @@ describe('states, the same in every component', () => {
   });
 });
 
+describe('page transitions', () => {
+  // The browser draws a page transition on pseudo-elements of the page, which "*" does not
+  // reach: they need rules of their own, in the same place as the rest.
+  const PARTS = ['group', 'old', 'new'].map((part) => `::view-transition-${part}(*)`);
+  const base = parse('styles/base.css');
+  const utilities = parse('styles/utilities.css');
+  const declares = (rule: Rule | undefined, prop: string, value: string) =>
+    rule?.declarations.some((d) => d.prop === prop && d.value === value) ?? false;
+
+  it('are switched off by lite mode', () => {
+    const rule = base.find((r) => r.selector.includes(':root[data-lite="true"]::view-transition'));
+    for (const part of PARTS)
+      expect(rule?.selector, part).toContain(`:root[data-lite="true"]${part}`);
+    expect(declares(rule, 'animation', 'none !important')).toBe(true);
+  });
+
+  it('are instant when the device asks for less motion', () => {
+    const rule = base.find(
+      (r) =>
+        r.within.includes('@media (prefers-reduced-motion: reduce)') &&
+        r.selector.includes('::view-transition'),
+    );
+    for (const part of PARTS) expect(rule?.selector, part).toContain(part);
+    expect(declares(rule, 'animation-duration', '1ms !important')).toBe(true);
+    expect(declares(rule, 'animation-delay', '0s !important')).toBe(true);
+  });
+
+  it('keep the frame still: the rail, the bottom bar and the header are named and do not move', () => {
+    for (const [className, name] of [
+      ['.wp-vt-rail', 'wp-rail'],
+      ['.wp-vt-bottom-bar', 'wp-bottom-bar'],
+      ['.wp-vt-header', 'wp-header'],
+    ] as const) {
+      const named = utilities.find((r) => r.selector === className);
+      expect(declares(named, 'view-transition-name', name), className).toBe(true);
+      const find = (part: string) =>
+        utilities.find((r) =>
+          r.selector
+            .split(',')
+            .map((s) => s.trim())
+            .includes(`::view-transition-${part}(${name})`),
+        );
+      expect(declares(find('group'), 'animation', 'none'), name).toBe(true);
+      expect(declares(find('new'), 'animation', 'none'), name).toBe(true);
+      // The picture of the old frame is dropped, or both would show for a moment.
+      expect(declares(find('old'), 'display', 'none'), name).toBe(true);
+    }
+  });
+
+  it('move a page out and the next one in with the motion tokens, and leave the page usable', () => {
+    const out = utilities.find((r) => r.selector === '::view-transition-old(.wp-page-out)');
+    const into = utilities.find((r) => r.selector === '::view-transition-new(.wp-page-in)');
+    for (const rule of [out, into]) {
+      const animation = rule?.declarations.find((d) => d.prop === 'animation')?.value ?? '';
+      expect(animation).toContain('var(--wp-duration-');
+      expect(animation).not.toMatch(/\d+ms|\ds\b/);
+    }
+    // While it runs, presses go to the page underneath instead of being swallowed.
+    const overlay = utilities.find((r) => r.selector === '::view-transition');
+    expect(declares(overlay, 'pointer-events', 'none')).toBe(true);
+  });
+});
+
 describe('right to left', () => {
   it('uses no physical sides, so Arabic mirrors without special cases', () => {
     const problems: string[] = [];

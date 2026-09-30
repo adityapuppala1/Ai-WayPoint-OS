@@ -77,6 +77,7 @@ export {
   type DialogProps,
 } from './components/Overlay';
 export { PageHeader, type PageHeaderProps } from './components/PageHeader';
+export { PageTransition, viewTransition } from './components/PageTransition';
 export { Panel, type PanelProps } from './components/Panel';
 export { Probability, type ProbabilityProps } from './components/Probability';
 export { Prose } from './components/Prose';

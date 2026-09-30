@@ -1,6 +1,7 @@
 /**
  * The pages people meet first — welcome, getting started, Today, Ask, Shield, What's next?,
- * settings and All modules — at a small phone (375 px) and a laptop (1280 px), in light and
+ * settings, privacy and All modules, and the staff pages full of figures — at a small phone
+ * (375 px) and a laptop (1280 px), in light and
  * dark, in English and in Arabic (right to left). Each must fit the screen without sideways
  * scrolling, keep every control big enough to press, show where the keyboard focus is, and
  * mirror for right-to-left reading, with no facts strung together by middle dots. Screenshots
@@ -8,8 +9,9 @@
  */
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import type { Page } from '@playwright/test';
+import type { Browser, Cookie, Page } from '@playwright/test';
 import { expect, startAsGuest, test } from './fixtures';
+import { STAFF } from './staff';
 
 const PAGES = [
   { name: 'welcome', path: '/welcome', guest: false },
@@ -19,8 +21,39 @@ const PAGES = [
   { name: 'shield', path: '/shield', guest: true },
   { name: 'forecasts', path: '/signals/forecasts', guest: true },
   { name: 'settings', path: '/settings', guest: true },
+  { name: 'privacy', path: '/settings/privacy', guest: true },
   { name: 'explore', path: '/explore', guest: true },
 ] as const;
+
+/** Staff pages full of figures, where facts were once strung together with dots. */
+const STAFF_PAGES = [
+  { name: 'admin', path: '/admin' },
+  { name: 'audit', path: '/admin/audit' },
+  { name: 'reports', path: '/admin/reports' },
+] as const;
+
+/**
+ * The staff session, signed in once in a context of its own and then lent to each test:
+ * sign-ins from one address are limited, and these tests run eight times.
+ */
+let staffCookies: Cookie[] | undefined;
+
+async function asStaff(browser: Browser, page: Page, baseURL: string): Promise<void> {
+  if (!staffCookies) {
+    const own = await browser.newContext({ baseURL });
+    const signIn = await own.newPage();
+    await signIn.goto('/sign-in');
+    await signIn.getByLabel('Email').fill(STAFF.email);
+    await signIn.getByLabel('Password').fill(STAFF.password);
+    await signIn.getByRole('main').getByRole('button', { name: 'Sign in' }).click();
+    await expect(signIn).toHaveURL(/\/($|start)/);
+    staffCookies = (await own.cookies()).filter(
+      (c) => c.name !== 'NEXT_LOCALE' && c.name !== 'wp-theme',
+    );
+    await own.close();
+  }
+  await page.context().addCookies(staffCookies);
+}
 
 const SIZES = [
   { name: 'phone', width: 375, height: 812 },
@@ -131,6 +164,7 @@ for (const size of SIZES) {
       test(`the first pages fit a ${size.name} in ${theme}, ${locale === 'ar' ? 'Arabic' : 'English'} @desktop`, async ({
         page,
         context,
+        browser,
         baseURL,
       }, testInfo) => {
         test.setTimeout(180_000);
@@ -181,6 +215,14 @@ for (const size of SIZES) {
           await check(p.name);
           const unfocused = await focusProblems(page);
           if (unfocused.length) found.push(`${p.name}: no focus ring on ${unfocused.join('; ')}`);
+        }
+        // Staff pages, where the test server has a staff account to sign in with.
+        if (!process.env.E2E_BASE_URL) {
+          await asStaff(browser, page, baseURL ?? '');
+          for (const p of STAFF_PAGES) {
+            await page.goto(p.path);
+            await check(p.name);
+          }
         }
         expect(found).toEqual([]);
       });

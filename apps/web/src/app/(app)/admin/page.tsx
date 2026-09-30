@@ -1,11 +1,12 @@
 import { JUDGE_FEATURES } from '@waypoint/ai';
 import { admin } from '@waypoint/api';
-import { Notice, Panel } from '@waypoint/ui';
+import { Disclosure, Notice, Panel } from '@waypoint/ui';
 import type { Metadata, Route } from 'next';
 import Link from 'next/link';
 import { getFormatter, getLocale, getTranslations } from 'next-intl/server';
 import type { CSSProperties, ReactNode } from 'react';
 import styles from '@/components/admin/admin.module.css';
+import { Facts, fact } from '@/components/Facts';
 import { requireAdmin } from '@/lib/server';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -111,13 +112,14 @@ export default async function AdminOverviewPage() {
         <Panel title={t('safetyTitle')} as="section">
           <ul className={styles.tiles}>
             <Tile value={n(o.safety.crisis7d.total)} label={t('crisis7d')}>
-              <span className={styles.note}>
-                {t('crisisTiers', {
+              <Facts className={styles.note}>
+                {t.rich('crisisTiers', {
                   urgent: n(o.safety.crisis7d.tier3),
                   high: n(o.safety.crisis7d.tier2),
                   distress: n(o.safety.crisis7d.tier1),
+                  f: fact,
                 })}
-              </span>
+              </Facts>
             </Tile>
             <Tile
               value={n(o.safety.followUpsDue)}
@@ -197,9 +199,13 @@ export default async function AdminOverviewPage() {
                             ? t(`aiFeatures.${f.feature as 'ask'}`)
                             : f.feature}
                         </span>
-                        <span className={styles.rowValue}>
-                          {t('aiFeatureRow', { count: f.calls, cost: usd(f.costUsd) })}
-                        </span>
+                        <Facts className={styles.rowValue}>
+                          {t.rich('aiFeatureRow', {
+                            count: f.calls,
+                            cost: usd(f.costUsd),
+                            f: fact,
+                          })}
+                        </Facts>
                       </li>
                     ))}
                   </ul>
@@ -217,8 +223,10 @@ export default async function AdminOverviewPage() {
                       style={{ blockSize: `${(d.calls / maxCalls) * 100}%` }}
                     />
                     <span className={styles.tip}>
-                      {shortDay(d.date)} ·{' '}
-                      {t('aiFeatureRow', { count: d.calls, cost: usd(d.costUsd) })}
+                      <Facts>
+                        {shortDay(d.date)}
+                        {t.rich('aiFeatureRow', { count: d.calls, cost: usd(d.costUsd), f: fact })}
+                      </Facts>
                     </span>
                   </li>
                 ))}
@@ -230,8 +238,9 @@ export default async function AdminOverviewPage() {
                 ) : null}
                 <span>{shortDay(o.ai.daily.at(-1)!.date)}</span>
               </div>
-              <details>
-                <summary className={styles.note}>{t('showTable')}</summary>
+              {/* The design system's disclosure: a full-size target, where a bare summary was
+                  a line of small text. */}
+              <Disclosure title={t('showTable')} headingLevel={3}>
                 <table className={styles.table}>
                   <thead>
                     <tr>
@@ -250,7 +259,7 @@ export default async function AdminOverviewPage() {
                     ))}
                   </tbody>
                 </table>
-              </details>
+              </Disclosure>
             </figure>
           </div>
         </div>
@@ -304,9 +313,9 @@ export default async function AdminOverviewPage() {
                       </span>
                     </span>
                     {counts ? (
-                      <span className={styles.rowValue}>
-                        {t('channelRow', { in: n(counts.in), out: n(counts.out) })}
-                      </span>
+                      <Facts className={styles.rowValue}>
+                        {t.rich('channelRow', { in: n(counts.in), out: n(counts.out), f: fact })}
+                      </Facts>
                     ) : null}
                   </li>
                 );
@@ -346,22 +355,22 @@ export default async function AdminOverviewPage() {
             {o.content.collections.map((c) => (
               <li key={c.collection} className={styles.row} data-stale={c.stale > 0}>
                 <span>{t(`collections.${c.collection as 'support'}`)}</span>
-                <span className={styles.rowValue}>
-                  {t('contentRow', { total: n(c.total), stale: n(c.stale) })}
+                <Facts className={styles.rowValue}>
+                  {t.rich('contentRow', { total: n(c.total), stale: n(c.stale), f: fact })}
                   {c.unsourced && c.stale < c.unsourced
-                    ? ` · ${t('contentGeneral', { count: c.unsourced })}`
-                    : ''}
+                    ? t('contentGeneral', { count: c.unsourced })
+                    : null}
                   {c.oldest
-                    ? ` · ${t('contentOldest', {
+                    ? t('contentOldest', {
                         date: format.dateTime(new Date(`${c.oldest}T12:00:00Z`), {
                           day: 'numeric',
                           month: 'short',
                           year: 'numeric',
                           timeZone: 'UTC',
                         }),
-                      })}`
-                    : ''}
-                </span>
+                      })
+                    : null}
+                </Facts>
               </li>
             ))}
           </ul>
@@ -375,17 +384,14 @@ export default async function AdminOverviewPage() {
                       {s.name}
                       {s.country ? ` (${s.country})` : ''}
                     </span>
-                    <span className={styles.rowValue}>
+                    <Facts className={styles.rowValue}>
                       {t('checkedOn', { date: s.checkedAt })}
                       {s.url ? (
-                        <>
-                          {' · '}
-                          <a href={s.url} target="_blank" rel="noopener noreferrer">
-                            {t('openSource')}
-                          </a>
-                        </>
+                        <a href={s.url} target="_blank" rel="noopener noreferrer">
+                          {t('openSource')}
+                        </a>
                       ) : null}
-                    </span>
+                    </Facts>
                   </li>
                 ))}
               </ul>

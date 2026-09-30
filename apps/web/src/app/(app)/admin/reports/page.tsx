@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { getFormatter, getLocale, getTranslations } from 'next-intl/server';
 import styles from '@/components/admin/admin.module.css';
 import { ScamReportActions } from '@/components/admin/ScamReportActions';
+import { Facts } from '@/components/Facts';
 import { requireAdmin } from '@/lib/server';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -88,20 +89,21 @@ export default async function ScamReportsPage({
                 ) : null}
                 {r.amountLost !== null || r.reportedTo.length ? (
                   <p className={styles.note}>
-                    {r.amountLost !== null
-                      ? t('lost', {
-                          amount: r.currency
-                            ? format.number(r.amountLost, {
-                                style: 'currency',
-                                currency: r.currency,
-                              })
-                            : format.number(r.amountLost),
-                        })
-                      : null}
-                    {r.amountLost !== null && r.reportedTo.length ? ' · ' : null}
-                    {r.reportedTo.length
-                      ? t('reportedTo', { list: lists.format(r.reportedTo) })
-                      : null}
+                    <Facts>
+                      {r.amountLost !== null
+                        ? t('lost', {
+                            amount: r.currency
+                              ? format.number(r.amountLost, {
+                                  style: 'currency',
+                                  currency: r.currency,
+                                })
+                              : format.number(r.amountLost),
+                          })
+                        : null}
+                      {r.reportedTo.length
+                        ? t('reportedTo', { list: lists.format(r.reportedTo) })
+                        : null}
+                    </Facts>
                   </p>
                 ) : null}
                 <ScamReportActions id={r.id} status={r.status} />

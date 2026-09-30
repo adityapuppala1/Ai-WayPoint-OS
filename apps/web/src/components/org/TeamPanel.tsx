@@ -22,6 +22,7 @@ import type { Route } from 'next';
 import { useRouter } from 'next/navigation';
 import { useFormatter, useTranslations } from 'next-intl';
 import { type FormEvent, useState } from 'react';
+import { Facts } from '@/components/Facts';
 import { ApiProblem, api, problemKey } from '@/lib/api';
 import { copyText } from '@/lib/clipboard';
 import styles from './org.module.css';
@@ -229,10 +230,10 @@ export function TeamPanel({
             <li key={m.id} className={styles.person}>
               <Avatar name={m.name} size={36} />
               <div className={styles.personText}>
-                <span className={styles.personName}>
+                <Facts className={styles.personName}>
                   {m.name}
-                  {m.isMe ? <span className="wp-meta"> · {common('you')}</span> : null}
-                </span>
+                  {m.isMe ? <span className="wp-meta">{common('you')}</span> : null}
+                </Facts>
                 <span className={styles.personMeta} dir="ltr">
                   {m.email}
                 </span>
@@ -300,9 +301,10 @@ export function TeamPanel({
                   <span className={styles.personName} dir="ltr">
                     {i.email}
                   </span>
-                  <span className={styles.personMeta}>
-                    {t(`roles.${i.role}`)} · {t('pendingExpires', { date: date(i.expiresAt) })}
-                  </span>
+                  <Facts className={styles.personMeta}>
+                    {t(`roles.${i.role}`)}
+                    {t('pendingExpires', { date: date(i.expiresAt) })}
+                  </Facts>
                 </div>
                 <div className={styles.personActions}>
                   <IconButton

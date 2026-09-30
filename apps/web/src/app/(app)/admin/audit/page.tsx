@@ -3,6 +3,7 @@ import { EmptyState, LinkButton, Panel } from '@waypoint/ui';
 import type { Metadata, Route } from 'next';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import styles from '@/components/admin/admin.module.css';
+import { Facts } from '@/components/Facts';
 import { requireAdmin } from '@/lib/server';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -40,10 +41,11 @@ export default async function AuditPage({
                     minute: '2-digit',
                   })}
                 </time>
-                <span className={styles.entryWho}>
-                  {e.actor ? `${e.actor.name} · ${e.actor.email}` : t('system')}
-                  {e.organisation ? ` · ${e.organisation}` : ''}
-                </span>
+                <Facts className={styles.entryWho}>
+                  {e.actor ? e.actor.name : t('system')}
+                  {e.actor ? e.actor.email : null}
+                  {e.organisation}
+                </Facts>
               </li>
             ))}
           </ol>

@@ -185,8 +185,10 @@ test.describe('the app never looks frozen', () => {
     await context.setOffline(false);
     await expect(note).toHaveCount(0);
     // Requests that failed while the connection was held down are what this test asked for
-    // (the browser's own checks for a connection, and the links it fetches ahead).
-    const expected = /net::ERR_(INTERNET_DISCONNECTED|FAILED)/;
+    // (the checks for a connection that Next's router makes, and the links it fetches ahead).
+    // WebKit words the same refused request as an internal error of its own.
+    const expected =
+      /net::ERR_(INTERNET_DISCONNECTED|FAILED)|^console: Failed to load resource: WebKit encountered an internal error$/;
     for (let i = problems.length - 1; i >= 0; i--)
       if (expected.test(problems[i] ?? '')) problems.splice(i, 1);
   });

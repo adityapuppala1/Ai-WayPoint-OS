@@ -20,6 +20,7 @@ export {
   Skeleton,
   Spinner,
   Stat,
+  StatStrip,
 } from './components/Feedback';
 export {
   Checkbox,
@@ -40,7 +41,13 @@ export { Icon, type IconProps } from './components/Icon';
 export { IconButton, type IconButtonProps } from './components/IconButton';
 export { List, ListItem, type ListItemProps } from './components/List';
 export { Menu, MenuItem, MenuSeparator } from './components/Menu';
-export { type ModuleKey, ModuleMark, type ModuleMarkProps } from './components/ModuleMark';
+export {
+  type ModuleKey,
+  ModuleMark,
+  type ModuleMarkProps,
+  moduleColours,
+} from './components/ModuleMark';
+export { type NextStop, NextStops, type NextStopsProps } from './components/NextStops';
 export { Notice, type NoticeProps, type NoticeTone } from './components/Notice';
 export {
   ConfirmDialog,
@@ -48,6 +55,7 @@ export {
   Dialog,
   type DialogProps,
 } from './components/Overlay';
+export { PageHeader, type PageHeaderProps } from './components/PageHeader';
 export { Panel, type PanelProps } from './components/Panel';
 export { Probability, type ProbabilityProps } from './components/Probability';
 export { Prose } from './components/Prose';

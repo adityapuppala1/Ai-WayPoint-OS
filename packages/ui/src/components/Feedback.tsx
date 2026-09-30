@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from 'react';
+import { Children, type CSSProperties, type ReactNode } from 'react';
 import { cn } from '../cn';
 import styles from './Feedback.module.css';
 
@@ -140,5 +140,32 @@ export function Stat({
       <span className={styles.statLabel}>{label}</span>
       {note ? <span className={styles.statNote}>{note}</span> : null}
     </div>
+  );
+}
+
+/**
+ * A row of figures that wraps onto more lines when the row is full. Each figure keeps a rule
+ * at its leading edge, so the strip reads the same on one line or three. A list, so a screen
+ * reader says how many figures there are; `label` names it.
+ */
+export function StatStrip({
+  children,
+  label,
+  className,
+}: {
+  /** `Stat` items. */
+  children: ReactNode;
+  label?: string;
+  className?: string;
+}) {
+  return (
+    // biome-ignore lint/a11y/noRedundantRoles: Safari drops list semantics when list-style is none.
+    <ul role="list" className={cn(styles.statStrip, className)} aria-label={label}>
+      {Children.toArray(children).map((child, i) => (
+        <li key={i} className={styles.statStripItem}>
+          {child}
+        </li>
+      ))}
+    </ul>
   );
 }

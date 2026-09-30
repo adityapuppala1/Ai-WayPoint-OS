@@ -152,6 +152,25 @@
     color: var(--wp-text-muted);
   }
 
+  /*
+   * A row of figures. As many as fit share a line, the rest wrap, and every figure has a
+   * rule at its leading edge (the first one too), so a strip looks the same however it
+   * wraps and in either reading direction.
+   */
+  .statStrip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+    gap: var(--wp-space-5) var(--wp-space-6);
+    padding: 0;
+    list-style: none;
+  }
+
+  .statStripItem {
+    min-inline-size: 0;
+    padding-inline-start: var(--wp-space-4);
+    border-inline-start: 2px solid var(--wp-border-strong);
+  }
+
   @keyframes appear {
     from {
       opacity: 0;

@@ -1,50 +1,119 @@
-# Production-like stack: Postgres (with pgvector), the web app and the worker.
-#   cp .env.example .env   # fill in BETTER_AUTH_SECRET, WAYPOINT_KEK and an AI key
-#   docker compose -f infra/docker/compose.yml up --build
+# Waypoint on one server: a reverse proxy with automatic HTTPS, the web app, the background
+# worker and Postgres (with pgvector). Only the proxy is reachable from outside.
+#
+# From the repository root:
+#   cp .env.example .env     # then fill in the values listed in docs/DEPLOYMENT.md
+#   docker compose --env-file .env -f infra/docker/compose.yml up -d --build
+#
+# The stack refuses to start without POSTGRES_PASSWORD and WAYPOINT_DOMAIN: there is no
+# default password, and no way to reach the app except through the proxy.
 name: waypoint
 
+x-app: &app
+  env_file: ../../.env
+  restart: unless-stopped
+  # A small init process passes stop signals on and reaps finished child processes.
+  init: true
+  # Waypoint needs no extra privileges, and cannot gain any.
+  security_opt: ["no-new-privileges:true"]
+  cap_drop: ["ALL"]
+
+x-app-env: &app-env
+  NODE_ENV: production
+  DATABASE_URL: postgres://waypoint:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env - a long random value of letters and digits}@db:5432/waypoint
+  WAYPOINT_URL: https://${WAYPOINT_DOMAIN:?Set WAYPOINT_DOMAIN in .env - the public name people will use, for example waypoint.example.org}
+  # The proxy below sets this header itself, from the connection it accepted: a visitor
+  # cannot fake it, so rate limits apply to each visitor.
+  WAYPOINT_CLIENT_IP_HEADER: x-real-ip
+
 services:
+  proxy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+      - "${HTTPS_PORT:-443}:443/udp"
+    environment:
+      WAYPOINT_DOMAIN: ${WAYPOINT_DOMAIN:?Set WAYPOINT_DOMAIN in .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      web: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:2019/config/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+    cap_add: ["NET_BIND_SERVICE"]
+
   db:
     image: pgvector/pgvector:pg17
+    restart: unless-stopped
     environment:
       POSTGRES_USER: waypoint
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-waypoint}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: waypoint
     volumes:
       - pgdata:/var/lib/postgresql/data
+    # Not published: only the app's containers can reach the database.
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U waypoint"]
+      test: ["CMD-SHELL", "pg_isready -U waypoint -d waypoint"]
       interval: 5s
-      retries: 10
+      timeout: 5s
+      retries: 12
+    security_opt: ["no-new-privileges:true"]
+    shm_size: 256mb
 
   migrate:
+    <<: *app
     build: { context: ../.., dockerfile: infra/docker/Dockerfile, target: worker }
-    env_file: ../../.env
+    restart: "no"
     environment:
-      DATABASE_URL: postgres://waypoint:${POSTGRES_PASSWORD:-waypoint}@db:5432/waypoint
+      <<: *app-env
       WAYPOINT_AUTO_SEED: "true"
-    command: ["sh", "-c", "pnpm --filter @waypoint/db migrate && pnpm --filter @waypoint/db seed"]
+    working_dir: /app/packages/db
+    command: ["sh", "-c", "node --import tsx src/cli.ts migrate && node --import tsx src/cli.ts seed"]
     depends_on:
       db: { condition: service_healthy }
 
   web:
+    <<: *app
     build: { context: ../.., dockerfile: infra/docker/Dockerfile, target: web }
-    env_file: ../../.env
     environment:
-      DATABASE_URL: postgres://waypoint:${POSTGRES_PASSWORD:-waypoint}@db:5432/waypoint
-      WAYPOINT_URL: ${WAYPOINT_URL:-http://localhost:3000}
-    ports:
-      - "3000:3000"
+      <<: *app-env
+    # Reachable only from the proxy, never published on the host.
+    expose: ["3000"]
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/apps/web/.next/cache
     depends_on:
       migrate: { condition: service_completed_successfully }
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    stop_grace_period: 30s
 
   worker:
+    <<: *app
     build: { context: ../.., dockerfile: infra/docker/Dockerfile, target: worker }
-    env_file: ../../.env
     environment:
-      DATABASE_URL: postgres://waypoint:${POSTGRES_PASSWORD:-waypoint}@db:5432/waypoint
+      <<: *app-env
     depends_on:
       migrate: { condition: service_completed_successfully }
+    # Finishes the round in progress before it stops (sending a message twice is worse than
+    # waiting a few seconds).
+    stop_grace_period: 40s
 
 volumes:
   pgdata:
+  caddy_data:
+  caddy_config:

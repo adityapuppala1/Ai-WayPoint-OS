@@ -11,6 +11,7 @@ regexes = [
   '''ci-only-secret-not-for-production-use-0+''',
   '''e2e-only-secret-never-use-in-production-0+''',
   '''MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=''',
+  '''ci-only-database-password''',
 ]
 paths = [
   '''\.env\.example$''',

@@ -1,0 +1,38 @@
+# Who may talk to Waypoint's pods. Your cluster's network plug-in must enforce NetworkPolicy
+# (most do; some need it switched on).
+#
+# The web pods accept traffic only from the ingress controller: nothing else in the cluster
+# can reach the app without passing the proxy that sets the visitor's address. The worker and
+# the migration job accept nothing at all. Outgoing traffic is left open: the app needs the
+# database, your email server and, if configured, AI and texting providers.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: waypoint-web
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: waypoint-web
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        # Change this to the namespace your ingress controller runs in.
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: waypoint-background
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/component
+        operator: In
+        values: ["worker", "migrate"]
+  policyTypes: ["Ingress"]
+  ingress: []

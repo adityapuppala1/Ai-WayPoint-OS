@@ -1,0 +1,72 @@
+# Database migrations and reference data (help lines, starter circles), run once per release
+# BEFORE the new web and worker pods start:
+#
+#   kubectl -n waypoint delete job waypoint-migrate --ignore-not-found
+#   kubectl apply -k infra/k8s/base
+#   kubectl -n waypoint wait --for=condition=complete job/waypoint-migrate --timeout=10m
+#
+# A Job cannot be changed once created, which is why the old one is deleted first. Migrations
+# only ever add (a column, a table, an index), so the version that is still running keeps
+# working while the new one rolls out.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: waypoint-migrate
+  labels:
+    app.kubernetes.io/name: waypoint-migrate
+    app.kubernetes.io/component: migrate
+spec:
+  backoffLimit: 3
+  activeDeadlineSeconds: 900
+  # Cleared away a day after it finishes; its log stays in your log store.
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: waypoint-migrate
+        app.kubernetes.io/component: migrate
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: migrate
+          image: waypoint-worker
+          imagePullPolicy: IfNotPresent
+          workingDir: /app/packages/db
+          command: ["sh", "-c"]
+          args:
+            - node --import tsx src/cli.ts migrate && node --import tsx src/cli.ts seed
+          envFrom:
+            - configMapRef:
+                name: waypoint-config
+            - secretRef:
+                name: waypoint-secrets
+          env:
+            - name: WAYPOINT_AUTO_SEED
+              value: "true"
+            - name: HOME
+              value: /tmp
+          resources:
+            requests:
+              cpu: 100m
+              memory: 384Mi
+            limits:
+              memory: 768Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 256Mi

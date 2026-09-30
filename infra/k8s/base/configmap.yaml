@@ -1,0 +1,27 @@
+# Settings that are not secret. Secrets (database address, keys) go in the Secret
+# `waypoint-secrets` — see secret.example.yaml.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: waypoint-config
+data:
+  NODE_ENV: production
+  # The public address people use. Must be https, and must match the Ingress host.
+  WAYPOINT_URL: https://waypoint.example.org
+  # The one header your ingress sets with the visitor's address. ingress-nginx sets X-Real-IP
+  # from the connection it accepted; behind Cloudflare use cf-connecting-ip instead. Without
+  # this, visitors could dodge rate limits by sending a made-up header.
+  WAYPOINT_CLIENT_IP_HEADER: x-real-ip
+  # Who runs this Waypoint and how to reach them: shown in the privacy notice, the terms and
+  # /.well-known/security.txt. Required before going live.
+  WAYPOINT_OPERATOR: ""
+  WAYPOINT_CONTACT_EMAIL: ""
+  WAYPOINT_SECURITY_CONTACT: ""
+  WAYPOINT_DATA_LOCATION: ""
+  # The web pods never run background work; the worker Deployment does.
+  WAYPOINT_INPROCESS_WORKER: "false"
+  # Migrations run as a Job before each rollout, never from the web pods.
+  WAYPOINT_AUTO_MIGRATE: "false"
+  LOG_LEVEL: info
+  # A hard cap on AI spending per month (USD, estimated). Set a limit with the provider too.
+  AI_MONTHLY_BUDGET_USD: "25"

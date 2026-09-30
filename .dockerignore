@@ -1,0 +1,48 @@
+# What never goes into an image build. `COPY . .` would otherwise take all of it — including
+# your secrets (.env.local) and your local database (.data) — into a layer of the image.
+
+# Secrets and local data
+.env
+.env.*
+!.env.example
+.data/
+**/.data/
+*.pem
+*.key
+*.p8
+*.p12
+*.jks
+
+# Dependencies and build output (rebuilt inside the image)
+node_modules/
+**/node_modules/
+.pnpm-store/
+.next/
+**/.next/
+dist/
+**/dist/
+.turbo/
+**/.turbo/
+*.tsbuildinfo
+.expo/
+**/.expo/
+
+# Version control, editors, test output, working notes
+.git/
+.github/
+.idea/
+.vscode/
+.superpowers/
+coverage/
+test-results/
+playwright-report/
+blob-report/
+evals/results/
+infra/load/results/
+*.log
+.DS_Store
+Thumbs.db
+
+# Not needed to build or run the server
+docs/
+apps/web/e2e/

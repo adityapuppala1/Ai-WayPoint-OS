@@ -47,3 +47,4 @@ desktop.ini
 
 # phone app web export
 dist-web/
+infra/load/results/

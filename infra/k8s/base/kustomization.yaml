@@ -1,0 +1,39 @@
+# Waypoint on Kubernetes: the web app (with the API), the background worker and a migration
+# job. Postgres is not included — use a managed database with the pgvector and pg_trgm
+# extensions (see docs/DEPLOYMENT.md).
+#
+#   kubectl apply -k infra/k8s/base            # after creating the Secret (secret.example.yaml)
+#
+# Copy this directory, or point an overlay at it, to set your own image names, address and
+# replica counts.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: waypoint
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - migrate-job.yaml
+  - web-deployment.yaml
+  - web-service.yaml
+  - web-hpa.yaml
+  - web-pdb.yaml
+  - worker-deployment.yaml
+  - worker-pdb.yaml
+  - networkpolicy.yaml
+  - ingress.yaml
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: waypoint
+    includeSelectors: false
+
+# Your registry and the version you built (docs/DEPLOYMENT.md shows the build commands).
+# Pin a version or a digest: never deploy "latest".
+images:
+  - name: waypoint-web
+    newName: registry.example.org/waypoint-web
+    newTag: "0.1.0"
+  - name: waypoint-worker
+    newName: registry.example.org/waypoint-worker
+    newTag: "0.1.0"

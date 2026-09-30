@@ -1,0 +1,12 @@
+# With one worker, a node drain would stop background work until the pod is rescheduled.
+# That is acceptable (nothing is lost: work waits in the database), so the drain is allowed —
+# but only one worker at a time when you run several.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: waypoint-worker
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: waypoint-worker

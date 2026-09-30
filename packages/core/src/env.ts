@@ -155,6 +155,18 @@ const EnvSchema = z.object({
    * its callbacks, so this is all that stands in for a signature. At least 32 characters.
    */
   AFRICASTALKING_WEBHOOK_KEY: optionalString.pipe(z.string().min(32).optional()),
+  /**
+   * The most texts Waypoint answers in an hour and in a day, across every number. Replies cost
+   * money, so this bounds what a flood of made-up senders can spend. People in danger have a
+   * separate allowance of the same size.
+   */
+  WAYPOINT_TEXT_REPLIES_PER_HOUR: z.coerce.number().int().min(1).default(2000),
+  WAYPOINT_TEXT_REPLIES_PER_DAY: z.coerce.number().int().min(1).default(20_000),
+  /**
+   * Countries whose numbers get replies, as ISO codes ("KE,TZ,UG"). Default: every country
+   * Waypoint has help lines for. Set your providers' own geographic permissions to match.
+   */
+  WAYPOINT_TEXT_COUNTRIES: optionalString,
   /** Shown on the website so people know where to text. */
   WAYPOINT_SMS_NUMBER: optionalString,
   WAYPOINT_WHATSAPP_NUMBER: optionalString,

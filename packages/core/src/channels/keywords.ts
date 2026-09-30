@@ -43,6 +43,24 @@ const STOP = words(
   'إيقاف',
   'الغاء',
 );
+/**
+ * What may follow a stop word and still mean "stop" ("STOP ALL", "stop please"). Anything
+ * else after it is read as a sentence, so "end my life" is never taken for an opt-out.
+ */
+const STOP_TAIL = words(
+  'all',
+  'please',
+  'now',
+  'it',
+  'messages',
+  'texts',
+  'sms',
+  'texting',
+  'texting me',
+  'messaging me',
+  'sending',
+  'sending messages',
+);
 const START = words(
   'start',
   'unstop',
@@ -289,7 +307,8 @@ export function parseCommand(input: string): ChannelCommand {
   const head = foldText(first).replace(/[!.,?¡¿:;]+$/g, '');
   const tail = rest.join(' ').trim();
   if (!head) return { kind: 'menu' };
-  if (STOP.has(head) && !tail) return { kind: 'stop' };
+  if (STOP.has(head) && (!tail || STOP_TAIL.has(foldText(tail).replace(/[!.,?¡¿:;]+$/g, ''))))
+    return { kind: 'stop' };
   if (START.has(head) && !tail) return { kind: 'start' };
   if (HELP.has(head) && tail.split(/\s+/).length <= 2) return { kind: 'help' };
   if (MENU.has(head) && tail.split(/\s+/).filter(Boolean).length <= 2) return { kind: 'menu' };

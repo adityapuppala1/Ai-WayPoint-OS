@@ -217,30 +217,149 @@ export interface TextResult {
   identityId?: string;
 }
 
+/** Whether a counter still has room (a 429 from the limiter means it does not). */
+async function allowed(
+  db: Database,
+  key: string,
+  opts: { max: number; windowSeconds: number },
+): Promise<boolean> {
+  try {
+    await rateLimit(db, key, opts);
+    return true;
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 429) return false;
+    throw err;
+  }
+}
+
+/**
+ * The first time a provider's message id is seen in a day. Providers redeliver when an answer
+ * is slow, and a signed request can be replayed by anyone who captured it: either way the
+ * person gets one reply, and one is paid for. Only a keyed hash of the id is kept.
+ */
+async function firstDelivery(db: Database, provider: Provider, id: string): Promise<boolean> {
+  return allowed(db, `ch-seen:${keyedHash(`${provider}:${id}`, 'channel-message')}`, {
+    max: 1,
+    windowSeconds: 86_400,
+  });
+}
+
+/** Numbers Waypoint answers: from a country it has help lines for, or the operator's own list. */
+export function servedNumber(e164: string): boolean {
+  const country = countryOfNumber(e164);
+  if (!country) return false;
+  const only = getEnv().WAYPOINT_TEXT_COUNTRIES;
+  if (!only) return true;
+  return only
+    .split(',')
+    .map((c) => c.trim().toUpperCase())
+    .includes(country);
+}
+
+/**
+ * The ceiling on answered texts for the whole service, so a flood from made-up senders cannot
+ * run up the bill. Someone in danger draws on a separate allowance of the same size, which a
+ * flood of ordinary messages cannot use up.
+ */
+async function serviceHasRoom(db: Database, crisis: boolean): Promise<boolean> {
+  const env = getEnv();
+  const name = crisis ? 'ch-out-crisis' : 'ch-out';
+  const hour = await allowed(db, `${name}-hour`, {
+    max: env.WAYPOINT_TEXT_REPLIES_PER_HOUR,
+    windowSeconds: 3600,
+  });
+  const day = await allowed(db, `${name}-day`, {
+    max: env.WAYPOINT_TEXT_REPLIES_PER_DAY,
+    windowSeconds: 86_400,
+  });
+  if (!(hour && day) && (await allowed(db, `${name}-warned`, { max: 1, windowSeconds: 3600 })))
+    log.warn('text replies paused: the ceiling for the whole service was reached', {
+      crisis,
+      perHour: env.WAYPOINT_TEXT_REPLIES_PER_HOUR,
+      perDay: env.WAYPOINT_TEXT_REPLIES_PER_DAY,
+    });
+  return hour && day;
+}
+
+/** Replies to someone in danger past their number's limit: a few an hour, never unlimited. */
+const CRISIS_PER_HOUR = 5;
+
 export async function handleText(
   db: Database,
-  input: { channel: TextChannel; provider: Provider; from: string; text: string | null },
+  input: {
+    channel: TextChannel;
+    provider: Provider;
+    from: string;
+    text: string | null;
+    /** The provider's id for this message (MessageSid, wamid…), when it sends one. */
+    messageId?: string;
+  },
 ): Promise<TextResult> {
   const e164 = toE164(input.from);
   if (!e164) return { replies: [] };
+  if (input.messageId && !(await firstDelivery(db, input.provider, input.messageId)))
+    return { replies: [] };
+  const text = input.text === null ? null : input.text.slice(0, 1600);
+
+  if (!servedNumber(e164)) {
+    // A number from somewhere Waypoint does not serve is not recorded and not answered —
+    // unless the person is in danger: then they get the support card with global directories.
+    await countMessage(db, input.channel, 'in', 'unserved').catch(() => undefined);
+    if (text === null) return { replies: [] };
+    const stranger: ChannelPerson = {
+      locale: null,
+      country: null,
+      optedOut: false,
+      aiAllowed: false,
+      isNew: true,
+    };
+    const danger = channelReply(text, stranger, {
+      ...setupFor(input.channel),
+      externalAi: false,
+      localAi: false,
+    });
+    if (!danger.crisis || danger.crisis.assessment.tier < 2) return { replies: [] };
+  }
+
   const { row, isNew } = await identityFor(db, input.channel, e164);
   const who = person(row, isNew);
   const copy = CHANNEL_COPY[who.locale ?? 'en'];
-  if (!(await withinLimits(db, row.id)))
-    return {
-      replies: (await slowDownNotice(db, row.id))
+  const limited = !(await withinLimits(db, row.id));
+  const slowDown = async (): Promise<TextResult> => ({
+    replies:
+      (await slowDownNotice(db, row.id)) && (await serviceHasRoom(db, false))
         ? [fitForChannel(copy.slowDown, input.channel)]
         : [],
+    e164,
+    identityId: row.id,
+  });
+  if (text === null) {
+    if (limited) return slowDown();
+    // A voice note, photo or sticker: say what can be read.
+    await countMessage(db, input.channel, 'in', 'unreadable').catch(() => undefined);
+    return {
+      replies: (await serviceHasRoom(db, false)) ? [fitForChannel(copy.menu, input.channel)] : [],
       e164,
       identityId: row.id,
     };
-  if (input.text === null) {
-    // A voice note, photo or sticker: say what can be read.
-    await countMessage(db, input.channel, 'in', 'unreadable').catch(() => undefined);
-    return { replies: [fitForChannel(copy.menu, input.channel)], e164, identityId: row.id };
   }
 
-  const reply = channelReply(input.text.slice(0, 1600), who, setupFor(input.channel));
+  // Safety is decided before any limit: a number over its limit (or one somebody else flooded)
+  // still gets the support card, from a small allowance of its own.
+  const reply = channelReply(text, who, setupFor(input.channel));
+  if (limited) {
+    const mayAnswer =
+      reply.crisis &&
+      (await allowed(db, `ch-crisis:${row.id}`, { max: CRISIS_PER_HOUR, windowSeconds: 3600 }));
+    if (!mayAnswer) return slowDown();
+    reply.ask = undefined;
+  }
+  if (reply.messages.length > 0 && !(await serviceHasRoom(db, Boolean(reply.crisis)))) {
+    await countMessage(db, input.channel, 'in', 'capped').catch(() => undefined);
+    // STOP and the person's other choices are still remembered; nothing is sent.
+    await remember(db, row.id, reply.update);
+    return { replies: [], e164, identityId: row.id };
+  }
   await remember(db, row.id, reply.update);
   if (reply.crisis) {
     const { assessment, plan } = reply.crisis;

@@ -97,14 +97,20 @@ function twilioSign(url: string, params: Record<string, string>): string {
     .digest('base64');
 }
 
-async function twilio(channel: 'sms' | 'whatsapp', from: string, body: string, sign = true) {
+async function twilio(
+  channel: 'sms' | 'whatsapp',
+  from: string,
+  body: string,
+  sign = true,
+  sid = `SM${crypto.randomUUID().replace(/-/g, '')}`,
+) {
   const path = `/api/channels/twilio/${channel}`;
   const params = {
     From: channel === 'whatsapp' ? `whatsapp:${from}` : from,
     To: '+15550001111',
     Body: body,
     NumMedia: '0',
-    MessageSid: `SM${crypto.randomUUID().replace(/-/g, '')}`,
+    MessageSid: sid,
   };
   const res = await app.request(`${SITE}${path}`, {
     method: 'POST',
@@ -251,6 +257,69 @@ describe('SMS through Twilio', () => {
     expect(slowDowns).toBe(1);
     expect(silent).toBe(2);
   });
+
+  it('still answers someone in danger whose number is over its limit', async () => {
+    const number = '+15557770014';
+    for (let i = 0; i < 31; i++) await twilio('sms', number, 'MENU');
+    const before = await rows<{ n: number }>(
+      db.sql`select count(*)::int as n from crisis_events where channel = 'sms'`,
+    );
+    const { xml } = await twilio('sms', number, 'I want to end my life tonight');
+    const text = replies(xml).join(' ');
+    expect(text).toMatch(/988|911/);
+    expect(text).not.toMatch(/a lot of messages/i);
+    const after = await rows<{ n: number }>(
+      db.sql`select count(*)::int as n from crisis_events where channel = 'sms'`,
+    );
+    expect(after[0]?.n).toBe((before[0]?.n ?? 0) + 1);
+    // The extra allowance is small, so it cannot be used to make Waypoint send without end.
+    let answered = 0;
+    for (let i = 0; i < 8; i++)
+      if (replies((await twilio('sms', number, 'I want to end my life tonight')).xml).length)
+        answered++;
+    expect(answered).toBe(4);
+  });
+
+  it('answers a message the provider delivers twice only once', async () => {
+    const sid = 'SM0123456789abcdef0123456789abcdef';
+    const first = await twilio('sms', '+15557770015', 'HELP', true, sid);
+    expect(replies(first.xml).length).toBeGreaterThan(0);
+    const replay = await twilio('sms', '+15557770015', 'HELP', true, sid);
+    expect(replay.res.status).toBe(200);
+    expect(replies(replay.xml)).toHaveLength(0);
+  });
+
+  it('does not reply to numbers outside the countries it serves, except to someone in danger', async () => {
+    const elsewhere = '+8881234567'; // no country Waypoint has help lines for
+    const menu = await twilio('sms', elsewhere, 'HELLO');
+    expect(menu.res.status).toBe(200);
+    expect(replies(menu.xml)).toHaveLength(0);
+    const known = await rows<{ n: number }>(
+      db.sql`select count(*)::int as n from channel_identities where address_hash = ${service.addressHash(elsewhere)}`,
+    );
+    expect(known[0]?.n).toBe(0);
+    const danger = await twilio('sms', elsewhere, 'I want to kill myself tonight');
+    expect(replies(danger.xml).join(' ').length).toBeGreaterThan(20);
+  });
+
+  it('stops replying when the hourly ceiling for the whole service is reached, except to someone in danger', async () => {
+    const { resetEnvForTests } = await import('@waypoint/core/env');
+    await db.getDb().execute(db.sql`delete from rate_limits where key like 'api:ch-out%'`);
+    process.env.WAYPOINT_TEXT_REPLIES_PER_HOUR = '3';
+    resetEnvForTests();
+    try {
+      let answered = 0;
+      for (let i = 0; i < 6; i++)
+        if (replies((await twilio('sms', `+1555777002${i}`, 'HELP')).xml).length) answered++;
+      expect(answered).toBe(3);
+      const danger = await twilio('sms', '+15557770029', 'I want to end my life tonight');
+      expect(replies(danger.xml).join(' ')).toMatch(/988|911/);
+    } finally {
+      delete process.env.WAYPOINT_TEXT_REPLIES_PER_HOUR;
+      resetEnvForTests();
+      await db.getDb().execute(db.sql`delete from rate_limits where key like 'api:ch-out%'`);
+    }
+  });
 });
 
 // ─────────────────────────────── WhatsApp Cloud API ───────────────────────────────
@@ -268,7 +337,13 @@ describe('WhatsApp through the Cloud API', () => {
               value: {
                 messaging_product: 'whatsapp',
                 messages: [
-                  { from, id: 'wamid.1', timestamp: '1', type: 'text', text: { body: text } },
+                  {
+                    from,
+                    id: `wamid.${crypto.randomUUID()}`,
+                    timestamp: '1',
+                    type: 'text',
+                    text: { body: text },
+                  },
                 ],
               },
             },
@@ -278,6 +353,42 @@ describe('WhatsApp through the Cloud API', () => {
     });
   const sign = (raw: string, secret = env.WHATSAPP_APP_SECRET as string) =>
     `sha256=${createHmac('sha256', secret).update(raw).digest('hex')}`;
+
+  it('reads messages, and ignores reactions, system notices and delivery reports', () => {
+    const value = (messages: unknown[]) => ({ entry: [{ changes: [{ value: { messages } }] }] });
+    expect(
+      providers.parseMetaWebhook(
+        value([
+          { from: '15557770030', id: 'wamid.a', type: 'reaction', reaction: { emoji: '👍' } },
+          { from: '15557770030', id: 'wamid.b', type: 'system', system: { body: 'changed' } },
+          { from: '15557770030', id: 'wamid.c', type: 'unsupported' },
+          { from: '15557770030', id: 'wamid.d', type: 'audio', audio: { id: 'x' } },
+          { from: '15557770030', id: 'wamid.e', type: 'text', text: { body: 'HELP' } },
+        ]),
+      ),
+    ).toEqual([
+      { from: '15557770030', id: 'wamid.d', text: null },
+      { from: '15557770030', id: 'wamid.e', text: 'HELP' },
+    ]);
+    expect(
+      providers.parseMetaWebhook({ entry: [{ changes: [{ value: { statuses: [{}] } }] }] }),
+    ).toEqual([]);
+  });
+
+  it('answers a redelivered WhatsApp message once', async () => {
+    const raw = metaBody('15557770031', 'HELP');
+    for (let i = 0; i < 2; i++) {
+      const res = await app.request(`${SITE}/api/channels/whatsapp`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-hub-signature-256': sign(raw) },
+        body: raw,
+      });
+      expect(res.status).toBe(200);
+      await service.dispatchSettled();
+    }
+    const toNumber = sent.filter((s) => s.body.includes('15557770031'));
+    expect(toNumber).toHaveLength(1);
+  });
 
   it('answers Meta’s verification only with the right token', async () => {
     const ok = await app.request(

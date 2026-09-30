@@ -129,11 +129,28 @@ export function validMetaSignature(
 
 export interface InboundMessage {
   from: string;
+  /** The provider's id for this message, to answer a redelivery only once. */
+  id?: string;
   /** The text, or null for things we cannot read (voice notes, images, stickers…). */
   text: string | null;
 }
 
-/** Messages in a WhatsApp Cloud API webhook (delivery statuses and the rest are ignored). */
+/** Things a person sent that cannot be read as text: they get "here is what I can read". */
+const UNREADABLE = new Set([
+  'audio',
+  'image',
+  'video',
+  'document',
+  'sticker',
+  'location',
+  'contacts',
+]);
+
+/**
+ * Messages in a WhatsApp Cloud API webhook. Delivery statuses, reactions, system notices
+ * (a changed number) and anything else that is not something a person wrote are ignored:
+ * answering them would send — and pay for — a reply nobody asked for.
+ */
 export function parseMetaWebhook(body: unknown): InboundMessage[] {
   const out: InboundMessage[] = [];
   const entries = (body as { entry?: unknown[] })?.entry;
@@ -147,6 +164,7 @@ export function parseMetaWebhook(body: unknown): InboundMessage[] {
       for (const m of messages) {
         const msg = m as {
           from?: unknown;
+          id?: unknown;
           type?: unknown;
           text?: { body?: unknown };
           button?: { text?: unknown };
@@ -163,7 +181,12 @@ export function parseMetaWebhook(body: unknown): InboundMessage[] {
                 : typeof msg.interactive?.list_reply?.title === 'string'
                   ? msg.interactive.list_reply.title
                   : null;
-        out.push({ from: msg.from, text });
+        if (text === null && !(typeof msg.type === 'string' && UNREADABLE.has(msg.type))) continue;
+        out.push({
+          from: msg.from,
+          ...(typeof msg.id === 'string' && msg.id ? { id: msg.id } : {}),
+          text,
+        });
       }
     }
   }

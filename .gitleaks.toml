@@ -12,6 +12,8 @@ regexes = [
   '''e2e-only-secret-never-use-in-production-0+''',
   '''MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=''',
   '''ci-only-database-password''',
+  # The made-up TypeSafe key in the judge's unit tests; nothing is ever sent with it.
+  '''ts_test_key_0123456789abcdef''',
 ]
 paths = [
   '''\.env\.example$''',

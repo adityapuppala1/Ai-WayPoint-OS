@@ -135,6 +135,17 @@ describe('signing in before the address is confirmed', () => {
 
     const attempt = (body: { email: string; password: string }, ip: string) =>
       post('/sign-in/email', body, { 'x-real-ip': ip });
+    // Straight after signing up the first link is still on its way: another is not sent
+    // (one every two minutes per inbox, so signing in repeatedly cannot flood it).
+    expect((await attempt({ email, password }, '198.51.100.44')).status).toBe(401);
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    expect(await links()).toBe(before);
+    // Two minutes on:
+    await db
+      .getDb()
+      .execute(
+        db.sql`update rate_limits set last_request = last_request - 121000 where key like 'mail:confirm:%'`,
+      );
     const right = await attempt({ email, password }, '198.51.100.41');
     const wrong = await attempt({ email, password: 'not the password at all' }, '198.51.100.42');
     const unknown = await attempt({ email: 'nobody-here@example.org', password }, '198.51.100.43');

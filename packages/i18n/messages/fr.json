@@ -348,7 +348,7 @@
     "haveAccount": "Vous avez déjà un compte ?",
     "orGuest": "Continuer sans compte",
     "failed": "Impossible de vous connecter avec cet e-mail et ce mot de passe.",
-    "failedHelp": "Vous venez de créer votre compte ? Confirmez d’abord votre adresse e-mail. Si le mot de passe est correct, un nouveau lien est en route vers {email} ; il est valable 24 heures. Sinon, vérifiez les deux et réessayez, ou choisissez un nouveau mot de passe.",
+    "failedHelp": "Vous venez de créer votre compte ? Confirmez d’abord votre adresse e-mail : ouvrez le lien envoyé à {email}. Si le mot de passe est correct, nous envoyons un nouveau lien (au plus un toutes les deux minutes) ; chacun est valable 24 heures. Sinon, vérifiez les deux et réessayez, ou choisissez un nouveau mot de passe.",
     "signUpFailed": "Impossible de créer le compte. Vérifiez vos informations et réessayez.",
     "signedOut": "Vous êtes déconnecté.",
     "checkTitle": "Consultez vos e-mails",

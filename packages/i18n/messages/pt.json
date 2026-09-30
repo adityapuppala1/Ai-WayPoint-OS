@@ -348,7 +348,7 @@
     "haveAccount": "Já tem uma conta?",
     "orGuest": "Continuar sem conta",
     "failed": "Não foi possível entrar com esse e-mail e essa senha.",
-    "failedHelp": "Acabou de criar sua conta? Confirme primeiro seu endereço de e-mail. Se a senha estiver certa, um novo link está a caminho de {email}; ele vale por 24 horas. Se não, confira os dois e tente de novo, ou escolha uma nova senha.",
+    "failedHelp": "Acabou de criar sua conta? Confirme primeiro seu endereço de e-mail: abra o link que enviamos para {email}. Se a senha estiver certa, enviamos um novo link (no máximo um a cada dois minutos); cada um vale por 24 horas. Se não, confira os dois e tente de novo, ou escolha uma nova senha.",
     "signUpFailed": "Não conseguimos criar a conta. Confira seus dados e tente de novo.",
     "signedOut": "Você saiu da conta.",
     "checkTitle": "Confira seu e-mail",

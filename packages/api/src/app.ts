@@ -2,6 +2,7 @@
  * The Waypoint HTTP API. One Hono app serves every client (web, mobile, messaging channels)
  * and runs inside Next.js during development or as its own service in production.
  */
+import { timingSafeEqual } from 'node:crypto';
 import { OpenAPIHono } from '@hono/zod-openapi';
 import {
   AUTH_CLIENT_IP_HEADER,
@@ -23,7 +24,7 @@ import { csrf } from 'hono/csrf';
 import { HTTPException } from 'hono/http-exception';
 import { errorFields, log } from './lib/log';
 import { ApiError, problemResponse } from './lib/problem';
-import { clientAddress, keyedHash, rateLimit } from './lib/request';
+import { clientAddress, ipHash, keyedHash, rateLimit } from './lib/request';
 import { withSession } from './middleware';
 import admin from './routes/admin';
 import ask from './routes/ask';
@@ -48,6 +49,53 @@ export const API_VERSION = '0.1.0';
 
 /** How long creating an account or asking for a reset link takes at least, in production. */
 const AUTH_ANSWER_FLOOR_MS = 900;
+
+/** How long a failed sign-in takes at least, in production. */
+const SIGN_IN_FAILURE_FLOOR_MS = 400;
+
+/** Marks a device that has signed in to an account before (a random value and its signature). */
+const DEVICE_COOKIE = 'waypoint.device';
+
+/** The account a sign-in request is for, as a keyed hash of the address (null when unreadable). */
+async function signInAccount(request: Request): Promise<string | null> {
+  const body = (await request
+    .clone()
+    .json()
+    .catch(() => null)) as { email?: unknown } | null;
+  const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
+  return email ? keyedHash(email, 'sign-in') : null;
+}
+
+/** The device's random value when its cookie was issued for this account; otherwise null. */
+function knownDevice(cookie: string | undefined, account: string): string | null {
+  const [nonce = '', signature = ''] = (cookie ?? '').split('.');
+  if (!/^[a-f0-9]{32}$/.test(nonce) || !signature) return null;
+  return sameText(signature, keyedHash(`${account}:${nonce}`, 'device')) ? nonce : null;
+}
+
+function deviceCookie(account: string): string {
+  const nonce = crypto.randomUUID().replace(/-/g, '');
+  const secure = getEnv().WAYPOINT_URL.startsWith('https://') ? '; Secure' : '';
+  return `${DEVICE_COOKIE}=${nonce}.${keyedHash(`${account}:${nonce}`, 'device')}; Path=/api/auth; Max-Age=31536000; HttpOnly; SameSite=Lax${secure}`;
+}
+
+/** Compared without stopping at the first difference, so timing says nothing. */
+function sameText(a: string, b: string): boolean {
+  const x = Buffer.from(a);
+  const y = Buffer.from(b);
+  return x.length === y.length && timingSafeEqual(x, y);
+}
+
+/** A path on this site ("/reset-password"), or a full address on one of its own origins. */
+function onThisSite(target: string, origins: string[]): boolean {
+  if (/^\/(?![/\\])/.test(target)) return true;
+  try {
+    const url = new URL(target);
+    return (url.protocol === 'https:' || url.protocol === 'http:') && origins.includes(url.origin);
+  } catch {
+    return false;
+  }
+}
 
 function allowedOrigins(): string[] {
   const env = getEnv();
@@ -159,29 +207,62 @@ export function createApp() {
     const db = c.get('db');
     const number = keyedHash(e164, 'otp');
     if (sending) {
+      // One visitor can ask for codes for a handful of numbers a day. Without this, a single
+      // address working through a list of numbers could use up the ceiling everyone shares
+      // (and with it, phone sign-in for everyone) within the hour.
+      await rateLimit(db, `otp-send-visitor:${ipHash(c.req.raw.headers)}`, {
+        windowSeconds: 86_400,
+        max: 10,
+      });
       await rateLimit(db, `otp-send:${number}`, { windowSeconds: 3600, max: 3 });
       await rateLimit(db, `otp-send-day:${number}`, { windowSeconds: 86_400, max: 6 });
-      await rateLimit(db, 'otp-send:all', { windowSeconds: 3600, max: 300 });
+      try {
+        await rateLimit(db, 'otp-send:all', { windowSeconds: 3600, max: 300 });
+      } catch (err) {
+        log.warn('sign-in codes paused: the hourly ceiling for everyone was reached');
+        throw err;
+      }
     } else {
       await rateLimit(db, `otp-verify:${number}`, { windowSeconds: 3600, max: 10 });
     }
     return next();
   });
+  // Waypoint's own apps send JSON. The auth library would also read a form, which the checks
+  // below (they read the address from the JSON body) would not see: anything else is refused.
+  app.use('/auth/*', async (c, next) => {
+    const type = c.req.header('content-type');
+    if (c.req.method === 'POST' && type && !/^application\/json\b/i.test(type.trim()))
+      return problemResponse(415, 'unsupported-media-type', 'Send JSON.');
+    return next();
+  });
   // Password guesses are limited per account as well as per visitor, so spreading guesses
   // over many addresses doesn't help. Unknown addresses count the same way, so the limit
-  // itself says nothing about who has an account.
+  // itself says nothing about who has an account. A device that has signed in to the account
+  // before counts on its own, so someone guessing a password cannot lock its owner out.
   app.use('/auth/sign-in/email', async (c, next) => {
+    if (c.req.method !== 'POST') return next();
+    const account = await signInAccount(c.req.raw);
+    if (account) {
+      const device = knownDevice(getCookie(c, DEVICE_COOKIE), account);
+      await rateLimit(c.get('db'), device ? `sign-in-device:${device}` : `sign-in:${account}`, {
+        windowSeconds: 900,
+        max: 20,
+      });
+    }
+    return next();
+  });
+  // A reset link leads back to the website and nowhere else. The phone app's own scheme is a
+  // trusted origin for signing in, but on Android another app can claim that scheme and would
+  // be handed the reset token.
+  app.use('/auth/request-password-reset', async (c, next) => {
     if (c.req.method !== 'POST') return next();
     const body = (await c.req.raw
       .clone()
       .json()
-      .catch(() => null)) as { email?: unknown } | null;
-    const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
-    if (email)
-      await rateLimit(c.get('db'), `sign-in:${keyedHash(email, 'sign-in')}`, {
-        windowSeconds: 900,
-        max: 20,
-      });
+      .catch(() => null)) as { redirectTo?: unknown } | null;
+    const to = body?.redirectTo;
+    if (to !== undefined && !(typeof to === 'string' && onThisSite(to, origins)))
+      return problemResponse(400, 'invalid-redirect', 'The link must lead back to this site.');
     return next();
   });
   // Better Auth owns the rest of /api/auth/* (sign-in, guest sessions, passkeys…). It learns
@@ -204,14 +285,31 @@ export function createApp() {
       const current = await getSession(raw.headers).catch(() => null);
       if (current?.user.isAnonymous) headers.set(AUTH_GUEST_HEADER, current.user.id);
     }
+    // Read before the body is handed on: a request can only be read once.
+    const account = signIn ? await signInAccount(raw) : null;
     const request = new Request(raw, { headers, duplex: 'half' } as RequestInit);
     const response = await getAuth().handler(request);
 
     // The answers that must not tell anyone whether an address has an account also take the
-    // same time: a new address costs more work than a known one.
-    if ((signUp || resetRequest) && getEnv().isProd) {
-      const wait = AUTH_ANSWER_FLOOR_MS - (performance.now() - started);
+    // same time: a new address costs more work than a known one. A failed sign-in is one of
+    // them (an unconfirmed address takes a different path from a wrong password).
+    if ((signUp || resetRequest || (signIn && response.status !== 200)) && getEnv().isProd) {
+      const floor = signIn ? SIGN_IN_FAILURE_FLOOR_MS : AUTH_ANSWER_FLOOR_MS;
+      const wait = floor - (performance.now() - started);
       if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
+    }
+
+    // A device that signs in gets a cookie saying it has been trusted with this account
+    // before (see the sign-in limit above). It names nobody: a random value and its signature.
+    if (signIn && response.status === 200) {
+      if (account && !knownDevice(getCookie(c, DEVICE_COOKIE), account)) {
+        const trusted = new Response(response.body, {
+          status: response.status,
+          headers: new Headers(response.headers),
+        });
+        trusted.headers.append('set-cookie', deviceCookie(account));
+        return trusted;
+      }
     }
 
     // Creating an account answers exactly the same whether the address was new or already

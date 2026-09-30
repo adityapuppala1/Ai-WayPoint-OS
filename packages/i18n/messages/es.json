@@ -348,7 +348,7 @@
     "haveAccount": "¿Ya tienes una cuenta?",
     "orGuest": "Continuar sin cuenta",
     "failed": "No pudimos iniciar tu sesión con ese correo y esa contraseña.",
-    "failedHelp": "¿Acabas de crear tu cuenta? Primero confirma tu dirección de correo. Si la contraseña es correcta, te estamos enviando un enlace nuevo a {email}; funciona durante 24 horas. Si no, revisa ambos datos e inténtalo de nuevo, o elige una contraseña nueva.",
+    "failedHelp": "¿Acabas de crear tu cuenta? Primero confirma tu dirección de correo: abre el enlace que enviamos a {email}. Si la contraseña es correcta, te enviamos un enlace nuevo (como máximo uno cada par de minutos); cada uno funciona durante 24 horas. Si no, revisa ambos datos e inténtalo de nuevo, o elige una contraseña nueva.",
     "signUpFailed": "No pudimos crear la cuenta. Revisa tus datos e inténtalo de nuevo.",
     "signedOut": "Has cerrado sesión.",
     "checkTitle": "Revisa tu correo",

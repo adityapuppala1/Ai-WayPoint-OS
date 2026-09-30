@@ -348,7 +348,7 @@
     "haveAccount": "Tayari una akaunti?",
     "orGuest": "Endelea bila akaunti",
     "failed": "Hatukuweza kukuingiza kwa barua pepe na nenosiri hilo.",
-    "failedHelp": "Umefungua akaunti yako sasa hivi? Tafadhali thibitisha anwani yako ya barua pepe kwanza. Ikiwa nenosiri ni sahihi, kiungo kipya kinatumwa kwa {email}; kinafanya kazi kwa saa 24. Vinginevyo, kagua vyote viwili ujaribu tena, au uchague nenosiri jipya.",
+    "failedHelp": "Umefungua akaunti yako sasa hivi? Tafadhali thibitisha anwani yako ya barua pepe kwanza: fungua kiungo tulichotuma kwa {email}. Ikiwa nenosiri ni sahihi, tunatuma kiungo kipya (kisichozidi kimoja kila dakika mbili); kila kimoja hufanya kazi kwa saa 24. Vinginevyo, kagua vyote viwili ujaribu tena, au uchague nenosiri jipya.",
     "signUpFailed": "Hatukuweza kufungua akaunti. Kagua taarifa zako kisha ujaribu tena.",
     "signedOut": "Umetoka.",
     "checkTitle": "Angalia barua pepe yako",

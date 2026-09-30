@@ -149,13 +149,23 @@ describe('creating an account', () => {
       body: { email: 'lin@example.org', redirectTo: '/reset-password' },
       headers: new Headers(),
     });
+    // The token is only in the emailed link: the database keeps a keyed hash of it, so reading
+    // the table gives nobody a link they could use.
     const [row] = await db
       .getDb()
       .select()
       .from(db.verifications)
       .where(db.eq(db.verifications.value, res.user.id));
-    const token = row?.identifier.replace('reset-password:', '') ?? '';
+    expect(row?.identifier).toBeTruthy();
+    expect(row?.identifier).not.toContain('reset-password:');
+    const queued = await db.getDb().execute<{ payload: Record<string, unknown> }>(
+      db.sql`select payload from outbox where payload->>'template' = 'reset-password'
+             and payload->>'userId' = ${res.user.id}`,
+    );
+    const link = String(db.openOutboxPayload(queued.rows[0]?.payload ?? {}).url ?? '');
+    const token = /\/reset-password\/([^/?]+)/.exec(link)?.[1] ?? '';
     expect(token).toBeTruthy();
+    expect(row?.identifier).not.toContain(token);
     await auth.api.resetPassword({
       body: { newPassword: 'a brand new long password', token },
       headers: new Headers(),
@@ -272,5 +282,23 @@ describe('what a guest did', () => {
         .where(db.eq(db.profiles.userId, res.user.id));
       expect(p?.guestOrigin, forged).toBeNull();
     }
+  });
+});
+
+describe('the auth library’s own limits in a shared database', () => {
+  it('count a visitor without keeping their address', async () => {
+    const storage = authMod.hashedRateLimitStorage();
+    const key = '203.0.113.9|/sign-in/email';
+    const rule = { window: 60, max: 2 };
+    expect((await storage.consume(key, rule)).allowed).toBe(true);
+    expect((await storage.consume(key, rule)).allowed).toBe(true);
+    const third = await storage.consume(key, rule);
+    expect(third.allowed).toBe(false);
+    expect(third.retryAfter).toBeGreaterThan(0);
+    // Another visitor has an allowance of their own.
+    expect((await storage.consume('203.0.113.10|/sign-in/email', rule)).allowed).toBe(true);
+    const stored = await db.getDb().execute(db.sql`select key from rate_limits`);
+    expect(stored.rows.length).toBeGreaterThan(0);
+    expect(JSON.stringify(stored.rows)).not.toContain('203.0.113');
   });
 });

@@ -4,7 +4,7 @@
  */
 import { openDek, openFor, SEALED } from '@waypoint/core/privacy';
 import * as s from '@waypoint/db';
-import { and, type Database, eq, inArray, or, sql } from '@waypoint/db';
+import { and, type Database, eq, inArray, ne, or, sql } from '@waypoint/db';
 import { getConsents, getProfile, listTrustedContacts } from './me';
 import { handOverOrganisations } from './org';
 
@@ -288,6 +288,20 @@ export async function deleteAccount(db: Database, userId: string): Promise<void>
           ),
         );
     }
+    // Rows that would otherwise stay behind without an owner (their link to the account is
+    // only set to null): what the person wrote in feedback, scam reports nobody has published
+    // (a published one has already become a warning for others: it keeps the kind of scam and
+    // the websites named, and loses the description and the amount), and messages still
+    // waiting to be sent to them.
+    await tx.delete(s.feedback).where(eq(s.feedback.userId, userId));
+    await tx
+      .delete(s.scamReports)
+      .where(and(eq(s.scamReports.userId, userId), ne(s.scamReports.status, 'published')));
+    await tx
+      .update(s.scamReports)
+      .set({ descriptionRedacted: null, amountLost: null, currency: null })
+      .where(eq(s.scamReports.userId, userId));
+    await tx.execute(sql`delete from outbox where payload->>'userId' = ${userId}`);
     await tx.delete(s.users).where(eq(s.users.id, userId));
   });
 }

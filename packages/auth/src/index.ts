@@ -356,6 +356,79 @@ async function firstInWindow(key: string, windowSeconds: number): Promise<boolea
   return Number(res.rows[0]?.count ?? 1) === 1;
 }
 
+/** True while a key has been seen at most `max` times in the window (same store as above). */
+async function withinWindow(key: string, windowSeconds: number, max: number): Promise<boolean> {
+  const now = Date.now();
+  const windowStart = now - windowSeconds * 1000;
+  const res = await getDb().execute<{ count: number | string }>(sql`
+    insert into rate_limits (id, key, count, last_request)
+    values (${newId()}, ${key}, 1, ${now})
+    on conflict (key) do update set
+      count = case when rate_limits.last_request < ${windowStart} then 1 else rate_limits.count + 1 end,
+      last_request = case when rate_limits.last_request < ${windowStart} then ${now} else rate_limits.last_request end
+    returning count`);
+  return Number(res.rows[0]?.count ?? 1) <= max;
+}
+
+/** The inbox an address delivers to: lower case, without a "+tag". */
+function inbox(email: string): string {
+  const [local = '', domain = ''] = email.trim().toLowerCase().split('@');
+  return `${local.split('+')[0]}@${domain}`;
+}
+
+/**
+ * Whether one more email of this kind may go to an inbox. Signing in before confirming asks
+ * for a fresh link each time, and accounts can be created for `name+1@…`, `name+2@…`: without a
+ * cap per inbox, anyone could fill someone else's with Waypoint's mail. Confirmation links: one
+ * every two minutes and six a day; reset links: three an hour. Counted under a keyed hash.
+ */
+async function mayEmail(kind: 'confirm' | 'reset', email: string, secret: string) {
+  const who = createHmac('sha256', secret)
+    .update(`mail:${inbox(email)}`)
+    .digest('base64url')
+    .slice(0, 32);
+  if (kind === 'reset') return withinWindow(`mail:reset:${who}`, 3600, 3);
+  return (
+    (await withinWindow(`mail:confirm:${who}`, 120, 1)) &&
+    (await withinWindow(`mail:confirm-day:${who}`, 86_400, 6))
+  );
+}
+
+/**
+ * The auth library's per-visitor limits, kept in the shared database without the visitor's
+ * address: its own database store writes keys such as `203.0.113.9|/sign-in/email`, and
+ * Waypoint never stores an IP address. Here the key is a keyed hash, and counting is one
+ * atomic statement, so every server instance agrees.
+ */
+export function hashedRateLimitStorage() {
+  return {
+    consume: async (key: string, rule: { window: number; max: number }) => {
+      const env = getEnv();
+      const secret = env.BETTER_AUTH_SECRET ?? devSecret('BETTER_AUTH_SECRET');
+      const digest = createHmac('sha256', secret).update(key).digest('base64url').slice(0, 32);
+      const now = Date.now();
+      const windowMs = rule.window * 1000;
+      const windowStart = now - windowMs;
+      const res = await getDb().execute<{
+        count: number | string;
+        last_request: number | string;
+      }>(sql`
+        insert into rate_limits (id, key, count, last_request)
+        values (${newId()}, ${`auth:${digest}`}, 1, ${now})
+        on conflict (key) do update set
+          count = case when rate_limits.last_request < ${windowStart} then 1 else rate_limits.count + 1 end,
+          last_request = case when rate_limits.last_request < ${windowStart} then ${now} else rate_limits.last_request end
+        returning count, last_request`);
+      const row = res.rows[0];
+      if (!row || Number(row.count) <= rule.max) return { allowed: true, retryAfter: null };
+      return {
+        allowed: false,
+        retryAfter: Math.max(1, Math.ceil((Number(row.last_request) + windowMs - now) / 1000)),
+      };
+    },
+  };
+}
+
 /** Placeholder addresses (guests, phone accounts) that can never receive mail. */
 const undeliverable = (email: string) => /\.invalid\.?$/i.test(email);
 
@@ -439,16 +512,15 @@ function createAuth() {
       revokeSessionsOnPasswordReset: true,
       sendResetPassword: async ({ user, url }, request) => {
         if (undeliverable(user.email)) return;
-        await sendAfterCommit({
-          channel: 'email',
-          recipientRef: sealWithKek(user.email, 'outbox'),
-          payload: {
-            template: 'reset-password',
-            name: user.name,
-            userId: user.id,
-            locale: preferredLocale(request?.headers),
-          },
-          secret: { url },
+        const locale = preferredLocale(request?.headers);
+        await afterCommit(async () => {
+          if (!(await mayEmail('reset', user.email, secret))) return;
+          await enqueueMessage(getDb(), {
+            channel: 'email',
+            recipientRef: sealWithKek(user.email, 'outbox'),
+            payload: { template: 'reset-password', name: user.name, userId: user.id, locale },
+            secret: { url },
+          });
         });
       },
       // The link in a reset email proves the address is theirs, as a confirmation link would.
@@ -488,16 +560,17 @@ function createAuth() {
       sendVerificationEmail: async ({ user, url }, request) => {
         // Guest and phone accounts have placeholder addresses that can never receive mail.
         if (undeliverable(user.email)) return;
-        await sendAfterCommit({
-          channel: 'email',
-          recipientRef: sealWithKek(user.email, 'outbox'),
-          payload: {
-            template: 'verify-email',
-            name: user.name,
-            userId: user.id,
-            locale: preferredLocale(request?.headers),
-          },
-          secret: { url: confirmationLink(url) },
+        const locale = preferredLocale(request?.headers);
+        await afterCommit(async () => {
+          // The link already sent still works for 24 hours, so nothing is lost by not
+          // sending another one straight away.
+          if (!(await mayEmail('confirm', user.email, secret))) return;
+          await enqueueMessage(getDb(), {
+            channel: 'email',
+            recipientRef: sealWithKek(user.email, 'outbox'),
+            payload: { template: 'verify-email', name: user.name, userId: user.id, locale },
+            secret: { url: confirmationLink(url) },
+          });
         });
       },
     },
@@ -511,9 +584,21 @@ function createAuth() {
       // A short cache: organisation changes must show up quickly.
       cookieCache: { enabled: true, maxAge: 60 },
     },
+    // One-time links and codes are looked up by a keyed hash: the table never holds a phone
+    // number or a usable token in the clear.
+    verification: {
+      storeIdentifier: {
+        hash: async (identifier: string) =>
+          createHmac('sha256', secret).update(`verification:${identifier}`).digest('base64url'),
+      },
+    },
     rateLimit: {
       enabled: true,
-      storage: env.embeddedDb ? 'memory' : 'database',
+      // In memory for the embedded database (one process); otherwise in the shared database,
+      // under keyed hashes rather than the visitor's address.
+      ...(env.embeddedDb
+        ? { storage: 'memory' as const }
+        : { customStorage: hashedRateLimitStorage() }),
       window: 60,
       max: 100,
       customRules: {

@@ -191,6 +191,10 @@ export type ServerEnv = z.infer<typeof EnvSchema> & {
   isProd: boolean;
 };
 
+const isThisMachine = (hostname: string) =>
+  ['localhost', '127.0.0.1', '[::1]', '::1'].includes(hostname.toLowerCase()) ||
+  hostname.toLowerCase().endsWith('.localhost');
+
 let envCache: ServerEnv | undefined;
 
 export function getEnv(): ServerEnv {
@@ -214,6 +218,18 @@ export function getEnv(): ServerEnv {
         `Missing required production secrets: ${missing.join(', ')}. Run \`pnpm setup\` or set them in the environment.`,
       );
     }
+    // Sessions, sign-in links and approvals are all signed with this one secret.
+    if ((env.BETTER_AUTH_SECRET ?? '').length < 32)
+      throw new Error(
+        "BETTER_AUTH_SECRET must be at least 32 characters in production. Generate one: node -e \"console.log(require('crypto').randomBytes(32).toString('base64'))\"",
+      );
+    // Without https the session cookie is not marked Secure and travels in the clear. A
+    // production build tried out on this machine (localhost) is the one exception.
+    const site = new URL(env.WAYPOINT_URL);
+    if (site.protocol !== 'https:' && !isThisMachine(site.hostname))
+      throw new Error(
+        `WAYPOINT_URL must start with https:// in production (it is ${site.origin}).`,
+      );
   }
   envCache = {
     ...env,
@@ -263,6 +279,10 @@ export function resetEnvForTests(): void {
  */
 export function configWarnings(env: ServerEnv = getEnv()): string[] {
   const out: string[] = [];
+  if (env.isProd && isThisMachine(new URL(env.WAYPOINT_URL).hostname))
+    out.push(
+      `WAYPOINT_URL is ${env.WAYPOINT_URL}: fine for trying a production build on this machine, but on a real server set it to the public https:// address. Until then sign-in links point here and session cookies are not marked Secure.`,
+    );
   if (env.isProd && !env.WAYPOINT_CLIENT_IP_HEADER && !env.TRUSTED_PROXIES)
     out.push(
       'Rate limits read the visitor address from X-Forwarded-For with no trusted proxies set. If Waypoint is reachable without a proxy that overwrites that header, visitors can dodge limits: set WAYPOINT_CLIENT_IP_HEADER (e.g. cf-connecting-ip) or TRUSTED_PROXIES.',

@@ -280,3 +280,223 @@ describe('background work', () => {
     expect(events[0]?.n).toBe(1);
   });
 });
+
+describe('signing in', () => {
+  const signIn = (email: string, password: string, init: { ip?: string; cookie?: string } = {}) =>
+    req('/api/auth/sign-in/email', {
+      method: 'POST',
+      json: { email, password },
+      ip: init.ip ?? newIp(),
+      cookie: init.cookie,
+    });
+  const deviceCookie = (cookie: string) =>
+    cookie.split('; ').find((c) => c.startsWith('waypoint.device=')) ?? '';
+
+  it('counts password tries per account whatever the request looks like', async () => {
+    // The per-account count read the address from a JSON body only; the auth library also
+    // accepts a form, which slipped past it.
+    const form = await req('/api/auth/sign-in/email', {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ email: 'someone@example.org', password: 'wrong' }).toString(),
+      ip: newIp(),
+    });
+    expect(form.status).toBe(415);
+    const email = `target-${crypto.randomUUID().slice(0, 8)}@example.org`;
+    let refused = 0;
+    for (let i = 0; i < 25; i++)
+      if ((await signIn(email, 'not the password')).status === 429) refused++;
+    expect(refused).toBe(5);
+  });
+
+  it('lets someone’s own device sign in while a stranger is guessing their password', async () => {
+    const victim = await account('Vera');
+    const other = await account('Otto');
+    expect(deviceCookie(victim.cookie)).not.toBe('');
+    for (let i = 0; i < 21; i++) await signIn(victim.email, 'a wrong guess');
+    // A device that has never signed in to this account is held back with the guesser…
+    expect((await signIn(victim.email, PASSWORD)).status).toBe(429);
+    // …and so is one showing another account's cookie, or a made-up one.
+    expect(
+      (await signIn(victim.email, PASSWORD, { cookie: deviceCookie(other.cookie) })).status,
+    ).toBe(429);
+    expect(
+      (await signIn(victim.email, PASSWORD, { cookie: 'waypoint.device=abc.def' })).status,
+    ).toBe(429);
+    // The victim's own device is not.
+    const own = await signIn(victim.email, PASSWORD, { cookie: deviceCookie(victim.cookie) });
+    expect(own.status).toBe(200);
+  });
+
+  it('answers a wrong password and an unconfirmed address identically, byte for byte', async () => {
+    const confirmed = await account('Wren');
+    const email = `new-${crypto.randomUUID().slice(0, 8)}@example.org`;
+    await req('/api/auth/sign-up/email', {
+      method: 'POST',
+      json: { email, password: PASSWORD, name: 'New' },
+      ip: newIp(),
+    });
+    const wrong = await signIn(confirmed.email, 'not the password');
+    const unconfirmed = await signIn(email, PASSWORD);
+    const unknown = await signIn(`nobody-${crypto.randomUUID().slice(0, 8)}@example.org`, PASSWORD);
+    const shape = async (res: Response) => ({
+      status: res.status,
+      body: await res.text(),
+      headers: [...res.headers.keys()].filter((h) => h !== 'x-request-id').sort(),
+    });
+    const expected = await shape(wrong);
+    expect(expected.status).toBe(401);
+    expect(await shape(unconfirmed)).toEqual(expected);
+    expect(await shape(unknown)).toEqual(expected);
+  });
+
+  it('sends reset links only back to the website', async () => {
+    const me = await account('Rui');
+    for (const redirectTo of [
+      'waypoint://reset',
+      'exp://x/reset',
+      'https://evil.example/reset',
+      '//evil.example',
+    ])
+      expect(
+        (
+          await req('/api/auth/request-password-reset', {
+            method: 'POST',
+            json: { email: me.email, redirectTo },
+            ip: newIp(),
+          })
+        ).status,
+        redirectTo,
+      ).toBe(400);
+    const fine = await req('/api/auth/request-password-reset', {
+      method: 'POST',
+      json: { email: me.email, redirectTo: '/reset-password' },
+      ip: newIp(),
+    });
+    expect(fine.status).toBe(200);
+  });
+
+  it('cannot be used to flood an inbox with confirmation or reset emails', async () => {
+    const tag = crypto.randomUUID().slice(0, 8);
+    const email = `flood-${tag}@example.org`;
+    const mails = (template: string) =>
+      rows<{ n: number }>(
+        db.sql`select count(*)::int as n from outbox o join users u on u.id = o.payload->>'userId'
+               where o.payload->>'template' = ${template} and u.email like ${`flood-${tag}%`}`,
+      ).then((r) => r[0]?.n ?? 0);
+    await req('/api/auth/sign-up/email', {
+      method: 'POST',
+      json: { email, password: PASSWORD, name: 'Flo' },
+      ip: newIp(),
+    });
+    expect(await mails('verify-email')).toBe(1);
+    // Signing in again and again before confirming asked for a fresh link every time.
+    for (let i = 0; i < 4; i++) await signIn(email, PASSWORD);
+    // So did creating accounts for the same inbox under other tags.
+    for (let i = 0; i < 3; i++)
+      await req('/api/auth/sign-up/email', {
+        method: 'POST',
+        json: { email: `flood-${tag}+${i}@example.org`, password: PASSWORD, name: 'Flo' },
+        ip: newIp(),
+      });
+    expect(await mails('verify-email')).toBe(1);
+
+    await db
+      .getDb()
+      .update(db.users)
+      .set({ emailVerified: true })
+      .where(db.eq(db.users.email, email));
+    for (let i = 0; i < 6; i++)
+      await req('/api/auth/request-password-reset', {
+        method: 'POST',
+        json: { email, redirectTo: '/reset-password' },
+        ip: newIp(),
+      });
+    expect(await mails('reset-password')).toBe(3);
+  });
+
+  it('limits sign-in codes per visitor, so one address cannot use up everyone’s', async () => {
+    const { keyedHash } = await import('../src/lib/request');
+    const ip = newIp();
+    await db.getDb().execute(db.sql`
+      insert into rate_limits (id, key, count, last_request)
+      values (gen_random_uuid(), ${`api:otp-send-visitor:${keyedHash(ip, 'ip')}`}, 10, ${Date.now()})`);
+    const res = await req('/api/auth/phone-number/send-otp', {
+      method: 'POST',
+      json: { phoneNumber: '+15557771234' },
+      ip,
+    });
+    expect(res.status).toBe(429);
+  });
+
+  it('refuses a cross-site request whatever its body', async () => {
+    const me = await account('Sam');
+    const put = await req('/api/me/consents', {
+      method: 'PUT',
+      cookie: me.cookie,
+      headers: { origin: 'https://evil.example' },
+    });
+    expect(put.status).toBe(403);
+    const post = await req('/api/circles/x/join', {
+      method: 'POST',
+      cookie: me.cookie,
+      headers: { origin: 'http://sub.localhost:3000' },
+    });
+    expect(post.status).toBe(403);
+    // The site itself is unaffected.
+    expect((await req('/api/me', { cookie: me.cookie })).status).toBe(200);
+  });
+});
+
+describe('deleting an account', () => {
+  it('takes feedback, unpublished scam reports and waiting messages with it', async () => {
+    const me = await account('Dele');
+    const count = async (query: ReturnType<typeof db.sql>) =>
+      (await rows<{ n: number }>(query))[0]?.n ?? 0;
+    await req('/api/feedback', {
+      method: 'POST',
+      cookie: me.cookie,
+      json: { module: 'today', message: 'My private thoughts about the app', rating: 4 },
+    });
+    await req('/api/shield/reports', {
+      method: 'POST',
+      cookie: me.cookie,
+      json: { category: 'job', description: 'They asked me to pay a fee', amountLost: 5000 },
+    });
+    await req('/api/auth/request-password-reset', {
+      method: 'POST',
+      json: { email: me.email, redirectTo: '/reset-password' },
+      ip: newIp(),
+    });
+    expect(
+      await count(db.sql`select count(*)::int as n from feedback where user_id = ${me.id}`),
+    ).toBe(1);
+    expect(
+      await count(db.sql`select count(*)::int as n from scam_reports where user_id = ${me.id}`),
+    ).toBe(1);
+    expect(
+      await count(
+        db.sql`select count(*)::int as n from outbox where payload->>'userId' = ${me.id}`,
+      ),
+    ).toBeGreaterThan(0);
+    const before = {
+      feedback: await count(db.sql`select count(*)::int as n from feedback`),
+      reports: await count(db.sql`select count(*)::int as n from scam_reports`),
+    };
+    const gone = await req('/api/me', {
+      method: 'DELETE',
+      cookie: me.cookie,
+      json: { confirm: 'DELETE' },
+    });
+    expect(gone.status).toBeLessThan(300);
+    expect(await count(db.sql`select count(*)::int as n from feedback`)).toBe(before.feedback - 1);
+    expect(await count(db.sql`select count(*)::int as n from scam_reports`)).toBe(
+      before.reports - 1,
+    );
+    expect(
+      await count(
+        db.sql`select count(*)::int as n from outbox where payload->>'userId' = ${me.id}`,
+      ),
+    ).toBe(0);
+  });
+});

@@ -2171,14 +2171,16 @@
         "phone": "Votre numéro de téléphone, si vous l’ajoutez (vérifié par un code) ou si vous écrivez à Waypoint par SMS",
         "phoneWhy": "Pour vous répondre par SMS ou WhatsApp, et vous envoyer des codes de connexion.",
         "security": "Un cookie qui vous garde connecté, et des versions brouillées des adresses réseau (IP)",
-        "securityWhy": "Pour protéger votre compte et empêcher les abus. Nous ne gardons jamais les adresses elles-mêmes."
+        "securityWhy": "Pour protéger votre compte et empêcher les abus. Nous ne gardons jamais les adresses elles-mêmes.",
+        "feedback": "Les avis que vous envoyez depuis les Réglages : leur sujet, une note si vous en donnez une, et votre message",
+        "feedbackWhy": "Pour améliorer Waypoint. Les numéros de téléphone, adresses e-mail et numéros de carte ou de pièce d’identité sont retirés de votre message avant conservation. Les personnes qui le lisent ne voient pas qui l’a envoyé, sauf si vous demandez une réponse : elles voient alors votre adresse e-mail, pour pouvoir vous répondre."
       },
       "never": {
         "title": "Ce que nous ne gardons jamais",
         "scam": "Les messages que vous vérifiez avec le Bouclier anti-arnaque. Nous ne gardons qu’une empreinte du texte, le résultat, les signaux d’alerte repérés et le nom des sites vers lesquels il renvoie — de quoi repérer les arnaques qui circulent.",
         "crisis": "Les mots qui ont amené Waypoint à afficher une aide de crise. Nous gardons seulement le fait que c’est arrivé, le niveau de gravité apparent et la règle concernée.",
         "location": "L’endroit où vous êtes. La météo et la qualité de l’air arrivent dans votre navigateur directement depuis le service de prévisions, pour un lieu arrondi à environ 1 km, et le lieu choisi reste sur votre appareil.",
-        "tracking": "Cookies publicitaires, cookies de pistage ou mesures d’audience qui vous suivent. Nos seuls cookies vous gardent connecté, retiennent que cet appareil s’est déjà connecté (pour qu’une personne qui essaie de deviner votre mot de passe ne puisse pas vous bloquer) et retiennent votre langue, votre fuseau horaire, vos choix d’affichage et les étapes que vous avez remises à plus tard aujourd’hui."
+        "tracking": "Cookies publicitaires, cookies de pistage ou mesures d’audience qui vous suivent. Nos seuls cookies vous gardent connecté, retiennent que cet appareil s’est déjà connecté (pour qu’une personne qui essaie de deviner votre mot de passe ne puisse pas vous bloquer) et retiennent votre langue, votre fuseau horaire, vos choix d’affichage, les étapes que vous avez remises à plus tard aujourd’hui (sous forme de codes qui n’en disent rien) et, si vous êtes invité, que vous avez répondu « Pas maintenant » à la note sur la création d’un compte. Quand vous vous déconnectez ou supprimez votre compte, votre langue, vos choix d’affichage, les étapes remises à plus tard et ce « Pas maintenant » sont effacés de l’appareil, pour que la personne qui l’utilise ensuite ne les voie pas."
       },
       "choices": {
         "title": "Vos choix",
@@ -2243,7 +2245,7 @@
         "encryption": "Les notes privées, les données de santé et financières, les objectifs et les personnes de confiance sont chiffrés dans la base de données avec une clé créée pour vous. Supprimer votre compte détruit d’abord cette clé : ils ne pourront plus jamais être lus.",
         "transport": "Tout circule par des connexions chiffrées (HTTPS).",
         "sessions": "Vous êtes déconnecté après 30 jours sans utiliser Waypoint, et les sessions n’enregistrent pas d’où vous vous connectez.",
-        "staff": "Les outils de l’équipe ne montrent que ce dont elle a besoin — messages retenus pour vérification, signalements d’arnaque et chiffres globaux —, jamais vos conversations, vos notes ni vos données de santé ou financières. Ce que fait l’équipe est enregistré."
+        "staff": "Les outils de l’équipe ne montrent que ce dont elle a besoin — messages retenus pour vérification, signalements d’arnaque, les avis que vous envoyez (sans numéros personnels, et avec votre adresse e-mail seulement si vous avez demandé une réponse) et chiffres globaux. Ils ne montrent jamais vos conversations ni vos notes, ni les données de santé ou financières que vous gardez dans Waypoint. Ce que fait l’équipe est enregistré."
       },
       "rights": {
         "title": "Vos droits",

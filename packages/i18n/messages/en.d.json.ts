@@ -2178,14 +2178,16 @@ declare const messages: {
         "phone": "Your phone number, if you add it (proved with a code) or text Waypoint",
         "phoneWhy": "To answer you by text or WhatsApp, and to send sign-in codes.",
         "security": "A cookie that keeps you signed in, and scrambled versions of network (IP) addresses",
-        "securityWhy": "To keep your account safe and stop abuse. We never keep the addresses themselves."
+        "securityWhy": "To keep your account safe and stop abuse. We never keep the addresses themselves.",
+        "feedback": "Feedback you send from Settings: what it is about, a rating if you give one, and your message",
+        "feedbackWhy": "To make Waypoint better. Phone numbers, email addresses and card or ID numbers are removed from your message before it is kept. The people who read it aren’t shown who sent it, unless you ask for a reply: then they see your email address, so they can answer you."
       },
       "never": {
         "title": "What we never keep",
         "scam": "Messages you check with Scam Shield. We keep only a fingerprint of the text, the result, which warning signs matched and the names of any websites it links to — enough to spot scams going round.",
         "crisis": "The words that made Waypoint show crisis support. We keep only that it happened, how serious it looked and which rule matched.",
         "location": "Where you are. Weather and air quality come to your browser straight from the forecast service, for a place rounded to about 1 km, and the place you choose stays on your device.",
-        "tracking": "Advertising cookies, tracking cookies or analytics that follow you. Our only cookies keep you signed in, remember that this device has signed in before (so someone guessing your password can’t lock you out), and remember your language, time zone and display choices, and which steps you set aside for today."
+        "tracking": "Advertising cookies, tracking cookies or analytics that follow you. Our only cookies keep you signed in, remember that this device has signed in before (so someone guessing your password can’t lock you out), and remember your language, time zone and display choices, which steps you set aside for today (as codes that say nothing about them) and, for a guest, that you said “Not now” to the note about creating an account. Signing out or deleting your account removes your language, display choices, the steps set aside and that “Not now” from the device, so whoever uses it next doesn’t see them."
       },
       "choices": {
         "title": "Your choices",
@@ -2250,7 +2252,7 @@ declare const messages: {
         "encryption": "Private notes, health and money details, goals and trusted contacts are encrypted in the database with a key made for you. Deleting your account destroys that key first, so they can never be read again.",
         "transport": "Everything travels over encrypted connections (HTTPS).",
         "sessions": "You’re signed out after 30 days without using Waypoint, and sessions don’t record where you connect from.",
-        "staff": "Staff tools show only what staff need — posts held for review, scam reports and overall counts — never your conversations, notes, health or money details. What staff do is recorded."
+        "staff": "Staff tools show only what staff need — posts held for review, scam reports, the feedback you send (with personal numbers removed, and your email address only if you asked for a reply) and overall counts. They never show your conversations or notes, or the health and money details you keep in Waypoint. What staff do is recorded."
       },
       "rights": {
         "title": "Your rights",

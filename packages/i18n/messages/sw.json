@@ -2171,14 +2171,16 @@
         "phone": "Nambari yako ya simu, ukiiongeza (ikithibitishwa kwa msimbo) au ukiitumia Waypoint ujumbe",
         "phoneWhy": "Ili kukujibu kwa SMS au WhatsApp, na kukutumia misimbo ya kuingia.",
         "security": "Kuki inayokuweka ukiwa umeingia, na matoleo yaliyochanganywa ya anwani za mtandao (IP)",
-        "securityWhy": "Ili kulinda akaunti yako na kuzuia matumizi mabaya. Hatuhifadhi anwani zenyewe kamwe."
+        "securityWhy": "Ili kulinda akaunti yako na kuzuia matumizi mabaya. Hatuhifadhi anwani zenyewe kamwe.",
+        "feedback": "Maoni unayotuma kutoka Mipangilio: yanahusu nini, alama ukiitoa, na ujumbe wako",
+        "feedbackWhy": "Ili kuiboresha Waypoint. Namba za simu, anwani za barua pepe na namba za kadi au za kitambulisho huondolewa kwenye ujumbe wako kabla ya kuhifadhiwa. Wanaousoma hawaonyeshwi nani aliyeutuma, isipokuwa ukiomba jibu: hapo wanaona anwani yako ya barua pepe, ili waweze kukujibu."
       },
       "never": {
         "title": "Tusichohifadhi kamwe",
         "scam": "Jumbe unazokagua kwa Ngao ya Ulaghai. Tunahifadhi tu alama ya maandishi, matokeo, ishara za tahadhari zilizoonekana na majina ya tovuti ambazo ujumbe unaelekeza — inatosha kutambua ulaghai unaosambaa.",
         "crisis": "Maneno yaliyoifanya Waypoint ionyeshe msaada wa dharura. Tunahifadhi tu kwamba ilitokea, ilionekana kuwa mbaya kiasi gani na kanuni ipi ililingana.",
         "location": "Mahali ulipo. Hali ya hewa na ubora wa hewa hufika kwenye kivinjari chako moja kwa moja kutoka kwa huduma ya utabiri, kwa mahali palipokadiriwa hadi takriban kilomita 1, na mahali unapochagua hubaki kwenye kifaa chako.",
-        "tracking": "Kuki za matangazo, kuki za kufuatilia au takwimu zinazokufuata. Kuki zetu pekee hukuweka ukiwa umeingia, hukumbuka kwamba kifaa hiki kimewahi kuingia (ili mtu anayejaribu kubahatisha nenosiri lako asiweze kukufungia nje), na hukumbuka lugha yako, saa za eneo, machaguo ya mwonekano na hatua ulizoziweka kando leo."
+        "tracking": "Kuki za matangazo, kuki za kufuatilia au takwimu zinazokufuata. Kuki zetu pekee hukuweka ukiwa umeingia, hukumbuka kwamba kifaa hiki kimewahi kuingia (ili mtu anayejaribu kubahatisha nenosiri lako asiweze kukufungia nje), na hukumbuka lugha yako, saa za eneo, machaguo ya mwonekano, hatua ulizoziweka kando leo (kama misimbo isiyosema chochote kuzihusu) na, kama wewe ni mgeni, kwamba ulichagua “Si sasa” kwenye ujumbe kuhusu kufungua akaunti. Ukitoka au ukifuta akaunti yako, lugha yako, machaguo ya mwonekano, hatua ulizoziweka kando na hilo “Si sasa” hufutwa kwenye kifaa, ili atakayekitumia baadaye asizione."
       },
       "choices": {
         "title": "Machaguo yako",
@@ -2243,7 +2245,7 @@
         "encryption": "Maelezo ya faragha, taarifa za afya na pesa, malengo na watu unaowaamini husimbwa kwenye hifadhidata kwa ufunguo ulioundwa kwa ajili yako. Kufuta akaunti yako huharibu ufunguo huo kwanza, kwa hivyo haviwezi kusomwa tena kamwe.",
         "transport": "Kila kitu husafiri kupitia miunganisho iliyosimbwa (HTTPS).",
         "sessions": "Unatolewa kiotomatiki baada ya siku 30 bila kutumia Waypoint, na hatuhifadhi mahali unapounganisha kutoka.",
-        "staff": "Zana za timu huonyesha tu kile ambacho timu inahitaji — machapisho yaliyozuiliwa kwa ukaguzi, ripoti za ulaghai na idadi za jumla — kamwe si mazungumzo yako, maelezo, wala taarifa za afya au pesa. Kila kitu ambacho timu hufanya huandikwa."
+        "staff": "Zana za timu huonyesha tu kile ambacho timu inahitaji — machapisho yaliyozuiliwa kwa ukaguzi, ripoti za ulaghai, maoni unayotuma (bila namba binafsi, na anwani yako ya barua pepe ikiwa tu uliomba jibu) na idadi za jumla. Kamwe hazionyeshi mazungumzo yako wala maelezo yako, wala taarifa za afya au pesa unazohifadhi kwenye Waypoint. Kila kitu ambacho timu hufanya huandikwa."
       },
       "rights": {
         "title": "Haki zako",

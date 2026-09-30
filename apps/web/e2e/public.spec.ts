@@ -45,6 +45,15 @@ test('the privacy notice and terms are complete and linked to each other', async
     await expect(page.getByRole('heading', { level: 2, name: section })).toBeVisible();
   // Nothing outside Waypoint is set up in the test server, and the notice says so.
   await expect(page.getByText('This Waypoint has no outside AI provider set up')).toBeVisible();
+  // Feedback is collected, and staff read it — with the address only when a reply was asked for.
+  const notice = page.getByRole('article');
+  await expect(notice.getByText(/^Feedback you send from Settings/)).toBeVisible();
+  await expect(
+    notice.getByText(/scam reports, the feedback you send .*your email address only if you asked/),
+  ).toBeVisible();
+  // Every cookie is named, and what signing out removes from the device.
+  await expect(notice.getByText(/“Not now” to the note about creating an account/)).toBeVisible();
+  await expect(notice.getByText(/Signing out or deleting your account removes/)).toBeVisible();
   await snap(page, testInfo, 'privacy');
 
   await page.getByRole('main').getByRole('link', { name: 'Terms of use' }).click();

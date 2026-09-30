@@ -5,11 +5,11 @@
  * notice they could read at the time. Change the version when the notice changes what
  * Waypoint does with information, and change the dates whenever the words change.
  */
-export const PRIVACY_POLICY_VERSION = '2026-09';
+export const PRIVACY_POLICY_VERSION = '2026-10';
 
 /** Shown as "Last updated" on each page (ISO dates). */
 export const LEGAL_UPDATED = {
-  privacy: '2026-09-30',
+  privacy: '2026-10-01',
   terms: '2026-09-30',
 } as const;
 

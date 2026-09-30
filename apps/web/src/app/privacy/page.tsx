@@ -51,11 +51,13 @@ export default async function PrivacyNoticePage() {
         <>
           <p>{t('collect.lead')}</p>
           <Rows
-            rows={(['account', 'profile', 'writing', 'phone', 'security'] as const).map((id) => ({
-              id,
-              term: t(`collect.${id}`),
-              detail: t(`collect.${id}Why`),
-            }))}
+            rows={(['account', 'profile', 'writing', 'feedback', 'phone', 'security'] as const).map(
+              (id) => ({
+                id,
+                term: t(`collect.${id}`),
+                detail: t(`collect.${id}Why`),
+              }),
+            )}
           />
         </>
       ),

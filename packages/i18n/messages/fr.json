@@ -2072,7 +2072,7 @@
         "scam": "Les messages que vous vérifiez avec le Bouclier anti-arnaque. Nous ne gardons qu’une empreinte du texte, le résultat, les signaux d’alerte repérés et le nom des sites vers lesquels il renvoie — de quoi repérer les arnaques qui circulent.",
         "crisis": "Les mots qui ont amené Waypoint à afficher une aide de crise. Nous gardons seulement le fait que c’est arrivé, le niveau de gravité apparent et la règle concernée.",
         "location": "L’endroit où vous êtes. La météo et la qualité de l’air arrivent dans votre navigateur directement depuis le service de prévisions, pour un lieu arrondi à environ 1 km, et le lieu choisi reste sur votre appareil.",
-        "tracking": "Cookies publicitaires, cookies de pistage ou mesures d’audience qui vous suivent. Nos seuls cookies vous gardent connecté, retiennent que cet appareil s’est déjà connecté (pour qu’une personne qui essaie de deviner votre mot de passe ne puisse pas vous bloquer) et retiennent votre langue, votre fuseau horaire et vos choix d’affichage."
+        "tracking": "Cookies publicitaires, cookies de pistage ou mesures d’audience qui vous suivent. Nos seuls cookies vous gardent connecté, retiennent que cet appareil s’est déjà connecté (pour qu’une personne qui essaie de deviner votre mot de passe ne puisse pas vous bloquer) et retiennent votre langue, votre fuseau horaire, vos choix d’affichage et les étapes que vous avez remises à plus tard aujourd’hui."
       },
       "choices": {
         "title": "Vos choix",

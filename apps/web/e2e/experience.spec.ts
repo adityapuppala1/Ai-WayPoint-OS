@@ -1,7 +1,7 @@
 /**
- * The pages people meet first — welcome, getting started, Today, Ask, Shield, What's next?
- * and settings — at a small phone (375 px) and a laptop (1280 px), in light and dark, in
- * English and in Arabic (right to left). Each must fit the screen without sideways
+ * The pages people meet first — welcome, getting started, Today, Ask, Shield, What's next?,
+ * settings and All modules — at a small phone (375 px) and a laptop (1280 px), in light and
+ * dark, in English and in Arabic (right to left). Each must fit the screen without sideways
  * scrolling, keep every control big enough to press, show where the keyboard focus is, and
  * mirror for right-to-left reading. Screenshots are saved with the results for looking over.
  */
@@ -18,6 +18,7 @@ const PAGES = [
   { name: 'shield', path: '/shield', guest: true },
   { name: 'forecasts', path: '/signals/forecasts', guest: true },
   { name: 'settings', path: '/settings', guest: true },
+  { name: 'explore', path: '/explore', guest: true },
 ] as const;
 
 const SIZES = [

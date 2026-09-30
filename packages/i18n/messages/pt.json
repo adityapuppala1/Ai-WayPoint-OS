@@ -2072,7 +2072,7 @@
         "scam": "As mensagens que você verifica com o Escudo contra golpes. Guardamos só uma impressão digital do texto, o resultado, os sinais de alerta encontrados e os nomes dos sites para os quais ele aponta — o suficiente para identificar golpes em circulação.",
         "crisis": "As palavras que fizeram o Waypoint mostrar apoio em crise. Guardamos só que isso aconteceu, a gravidade aparente e qual regra foi acionada.",
         "location": "Onde você está. O clima e a qualidade do ar chegam ao seu navegador direto do serviço de previsão, para um local arredondado para cerca de 1 km, e o local que você escolhe fica no seu aparelho.",
-        "tracking": "Cookies de publicidade, cookies de rastreamento ou análises que seguem você. Nossos únicos cookies mantêm você conectado, lembram que este aparelho já entrou antes (para que alguém tentando adivinhar sua senha não consiga bloquear você) e lembram seu idioma, fuso horário e preferências de exibição."
+        "tracking": "Cookies de publicidade, cookies de rastreamento ou análises que seguem você. Nossos únicos cookies mantêm você conectado, lembram que este aparelho já entrou antes (para que alguém tentando adivinhar sua senha não consiga bloquear você) e lembram seu idioma, fuso horário, preferências de exibição e quais passos você deixou para depois hoje."
       },
       "choices": {
         "title": "Suas escolhas",

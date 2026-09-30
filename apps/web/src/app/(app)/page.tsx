@@ -117,10 +117,8 @@ export default async function TodayPage() {
       : { title: path('makePlan'), description: path('noPlanBody') },
     shield: { title: t('toolShield'), description: t('toolShieldHint') },
     ask: { title: t('toolAsk'), description: t('toolAskHint') },
-    signals: {
-      title: nav('signals'),
-      description: view.signals.length ? modules('signals') : t('changedEmpty'),
-    },
+    // What changed is listed in full beside this list; this line only says what Signals is.
+    signals: { title: nav('signals'), description: modules('signals') },
     circles: { title: t('toolCircles'), description: t('toolCirclesHint') },
     money: view.money
       ? {

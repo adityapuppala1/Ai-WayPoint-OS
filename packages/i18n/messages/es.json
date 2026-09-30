@@ -2072,7 +2072,7 @@
         "scam": "Los mensajes que revisas con el Escudo antiestafas. Solo guardamos una huella del texto, el resultado, las señales de alerta que coincidieron y los nombres de las webs a las que enlaza: lo justo para detectar estafas que circulan.",
         "crisis": "Las palabras que hicieron que Waypoint mostrara ayuda en crisis. Solo guardamos que ocurrió, lo grave que parecía y qué regla coincidió.",
         "location": "Dónde estás. El tiempo y la calidad del aire llegan a tu navegador directamente del servicio de pronósticos, para un lugar redondeado a aproximadamente 1 km, y el lugar que eliges se queda en tu dispositivo.",
-        "tracking": "Cookies publicitarias o de rastreo, ni analíticas que te sigan. Nuestras únicas cookies mantienen tu sesión, recuerdan que este dispositivo ya inició sesión antes (para que alguien que intente adivinar tu contraseña no pueda bloquearte) y recuerdan tu idioma, tu zona horaria y cómo prefieres ver la app."
+        "tracking": "Cookies publicitarias o de rastreo, ni analíticas que te sigan. Nuestras únicas cookies mantienen tu sesión, recuerdan que este dispositivo ya inició sesión antes (para que alguien que intente adivinar tu contraseña no pueda bloquearte) y recuerdan tu idioma, tu zona horaria, cómo prefieres ver la app y qué pasos dejaste hoy para otro momento."
       },
       "choices": {
         "title": "Lo que puedes elegir",

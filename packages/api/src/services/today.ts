@@ -9,6 +9,7 @@
  * data, never made up.
  */
 import { z } from '@hono/zod-openapi';
+import { getChecklist } from '@waypoint/content';
 import {
   chooseNextStep,
   lifeEventFor,
@@ -219,7 +220,9 @@ export async function today(
         .orderBy(desc(nudges.createdAt))
         .limit(3),
       // The life-event checklist that matches the person's situation, with their progress.
-      event ? checklistFor(db, userId, event, profile.country).catch(() => null) : null,
+      event && getChecklist(event, profile.country)
+        ? checklistFor(db, userId, event, profile.country)
+        : null,
       // Only counts and dates: a goal's words stay encrypted and are not read here.
       db
         .select({ n: count() })

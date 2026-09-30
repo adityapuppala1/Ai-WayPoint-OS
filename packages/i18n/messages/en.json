@@ -2076,7 +2076,7 @@
         "scam": "Messages you check with Scam Shield. We keep only a fingerprint of the text, the result, which warning signs matched and the names of any websites it links to — enough to spot scams going round.",
         "crisis": "The words that made Waypoint show crisis support. We keep only that it happened, how serious it looked and which rule matched.",
         "location": "Where you are. Weather and air quality come to your browser straight from the forecast service, for a place rounded to about 1 km, and the place you choose stays on your device.",
-        "tracking": "Advertising cookies, tracking cookies or analytics that follow you. Our only cookies keep you signed in, remember that this device has signed in before (so someone guessing your password can’t lock you out), and remember your language, time zone and display choices."
+        "tracking": "Advertising cookies, tracking cookies or analytics that follow you. Our only cookies keep you signed in, remember that this device has signed in before (so someone guessing your password can’t lock you out), and remember your language, time zone and display choices, and which steps you set aside for today."
       },
       "choices": {
         "title": "Your choices",

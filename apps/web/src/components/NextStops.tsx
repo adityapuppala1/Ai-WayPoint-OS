@@ -99,7 +99,8 @@ export async function NextStops({ stops }: { stops: NextStop[] }) {
     goals: { module: 'goals', href: '/goals', title: nav('goals'), description: modules('goals') },
   };
   return (
-    <Panel title={explore('moreTitle')} as="section" flush>
+    // The id gives the section its name ("Also on Waypoint") for screen readers.
+    <Panel id="also-on-waypoint" title={explore('moreTitle')} as="section" flush>
       <List>
         {shown.map((stop) => {
           const w = words[stop];

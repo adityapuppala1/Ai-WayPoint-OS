@@ -5,7 +5,7 @@
  * to each other.
  */
 import type { Page } from '@playwright/test';
-import { expect, startAsGuest, test } from './fixtures';
+import { expect, snap, startAsGuest, test } from './fixtures';
 
 /** Every module's address, as the navigation has them. */
 const MODULES = [
@@ -30,7 +30,9 @@ async function startWith(page: Page, situation: string, from = '/welcome'): Prom
   await expect(page).toHaveURL(/\/start/);
   await page.getByLabel('What should we call you?').fill('Amani');
   await page.getByRole('button', { name: 'Continue' }).click();
-  await page.getByRole('radio', { name: situation }).check();
+  // The radio's input sits under its label; press the label, as a person would.
+  await page.getByText(situation, { exact: true }).click();
+  await expect(page.getByRole('radio', { name: situation })).toBeChecked();
   for (let step = 0; step < 3; step++) {
     await page.getByRole('button', { name: 'Continue' }).click();
   }
@@ -43,7 +45,7 @@ const sign = (page: Page) => page.locator('section[aria-live="polite"]').first()
 test('someone who lost their job sees their checklist on the sign; “not now” and “done” both move on', async ({
   page,
   context,
-}) => {
+}, testInfo) => {
   await startWith(page, 'I recently lost my job or income');
   // Today, not a career form.
   await expect(page).toHaveURL(/\/$/, { timeout: 30_000 });
@@ -61,6 +63,8 @@ test('someone who lost their job sees their checklist on the sign; “not now”
   await expect(sign(page)).toContainText(
     'It is on the checklist for your situation, under “Do now”.',
   );
+
+  await snap(page, testInfo, 'today-lost-job');
 
   // Done and not now are the same kind of control, side by side.
   const done = sign(page).getByRole('button', { name: 'Mark as done' });
@@ -121,7 +125,7 @@ test('Today links to all twelve modules, beside the sign on a laptop and under i
 
   if (isMobile) {
     // A phone shows four, and the rest on request — so Today stays short.
-    await expect(tools.getByRole('link')).toHaveCount(4);
+    await expect(tools.getByRole('listitem')).toHaveCount(4);
     const all = tools.getByRole('button', { name: 'All modules' });
     await expect(all).toHaveAttribute('aria-expanded', 'false');
     await all.click();
@@ -179,7 +183,7 @@ test('in Arabic the module list moves to the other side of the sign @desktop', a
 test('on a phone, More is a directory that reaches every place that is not a tab', async ({
   page,
   isMobile,
-}) => {
+}, testInfo) => {
   test.skip(!isMobile, 'wide screens show the rail instead of the bottom bar');
   await startAsGuest(page);
   const more = page.getByRole('button', { name: 'More' });
@@ -200,6 +204,7 @@ test('on a phone, More is a directory that reaches every place that is not a tab
   expect(boxes.length).toBeGreaterThanOrEqual(12);
   expect(new Set(boxes.map((b) => b.x)).size).toBe(1);
   for (const b of boxes) expect(b.height).toBeGreaterThanOrEqual(44);
+  await snap(page, testInfo, 'more-sheet');
   // The tabs are not repeated here.
   await expect(sheet.locator('a[href="/path"]')).toHaveCount(0);
 
@@ -300,6 +305,7 @@ test('modules point on to each other: “Also on Waypoint” at the foot', async
   expect(count).toBeLessThanOrEqual(3);
   await also.locator('a[href="/civic"]').click();
   await expect(page).toHaveURL(/\/civic$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Services' })).toBeVisible();
 
   // A checklist: money, or talking it through.
   await page.goto('/civic/job-loss');

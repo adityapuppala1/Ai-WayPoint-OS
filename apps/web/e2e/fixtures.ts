@@ -167,6 +167,15 @@ export const test = base.extend<{ problems: string[]; allow: { console: RegExp[]
 
 export { expect };
 
+/**
+ * For tests that hold back or stand in for the app's own requests with `page.route`: in
+ * WebKit the route never sees a request from a page that the service worker looks after, so
+ * there it would do nothing and the test would check something else. Use it with
+ * `test.use(WITHOUT_WORKER)`. The worker only keeps the offline page and the help numbers
+ * (public/sw.js), which such tests do not look at.
+ */
+export const WITHOUT_WORKER = { serviceWorkers: 'block' } as const;
+
 /** A full-page screenshot saved with the test's results, for looking over by eye. */
 export async function snap(page: Page, testInfo: TestInfo, name: string): Promise<void> {
   await page.screenshot({ path: testInfo.outputPath(`${name}.png`), fullPage: true });

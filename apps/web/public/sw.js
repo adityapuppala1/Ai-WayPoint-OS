@@ -25,6 +25,8 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('message', (event) => {
+  // Only this site's own pages may ask: a message from anywhere else is ignored.
+  if (event.origin !== self.location.origin) return;
   if (event.data === 'forget') event.waitUntil(caches.delete(PAGES));
 });
 

@@ -48,4 +48,22 @@ describe('/.well-known/security.txt (RFC 9116)', () => {
         field(securityTxt({ site: 'https://w.example', contact: bad, now }), 'Contact'),
       ).toEqual([SECURITY_REPORT_URL]);
   });
+
+  it('decides quickly whatever the contact setting holds', () => {
+    // A value built to make a careless pattern retry every split: it must cost nothing.
+    const hostile = `!@${'!.'.repeat(60_000)}@`;
+    const started = performance.now();
+    const text = securityTxt({ site: 'https://w.example', contact: hostile, now });
+    expect(performance.now() - started).toBeLessThan(200);
+    expect(field(text, 'Contact')).toEqual([SECURITY_REPORT_URL]);
+    // Ordinary addresses are still recognised, odd but valid ones included.
+    for (const ok of ['security@w.example', 'first.last+tag@mail.w.example'])
+      expect(
+        field(securityTxt({ site: 'https://w.example', contact: ok, now }), 'Contact')[0],
+      ).toBe(`mailto:${ok}`);
+    for (const bad of ['a@b', '@w.example', 'a@.example', 'a@w.example.', 'a@@w.example'])
+      expect(
+        field(securityTxt({ site: 'https://w.example', contact: bad, now }), 'Contact'),
+      ).toEqual([SECURITY_REPORT_URL]);
+  });
 });

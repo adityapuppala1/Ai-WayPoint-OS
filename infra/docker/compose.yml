@@ -107,6 +107,8 @@ services:
     build: { context: ../.., dockerfile: infra/docker/Dockerfile, target: worker }
     environment:
       <<: *app-env
+      # The file the healthcheck below reads.
+      WORKER_HEARTBEAT_FILE: /tmp/waypoint-worker-alive
     depends_on:
       migrate: { condition: service_completed_successfully }
     # The worker touches this file every round; `docker compose ps` shows it as unhealthy

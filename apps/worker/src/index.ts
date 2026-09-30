@@ -7,8 +7,7 @@
  *   pnpm worker --once   run each task once and exit (cron-style)
  */
 import { writeFileSync } from 'node:fs';
-import { hostname, tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { hostname } from 'node:os';
 import { jobs } from '@waypoint/api';
 import { getEnv } from '@waypoint/core/env';
 import { closeDb, dbReady, getDb } from '@waypoint/db';
@@ -20,16 +19,19 @@ const INTERVAL_MS = jobs.workerIntervalMs(process.env.WORKER_INTERVAL_MS);
 const RETENTION_EVERY = Math.max(1, Math.round((6 * 3_600_000) / INTERVAL_MS));
 
 /**
- * Touched at the start and end of every round. The deployment's liveness check reads it
- * (infra/k8s/base/worker-deployment.yaml, infra/docker/compose.yml): a worker that has not
- * touched it for five minutes is stuck and gets restarted.
+ * Touched at the start and end of every round, when the deployment names a file for it
+ * (WORKER_HEARTBEAT_FILE in infra/k8s/base/worker-deployment.yaml and
+ * infra/docker/compose.yml). Their liveness check reads it: a worker that has not touched it
+ * for five minutes is stuck and gets restarted. The path is the deployment's own private
+ * folder, never a guessable name in a temp folder shared with other programs.
  */
-const HEARTBEAT_FILE = 'waypoint-worker-alive';
+const HEARTBEAT_FILE = process.env.WORKER_HEARTBEAT_FILE;
 const beat = () => {
+  if (!HEARTBEAT_FILE) return;
   try {
-    writeFileSync(join(tmpdir(), HEARTBEAT_FILE), String(Date.now()));
+    writeFileSync(HEARTBEAT_FILE, String(Date.now()), { mode: 0o600 });
   } catch {
-    // No writable temp folder: the worker still works, it just cannot be watched this way.
+    // Not writable: the worker still works, it just cannot be watched this way.
   }
 };
 

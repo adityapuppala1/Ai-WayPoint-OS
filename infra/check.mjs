@@ -50,15 +50,27 @@ must(
 must(/maxUnavailable: 0/.test(web), 'web-deployment.yaml: never fewer pods during a rollout');
 
 // A worker that hangs sends no email and nobody can confirm an address: it must be noticed.
-const beatFile = /HEARTBEAT_FILE = '([^']+)'/.exec(workerSource)?.[1];
-must(Boolean(beatFile), 'apps/worker/src/index.ts: the worker writes a heartbeat file');
 must(
-  /livenessProbe:/.test(worker) && Boolean(beatFile) && worker.includes(beatFile),
-  'worker-deployment.yaml: a liveness probe that reads the worker heartbeat file',
+  /process\.env\.WORKER_HEARTBEAT_FILE/.test(workerSource),
+  'apps/worker/src/index.ts: the worker touches the file named by WORKER_HEARTBEAT_FILE',
 );
 must(
-  /worker:[\s\S]*healthcheck:/.test(compose) && Boolean(beatFile) && compose.includes(beatFile),
-  'compose.yml: a healthcheck on the worker that reads its heartbeat file',
+  !/tmpdir\(\)/.test(workerSource),
+  'apps/worker/src/index.ts: no file with a guessable name in the shared temp folder',
+);
+/** The file a deployment tells the worker to touch, which its own check must then read. */
+const beatFile = (text) => /WORKER_HEARTBEAT_FILE[\s\S]{0,40}?(\/[\w./-]+)/.exec(text)?.[1];
+const probed = (text) => {
+  const file = beatFile(text);
+  return Boolean(file) && text.split(file).length > 2;
+};
+must(
+  /livenessProbe:/.test(worker) && probed(worker),
+  'worker-deployment.yaml: WORKER_HEARTBEAT_FILE set, and a liveness probe that reads that file',
+);
+must(
+  /worker:[\s\S]*healthcheck:/.test(compose) && probed(compose),
+  'compose.yml: WORKER_HEARTBEAT_FILE set on the worker, and a healthcheck that reads that file',
 );
 
 // Secrets never live in the kustomization.

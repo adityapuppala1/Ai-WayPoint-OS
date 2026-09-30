@@ -52,6 +52,9 @@ spec:
               value: "30000"
             - name: HOME
               value: /tmp
+            # The file the liveness check below reads (/tmp is this pod's own volume).
+            - name: WORKER_HEARTBEAT_FILE
+              value: /tmp/waypoint-worker-alive
           # The worker touches a file at the start and end of every round. If it has not for
           # five minutes it is stuck (no email goes out, nobody can confirm an address):
           # restart it.

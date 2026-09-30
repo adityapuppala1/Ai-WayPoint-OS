@@ -16,11 +16,26 @@ export const SECURITY_POLICY_URL =
 /** How long a served copy may be relied on. The standard asks for less than a year. */
 const VALID_DAYS = 180;
 
+/** No address (or web address) worth writing out is longer than this. */
+const LONGEST_CONTACT = 320;
+
+/**
+ * An email address, checked by splitting rather than by one pattern: a pattern with two
+ * open-ended parts around a dot can be made to retry every split of a long value.
+ */
+function isEmailAddress(value: string): boolean {
+  const at = value.indexOf('@');
+  if (at < 1 || at !== value.lastIndexOf('@')) return false;
+  const domain = value.slice(at + 1);
+  if (/[:/]/.test(value) || !domain.includes('.')) return false;
+  return domain.split('.').every((label) => label.length > 0);
+}
+
 /** The contact as RFC 9116 wants it: `mailto:` for an email address, or an https address. */
 function contactUri(contact: string | null | undefined): string | null {
   const value = contact?.trim();
-  if (!value || /\s/.test(value)) return null;
-  if (/^[^@\s:/]+@[^@\s:/]+\.[^@\s:/]+$/.test(value)) return `mailto:${value}`;
+  if (!value || value.length > LONGEST_CONTACT || /\s/.test(value)) return null;
+  if (isEmailAddress(value)) return `mailto:${value}`;
   try {
     const url = new URL(value);
     return url.protocol === 'https:' ? url.href : null;

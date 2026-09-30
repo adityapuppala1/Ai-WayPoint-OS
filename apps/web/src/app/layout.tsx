@@ -1,12 +1,15 @@
 import '@waypoint/ui/styles.css';
 import './app.css';
 import { SERVER_ONLY_NAMESPACES, textDirection } from '@waypoint/i18n';
+import { hexRoles } from '@waypoint/tokens';
 import type { Metadata, Viewport } from 'next';
-import { cookies, headers } from 'next/headers';
+import { headers } from 'next/headers';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages, getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { ServiceWorker } from '@/components/ServiceWorker';
+import { EARLY_INPUT_SCRIPT } from '@/lib/early-input';
+import { savedPreferences } from '@/lib/saved-preferences';
 import { Providers } from './providers';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -24,9 +27,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export const viewport: Viewport = {
+  // The page background (the canvas token), so the browser's own bars match the page.
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#f2f5f6' },
-    { media: '(prefers-color-scheme: dark)', color: '#0e141c' },
+    { media: '(prefers-color-scheme: light)', color: hexRoles('light').canvas },
+    { media: '(prefers-color-scheme: dark)', color: hexRoles('dark').canvas },
   ],
   colorScheme: 'light dark',
   viewportFit: 'cover',
@@ -36,11 +40,10 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const locale = await getLocale();
-  const store = await cookies();
-  const theme = store.get('wp-theme')?.value;
-  const lite = store.get('wp-lite')?.value === '1';
+  const { theme, lite, restore } = await savedPreferences();
   const t = await getTranslations('a11y');
   const common = await getTranslations('common');
+  const shell = await getTranslations('shell');
   // The per-request CSP nonce (src/proxy.ts). React Aria reads it from this meta tag for the
   // few style rules it adds at run time; without it the browser blocks them.
   const nonce = (await headers()).get('x-nonce') ?? undefined;
@@ -53,20 +56,32 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     <html
       lang={locale}
       dir={textDirection(locale)}
-      data-theme={theme === 'light' || theme === 'dark' ? theme : undefined}
+      data-theme={theme === 'system' ? undefined : theme}
       data-lite={lite ? 'true' : undefined}
       suppressHydrationWarning
     >
       <head>
         {/* Browsers hide nonce values after parsing, so the client never sees the same value. */}
         <meta property="csp-nonce" nonce={nonce} suppressHydrationWarning />
+        {/* First thing in the page: notes what is typed before the rest of the script arrives
+            (src/lib/early-input.ts). */}
+        <script nonce={nonce} suppressHydrationWarning>
+          {EARLY_INPUT_SCRIPT}
+        </script>
       </head>
       <body>
+        {/* Shown only by a browser too old for the stylesheet, which then shows the page as
+            plain text: the stylesheet hides this, and such a browser skips the stylesheet
+            (.wp-old-browser in packages/ui/src/styles/reset.css; the plain layout it gets
+            instead is at the end of index.css there). */}
+        <p className="wp-old-browser">
+          {shell('oldBrowser')} <a href="/support">{shell('help')}</a>
+        </p>
         <a className="wp-skip-link" href="#main">
           {t('skipToContent')}
         </a>
         <NextIntlClientProvider messages={messages}>
-          <Providers locale={locale} closeLabel={common('close')}>
+          <Providers locale={locale} closeLabel={common('close')} restore={restore}>
             {children}
           </Providers>
         </NextIntlClientProvider>

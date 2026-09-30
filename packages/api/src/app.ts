@@ -40,6 +40,7 @@ import mind from './routes/mind';
 import money from './routes/money';
 import org from './routes/org';
 import path from './routes/path';
+import preferences from './routes/preferences';
 import shield from './routes/shield';
 import signals from './routes/signals';
 import support from './routes/support';
@@ -380,6 +381,7 @@ export function createApp() {
 
   app.route('/', system);
   app.route('/', me);
+  app.route('/', preferences);
   app.route('/', today);
   app.route('/', support);
   app.route('/', shield);

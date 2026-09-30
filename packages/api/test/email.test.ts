@@ -78,6 +78,8 @@ describe('sending through an SMTP server', () => {
 });
 
 describe('the worker’s settings', () => {
+  // The first import of the whole worker: over five seconds while the other test files start
+  // their own databases alongside (`pnpm check`).
   it('falls back to a sensible pause when WORKER_INTERVAL_MS is not a number', async () => {
     const { workerIntervalMs } = await import('../src/jobs');
     expect(workerIntervalMs(undefined)).toBe(30_000);

@@ -26,15 +26,8 @@ import { LanguagePicker } from '@/components/LanguagePicker';
 import { api } from '@/lib/api';
 import { forgetOfflineCopy } from '@/lib/offline';
 import { LIFE_STAGE_OPTIONS, SITUATION_OPTIONS, WORK_TYPE_OPTIONS } from '@/lib/options';
+import { type Preferences, savePreferences } from '@/lib/preferences';
 import styles from './settings.module.css';
-
-function setCookie(name: string, value: string | null) {
-  // biome-ignore lint/suspicious/noDocumentCookie: plain preference cookies read by the server layout
-  document.cookie =
-    value === null
-      ? `${name}=; path=/; max-age=0; samesite=lax`
-      : `${name}=${value}; path=/; max-age=31536000; samesite=lax`;
-}
 
 export function SettingsForm({
   profile,
@@ -67,6 +60,16 @@ export function SettingsForm({
     } catch {
       toast({ title: errors('generic'), tone: 'danger' });
     }
+  };
+
+  /**
+   * Theme and lite mode: the cookie the pages are drawn from, then the profile. In that order,
+   * because saving the profile redraws the page from the cookie.
+   */
+  const appear = async (choice: Preferences, changes: Partial<Profile>) => {
+    setP((cur) => ({ ...cur, ...changes }));
+    await savePreferences(choice);
+    await patch(changes, true);
   };
 
   const saveAbout = async () => {
@@ -174,11 +177,12 @@ export function SettingsForm({
               label={theme('label')}
               value={p.theme}
               onChange={(v) => {
-                setCookie('wp-theme', v === 'system' ? null : v);
+                const chosen = v as Profile['theme'];
+                // Straight away, so the page never shows the old theme while it is saved.
                 const root = document.documentElement;
-                if (v === 'system') root.removeAttribute('data-theme');
-                else root.setAttribute('data-theme', v);
-                void patch({ theme: v as Profile['theme'] }, true);
+                if (chosen === 'system') root.removeAttribute('data-theme');
+                else root.setAttribute('data-theme', chosen);
+                void appear({ theme: chosen }, { theme: chosen });
               }}
               options={[
                 { id: 'system', label: theme('system'), icon: 'system' },
@@ -191,10 +195,9 @@ export function SettingsForm({
             isSelected={p.liteMode}
             description={t('liteModeHint')}
             onChange={(v) => {
-              setCookie('wp-lite', v ? '1' : null);
               if (v) document.documentElement.setAttribute('data-lite', 'true');
               else document.documentElement.removeAttribute('data-lite');
-              void patch({ liteMode: v }, true);
+              void appear({ lite: v }, { liteMode: v });
             }}
           >
             {t('liteMode')}

@@ -152,7 +152,8 @@
     "home": "Início do Waypoint",
     "offline": "Você está sem conexão. As linhas de apoio continuam funcionando.",
     "organisations": "Organizações",
-    "admin": "Administração"
+    "admin": "Administração",
+    "oldBrowser": "Este navegador é antigo demais para mostrar o Waypoint corretamente. Atualize-o ou abra o Waypoint em um mais recente. Os números de ajuda continuam funcionando aqui."
   },
   "welcome": {
     "title": "Veja o que vem aí. Saiba seu próximo passo. Nunca siga sozinho.",

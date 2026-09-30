@@ -1,10 +1,11 @@
 'use client';
 
-import { isLocale, LOCALE_COOKIE, type Locale, localeNames, locales } from '@waypoint/i18n';
+import { isLocale, type Locale, localeNames, locales } from '@waypoint/i18n';
 import { SelectField } from '@waypoint/ui';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useTransition } from 'react';
+import { savePreferences } from '@/lib/preferences';
 
 /** Language picker. Names are shown in their own language so people can find theirs. */
 export function LanguagePicker({ signedIn, compact }: { signedIn: boolean; compact?: boolean }) {
@@ -15,16 +16,18 @@ export function LanguagePicker({ signedIn, compact }: { signedIn: boolean; compa
 
   const change = (next: string) => {
     if (!isLocale(next) || next === locale) return;
-    // biome-ignore lint/suspicious/noDocumentCookie: a plain preference cookie read on the server
-    document.cookie = `${LOCALE_COOKIE}=${next}; path=/; max-age=31536000; samesite=lax`;
-    const save = signedIn
+    // The cookie the pages are drawn from (the server sets it, so Safari keeps it), and, for
+    // someone signed in, the profile their emails and other devices use.
+    const cookie = savePreferences({ locale: next });
+    const profile = signedIn
       ? fetch('/api/me/profile', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ locale: next }),
         }).catch(() => undefined)
       : Promise.resolve();
-    save.finally(() => startTransition(() => router.refresh()));
+    // Redrawn in the new language once both are in place.
+    Promise.all([cookie, profile]).finally(() => startTransition(() => router.refresh()));
   };
 
   return (

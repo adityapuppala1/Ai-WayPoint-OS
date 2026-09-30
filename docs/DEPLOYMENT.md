@@ -271,6 +271,17 @@ on a schedule.
 an empty database skip themselves), then production. One-time links and codes issued before
 an upgrade that changes how they are stored stop working; people ask for a new one.
 
+**Browsers.** The browser tests run in three engines, as five projects: Chrome at a desktop
+and a phone size (`desktop`, `phone`), Firefox (`firefox`), and WebKit, the engine of Safari
+and of every browser on an iPhone, at a desktop and an iPhone size (`safari`, `iphone`). CI
+runs one job per engine. To run one engine on your own machine, install its browser once
+(`pnpm --filter @waypoint/web exec playwright install firefox`, or `chromium`, or `webkit`),
+build (`pnpm --filter @waypoint/web build`), then name its projects:
+`pnpm test:e2e --project=firefox`, or `--project=safari --project=iphone`. Playwright's
+WebKit is not Safari itself, and Samsung Internet cannot be driven at all: before a release,
+open the site on a real iPhone, a Mac and an Android phone (the README's "Browsers" section
+lists what to look at). Supported versions are the `browserslist` in the root `package.json`.
+
 **If something goes wrong.** Take the app out of service at the proxy rather than deleting
 anything. The database and your copy of `WAYPOINT_KEK` are everything you need to bring it
 back. For a security problem, see [SECURITY.md](../SECURITY.md).

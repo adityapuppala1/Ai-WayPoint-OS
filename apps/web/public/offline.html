@@ -4,10 +4,14 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
+    <!-- The page background, light and dark: the same two colours as the app's own pages and
+         its manifest (the canvas token, packages/tokens). A browser test compares them. -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f2f5f6" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e141c" />
     <title>Offline · Waypoint</title>
     <style>
       :root { color-scheme: light dark; --bg: #f2f5f6; --panel: #fff; --text: #1f2a37; --muted: #4b5563; --support: #1d5d80; --tint: #e9f3f8; }
-      @media (prefers-color-scheme: dark) { :root { --bg: #151c25; --panel: #1c2430; --text: #eef1f5; --muted: #c2c9d3; --support: #9cc9e3; --tint: #1b3342; } }
+      @media (prefers-color-scheme: dark) { :root { --bg: #0e141c; --panel: #1c2430; --text: #eef1f5; --muted: #c2c9d3; --support: #9cc9e3; --tint: #1b3342; } }
       * { box-sizing: border-box; }
       body { margin: 0; font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif; background: var(--bg); color: var(--text); }
       main { max-width: 36rem; margin: 0 auto; padding: 2.5rem 1rem; display: flex; flex-direction: column; gap: 1.25rem; }

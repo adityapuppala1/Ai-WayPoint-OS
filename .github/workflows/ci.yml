@@ -64,12 +64,31 @@ jobs:
         env:
           WAYPOINT_TEST_DATABASE_URL: postgres://waypoint:ci-only-database-password@localhost:5432/waypoint
 
-  # The real app in a real browser, at phone and desktop widths: the journeys people take,
-  # accessibility, the first pages in light, dark and Arabic, and the staff console.
+  # The real app in real browsers, at phone and desktop widths: the journeys people take,
+  # accessibility, the first pages in light, dark and Arabic, the staff console and the offline
+  # page. One job per browser engine, each with its own build, server and empty database: a
+  # problem in one engine never hides behind another, and no job waits for the other two.
+  # WebKit is the engine of Safari and of every browser on an iPhone. It is also the slowest of
+  # the three under test (its desktop project alone took 14.5 minutes on a busy Windows
+  # machine, against 5 for both of Chrome's), so the limit leaves room for it, the build and
+  # a retry.
   browser:
-    name: Browser tests
+    name: Browser tests, ${{ matrix.name }}
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Chrome (desktop and phone)
+            engine: chromium
+            projects: --project=desktop --project=phone
+          - name: Firefox
+            engine: firefox
+            projects: --project=firefox
+          - name: Safari (desktop and iPhone)
+            engine: webkit
+            projects: --project=safari --project=iphone
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -81,13 +100,14 @@ jobs:
         env:
           BETTER_AUTH_SECRET: ci-only-secret-not-for-production-use-000000
           WAYPOINT_KEK: MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=
-      - run: pnpm --filter @waypoint/web exec playwright install --with-deps chromium
-      - run: pnpm test:e2e
+      - name: Install this job's browser only, with the system libraries it needs
+        run: pnpm --filter @waypoint/web exec playwright install --with-deps ${{ matrix.engine }}
+      - run: pnpm --filter @waypoint/web exec playwright test ${{ matrix.projects }}
       - name: Keep the report when a test fails
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: browser-test-report
+          name: browser-test-report-${{ matrix.engine }}
           path: |
             apps/web/playwright-report
             apps/web/test-results

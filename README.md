@@ -109,11 +109,38 @@ read [docs/AI.md](docs/AI.md#typed-decisions-jev) before switching it on.
 | `pnpm worker` | Background worker for Postgres deployments |
 | `pnpm eval` | Run the safety evaluation sets against the classifiers, and the assistant guardrail cases (no AI key needed) |
 | `pnpm check` | Lint, types and every unit test in one go (what CI runs) |
-| `pnpm --filter @waypoint/web build` then `pnpm test:e2e` | Browser tests against the built app, at phone and desktop widths (first time: `pnpm --filter @waypoint/web exec playwright install chromium`) |
+| `pnpm --filter @waypoint/web build` then `pnpm test:e2e` | Browser tests against the built app in Chrome, Firefox and Safari's engine (WebKit), at phone and desktop widths (first time: `pnpm --filter @waypoint/web exec playwright install`; one browser only: add `--project=desktop`, `phone`, `firefox`, `safari` or `iphone`) |
 | `node infra/load/run.mjs` | The load test, against a server you name ([infra/load/README.md](infra/load/README.md) has the recorded baseline) |
 | `pnpm --filter @waypoint/mobile dev` | Start the phone app (open it in Expo Go; see [docs/MOBILE.md](docs/MOBILE.md)) |
 
 API documentation: http://localhost:3000/api/openapi.json (auth endpoints: `/api/auth/reference`).
+
+---
+
+## Browsers
+
+Waypoint is built for Chrome and Edge 111, Firefox 111 and Safari 16.4 or newer: browsers
+from spring 2023 on, including every browser on an iPhone or iPad with iOS 16.4. That list is
+the `browserslist` in the root `package.json`: the one Next.js 16 builds for by itself, with
+iOS Safari named too, so the build keeps the few prefixed rules only an iPhone reads.
+(Firefox 111 and 112 miss a few borders and hover fills, because they do not know
+`color-mix()`; nothing stops working.) An older browser shows the page as plain text with a
+notice that says so, in the reader's language, and a link to Get help now, which stays
+readable without the stylesheet.
+
+**Tested** on every change, in five Playwright projects against the built app: Chrome at a
+desktop and a phone size (`desktop`, `phone`), Firefox (`firefox`), and WebKit, the engine
+of Safari and of every browser on an iPhone, at a desktop and an iPhone size (`safari`,
+`iphone`).
+
+**Not tested**, so check by hand before a release:
+
+- **Real iPhones and Macs.** Playwright's WebKit is Safari's engine, not Safari: no on-screen
+  keyboard or toolbars, no real safe-area insets, no native date and time pickers, no
+  installed (home-screen) app, and not Safari's rule that a cookie written by a page's script
+  is forgotten after seven days. Language, theme and time zone are cookies the server sets
+  for that reason (`POST /api/preferences`).
+- **Samsung Internet**, which Playwright cannot drive.
 
 ---
 

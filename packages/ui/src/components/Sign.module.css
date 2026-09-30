@@ -1,18 +1,24 @@
 @layer components {
   /*
    * The Next Step sign — Waypoint's one bold element. A slate wayfinding panel with a
-   * signal-yellow edge, one message, one primary action. At most one per screen.
+   * signal-yellow edge, one message, one primary action. At most one per screen. It is
+   * lifted a step off the page, and in the dark it is lit: a brighter slate and a wider edge.
    */
   .sign {
+    /* Inside the Sign the focus ring takes the Sign's own text colour. */
+    --wp-focus-shadow: var(--wp-focus-shadow-on-sign);
+
     position: relative;
     display: grid;
     gap: var(--wp-space-4);
-    padding: var(--wp-space-5) var(--wp-space-5) var(--wp-space-5)
-      calc(var(--wp-space-5) + 0.375rem);
+    padding: var(--wp-space-5);
+    /* Room for the signal edge, on whichever side the language starts. */
+    padding-inline-start: calc(var(--wp-space-5) + var(--wp-sign-edge));
     border-radius: var(--wp-radius-lg);
     background: var(--wp-sign);
     color: var(--wp-sign-text);
-    border: 1px solid color-mix(in oklch, var(--wp-sign-text) 10%, transparent);
+    border: 1px solid var(--wp-sign-fill-hover);
+    box-shadow: var(--wp-shadow-2);
     overflow: hidden;
     isolation: isolate;
   }
@@ -23,7 +29,7 @@
     position: absolute;
     inset-block: 0;
     inset-inline-start: 0;
-    inline-size: 0.375rem;
+    inline-size: var(--wp-sign-edge);
     background: var(--wp-signal);
   }
 
@@ -104,17 +110,10 @@
     padding-block-start: var(--wp-space-1);
   }
 
-  .sign :focus-visible {
-    box-shadow:
-      0 0 0 2px var(--wp-sign),
-      0 0 0 4px var(--wp-sign-text),
-      0 0 0 7px var(--wp-signal);
-  }
-
   @media (min-width: 48rem) {
     .sign {
-      padding: var(--wp-space-8) var(--wp-space-8) var(--wp-space-8)
-        calc(var(--wp-space-8) + 0.375rem);
+      padding: var(--wp-space-8);
+      padding-inline-start: calc(var(--wp-space-8) + var(--wp-sign-edge));
       gap: var(--wp-space-5);
     }
   }

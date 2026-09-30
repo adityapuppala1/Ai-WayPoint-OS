@@ -21,15 +21,35 @@
   }
 
   .segment {
+    position: relative;
     block-size: 0.5rem;
     border-radius: 2px;
     background: var(--wp-sunken);
     box-shadow: inset 0 0 0 1px var(--wp-border-subtle);
+    overflow: hidden;
   }
 
-  .segment[data-on="true"] {
+  /*
+   * The meter grows to its value: each lit step fills from the start, one after the other
+   * (--step is the step's place, set by the component). Without motion it is simply full.
+   */
+  .segment[data-on="true"]::after {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    inline-size: 100%;
     background: var(--tone);
-    box-shadow: none;
+    animation: grow var(--wp-duration-base) var(--wp-ease-out) backwards;
+    animation-delay: calc(var(--step, 0) * var(--wp-duration-instant));
+  }
+
+  /* Forced colours drop backgrounds: keep the lit steps visible. */
+  @media (forced-colors: active) {
+    .segment[data-on="true"]::after {
+      forced-color-adjust: none;
+      background: Highlight;
+    }
   }
 
   .scale {
@@ -56,5 +76,11 @@
   .high,
   .veryHigh {
     --tone: var(--wp-danger);
+  }
+
+  @keyframes grow {
+    from {
+      inline-size: 0;
+    }
   }
 }

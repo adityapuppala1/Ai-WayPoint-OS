@@ -18,24 +18,48 @@
     font-weight: var(--wp-weight-medium);
     text-align: start;
     cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color var(--wp-duration-fast) var(--wp-ease-out);
   }
 
+  @media (hover: hover) {
+    .trigger[data-hovered] {
+      background: var(--wp-fill-hover);
+    }
+  }
+
+  .trigger[data-pressed] {
+    background: var(--wp-fill-pressed);
+  }
+
+  /* Drawn inside: the trigger runs edge to edge in a panel that would clip an outer ring. */
   .trigger[data-focus-visible] {
-    box-shadow:
-      inset 0 0 0 2px var(--wp-focus-ring),
-      inset 0 0 0 5px var(--wp-signal);
+    box-shadow: var(--wp-focus-shadow-inset);
   }
 
   .chevron {
     flex: none;
-    transition: transform var(--wp-duration-base) var(--wp-ease-out);
+    transition: rotate var(--wp-duration-base) var(--wp-ease-out);
   }
 
   .disclosure[data-expanded] .chevron {
-    transform: rotate(180deg);
+    rotate: 180deg;
   }
 
+  /*
+   * The panel opens and closes by height. React Aria measures the content and sets
+   * --disclosure-panel-height (pixels while it moves, then auto so the content can reflow),
+   * and hides the panel once the closing transition has finished. Without the variable
+   * (before the page's script has run) the height is simply auto.
+   */
   .panel {
+    block-size: var(--disclosure-panel-height);
+    overflow: clip;
+    transition: block-size var(--wp-duration-base) var(--wp-ease-out);
+  }
+
+  /* The padding sits inside, so a closed panel is truly 0 high. */
+  .panelBody {
     padding: 0 var(--wp-space-4) var(--wp-space-4);
     color: var(--wp-text-secondary);
   }
@@ -45,7 +69,7 @@
       padding-inline: var(--wp-space-6);
     }
 
-    .panel {
+    .panelBody {
       padding-inline: var(--wp-space-6);
     }
   }

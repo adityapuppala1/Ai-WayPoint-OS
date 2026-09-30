@@ -6,7 +6,18 @@
     background: var(--wp-raised);
     border: 1px solid var(--wp-border-subtle);
     border-radius: var(--wp-radius-md);
-    box-shadow: var(--wp-shadow-raised);
+    box-shadow: var(--wp-shadow-1);
+  }
+
+  /* A panel that is itself a way in (a card that opens something) lifts one step. */
+  .interactive {
+    transition: box-shadow var(--wp-duration-fast) var(--wp-ease-out);
+  }
+
+  @media (hover: hover) {
+    .interactive:hover {
+      box-shadow: var(--wp-shadow-2);
+    }
   }
 
   .header {

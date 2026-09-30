@@ -7,6 +7,7 @@ import {
   TabPanel as AriaTabPanel,
   Tabs as AriaTabs,
   type TabsProps as AriaTabsProps,
+  SelectionIndicator,
   ToggleButton,
   ToggleButtonGroup,
 } from 'react-aria-components';
@@ -35,6 +36,8 @@ export function Tab({ id, children, icon }: { id: string; children: ReactNode; i
     <AriaTab id={id} className={styles.tab}>
       {icon ? <Icon name={icon} size={18} /> : null}
       {children}
+      {/* Drawn only in the chosen tab; React Aria slides it there from the last one. */}
+      <SelectionIndicator className={styles.indicator} />
     </AriaTab>
   );
 }
@@ -79,6 +82,7 @@ export function Segmented({
     >
       {options.map((o) => (
         <ToggleButton key={o.id} id={o.id} className={styles.segment}>
+          <SelectionIndicator className={styles.thumb} />
           {o.icon ? <Icon name={o.icon} size={18} /> : null}
           {o.label}
         </ToggleButton>

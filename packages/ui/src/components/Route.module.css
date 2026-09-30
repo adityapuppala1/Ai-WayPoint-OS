@@ -9,6 +9,14 @@
     position: relative;
   }
 
+  /*
+   * The track between two stations is drawn twice. ::before is the line still ahead: dashed,
+   * like a line under construction. ::after is the line travelled: solid, and it grows over
+   * the dashed one when its station is done. That growth is the moment the design promises:
+   * complete a step and the route fills to the next station. It only happens when a station
+   * changes while the page is open; a route that arrives already travelled is drawn that way.
+   */
+
   /* Vertical route: stations on a thick line along the inline-start edge. */
   .vertical .station {
     position: relative;
@@ -22,29 +30,39 @@
     padding-block-end: 0;
   }
 
-  .vertical .station::before {
+  .vertical .station::before,
+  .vertical .station::after {
     content: "";
     position: absolute;
     inset-inline-start: calc(1rem - var(--rail) / 2);
-    inset-block: calc(var(--station) / 2 + 0.25rem) 0;
+    inset-block-start: calc(var(--station) / 2 + 0.25rem);
     inline-size: var(--rail);
-    background: var(--line);
     border-radius: var(--rail);
   }
 
-  .vertical .station:last-child::before {
-    display: none;
-  }
-
-  /* Track ahead of you is drawn dashed, like a line under construction. */
-  .vertical .station[data-state="current"]::before,
-  .vertical .station[data-state="upcoming"]::before {
+  .vertical .station::before {
+    inset-block-end: 0;
     background: repeating-linear-gradient(
       to bottom,
       var(--line) 0 0.375rem,
       transparent 0.375rem 0.75rem
     );
     opacity: 0.55;
+  }
+
+  .vertical .station::after {
+    block-size: 0;
+    background: var(--line);
+    transition: block-size var(--wp-duration-route) var(--wp-ease-route);
+  }
+
+  .vertical .station[data-state="done"]::after {
+    block-size: calc(100% - var(--station) / 2 - 0.25rem);
+  }
+
+  .vertical .station:last-child::before,
+  .vertical .station:last-child::after {
+    display: none;
   }
 
   .dotCell {
@@ -55,6 +73,11 @@
     z-index: 1;
   }
 
+  /*
+   * The station dot. When a station becomes the current one its dot settles into place:
+   * it grows and its halo spreads, timed to land as the track arrives. A dot that is done
+   * changes at once, since that is the step the person has just completed.
+   */
   .dot {
     inline-size: var(--station);
     block-size: var(--station);
@@ -64,6 +87,14 @@
     display: grid;
     place-items: center;
     color: var(--wp-raised);
+    box-shadow: 0 0 0 0 transparent;
+    transition:
+      inline-size var(--wp-duration-slow) var(--wp-ease-out),
+      block-size var(--wp-duration-slow) var(--wp-ease-out),
+      margin var(--wp-duration-slow) var(--wp-ease-out),
+      background-color var(--wp-duration-slow) var(--wp-ease-out),
+      border-color var(--wp-duration-slow) var(--wp-ease-out),
+      box-shadow var(--wp-duration-slow) var(--wp-ease-out);
   }
 
   .station[data-state="done"] .dot {
@@ -76,7 +107,16 @@
     margin-block-start: -0.125rem;
     background: var(--wp-signal);
     border-color: var(--wp-text);
-    box-shadow: 0 0 0 4px color-mix(in oklch, var(--wp-signal) 45%, transparent);
+    box-shadow: 0 0 0 4px var(--wp-signal-tint);
+    /* Wait for the track: it sets off from the station before and takes --wp-duration-route. */
+    transition-delay: calc(var(--wp-duration-route) - var(--wp-duration-slow));
+  }
+
+  /* A see-through signal halo where the browser can mix colours; the pale tint where not. */
+  @supports (color: color-mix(in oklch, red, blue)) {
+    .station[data-state="current"] .dot {
+      box-shadow: 0 0 0 4px color-mix(in oklch, var(--wp-signal) 45%, transparent);
+    }
   }
 
   .label {
@@ -111,7 +151,20 @@
     text-decoration: none;
   }
 
-  .content a:hover {
+  @media (hover: hover) {
+    .content a:hover {
+      text-decoration: underline;
+    }
+  }
+
+  /* A station that leads somewhere: the whole label is the link, tall enough to press. */
+  .link {
+    display: inline-block;
+    min-block-size: 1.5rem;
+    color: inherit;
+  }
+
+  .link:active {
     text-decoration: underline;
   }
 
@@ -132,19 +185,18 @@
     text-align: center;
   }
 
+  .horizontal .station::before,
   .horizontal .station::after {
     content: "";
     position: absolute;
     inset-block-start: calc(var(--station) / 2 + 0.2rem - var(--rail) / 2);
     inset-inline-start: 50%;
-    inline-size: 100%;
     block-size: var(--rail);
-    background: var(--line);
     border-radius: var(--rail);
   }
 
-  .horizontal .station[data-state="current"]::after,
-  .horizontal .station[data-state="upcoming"]::after {
+  .horizontal .station::before {
+    inline-size: 100%;
     background: repeating-linear-gradient(
       to right,
       var(--line) 0 0.375rem,
@@ -153,6 +205,17 @@
     opacity: 0.55;
   }
 
+  .horizontal .station::after {
+    inline-size: 0;
+    background: var(--line);
+    transition: inline-size var(--wp-duration-route) var(--wp-ease-route);
+  }
+
+  .horizontal .station[data-state="done"]::after {
+    inline-size: 100%;
+  }
+
+  .horizontal .station:last-child::before,
   .horizontal .station:last-child::after {
     display: none;
   }
@@ -204,11 +267,5 @@
 
   .compact .station[data-state="current"] .label {
     display: block;
-  }
-
-  @media (prefers-reduced-motion: no-preference) {
-    .station[data-state="current"] .dot {
-      transition: box-shadow var(--wp-duration-slow) var(--wp-ease-out);
-    }
   }
 }

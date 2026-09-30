@@ -28,9 +28,7 @@
 
   .group[data-focus-within] {
     border-color: var(--wp-focus-ring);
-    box-shadow:
-      0 0 0 1px var(--wp-focus-ring),
-      0 0 0 4px var(--wp-signal);
+    box-shadow: var(--wp-focus-shadow);
   }
 
   .slot {
@@ -47,19 +45,37 @@
     color: var(--wp-text);
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
+    transition: background-color var(--wp-duration-fast) var(--wp-ease-out);
   }
 
-  .button[data-hovered] {
-    background: color-mix(in oklch, var(--wp-sunken) 80%, var(--wp-text) 8%);
+  /* The buttons are already tinted, so their hover and pressed shades are a step further. */
+  @media (hover: hover) {
+    .button[data-hovered] {
+      background: var(--wp-fill-pressed);
+    }
   }
 
   .button[data-pressed] {
-    background: color-mix(in oklch, var(--wp-sunken) 70%, var(--wp-text) 14%);
+    background: var(--wp-border-strong);
   }
 
+  @supports (color: color-mix(in oklch, red, blue)) {
+    @media (hover: hover) {
+      .button[data-hovered] {
+        background: color-mix(in oklch, var(--wp-sunken) 80%, var(--wp-text) 8%);
+      }
+    }
+
+    .button[data-pressed] {
+      background: color-mix(in oklch, var(--wp-sunken) 70%, var(--wp-text) 14%);
+    }
+  }
+
+  /* Drawn inside: the group clips its corners, and an outer ring would be cut off. */
   .button[data-focus-visible] {
-    outline: 2px solid var(--wp-focus-ring);
-    outline-offset: -3px;
+    outline: 2px solid transparent;
+    outline-offset: -2px;
+    box-shadow: var(--wp-focus-shadow-inset);
   }
 
   .button[data-disabled] {

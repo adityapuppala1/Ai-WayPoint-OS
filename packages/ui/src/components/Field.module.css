@@ -42,6 +42,7 @@
     line-height: var(--wp-leading-body);
     transition:
       border-color var(--wp-duration-fast) var(--wp-ease-out),
+      background-color var(--wp-duration-fast) var(--wp-ease-out),
       box-shadow var(--wp-duration-fast) var(--wp-ease-out);
   }
 
@@ -49,22 +50,27 @@
     color: var(--wp-text-muted);
   }
 
-  .control[data-hovered] {
-    border-color: color-mix(in oklch, var(--wp-text) 45%, transparent);
-  }
-
-  .control[data-focused],
-  .control:focus-visible {
-    outline: 2px solid transparent;
-    border-color: var(--wp-focus-ring);
-    box-shadow:
-      0 0 0 1px var(--wp-focus-ring),
-      0 0 0 4px var(--wp-signal);
+  @media (hover: hover) {
+    .control[data-hovered] {
+      border-color: var(--wp-text-muted);
+    }
   }
 
   .control[data-invalid] {
     border-color: var(--wp-danger);
     box-shadow: 0 0 0 1px var(--wp-danger);
+  }
+
+  /* After the invalid rule, so a field with a mistake in it still shows where the focus is. */
+  .control[data-focused],
+  .control:focus-visible {
+    outline: 2px solid transparent;
+    border-color: var(--wp-focus-ring);
+    box-shadow: var(--wp-focus-shadow);
+  }
+
+  .control[data-invalid][data-focused] {
+    border-color: var(--wp-danger);
   }
 
   .control[data-disabled] {
@@ -87,11 +93,13 @@
     cursor: pointer;
   }
 
+  .selectButton[data-pressed] {
+    background: var(--wp-sunken);
+  }
+
   .selectButton[data-focus-visible] {
     border-color: var(--wp-focus-ring);
-    box-shadow:
-      0 0 0 1px var(--wp-focus-ring),
-      0 0 0 4px var(--wp-signal);
+    box-shadow: var(--wp-focus-shadow);
   }
 
   .selectValue {
@@ -118,11 +126,15 @@
     border: 1px solid var(--wp-border-subtle);
     border-radius: var(--wp-radius-sm);
     background: var(--wp-overlay);
-    box-shadow: var(--wp-shadow-overlay);
+    box-shadow: var(--wp-shadow-3);
   }
 
   .popover[data-entering] {
     animation: pop var(--wp-duration-fast) var(--wp-ease-out);
+  }
+
+  .popover[data-exiting] {
+    animation: popOut var(--wp-duration-instant) var(--wp-ease-in) forwards;
   }
 
   .listbox {
@@ -139,9 +151,11 @@
     border-radius: var(--wp-radius-xs);
     cursor: pointer;
     outline: none;
+    transition: background-color var(--wp-duration-fast) var(--wp-ease-out);
   }
 
-  .option[data-focused] {
+  .option[data-focused],
+  .option[data-pressed] {
     background: var(--wp-signal-tint);
   }
 
@@ -180,7 +194,15 @@
     border-radius: var(--wp-radius-xs);
     background: var(--wp-raised);
     color: var(--wp-signal-ink);
-    transition: background-color var(--wp-duration-fast) var(--wp-ease-out);
+    transition:
+      background-color var(--wp-duration-fast) var(--wp-ease-out),
+      box-shadow var(--wp-duration-fast) var(--wp-ease-out),
+      scale var(--wp-duration-fast) var(--wp-ease-out);
+  }
+
+  /* Too small for the shared press scale to show: the box dips a little further. */
+  .choice[data-pressed] .box {
+    scale: 0.9;
   }
 
   .radioDot {
@@ -198,10 +220,14 @@
   }
 
   .choice[data-focus-visible] .box {
+    box-shadow: var(--wp-focus-shadow);
+  }
+
+  /* After the selected radio's inner ring, which is a shadow too: keep it and add the focus ring. */
+  .choice[data-selected][data-focus-visible] .radioDot {
     box-shadow:
-      0 0 0 2px var(--wp-canvas),
-      0 0 0 4px var(--wp-focus-ring),
-      0 0 0 7px var(--wp-signal);
+      inset 0 0 0 4px var(--wp-raised),
+      var(--wp-focus-shadow);
   }
 
   .choice[data-disabled] {
@@ -259,7 +285,12 @@
     background: var(--wp-text-secondary);
     transition:
       transform var(--wp-duration-base) var(--wp-ease-out),
-      background-color var(--wp-duration-fast) var(--wp-ease-out);
+      background-color var(--wp-duration-fast) var(--wp-ease-out),
+      scale var(--wp-duration-fast) var(--wp-ease-out);
+  }
+
+  .switch[data-pressed] .thumb {
+    scale: 0.88;
   }
 
   .switch[data-selected] .track {
@@ -279,9 +310,7 @@
   .switch[data-focus-visible] .track {
     box-shadow:
       inset 0 0 0 2px var(--wp-text),
-      0 0 0 2px var(--wp-canvas),
-      0 0 0 4px var(--wp-focus-ring),
-      0 0 0 7px var(--wp-signal);
+      var(--wp-focus-shadow);
   }
 
   /* Slider */
@@ -321,19 +350,30 @@
     border-radius: 50%;
     background: var(--wp-signal);
     border: 2px solid var(--wp-text);
+    transition:
+      box-shadow var(--wp-duration-fast) var(--wp-ease-out),
+      scale var(--wp-duration-fast) var(--wp-ease-out);
+  }
+
+  /* While it is held the thumb grows a little, so it shows from under a finger. */
+  .sliderThumb[data-dragging] {
+    scale: 1.12;
   }
 
   .sliderThumb[data-focus-visible] {
-    box-shadow:
-      0 0 0 2px var(--wp-canvas),
-      0 0 0 4px var(--wp-focus-ring),
-      0 0 0 7px var(--wp-signal);
+    box-shadow: var(--wp-focus-shadow);
   }
 
   @keyframes pop {
     from {
       opacity: 0;
       transform: translateY(-4px);
+    }
+  }
+
+  @keyframes popOut {
+    to {
+      opacity: 0;
     }
   }
 }

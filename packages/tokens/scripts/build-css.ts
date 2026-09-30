@@ -8,6 +8,8 @@ import { fileURLToPath } from 'node:url';
 import {
   type ColorRoles,
   dark,
+  elevation,
+  focus,
   fontFamily,
   fontSize,
   fontWeight,
@@ -22,7 +24,7 @@ import {
   radius,
   SERIES_HUES,
   series,
-  shadow,
+  signEdge,
   space,
   toCss,
   zIndex,
@@ -39,10 +41,11 @@ function colorVars(roles: ColorRoles, mode: 'light' | 'dark'): string[] {
   SERIES_HUES.forEach((_, i) => {
     lines.push(`--wp-series-${i + 1}: ${toCss(series(i, mode))};`);
   });
-  lines.push(`--wp-shadow-raised: ${mode === 'light' ? shadow.raised : shadow.darkEdge};`);
-  lines.push(
-    `--wp-shadow-overlay: ${mode === 'light' ? shadow.overlay : `${shadow.darkEdge}, 0 16px 40px rgb(0 0 0 / 0.35)`};`,
-  );
+  // Elevation changes with the theme: shadows in the light, lit edges in the dark.
+  for (const step of [1, 2, 3] as const) {
+    lines.push(`--wp-shadow-${step}: ${elevation[mode][step]};`);
+  }
+  lines.push(`--wp-sign-edge: ${signEdge[mode] / 16}rem;`);
   return lines;
 }
 
@@ -61,9 +64,18 @@ const staticVars: string[] = [
   `--wp-duration-base: ${motion.base}ms;`,
   `--wp-duration-slow: ${motion.slow}ms;`,
   `--wp-duration-flip: ${motion.flip}ms;`,
+  `--wp-duration-route: ${motion.route}ms;`,
   `--wp-ease-out: ${motion.easeOut};`,
   `--wp-ease-in: ${motion.easeIn};`,
   `--wp-ease-standard: ${motion.easeStandard};`,
+  `--wp-ease-route: ${motion.easeRoute};`,
+  `--wp-press-scale: ${motion.pressScale};`,
+  // The names pages already use, pointing at the scale.
+  '--wp-shadow-raised: var(--wp-shadow-1);',
+  '--wp-shadow-overlay: var(--wp-shadow-3);',
+  `--wp-focus-shadow: ${focus.shadow};`,
+  `--wp-focus-shadow-inset: ${focus.shadowInset};`,
+  `--wp-focus-shadow-on-sign: ${focus.shadowOnSign};`,
   ...Object.entries(zIndex).map(([k, v]) => `--wp-z-${k}: ${v};`),
   ...Object.entries(layout).map(([k, v]) => `--wp-${kebab(k)}: ${v}rem;`),
 ];

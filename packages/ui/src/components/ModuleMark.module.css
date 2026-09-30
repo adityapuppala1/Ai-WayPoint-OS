@@ -16,7 +16,7 @@
   }
 
   .onSign {
-    background: color-mix(in oklch, var(--wp-sign-text) 12%, transparent);
+    background: var(--wp-sign-fill-hover);
     color: var(--wp-signal);
   }
 }

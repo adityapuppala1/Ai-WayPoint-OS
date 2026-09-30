@@ -4,11 +4,15 @@
     border: 1px solid var(--wp-border-subtle);
     border-radius: var(--wp-radius-sm);
     background: var(--wp-overlay);
-    box-shadow: var(--wp-shadow-overlay);
+    box-shadow: var(--wp-shadow-3);
   }
 
   .popover[data-entering] {
     animation: pop var(--wp-duration-fast) var(--wp-ease-out);
+  }
+
+  .popover[data-exiting] {
+    animation: popOut var(--wp-duration-instant) var(--wp-ease-in) forwards;
   }
 
   .menu {
@@ -27,9 +31,11 @@
     outline: none;
     color: var(--wp-text);
     text-decoration: none;
+    transition: background-color var(--wp-duration-fast) var(--wp-ease-out);
   }
 
-  .item[data-focused] {
+  .item[data-focused],
+  .item[data-pressed] {
     background: var(--wp-signal-tint);
   }
 
@@ -47,6 +53,12 @@
     from {
       opacity: 0;
       transform: translateY(-4px);
+    }
+  }
+
+  @keyframes popOut {
+    to {
+      opacity: 0;
     }
   }
 }

@@ -13,39 +13,55 @@
     animation: fade var(--wp-duration-base) var(--wp-ease-out);
   }
 
+  /* Leaving takes as long as the dialog or sheet in front takes to leave. */
   .overlay[data-exiting] {
-    animation: fade var(--wp-duration-fast) var(--wp-ease-in) reverse;
+    animation: fadeOut var(--wp-duration-base) var(--wp-ease-in) forwards;
   }
 
   .modal {
     inline-size: min(100%, 32rem);
-    max-block-size: calc(100dvh - 2rem);
+    max-block-size: calc(100vh - 2rem);
     overflow: auto;
+    /* Scrolling to the end of a dialog must not start scrolling the page behind it. */
+    overscroll-behavior: contain;
     border: 1px solid var(--wp-border-subtle);
     border-radius: var(--wp-radius-lg);
     background: var(--wp-overlay);
-    box-shadow: var(--wp-shadow-overlay);
+    box-shadow: var(--wp-shadow-3);
   }
 
   .modal[data-entering] {
     animation: rise var(--wp-duration-base) var(--wp-ease-out);
   }
 
-  /* Sheet: bottom on phones, end edge on larger screens. */
-  .sheetOverlay {
+  .modal[data-exiting] {
+    animation: sink var(--wp-duration-fast) var(--wp-ease-in) forwards;
+  }
+
+  /* Sheet: bottom on phones, end edge on larger screens. The palette is a sheet on phones too. */
+  .sheetOverlay,
+  .paletteOverlay {
     place-items: end stretch;
     padding: 0;
   }
 
-  .sheet {
+  .sheet,
+  .palette {
     inline-size: 100%;
-    max-block-size: 92dvh;
+    max-block-size: 92vh;
     border-radius: var(--wp-radius-lg) var(--wp-radius-lg) 0 0;
     padding-block-end: env(safe-area-inset-bottom);
   }
 
-  .sheet[data-entering] {
+  /* It leaves the way it came. */
+  .sheet[data-entering],
+  .palette[data-entering] {
     animation: slideUp var(--wp-duration-slow) var(--wp-ease-out);
+  }
+
+  .sheet[data-exiting],
+  .palette[data-exiting] {
+    animation: slideDown var(--wp-duration-base) var(--wp-ease-in) forwards;
   }
 
   @media (min-width: 48rem) {
@@ -55,13 +71,86 @@
 
     .sheet {
       inline-size: min(28rem, 100%);
-      max-block-size: 100dvh;
-      block-size: 100dvh;
+      max-block-size: 100vh;
+      block-size: 100vh;
       border-radius: 0;
     }
 
     .sheet[data-entering] {
       animation: slideIn var(--wp-duration-slow) var(--wp-ease-out);
+    }
+
+    .sheet[data-exiting] {
+      animation: slideOut var(--wp-duration-base) var(--wp-ease-in) forwards;
+    }
+
+    /* The end edge is on the left in right-to-left languages. */
+    .sheet[data-entering]:dir(rtl) {
+      animation-name: slideInRtl;
+    }
+
+    .sheet[data-exiting]:dir(rtl) {
+      animation-name: slideOutRtl;
+    }
+  }
+
+  /*
+   * dvh follows a phone browser's toolbar as it shows and hides. Where a browser does not
+   * know the unit (before Safari 15.4 and Chrome 108) the vh values above stay.
+   */
+  @supports (height: 100dvh) {
+    .modal {
+      max-block-size: calc(100dvh - 2rem);
+    }
+
+    .sheet {
+      max-block-size: 92dvh;
+    }
+
+    @media (min-width: 48rem) {
+      .sheet {
+        max-block-size: 100dvh;
+        block-size: 100dvh;
+      }
+    }
+  }
+
+  /*
+   * After the rules above, so these win for a palette.
+   *
+   * The palette has a field that is typed in at once, so on a phone the keyboard is up. The
+   * dimmed layer covers only what is still visible (React Aria measures it), and the sheet
+   * rests on the keyboard instead of hiding behind it.
+   */
+  .paletteOverlay {
+    inset-block-end: auto;
+    block-size: var(--visual-viewport-height, 100vh);
+  }
+
+  .palette {
+    max-block-size: calc(var(--visual-viewport-height, 100vh) - var(--wp-space-4));
+  }
+
+  @media (min-width: 48rem) {
+    /* Near the top, so the box stays where it is while its list grows and shrinks. */
+    .paletteOverlay {
+      place-items: start center;
+      padding: min(12vh, 6rem) var(--wp-space-4) var(--wp-space-4);
+    }
+
+    .palette {
+      inline-size: min(100%, 36rem);
+      max-block-size: calc(100vh - min(12vh, 6rem) - var(--wp-space-4));
+      border-radius: var(--wp-radius-lg);
+      padding-block-end: 0;
+    }
+
+    .palette[data-entering] {
+      animation: rise var(--wp-duration-base) var(--wp-ease-out);
+    }
+
+    .palette[data-exiting] {
+      animation: sink var(--wp-duration-fast) var(--wp-ease-in) forwards;
     }
   }
 
@@ -107,8 +196,21 @@
     }
   }
 
+  @keyframes fadeOut {
+    to {
+      opacity: 0;
+    }
+  }
+
   @keyframes rise {
     from {
+      opacity: 0;
+      transform: translateY(8px) scale(0.98);
+    }
+  }
+
+  @keyframes sink {
+    to {
       opacity: 0;
       transform: translateY(8px) scale(0.98);
     }
@@ -120,8 +222,20 @@
     }
   }
 
+  @keyframes slideDown {
+    to {
+      transform: translateY(100%);
+    }
+  }
+
   @keyframes slideIn {
     from {
+      transform: translateX(100%);
+    }
+  }
+
+  @keyframes slideOut {
+    to {
       transform: translateX(100%);
     }
   }
@@ -132,7 +246,9 @@
     }
   }
 
-  .sheet[data-entering]:dir(rtl) {
-    animation-name: slideInRtl;
+  @keyframes slideOutRtl {
+    to {
+      transform: translateX(-100%);
+    }
   }
 }

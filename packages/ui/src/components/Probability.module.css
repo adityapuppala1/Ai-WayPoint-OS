@@ -36,6 +36,9 @@
     inset-inline-start: 0;
     border-radius: inherit;
     background: var(--wp-line-signals);
+    /* The bar grows to its value when it appears, and moves there when the value changes. */
+    animation: grow var(--wp-duration-slow) var(--wp-ease-out);
+    transition: inline-size var(--wp-duration-slow) var(--wp-ease-out);
   }
 
   .base {
@@ -65,5 +68,11 @@
     margin-inline-end: 0.35em;
     background: var(--wp-text);
     vertical-align: -0.05em;
+  }
+
+  @keyframes grow {
+    from {
+      inline-size: 0;
+    }
   }
 }

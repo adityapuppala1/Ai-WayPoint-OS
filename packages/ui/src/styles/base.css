@@ -72,26 +72,36 @@ a {
   text-decoration-line: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 0.22em;
-  text-decoration-color: color-mix(in oklch, currentColor 45%, transparent);
+  text-decoration-color: currentColor;
   border-radius: 2px;
   transition:
     background-color var(--wp-duration-fast) var(--wp-ease-out),
     text-decoration-color var(--wp-duration-fast) var(--wp-ease-out);
 }
 
-a:hover {
-  text-decoration-thickness: 2px;
-  text-decoration-color: currentColor;
+/* A quieter underline where the browser can mix colours; a full one where it cannot. */
+@supports (color: color-mix(in oklch, red, blue)) {
+  a {
+    text-decoration-color: color-mix(in oklch, currentColor 45%, transparent);
+  }
 }
 
-/* One focus treatment everywhere: slate ring + signal-yellow halo, visible on every surface. */
+/* Hover only where a pointer hovers: after a tap on a phone the style would stay on. */
+@media (hover: hover) {
+  a:hover {
+    text-decoration-thickness: 2px;
+    text-decoration-color: currentColor;
+  }
+}
+
+/*
+ * One focus treatment everywhere, from one token: a 2px ring and a 3px signal-yellow halo.
+ * Two colours, so one of them is visible on every surface.
+ */
 :focus-visible {
   outline: 2px solid transparent; /* keeps a visible outline in Windows forced-colours mode */
   outline-offset: 2px;
-  box-shadow:
-    0 0 0 2px var(--wp-canvas),
-    0 0 0 4px var(--wp-focus-ring),
-    0 0 0 7px var(--wp-signal);
+  box-shadow: var(--wp-focus-shadow);
 }
 
 a:focus-visible {
@@ -145,9 +155,31 @@ kbd {
   *::before,
   *::after {
     animation-duration: 1ms !important;
+    animation-delay: 0s !important;
     animation-iteration-count: 1 !important;
     transition-duration: 1ms !important;
+    transition-delay: 0s !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/*
+ * A page transition (PageTransition) is drawn by the browser on pseudo-elements of the page
+ * itself, which "*" above does not reach. The same two switches, for those: none in lite
+ * mode, instant when less motion is asked for.
+ */
+:root[data-lite="true"]::view-transition-group(*),
+:root[data-lite="true"]::view-transition-old(*),
+:root[data-lite="true"]::view-transition-new(*) {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 1ms !important;
+    animation-delay: 0s !important;
   }
 }
 

@@ -7,11 +7,19 @@
     grid-template-columns: auto 1fr;
     gap: var(--wp-space-1) var(--wp-space-3);
     padding: var(--wp-space-4);
-    border: 1px solid color-mix(in oklch, var(--tone) 28%, transparent);
+    border: 1px solid var(--wp-border-strong);
     border-inline-start: 4px solid var(--tone);
     border-radius: var(--wp-radius-sm);
     background: var(--tone-tint);
     color: var(--wp-text);
+  }
+
+  /* The hairline takes a little of the tone where the browser can mix colours. */
+  @supports (color: color-mix(in oklch, red, blue)) {
+    .notice {
+      border-block-color: color-mix(in oklch, var(--tone) 28%, transparent);
+      border-inline-end-color: color-mix(in oklch, var(--tone) 28%, transparent);
+    }
   }
 
   .icon {

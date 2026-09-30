@@ -251,16 +251,26 @@ test('a disclosure opens and closes by height', async ({ page }) => {
   await open(page);
   const trigger = page.getByRole('button', { name: 'Why am I seeing this?' });
   const answer = page.getByText('We matched it to your city and the role in your plan.');
-  await expect(answer).toBeHidden();
+  // Closed means no height and hidden from everyone (but still found by find-in-page, where
+  // the browser can do that). Measured, because browsers differ in what they call "visible".
+  const panel = page.locator(`[id="${await trigger.getAttribute('aria-controls')}"]`);
+  const height = async () => (await panel.boundingBox())?.height ?? 0;
+  await expect(panel).toHaveAttribute('hidden', /.*/);
+  expect(await height()).toBe(0);
+
   await trigger.click();
   await expect(trigger).toHaveAttribute('aria-expanded', 'true');
   await expect(answer).toBeVisible();
-  const panel = page.getByRole('group').filter({ has: answer });
+  await expect(panel).not.toHaveAttribute('hidden', /.*/);
   expect(await style(panel, 'transition-property')).toMatch(/block-size|height/);
   expect(await style(panel, 'transition-duration')).toBe('0.18s');
+  await expect.poll(height).toBeGreaterThan(20);
+
   await trigger.click();
   await expect(trigger).toHaveAttribute('aria-expanded', 'false');
-  await expect(answer).toBeHidden();
+  // The hidden attribute comes back only once the panel has finished closing.
+  await expect(panel).toHaveAttribute('hidden', /.*/);
+  expect(await height()).toBe(0);
 });
 
 test('a sheet and a dialog leave with an animation and keep their scrolling to themselves', async ({
@@ -271,7 +281,9 @@ test('a sheet and a dialog leave with an animation and keep their scrolling to t
   await page.getByRole('button', { name: 'Open a sheet' }).click();
   const sheet = page.getByRole('dialog', { name: 'Check-in with your circle' });
   await expect(sheet).toBeVisible();
-  expect(await style(sheet.locator('..'), 'overscroll-behavior')).toContain('contain');
+  // Where the browser knows the property (the WebKit build used for tests on Windows does not).
+  if (await page.evaluate(() => CSS.supports('overscroll-behavior', 'contain')))
+    expect(await style(sheet.locator('..'), 'overscroll-behavior-y')).toBe('contain');
   await page.keyboard.press('Escape');
   await expect(sheet).toBeHidden();
 
@@ -357,9 +369,10 @@ test('in Arabic the Sign, the toast and the list mirror, and nothing leaves the 
   expect(right).toBeGreaterThan(left);
   // A focused row draws its ring evenly inside, not as a bar on one side.
   const row = page.getByRole('link', { name: /Entry-level analyst postings/ });
-  await row.focus();
-  await page.keyboard.press('Shift+Tab');
+  // Safari does not stop at links with Tab unless asked to, so: a key press (the keyboard
+  // is in use), then focus moved to the row.
   await page.keyboard.press('Tab');
+  await row.focus();
   await expect
     .poll(() => style(row, 'box-shadow'))
     .toMatch(/0px 0px 0px 2px inset.*0px 0px 0px 5px inset/);

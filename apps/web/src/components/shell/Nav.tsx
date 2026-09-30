@@ -1,12 +1,13 @@
 'use client';
 
-import { cn, Dialog, Icon, ModuleMark } from '@waypoint/ui';
+import { cn, Dialog, Icon, ModuleMark, viewTransition } from '@waypoint/ui';
 import type { Route } from 'next';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { LogoMark } from '@/components/Logo';
+import { GoToButton } from './GoTo';
 import { type DirectoryRow, NAV, PRIMARY_TABS } from './nav-items';
 import { LinkPending } from './pending';
 import styles from './shell.module.css';
@@ -36,13 +37,16 @@ export function NavRail({ accountSlot }: { accountSlot: React.ReactNode }) {
   const a11y = useTranslations('a11y');
   const pathname = usePathname();
   return (
-    <nav className={styles.rail} aria-label={a11y('mainNav')}>
+    <nav className={cn(styles.rail, viewTransition.rail)} aria-label={a11y('mainNav')}>
       <Link href="/" className={styles.brand} aria-label={shell('home')}>
         <span className={styles.brandMark} aria-hidden>
           <LogoMark size={28} />
         </span>
         <span className={styles.brandText}>Waypoint</span>
       </Link>
+      <div className={styles.railSearch}>
+        <GoToButton withShortcut />
+      </div>
       <ul className={styles.railList}>
         {NAV.filter((n) => n.ready).map((item) => {
           const active = isActive(pathname, item.href);
@@ -56,7 +60,7 @@ export function NavRail({ accountSlot }: { accountSlot: React.ReactNode }) {
               >
                 <ModuleMark module={item.key} size="sm" tone={active ? 'solid' : 'tint'} />
                 <span>{t(item.key as NavKey)}</span>
-                <LinkPending className={styles.pendingMark} />
+                <LinkPending className={styles.pendingMark} sign={item.key === 'today'} />
               </Link>
             </li>
           );
@@ -109,7 +113,7 @@ export function BottomBar({ directory }: { directory: DirectoryRow[] }) {
     .sort((a, b) => b.href.length - a.href.length)[0];
   return (
     <>
-      <nav className={styles.bottomBar} aria-label={a11y('mainNav')}>
+      <nav className={cn(styles.bottomBar, viewTransition.bottomBar)} aria-label={a11y('mainNav')}>
         <ul>
           {primary.map((item) => {
             const active = isActive(pathname, item.href);
@@ -122,7 +126,7 @@ export function BottomBar({ directory }: { directory: DirectoryRow[] }) {
                 >
                   <ModuleMark module={item.key} size="sm" tone={active ? 'solid' : 'tint'} />
                   <span>{t(item.key as NavKey)}</span>
-                  <LinkPending className={styles.pendingMark} />
+                  <LinkPending className={styles.pendingMark} sign={item.key === 'today'} />
                 </Link>
               </li>
             );
@@ -149,6 +153,9 @@ export function BottomBar({ directory }: { directory: DirectoryRow[] }) {
         variant="sheet"
         closeLabel={a11y('closeMenu')}
       >
+        <div className={styles.sheetSearch}>
+          <GoToButton onBeforeOpen={() => setOpen(false)} />
+        </div>
         <ul className={styles.sheetList}>
           {directory.map((row) => (
             <li key={row.key}>

@@ -152,7 +152,14 @@
     "home": "Waypoint होम",
     "offline": "आप ऑफ़लाइन हैं। हेल्पलाइन अब भी काम करती हैं।",
     "organisations": "संगठन",
-    "admin": "एडमिन"
+    "admin": "एडमिन",
+    "goTo": "इस पर जाएँ",
+    "goToSearch": "Waypoint में खोजें",
+    "goToPlaceholder": "कोई मॉड्यूल, पेज या सवाल",
+    "goToPlaces": "और जगहें",
+    "goToNoMatch": "Waypoint में इससे मेल खाता कुछ नहीं मिला।",
+    "goToAsk": "बात करें: “{query}”",
+    "goToCount": "{count, plural, one {# परिणाम} other {# परिणाम}}"
   },
   "welcome": {
     "title": "आगे क्या आने वाला है, देखें। अपना अगला कदम जानें। कभी अकेले न चलें।",

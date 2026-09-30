@@ -152,7 +152,14 @@
     "home": "Início do Waypoint",
     "offline": "Você está sem conexão. As linhas de apoio continuam funcionando.",
     "organisations": "Organizações",
-    "admin": "Administração"
+    "admin": "Administração",
+    "goTo": "Ir para",
+    "goToSearch": "Pesquisar no Waypoint",
+    "goToPlaceholder": "Um módulo, uma página ou uma pergunta",
+    "goToPlaces": "Mais lugares",
+    "goToNoMatch": "Nada no Waypoint corresponde a isso.",
+    "goToAsk": "Conversar: “{query}”",
+    "goToCount": "{count, plural, one {# resultado} other {# resultados}}"
   },
   "welcome": {
     "title": "Veja o que vem aí. Saiba seu próximo passo. Nunca siga sozinho.",

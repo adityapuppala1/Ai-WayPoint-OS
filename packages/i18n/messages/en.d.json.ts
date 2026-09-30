@@ -159,7 +159,14 @@ declare const messages: {
     "home": "Waypoint home",
     "offline": "You’re offline. Help lines still work.",
     "organisations": "Organisations",
-    "admin": "Admin"
+    "admin": "Admin",
+    "goTo": "Go to",
+    "goToSearch": "Search Waypoint",
+    "goToPlaceholder": "A module, a page or a question",
+    "goToPlaces": "More places",
+    "goToNoMatch": "Nothing in Waypoint matches that.",
+    "goToAsk": "Talk it through: “{query}”",
+    "goToCount": "{count, plural, one {# result} other {# results}}"
   },
   "welcome": {
     "title": "See what’s coming. Know your next step. Never take it alone.",

@@ -152,7 +152,14 @@
     "home": "Accueil de Waypoint",
     "offline": "Vous êtes hors ligne. Les lignes d’écoute fonctionnent toujours.",
     "organisations": "Organisations",
-    "admin": "Administration"
+    "admin": "Administration",
+    "goTo": "Aller à",
+    "goToSearch": "Rechercher dans Waypoint",
+    "goToPlaceholder": "Un module, une page ou une question",
+    "goToPlaces": "Autres pages",
+    "goToNoMatch": "Rien dans Waypoint ne correspond.",
+    "goToAsk": "En parler : « {query} »",
+    "goToCount": "{count, plural, one {# résultat} other {# résultats}}"
   },
   "welcome": {
     "title": "Voyez ce qui arrive. Connaissez votre prochaine étape. Ne soyez jamais seul.",

@@ -153,7 +153,14 @@
     "home": "الصفحة الرئيسية لـ Waypoint",
     "offline": "أنت غير متصل. خطوط المساعدة ما زالت تعمل.",
     "organisations": "المؤسسات",
-    "admin": "الإدارة"
+    "admin": "الإدارة",
+    "goTo": "انتقل إلى",
+    "goToSearch": "ابحث في Waypoint",
+    "goToPlaceholder": "وحدة أو صفحة أو سؤال",
+    "goToPlaces": "أماكن أخرى",
+    "goToNoMatch": "لا شيء في Waypoint يطابق ذلك.",
+    "goToAsk": "تحدّث عنه: «{query}»",
+    "goToCount": "{count, plural, zero {لا نتائج} one {نتيجة واحدة} two {نتيجتان} few {# نتائج} many {# نتيجة} other {# نتيجة}}"
   },
   "welcome": {
     "title": "اعرف ما هو قادم. اعرف خطوتك التالية. لا تمشِ الطريق وحدك.",

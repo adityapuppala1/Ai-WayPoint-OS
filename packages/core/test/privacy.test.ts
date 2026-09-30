@@ -162,6 +162,16 @@ describe('text for logs and for emails to other people', () => {
     );
   });
 
+  it('cuts at the values after blank lines too, and answers at once for a run of new lines', async () => {
+    const { scrubLogText } = await import('../src/privacy');
+    expect(scrubLogText('Failed query: select 1\n\n \t params: ada@example.org')).toBe(
+      'Failed query: select 1',
+    );
+    const started = performance.now();
+    scrubLogText(`${'\n'.repeat(50_000)}x`);
+    expect(performance.now() - started).toBeLessThan(250);
+  });
+
   it('turns names into one plain line with no links', async () => {
     const { plainName } = await import('../src/privacy');
     expect(plainName('  Ada   Lovelace ')).toBe('Ada Lovelace');

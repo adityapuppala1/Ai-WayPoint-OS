@@ -9,7 +9,9 @@ import { redactPII } from './redact';
  * carry one-time tokens, and messages can contain addresses or numbers. All of that goes.
  */
 export function scrubLogText(text: string, max = 500): string {
-  const cut = text.split(/\n\s*params:/i)[0] ?? '';
+  // Spaces between the new line and `params:`, but not more new lines: a pattern that allowed
+  // those started again at every one of a long run of them.
+  const cut = (text.split(/\n[^\S\n]*params:/i)[0] ?? '').trimEnd();
   const noTokens = cut.replace(
     /([?&;](?:token|code|otp|secret|key|signature|sig)=)[^&\s"']+/gi,
     '$1[redacted]',

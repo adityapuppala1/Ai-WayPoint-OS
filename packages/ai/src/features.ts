@@ -233,11 +233,16 @@ export async function shieldOpinion(
 
 const isLocale = (v: string): v is Locale => (LOCALES as readonly string[]).includes(v);
 
-/** The judge's opinion, or nothing when it may not be asked or gives no usable answer. */
-async function shieldJudgeOpinion(
+/**
+ * The judge's opinion, or nothing when it may not be asked or gives no usable answer. Exported
+ * for the measurement run (evals/judge-cli.ts), which needs the score behind the level; the
+ * app goes through `shieldOpinion`.
+ */
+export async function shieldJudgeOpinion(
   ctx: CallerContext,
   input: ShieldOpinionInput,
-): Promise<{ opinion: AiOpinion; unsure: boolean } | null> {
+  pace: 'interactive' | 'background' = 'interactive',
+): Promise<{ opinion: AiOpinion; unsure: boolean; score: number } | null> {
   const text = input.text.slice(0, 4000);
   if (judgeBarredByCrisis(text) || !judgeReads(text, input.locale)) return null;
   const out = await runJudge(
@@ -248,6 +253,7 @@ async function shieldJudgeOpinion(
       allowExternal: ctx.allowExternal,
       locale: input.locale,
       feature: 'judge-shield',
+      pace,
     },
     { message: text },
     SHIELD_SIGNS,
@@ -258,6 +264,7 @@ async function shieldJudgeOpinion(
   const locale = isLocale(input.locale) ? input.locale : 'en';
   return {
     unsure: judged.unsure,
+    score: judged.score,
     opinion: {
       level: judged.level,
       categories: judged.categories.slice(0, 3),

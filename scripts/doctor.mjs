@@ -101,6 +101,11 @@ if (env.TYPESAFE_API_KEY) {
     warn(
       `AI_JUDGE_MODEL is ${model}, which changes whenever TypeSafe ships a release — pin a version such as jev-1.13.0.`,
     );
+  // The thresholds in the code are starting values: nothing here can know whether they were
+  // measured on this installation's languages, so say how to find out every time.
+  warn(
+    `The judge is only as good as its last measurement: run "pnpm --filter @waypoint/ai eval:judge" and keep in AI_JUDGE_LOCALES only the languages that pass (English included).`,
+  );
 }
 
 if (env.WAYPOINT_OPERATOR && env.WAYPOINT_CONTACT_EMAIL)

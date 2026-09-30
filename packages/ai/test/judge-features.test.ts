@@ -750,3 +750,69 @@ describe('guided mode, when no keyword says what a question is about', () => {
     expect(asked).toHaveLength(0);
   });
 });
+
+// ───────────────────────────── Measuring the real judge ─────────────────────────────
+
+describe('the measurement run (eval:judge)', () => {
+  it('asks the judge exactly as the app does, in every language, without hurrying', async () => {
+    const { askShieldJudge } = await import('../src/evals/judge-ask');
+    const { measure, summarise } = await import('../src/evals/judge-measure');
+    configure({ AI_JUDGE_LOCALES: 'en,hi,es,fr,pt,ar,sw' });
+    const asked: Array<{ request: JevRequest; timeoutMs: number; maxRetries: number }> = [];
+    ai.overrideJudgeForTests(async (request, opts) => {
+      asked.push({ request, timeoutMs: opts.timeoutMs, maxRetries: opts.maxRetries });
+      const text = JSON.stringify(request.state);
+      const scam = text.includes('profile') || text.includes('प्रोफ़ाइल');
+      return {
+        model: 'jev-1.13.0',
+        answers: Object.fromEntries(
+          Object.entries(request.questions).map(([id, q]) => [
+            id,
+            answerTo(q, scam && id === 'payToWork' ? 0.95 : 0.02),
+          ]),
+        ),
+        usage: { input_tokens: 400, output_tokens: 40 },
+      };
+    });
+    const rows = await measure(
+      [
+        {
+          text: 'Hello, we saw your profile. We have a role for you. Reply to hear more. Call +254 711 000 000',
+          lang: 'en',
+          label: 'scam',
+        },
+        { text: 'Hi Amina, lunch is at one tomorrow. See you there.', lang: 'en', label: 'legit' },
+        {
+          text: 'नमस्ते, हमने आपकी प्रोफ़ाइल देखी। आपके लिए एक अवसर है। और जानने के लिए जवाब दें।',
+          lang: 'hi',
+          label: 'scam',
+        },
+        {
+          text: 'You are under digital arrest. Do not tell anyone. Stay on the video call and transfer the money to the safe account now.',
+          lang: 'en',
+          label: 'scam',
+        },
+      ],
+      askShieldJudge(db.getDb()),
+    );
+    expect(rows.map((r) => [r.lang, r.rules, r.withJudge, r.asked, r.answered])).toEqual([
+      ['en', 'low', 'high', true, true],
+      ['en', 'low', 'low', true, true],
+      ['hi', 'low', 'high', true, true],
+      ['en', 'very-high', 'very-high', false, false],
+    ]);
+    expect(rows[0]?.score).toBeCloseTo(0.72 * 0.95);
+    expect(rows[1]?.score).toBe(0);
+    // Three calls: the rules were certain about the fourth message. Each with the patience of
+    // background work, and with personal details removed like any other call.
+    expect(asked).toHaveLength(3);
+    for (const a of asked) expect(a).toMatchObject({ timeoutMs: 10_000, maxRetries: 2 });
+    expect(JSON.stringify(asked[0]?.request.state)).not.toContain('711 000 000');
+    expect(await usageRows('judge-shield')).toHaveLength(3);
+    const report = summarise(rows);
+    expect(report.languages.map((l) => [l.lang, l.judged.pass])).toEqual([
+      ['en', true],
+      ['hi', true],
+    ]);
+  });
+});

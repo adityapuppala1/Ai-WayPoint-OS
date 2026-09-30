@@ -7,7 +7,7 @@
  * they saved lives.
  */
 import type { Page } from '@playwright/test';
-import { expect, snap, startAsGuest, test } from './fixtures';
+import { expect, snap, startAsGuest, test, WITHOUT_WORKER } from './fixtures';
 import { STAFF } from './staff';
 
 const stepTitle = (page: Page) => page.getByRole('main').getByRole('heading', { level: 2 });
@@ -97,70 +97,75 @@ test.describe('the app never looks frozen', () => {
       },
     );
 
-  test('a pressed link is marked at once, and a placeholder holds the page’s place', async ({
-    page,
-    context,
-    baseURL,
-    isMobile,
-  }, testInfo) => {
-    await startAsGuest(page);
-    const nav = page.getByRole('navigation', { name: 'Main' });
-    // A tab on the phone's bottom bar; a line on the laptop's rail.
-    const first = isMobile
-      ? { name: 'Shield', path: '/shield', title: 'Scam Shield' }
-      : { name: 'Money', path: '/money', title: 'Money' };
-    await slow(page, first.path);
-    const link = nav.getByRole('link', { name: first.name, exact: true });
-    await link.click();
+  // Held back pages: see WITHOUT_WORKER.
+  test.describe(() => {
+    test.use(WITHOUT_WORKER);
 
-    // At once: the marker on what was pressed…
-    await expect(link.locator('[data-pending]')).toBeVisible();
-    // …then a page-shaped placeholder instead of a page that seems not to have heard.
-    const placeholder = page.getByRole('main').getByRole('status').filter({ hasText: 'Loading' });
-    await expect(placeholder).toBeVisible();
-    await expect(page.getByRole('heading', { level: 1 })).toHaveCount(0);
-    const moving = await placeholder
-      .locator('span[aria-hidden="true"]')
-      .first()
-      .evaluate((bar) => getComputedStyle(bar).animationName);
-    expect(moving).not.toBe('none');
-    await snap(page, testInfo, 'placeholder');
+    test('a pressed link is marked at once, and a placeholder holds the page’s place', async ({
+      page,
+      context,
+      baseURL,
+      isMobile,
+    }, testInfo) => {
+      await startAsGuest(page);
+      const nav = page.getByRole('navigation', { name: 'Main' });
+      // A tab on the phone's bottom bar; a line on the laptop's rail.
+      const first = isMobile
+        ? { name: 'Shield', path: '/shield', title: 'Scam Shield' }
+        : { name: 'Money', path: '/money', title: 'Money' };
+      await slow(page, first.path);
+      const link = nav.getByRole('link', { name: first.name, exact: true });
+      await link.click();
 
-    // Then the page itself, and the marker is where the person now is.
-    await expect(page.getByRole('heading', { level: 1, name: first.title })).toBeVisible();
-    await expect(placeholder).toHaveCount(0);
-    await expect(link).toHaveAttribute('aria-current', 'page');
-    await expect(nav.locator('[data-pending]')).toHaveCount(0);
+      // At once: the marker on what was pressed…
+      await expect(link.locator('[data-pending]')).toBeVisible();
+      // …then a page-shaped placeholder instead of a page that seems not to have heard.
+      const placeholder = page.getByRole('main').getByRole('status').filter({ hasText: 'Loading' });
+      await expect(placeholder).toBeVisible();
+      await expect(page.getByRole('heading', { level: 1 })).toHaveCount(0);
+      const moving = await placeholder
+        .locator('span[aria-hidden="true"]')
+        .first()
+        .evaluate((bar) => getComputedStyle(bar).animationName);
+      expect(moving).not.toBe('none');
+      await snap(page, testInfo, 'placeholder');
 
-    // Lite mode: the same placeholder, standing still.
-    await context.addCookies([{ name: 'wp-lite', value: '1', url: baseURL ?? '' }]);
-    await page.goto('/');
-    await expect(page.locator('html')).toHaveAttribute('data-lite', 'true');
-    await slow(page, '/path');
-    await nav.getByRole('link', { name: 'Path', exact: true }).click();
-    await expect(placeholder).toBeVisible();
-    const still = await placeholder
-      .locator('span[aria-hidden="true"]')
-      .first()
-      .evaluate((bar) => getComputedStyle(bar).animationName);
-    expect(still).toBe('none');
-    await expect(page.getByRole('heading', { level: 1, name: 'Path' })).toBeVisible();
-  });
+      // Then the page itself, and the marker is where the person now is.
+      await expect(page.getByRole('heading', { level: 1, name: first.title })).toBeVisible();
+      await expect(placeholder).toHaveCount(0);
+      await expect(link).toHaveAttribute('aria-current', 'page');
+      await expect(nav.locator('[data-pending]')).toHaveCount(0);
 
-  test('a row on Today holds the page’s place too', async ({ page }) => {
-    await startAsGuest(page);
-    await slow(page, '/support');
-    const tools = page.getByRole('complementary', { name: 'Tools' });
-    // A phone shows the first few rows and "All modules" for the rest.
-    const all = tools.getByRole('button', { name: 'All modules' });
-    if (await all.isVisible()) await all.click();
-    await tools.locator('a[href="/support"]').click();
-    await expect(
-      page.getByRole('main').getByRole('status').filter({ hasText: 'Loading' }),
-    ).toBeVisible();
-    await expect(page.getByRole('heading', { level: 1 })).toHaveCount(0);
-    await expect(page).toHaveURL(/\/support$/);
-    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+      // Lite mode: the same placeholder, standing still.
+      await context.addCookies([{ name: 'wp-lite', value: '1', url: baseURL ?? '' }]);
+      await page.goto('/');
+      await expect(page.locator('html')).toHaveAttribute('data-lite', 'true');
+      await slow(page, '/path');
+      await nav.getByRole('link', { name: 'Path', exact: true }).click();
+      await expect(placeholder).toBeVisible();
+      const still = await placeholder
+        .locator('span[aria-hidden="true"]')
+        .first()
+        .evaluate((bar) => getComputedStyle(bar).animationName);
+      expect(still).toBe('none');
+      await expect(page.getByRole('heading', { level: 1, name: 'Path' })).toBeVisible();
+    });
+
+    test('a row on Today holds the page’s place too', async ({ page }) => {
+      await startAsGuest(page);
+      await slow(page, '/support');
+      const tools = page.getByRole('complementary', { name: 'Tools' });
+      // A phone shows the first few rows and "All modules" for the rest.
+      const all = tools.getByRole('button', { name: 'All modules' });
+      if (await all.isVisible()) await all.click();
+      await tools.locator('a[href="/support"]').click();
+      await expect(
+        page.getByRole('main').getByRole('status').filter({ hasText: 'Loading' }),
+      ).toBeVisible();
+      await expect(page.getByRole('heading', { level: 1 })).toHaveCount(0);
+      await expect(page).toHaveURL(/\/support$/);
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    });
   });
 
   test('says when the device is offline, and stops saying so when it is back', async ({
@@ -180,8 +185,10 @@ test.describe('the app never looks frozen', () => {
     await context.setOffline(false);
     await expect(note).toHaveCount(0);
     // Requests that failed while the connection was held down are what this test asked for
-    // (the browser's own checks for a connection, and the links it fetches ahead).
-    const expected = /net::ERR_(INTERNET_DISCONNECTED|FAILED)/;
+    // (the checks for a connection that Next's router makes, and the links it fetches ahead).
+    // WebKit words the same refused request as an internal error of its own.
+    const expected =
+      /net::ERR_(INTERNET_DISCONNECTED|FAILED)|^console: Failed to load resource: WebKit encountered an internal error$/;
     for (let i = problems.length - 1; i >= 0; i--)
       if (expected.test(problems[i] ?? '')) problems.splice(i, 1);
   });
@@ -238,65 +245,70 @@ test.describe('Ask', () => {
     if (isMobile) await expect(list).toHaveCount(0);
   });
 
-  test('something Ask saved is a row that opens where it went', async ({ page }) => {
-    await startAsGuest(page);
-    // No AI provider runs in tests, so stand in for the answer of one that saved a goal.
-    const chunks = [
-      { type: 'start', messageId: 'a1b2c3d4-0000-4000-8000-000000000001' },
-      { type: 'start-step' },
-      {
-        type: 'tool-input-available',
-        toolCallId: 'call-1',
-        toolName: 'create_goal',
-        input: { title: 'Walk every morning' },
-      },
-      {
-        type: 'tool-output-available',
-        toolCallId: 'call-1',
-        output: { saved: true, goalId: 'g1', href: '/goals' },
-      },
-      {
-        type: 'tool-input-available',
-        toolCallId: 'call-2',
-        toolName: 'draft_plan',
-        input: { title: 'A plan' },
-      },
-      {
-        type: 'tool-output-available',
-        toolCallId: 'call-2',
-        // A link that leaves Waypoint is never followed: no row, and no link.
-        output: { saved: true, href: 'https://example.org/plan' },
-      },
-      { type: 'finish-step' },
-      { type: 'finish' },
-    ];
-    await page.route('**/api/ask', (route) =>
-      route.request().method() === 'POST'
-        ? route.fulfill({
-            status: 200,
-            headers: {
-              'content-type': 'text/event-stream',
-              'x-vercel-ai-ui-message-stream': 'v1',
-            },
-            body: `${chunks.map((c) => `data: ${JSON.stringify(c)}\n\n`).join('')}data: [DONE]\n\n`,
-          })
-        : route.continue(),
-    );
-    await page.goto('/ask');
-    await page.getByLabel('Your message').fill('Help me set a goal to walk every morning');
-    await page.getByRole('button', { name: 'Send' }).click();
+  // Ask's answer is stood in for: see WITHOUT_WORKER.
+  test.describe(() => {
+    test.use(WITHOUT_WORKER);
 
-    const row = page.getByRole('main').getByRole('link', { name: /Goal saved/ });
-    await expect(row).toBeVisible();
-    await expect(row).toHaveAttribute('href', '/goals');
-    // The destination's own mark and name, in a row big enough to press.
-    await expect(row).toContainText('Goals');
-    expect((await row.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
-    await expect(page.getByText('Plan saved')).toBeVisible();
-    await expect(page.locator('a[href^="https://example.org"]')).toHaveCount(0);
-    await row.click();
-    await expect(page).toHaveURL(/\/goals$/);
-    await expect(page.getByRole('heading', { level: 1, name: 'Goals' })).toBeVisible();
+    test('something Ask saved is a row that opens where it went', async ({ page }) => {
+      await startAsGuest(page);
+      // No AI provider runs in tests, so stand in for the answer of one that saved a goal.
+      const chunks = [
+        { type: 'start', messageId: 'a1b2c3d4-0000-4000-8000-000000000001' },
+        { type: 'start-step' },
+        {
+          type: 'tool-input-available',
+          toolCallId: 'call-1',
+          toolName: 'create_goal',
+          input: { title: 'Walk every morning' },
+        },
+        {
+          type: 'tool-output-available',
+          toolCallId: 'call-1',
+          output: { saved: true, goalId: 'g1', href: '/goals' },
+        },
+        {
+          type: 'tool-input-available',
+          toolCallId: 'call-2',
+          toolName: 'draft_plan',
+          input: { title: 'A plan' },
+        },
+        {
+          type: 'tool-output-available',
+          toolCallId: 'call-2',
+          // A link that leaves Waypoint is never followed: no row, and no link.
+          output: { saved: true, href: 'https://example.org/plan' },
+        },
+        { type: 'finish-step' },
+        { type: 'finish' },
+      ];
+      await page.route('**/api/ask', (route) =>
+        route.request().method() === 'POST'
+          ? route.fulfill({
+              status: 200,
+              headers: {
+                'content-type': 'text/event-stream',
+                'x-vercel-ai-ui-message-stream': 'v1',
+              },
+              body: `${chunks.map((c) => `data: ${JSON.stringify(c)}\n\n`).join('')}data: [DONE]\n\n`,
+            })
+          : route.continue(),
+      );
+      await page.goto('/ask');
+      await page.getByLabel('Your message').fill('Help me set a goal to walk every morning');
+      await page.getByRole('button', { name: 'Send' }).click();
+
+      const row = page.getByRole('main').getByRole('link', { name: /Goal saved/ });
+      await expect(row).toBeVisible();
+      await expect(row).toHaveAttribute('href', '/goals');
+      // The destination's own mark and name, in a row big enough to press.
+      await expect(row).toContainText('Goals');
+      expect((await row.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
+      await expect(page.getByText('Plan saved')).toBeVisible();
+      await expect(page.locator('a[href^="https://example.org"]')).toHaveCount(0);
+      await row.click();
+      await expect(page).toHaveURL(/\/goals$/);
+      await expect(page.getByRole('heading', { level: 1, name: 'Goals' })).toBeVisible();
+    });
   });
 });
 

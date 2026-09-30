@@ -35,9 +35,15 @@ export function JumpLink({
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey) return;
     const part = document.getElementById(to);
     const target = part ? firstControl(part) : undefined;
-    // The link itself does the scrolling (it stops clear of the phone's header); once it has,
-    // the keyboard goes to the field without moving the page again.
-    if (target) requestAnimationFrame(() => target.focus({ preventScroll: true }));
+    if (!part || !target) return;
+    // A link's own jump moves the keyboard to the page itself, and Firefox makes that jump a
+    // moment after the click, after anything done here. So the jump is made here, at once: the
+    // part becomes the target, so it stops clear of the phone's header, as the link would.
+    // Then the keyboard goes to the field without moving the page again.
+    e.preventDefault();
+    if (window.location.hash === `#${to}`) part.scrollIntoView();
+    else window.location.hash = to;
+    target.focus({ preventScroll: true });
   };
   return (
     <a href={`#${to}`} onClick={onClick} className={className}>

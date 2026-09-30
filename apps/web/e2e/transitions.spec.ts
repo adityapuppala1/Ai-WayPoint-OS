@@ -7,7 +7,7 @@
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
-import { expect, startAsGuest, test } from './fixtures';
+import { expect, startAsGuest, test, WITHOUT_WORKER } from './fixtures';
 
 /*
  * One guest for the whole file. New guests from one address are limited (40 a minute, with
@@ -117,32 +117,37 @@ test('the page moves and the frame stays still', async ({ page, isMobile }) => {
   expect((await moves(page)).slice(before).some((a) => a.includes('wp-page-in'))).toBe(true);
 });
 
-test('a page that keeps someone waiting still arrives with the transition', async ({
-  page,
-  isMobile,
-}) => {
-  await watchTransitions(page);
-  await openToday(page);
-  const path = isMobile ? '/shield' : '/money';
-  // Hold back the answer, as a slow connection would, so the placeholder stands in first.
-  await page.route(
-    (url) => url.pathname === path,
-    async (route) => {
-      await new Promise((r) => setTimeout(r, 1500));
-      await route.continue().catch(() => undefined);
-    },
-  );
-  const nav = page.getByRole('navigation', { name: 'Main' });
-  await nav.getByRole('link', { name: isMobile ? 'Shield' : 'Money', exact: true }).click();
-  await expect(
-    page.getByRole('main').getByRole('status').filter({ hasText: 'Loading' }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole('heading', { level: 1, name: isMobile ? 'Scam Shield' : 'Money' }),
-  ).toBeVisible();
-  if (!(await supported(page))) return;
-  // The page rises in, rather than appearing from behind the placeholder afterwards.
-  expect((await moves(page)).some((a) => a.includes('wp-page-in'))).toBe(true);
+// The page is held back: see WITHOUT_WORKER.
+test.describe(() => {
+  test.use(WITHOUT_WORKER);
+
+  test('a page that keeps someone waiting still arrives with the transition', async ({
+    page,
+    isMobile,
+  }) => {
+    await watchTransitions(page);
+    await openToday(page);
+    const path = isMobile ? '/shield' : '/money';
+    // Hold back the answer, as a slow connection would, so the placeholder stands in first.
+    await page.route(
+      (url) => url.pathname === path,
+      async (route) => {
+        await new Promise((r) => setTimeout(r, 1500));
+        await route.continue().catch(() => undefined);
+      },
+    );
+    const nav = page.getByRole('navigation', { name: 'Main' });
+    await nav.getByRole('link', { name: isMobile ? 'Shield' : 'Money', exact: true }).click();
+    await expect(
+      page.getByRole('main').getByRole('status').filter({ hasText: 'Loading' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('heading', { level: 1, name: isMobile ? 'Scam Shield' : 'Money' }),
+    ).toBeVisible();
+    if (!(await supported(page))) return;
+    // The page rises in, rather than appearing from behind the placeholder afterwards.
+    expect((await moves(page)).some((a) => a.includes('wp-page-in'))).toBe(true);
+  });
 });
 
 test('lite mode moves nothing, and less motion is instant', async ({

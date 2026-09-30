@@ -5,7 +5,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { test as base, expect, type Page, type TestInfo } from '@playwright/test';
+import { test as base, expect, type Locator, type Page, type TestInfo } from '@playwright/test';
 
 type Engine = 'chromium' | 'firefox' | 'webkit';
 
@@ -51,6 +51,31 @@ const cancelledInWebKit = (baseURL: string) => {
  */
 const STYLE_REFUSED =
   "Refused to apply a stylesheet because its hash, its nonce, or 'unsafe-inline' does not appear in the style-src directive of the Content Security Policy.";
+
+/** Photographs taken of each page so far (see STYLE_REFUSED). */
+const photographs = new WeakMap<Page, number>();
+let countsPhotographs = false;
+/**
+ * Counts every photograph of a page: the whole page (`page.screenshot`) and one part of it
+ * (`locator.screenshot`), which WebKit refuses the same style for.
+ */
+function countPhotographs(page: Page): void {
+  if (countsPhotographs) return;
+  countsPhotographs = true;
+  const taken = (of: Page) => photographs.set(of, (photographs.get(of) ?? 0) + 1);
+  const pages = Object.getPrototypeOf(page) as Page;
+  const parts = Object.getPrototypeOf(page.locator('html')) as Locator;
+  const { screenshot: whole } = pages;
+  const { screenshot: part } = parts;
+  pages.screenshot = function (this: Page, options) {
+    taken(this);
+    return whole.call(this, options);
+  };
+  parts.screenshot = function (this: Locator, options) {
+    taken(this.page());
+    return part.call(this, options);
+  };
+}
 
 /**
  * Waits until the page answers to a press. Playwright's `goto` returns when the page has
@@ -137,13 +162,8 @@ export const test = base.extend<{ problems: string[]; allow: { console: RegExp[]
       const ignored = [...CONSOLE_NOISE[browserName], ...DEV_NOISE, ...allow.console];
       const cancelled = browserName === 'webkit' && baseURL ? cancelledInWebKit(baseURL) : null;
       // Photographs taken of this page, and the refusals WebKit logged (see STYLE_REFUSED).
-      let photographs = 0;
+      countPhotographs(page);
       let refusals = 0;
-      const screenshot = page.screenshot.bind(page);
-      page.screenshot = (options) => {
-        photographs++;
-        return screenshot(options);
-      };
       page.on('pageerror', (error) => {
         if (cancelled?.test(error.message)) return;
         problems.push(`page error: ${error.message}`);
@@ -161,11 +181,10 @@ export const test = base.extend<{ problems: string[]; allow: { console: RegExp[]
       });
       await use(problems);
       // A test that has already failed is photographed once more, by Playwright itself.
-      if (testInfo.status !== testInfo.expectedStatus) photographs++;
-      if (refusals > photographs)
-        problems.push(
-          `console: ${STYLE_REFUSED} (${refusals} times, for ${photographs} photographs)`,
-        );
+      const taken =
+        (photographs.get(page) ?? 0) + (testInfo.status !== testInfo.expectedStatus ? 1 : 0);
+      if (refusals > taken)
+        problems.push(`console: ${STYLE_REFUSED} (${refusals} times, for ${taken} photographs)`);
       expect(problems, 'errors while the test ran').toEqual([]);
     },
     { auto: true },
@@ -173,6 +192,15 @@ export const test = base.extend<{ problems: string[]; allow: { console: RegExp[]
 });
 
 export { expect };
+
+/**
+ * For tests that hold back or stand in for the app's own requests with `page.route`: in
+ * WebKit the route never sees a request from a page that the service worker looks after, so
+ * there it would do nothing and the test would check something else. Use it with
+ * `test.use(WITHOUT_WORKER)`. The worker only keeps the offline page and the help numbers
+ * (public/sw.js), which such tests do not look at.
+ */
+export const WITHOUT_WORKER = { serviceWorkers: 'block' } as const;
 
 /** A full-page screenshot saved with the test's results, for looking over by eye. */
 export async function snap(page: Page, testInfo: TestInfo, name: string): Promise<void> {

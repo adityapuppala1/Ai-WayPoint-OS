@@ -1,7 +1,8 @@
 import { path, signals } from '@waypoint/api';
 import { dbReady, getDb } from '@waypoint/db';
-import { EmptyState, Panel } from '@waypoint/ui';
-import type { Metadata } from 'next';
+import { Button, EmptyState, LinkButton, Panel, SearchField } from '@waypoint/ui';
+import type { Metadata, Route } from 'next';
+import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { ForesightNav } from '@/components/forecasts/ForesightNav';
 import { SignalItem } from '@/components/SignalItem';
@@ -16,23 +17,38 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function SignalsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; saved?: string }>;
 }) {
-  const { q } = await searchParams;
+  const { q, saved } = await searchParams;
   const viewer = await getViewer();
-  const t = await getTranslations('signals');
-  const common = await getTranslations('common');
+  const [t, common, forecasts] = await Promise.all([
+    getTranslations('signals'),
+    getTranslations('common'),
+    getTranslations('forecasts'),
+  ]);
   const skills = viewer ? await path.getUserSkills(viewer.db, viewer.user.id) : [];
   await dbReady();
-  const list = await signals.relevantSignals(
-    viewer?.db ?? getDb(),
-    {
-      userId: viewer?.user.id ?? null,
-      profile: viewer?.profile ?? null,
-      skillIds: skills.map((s) => s.skillId),
-      matching: viewer?.consents.foresight_matching ?? false,
-    },
-    { query: q?.slice(0, 120), limit: 30, days: 365 },
+  const db = viewer?.db ?? getDb();
+  const who = {
+    userId: viewer?.user.id ?? null,
+    profile: viewer?.profile ?? null,
+    skillIds: skills.map((s) => s.skillId),
+    matching: viewer?.consents.foresight_matching ?? false,
+  };
+  // What someone saved needs a session to belong to (a guest session counts).
+  const showSaved = Boolean(viewer) && saved === '1';
+  const query = showSaved ? '' : (q?.trim().slice(0, 120) ?? '');
+  const list = showSaved
+    ? await signals.savedSignals(db, who)
+    : await signals.relevantSignals(db, who, {
+        query,
+        limit: 30,
+        days: signals.SIGNAL_WINDOW_DAYS,
+      });
+  const showAll = (
+    <LinkButton href={'/signals' as Route} variant="secondary">
+      {t('showAll')}
+    </LinkButton>
   );
   return (
     <div className="wp-page">
@@ -41,28 +57,59 @@ export default async function SignalsPage({
         <p className="wp-lead">{t('lead')}</p>
       </header>
       <ForesightNav current="/signals" />
-      <form className={styles.search} action="/signals" aria-label={t('search')}>
-        <label htmlFor="signals-q" className="wp-visually-hidden">
-          {t('search')}
-        </label>
-        <input
-          id="signals-q"
-          name="q"
-          type="search"
-          defaultValue={q ?? ''}
-          placeholder={t('search')}
-          className={styles.input}
-          maxLength={120}
-        />
-        <button type="submit" className={styles.button}>
-          {common('search')}
-        </button>
-      </form>
+      {viewer ? (
+        <nav aria-label={t('filterLabel')}>
+          <ul className={styles.filters}>
+            <li>
+              <Link href={'/signals' as Route} aria-current={showSaved ? undefined : 'page'}>
+                {t('filterAll')}
+              </Link>
+            </li>
+            <li>
+              <Link
+                href={'/signals?saved=1' as Route}
+                aria-current={showSaved ? 'page' : undefined}
+              >
+                {t('saved')}
+              </Link>
+            </li>
+          </ul>
+        </nav>
+      ) : null}
+      {showSaved ? null : (
+        <form className={styles.search} action="/signals" aria-label={t('search')}>
+          <SearchField
+            className={styles.field}
+            label={t('search')}
+            placeholder={t('search')}
+            name="q"
+            defaultValue={query}
+            maxLength={120}
+          />
+          <Button type="submit" variant="secondary" icon="search">
+            {common('search')}
+          </Button>
+        </form>
+      )}
       <Panel flush>
         {list.length ? (
-          list.map((s) => <SignalItem key={s.id} signal={s} headingLevel={3} />)
+          list.map((s) => (
+            <SignalItem key={s.id} signal={s} headingLevel={3} canDismiss={!showSaved} />
+          ))
+        ) : showSaved ? (
+          <EmptyState title={t('savedEmpty')} action={showAll} />
+        ) : query ? (
+          <EmptyState title={t('noMatch', { query })} action={showAll} />
         ) : (
-          <EmptyState title={t('empty')} />
+          // Nothing has changed for this person lately: what may come next is one tap away.
+          <EmptyState
+            title={t('empty')}
+            action={
+              <LinkButton href={'/signals/forecasts' as Route} variant="secondary">
+                {forecasts('navForecasts')}
+              </LinkButton>
+            }
+          />
         )}
       </Panel>
     </div>

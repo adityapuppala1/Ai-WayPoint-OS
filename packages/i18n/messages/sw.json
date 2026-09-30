@@ -699,7 +699,8 @@
     "weeklyReviewTitle": "Tathmini ya wiki",
     "weeklyReviewDetail": "Nini kilienda vizuri, nini kilikwamisha, na badiliko moja kwa wiki ijayo.",
     "listJoin": ", ",
-    "listAnd": " na "
+    "listAnd": " na ",
+    "projectTitleGeneral": "Tengeneza mradi mdogo unaoonyesha unachoweza kufanya"
   },
   "signals": {
     "title": "Ishara",

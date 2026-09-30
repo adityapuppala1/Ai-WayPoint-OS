@@ -699,7 +699,8 @@
     "weeklyReviewTitle": "Repaso semanal",
     "weeklyReviewDetail": "Qué salió bien, qué se interpuso y un cambio para la próxima semana.",
     "listJoin": ", ",
-    "listAnd": " y "
+    "listAnd": " y ",
+    "projectTitleGeneral": "Haz un proyecto pequeño que muestre lo que sabes hacer"
   },
   "signals": {
     "title": "Señales",

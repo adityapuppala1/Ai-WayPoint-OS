@@ -699,7 +699,8 @@
     "weeklyReviewTitle": "Bilan de la semaine",
     "weeklyReviewDetail": "Ce qui a marché, ce qui a bloqué, et un changement pour la semaine prochaine.",
     "listJoin": ", ",
-    "listAnd": " et "
+    "listAnd": " et ",
+    "projectTitleGeneral": "Réalisez un petit projet qui montre ce que vous savez faire"
   },
   "signals": {
     "title": "Signaux",

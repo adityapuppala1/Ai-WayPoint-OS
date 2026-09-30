@@ -700,7 +700,8 @@
     "weeklyReviewTitle": "المراجعة الأسبوعية",
     "weeklyReviewDetail": "ما الذي نجح، وما الذي أعاقك، وتغيير واحد للأسبوع القادم.",
     "listJoin": "، ",
-    "listAnd": " و"
+    "listAnd": " و",
+    "projectTitleGeneral": "أنجز مشروعًا صغيرًا يُظهر ما تستطيع فعله"
   },
   "signals": {
     "title": "الإشارات",

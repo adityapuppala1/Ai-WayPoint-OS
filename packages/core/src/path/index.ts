@@ -164,6 +164,7 @@ export interface PlanTemplates {
   circleTitle: string;
   circleDetail: string;
   projectTitle: string; // {role}
+  projectTitleGeneral: string; // the same step when no role was chosen
   projectDetail: string; // {skills}
   reviewTitle: string;
   reviewDetail: string;
@@ -201,6 +202,7 @@ export const PLAN_TEMPLATES_EN: PlanTemplates = {
   circleDetail:
     "Introduce yourself and share this week's goal. People who plan together tend to follow through.",
   projectTitle: 'Make a proof project for {role}',
+  projectTitleGeneral: 'Make a small project that shows what you can do',
   projectDetail:
     'Combine {skills} in one small, finished piece of work that someone could look at in five minutes.',
   reviewTitle: 'Ask someone to review your project',
@@ -257,7 +259,13 @@ function resolveVar(v: PlanTextVar, t: PlanTemplates, names: PlanNames): string 
  * Unknown keys fall back to English so an old plan never shows a blank step.
  */
 export function renderPlanText(ref: PlanText, t: PlanTemplates, names: PlanNames): string {
-  const key = ref.key as keyof PlanTemplates;
+  // Plans made without a role used to put the plan's own title where the role goes ("Make a
+  // proof project for Your next steps"). They are stored that way, so they are written with
+  // the wording made for them whenever they are read.
+  const role = ref.vars?.role;
+  const general =
+    ref.key === 'projectTitle' && typeof role === 'object' && role !== null && 'template' in role;
+  const key = (general ? 'projectTitleGeneral' : ref.key) as keyof PlanTemplates;
   const template = t[key] ?? PLAN_TEMPLATES_EN[key] ?? '';
   const vars: Record<string, string | number> = {};
   for (const [k, v] of Object.entries(ref.vars ?? {})) vars[k] = resolveVar(v, t, names);
@@ -448,7 +456,6 @@ export function draftPlan(
 
   // Proof and apply weeks.
   const proofSkillIds = gaps.slice(0, 3).map((g) => g.skillId);
-  const roleVar: PlanTextVar = role ? { role: role.id } : { template: 'titleGeneral' };
   while (planWeeks.length < weeks) {
     const weekNo = planWeeks.length + 1;
     const isLast = weekNo === weeks;
@@ -463,7 +470,7 @@ export function draftPlan(
             minutes: mins(weeklyMinutes * (isLast ? 0.45 : 0.75)),
             skillIds: proofSkillIds,
           },
-          txt('projectTitle', { role: roleVar }),
+          role ? txt('projectTitle', { role: { role: role.id } }) : txt('projectTitleGeneral'),
           txt('projectDetail', { skills: { skills: proofSkillIds } }),
         ),
       );

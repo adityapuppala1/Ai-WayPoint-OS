@@ -706,7 +706,8 @@ declare const messages: {
     "weeklyReviewTitle": "Weekly review",
     "weeklyReviewDetail": "What went well, what got in the way, and one change for next week.",
     "listJoin": ", ",
-    "listAnd": " and "
+    "listAnd": " and ",
+    "projectTitleGeneral": "Make a small project that shows what you can do"
   },
   "signals": {
     "title": "Signals",

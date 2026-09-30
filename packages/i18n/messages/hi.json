@@ -699,7 +699,8 @@
     "weeklyReviewTitle": "साप्ताहिक समीक्षा",
     "weeklyReviewDetail": "क्या अच्छा रहा, किस चीज़ ने रोका, और अगले हफ़्ते के लिए एक बदलाव।",
     "listJoin": ", ",
-    "listAnd": " और "
+    "listAnd": " और ",
+    "projectTitleGeneral": "एक छोटा प्रोजेक्ट बनाएँ जो दिखाए कि आप क्या कर सकते हैं"
   },
   "signals": {
     "title": "संकेत",

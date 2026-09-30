@@ -1,0 +1,92 @@
+@layer components {
+  /* A small line of values, sitting in a row of text or beside a figure. */
+  .sparkline {
+    display: inline-block;
+    flex: none;
+    max-inline-size: 100%;
+    vertical-align: middle;
+    /* The dot on the last value may touch the edge; it must not be cut. */
+    overflow: visible;
+  }
+
+  /*
+   * A value out of a total. The drawing and the number share one cell, so the number sits
+   * in the middle of the ring at every size.
+   */
+  .ring {
+    --ring-size: 5rem;
+
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    inline-size: var(--ring-size);
+    block-size: var(--ring-size);
+  }
+
+  .sm {
+    --ring-size: 3.5rem;
+  }
+
+  .lg {
+    --ring-size: 7.5rem;
+  }
+
+  .ringArt {
+    grid-area: 1 / 1;
+    inline-size: 100%;
+    block-size: 100%;
+  }
+
+  /* The whole: the text colour thinned out, so it shows on a panel, the page or a tint. */
+  .ringTrack {
+    fill: none;
+    stroke: var(--wp-fill-pressed);
+    stroke-width: 8;
+  }
+
+  .ringValue {
+    fill: none;
+    stroke: var(--line, currentColor);
+    stroke-width: 8;
+    stroke-linecap: round;
+    /* The ring grows to its value when it appears, and moves there when the value changes. */
+    animation: ringGrow var(--wp-duration-slow) var(--wp-ease-out);
+    transition: stroke-dasharray var(--wp-duration-slow) var(--wp-ease-out);
+  }
+
+  .ringText {
+    grid-area: 1 / 1;
+    font-size: var(--wp-text-lead);
+    font-weight: var(--wp-weight-semibold);
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    white-space: nowrap;
+    color: var(--wp-text);
+  }
+
+  .sm .ringText {
+    font-size: var(--wp-text-small);
+  }
+
+  .lg .ringText {
+    font-size: var(--wp-text-h3);
+  }
+
+  /* Where colours are forced the track and the value would be one colour: tell them apart. */
+  @media (forced-colors: active) {
+    .ringTrack {
+      stroke: GrayText;
+    }
+
+    .ringValue {
+      stroke: Highlight;
+    }
+  }
+
+  @keyframes ringGrow {
+    from {
+      stroke-dasharray: 0 100;
+    }
+  }
+}

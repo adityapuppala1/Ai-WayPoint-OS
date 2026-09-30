@@ -4,6 +4,7 @@
  */
 
 export { cn } from './cn';
+export { AnimatedNumber, type AnimatedNumberProps } from './components/AnimatedNumber';
 export {
   Button,
   type ButtonProps,
@@ -12,6 +13,13 @@ export {
   LinkButton,
   type LinkButtonProps,
 } from './components/Button';
+export {
+  ProgressRing,
+  type ProgressRingProps,
+  type SeriesIndex,
+  Sparkline,
+  type SparklineProps,
+} from './components/Chart';
 export { Disclosure } from './components/Disclosure';
 export {
   Avatar,
@@ -73,3 +81,4 @@ export {
 } from './components/Toast';
 export { Tooltip } from './components/Tooltip';
 export { ICONS, type IconName } from './icons';
+export { countAt, durationToken, stillnessPreferred } from './motion';

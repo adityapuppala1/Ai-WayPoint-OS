@@ -108,6 +108,9 @@ test('with no connection, the offline page shows the help numbers saved earlier'
   await expect.poll(async () => (await savedCopy(page))?.emergency).toBe('999');
   const before = await savedCopy(page);
 
+  // They leave. Later, with no connection, they open Waypoint again. (Leaving first also
+  // means no request is cut off half way, which each engine reports in its own words.)
+  await page.goto('about:blank');
   await line.cut();
   await page.goto('/shield');
   await expect(page.getByRole('heading', { level: 1, name: 'You’re offline' })).toBeVisible();
@@ -127,7 +130,12 @@ test('with no connection, the offline page shows the help numbers saved earlier'
   await line.restore();
   await page.getByRole('button', { name: 'Try again' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Scam Shield' })).toBeVisible();
-  await expect.poll(async () => (await savedCopy(page))?.id).not.toBe(before?.id);
+  await expect
+    .poll(async () => {
+      const now = await savedCopy(page);
+      return Boolean(now?.id) && now?.id !== before?.id;
+    })
+    .toBe(true);
 
   // Signing out tells the worker to forget the saved numbers, so the next person to use the
   // device never sees where the last one was. Asked here the way the page asks it.

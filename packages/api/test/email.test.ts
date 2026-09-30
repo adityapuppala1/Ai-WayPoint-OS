@@ -86,5 +86,7 @@ describe('the worker’s settings', () => {
     expect(workerIntervalMs('-5')).toBe(30_000);
     expect(workerIntervalMs('5')).toBe(1_000);
     expect(workerIntervalMs('60000')).toBe(60_000);
-  });
+    // Loading the worker's module loads most of the API with it: while the other test files
+    // run alongside (each with its own database), that alone can take longer than 5 seconds.
+  }, 30_000);
 });

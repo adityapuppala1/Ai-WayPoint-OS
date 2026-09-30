@@ -11,8 +11,9 @@ Golden datasets that gate every change to safety-critical logic and prompts.
 Each JSONL line is one case. Fields: `text`, `lang`, expected minimum `tier`/`level`, maximum
 allowed (`max`), optional `other` (about someone else) and `cat` (category that must appear).
 
-Run: `pnpm eval`. Everything is deterministic and needs no AI key. Add a case for every false
-negative found in production review.
+Run: `pnpm eval`. Everything is deterministic and needs no AI key. The guardrail cases blank
+every outside key on this machine first (the AI providers' and the judge's), so nothing is ever
+sent. Add a case for every false negative found in production review.
 
 ### Guardrail cases
 

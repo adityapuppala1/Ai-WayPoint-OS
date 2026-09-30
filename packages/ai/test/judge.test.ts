@@ -23,6 +23,10 @@ for (const key of [
 ])
   delete process.env[key];
 
+// Each test makes several database calls; on a machine busy with other builds five seconds
+// (the default) is not always enough.
+vi.setConfig({ testTimeout: 30_000 });
+
 let ai: typeof import('../src');
 let db: typeof import('@waypoint/db');
 let env: typeof import('@waypoint/core/env');

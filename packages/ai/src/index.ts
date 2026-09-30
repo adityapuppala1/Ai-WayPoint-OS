@@ -30,7 +30,16 @@ export {
   overrideJudgeForTests,
   runJudge,
 } from './judge';
-export { JUDGE_LIMITS, JUDGE_PACE, JUDGE_PROVIDER, JudgeError } from './judge-client';
+export {
+  type JevAnswer,
+  type JevRequest,
+  type JevResponse,
+  JUDGE_LIMITS,
+  JUDGE_PACE,
+  JUDGE_PROVIDER,
+  JudgeError,
+  type JudgeErrorKind,
+} from './judge-client';
 export {
   type AnswerOf,
   choice,

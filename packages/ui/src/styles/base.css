@@ -174,6 +174,19 @@ kbd {
   animation: none !important;
 }
 
+/*
+ * WebKit ends the page's process (the tab shows it crashed) when the page becomes long enough
+ * to scroll in the middle of a page transition: a short page, or the placeholder, giving way
+ * to a long one. There the page is always a scroll container, so that never changes during
+ * one. The room for the scrollbar is kept in every browser anyway (scrollbar-gutter above).
+ * Only WebKit has hanging-punctuation, so only WebKit takes this.
+ */
+@supports (hanging-punctuation: first) {
+  html {
+    overflow-y: scroll;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(*),
   ::view-transition-old(*),

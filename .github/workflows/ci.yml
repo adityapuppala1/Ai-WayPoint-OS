@@ -19,11 +19,19 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+      # pnpm first (its version comes from package.json), so setup-node can cache its store.
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
-      - run: corepack enable pnpm
+          cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Next.js reuses what it compiled last time for files that did not change.
+      - uses: actions/cache@v4
+        with:
+          path: apps/web/.next/cache
+          key: next-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: next-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
@@ -59,10 +67,12 @@ jobs:
           --health-interval 5s --health-timeout 5s --health-retries 12
     steps:
       - uses: actions/checkout@v4
+      # pnpm first (its version comes from package.json), so setup-node can cache its store.
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
-      - run: corepack enable pnpm
+          cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @waypoint/api exec vitest run test/security.test.ts
         env:
@@ -102,17 +112,39 @@ jobs:
             projects: --project=safari --project=iphone --shard=2/2
     steps:
       - uses: actions/checkout@v4
+      # pnpm first (its version comes from package.json), so setup-node can cache its store.
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
-      - run: corepack enable pnpm
+          cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Next.js reuses what it compiled last time for files that did not change.
+      - uses: actions/cache@v4
+        with:
+          path: apps/web/.next/cache
+          key: next-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: next-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
       - run: pnpm --filter @waypoint/web build
         env:
           BETTER_AUTH_SECRET: ci-only-secret-not-for-production-use-000000
           WAYPOINT_KEK: MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=
+      # The browser itself is cached per Playwright version; its system libraries come from
+      # apt either way.
+      - name: Which Playwright
+        id: playwright
+        run: echo "version=$(node -p "require('./apps/web/node_modules/@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        id: browsers
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ matrix.engine }}-${{ steps.playwright.outputs.version }}
       - name: Install this job's browser only, with the system libraries it needs
+        if: steps.browsers.outputs.cache-hit != 'true'
         run: pnpm --filter @waypoint/web exec playwright install --with-deps ${{ matrix.engine }}
+      - name: The cached browser's system libraries
+        if: steps.browsers.outputs.cache-hit == 'true'
+        run: pnpm --filter @waypoint/web exec playwright install-deps ${{ matrix.engine }}
       - run: pnpm --filter @waypoint/web exec playwright test ${{ matrix.projects }}
       # The HTML report carries each failure's trace and screenshots itself: test-results
       # would only upload the same files twice.

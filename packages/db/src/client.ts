@@ -10,7 +10,7 @@
  * Only ONE process may open the embedded database at a time — a second process can corrupt it.
  * A lock file enforces this, so stop `pnpm dev` before running `pnpm db:seed` (or use Postgres).
  */
-import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
 import { pg_trgm } from '@electric-sql/pglite/contrib/pg_trgm';
@@ -76,8 +76,17 @@ function isAlive(pid: number): boolean {
 function acquireLock(dataDir: string): () => void {
   mkdirSync(dataDir, { recursive: true });
   const lockPath = join(dataDir, 'pglite.lock');
-  if (existsSync(lockPath)) {
-    const pid = Number(readFileSync(lockPath, 'utf8').trim());
+  // Claimed by creating it, which fails if it is there: no gap between looking and taking.
+  try {
+    writeFileSync(lockPath, String(process.pid), { flag: 'wx' });
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== 'EEXIST') throw err;
+    let pid = 0;
+    try {
+      pid = Number(readFileSync(lockPath, 'utf8').trim());
+    } catch {
+      // let go of in the meantime
+    }
     if (pid && pid !== process.pid && isAlive(pid)) {
       throw new Error(
         `The embedded database in ${dataDir} is already open in another process (pid ${pid}). ` +
@@ -85,8 +94,9 @@ function acquireLock(dataDir: string): () => void {
           'or set DATABASE_URL to use a Postgres server.',
       );
     }
+    // Left behind by a process that has ended (or by this one): taken over.
+    writeFileSync(lockPath, String(process.pid));
   }
-  writeFileSync(lockPath, String(process.pid));
   let released = false;
   const release = () => {
     if (released) return;

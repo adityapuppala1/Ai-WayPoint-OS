@@ -60,7 +60,7 @@ import {
   toast,
   useCommandShortcut,
 } from '@waypoint/ui';
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import styles from './design.module.css';
 
 const STEPS = [
@@ -1026,8 +1026,12 @@ const ACTIVITY = WEEKDAYS.map((_, d) =>
   ),
 );
 
-/** The admin console's charts, with made-up numbers. */
-function ChartShowcase() {
+/**
+ * The admin console's charts, with made-up numbers. Memoised: the page's own state (a
+ * counting figure, a stepper) changes often, and redrawing every chart each time starved the
+ * page's animations of frames on a slow machine.
+ */
+const ChartShowcase = memo(function ChartShowcase() {
   const [pending, setPending] = useState(false);
   const reload = () => {
     setPending(true);
@@ -1204,4 +1208,4 @@ function ChartShowcase() {
       </div>
     </section>
   );
-}
+});

@@ -2078,7 +2078,7 @@
     "sWithdrawBody": "Il ne sera plus affiché à personne, y compris à celles et ceux qui l’avaient enregistré. Le journal d’activité garde son titre et sa source.",
     "sWithdrawn": "Signal retiré",
     "feedbackTitle": "Avis",
-    "feedbackLead": "Ce que les gens nous ont dit avoir marché ou non, du plus récent au plus ancien. Les données personnelles ont été retirées de chaque message avant conservation. Personne n’est nommé sauf demande de réponse, et un invité ne peut pas être identifié.",
+    "feedbackLead": "Ce que les gens nous ont dit avoir marché ou non. Faites avancer chaque avis, laissez une note à l’équipe et répondez à qui l’a demandé. Les données personnelles ont été retirées de chaque message avant sa conservation ; personne n’est nommé sans avoir demandé de réponse, et un invité ne peut pas être identifié.",
     "feedbackEmpty": "Aucun avis pour l’instant.",
     "feedbackRated": "Note : {rating, number} sur 5",
     "feedbackNoMessage": "Aucun message.",
@@ -2536,6 +2536,48 @@
         "inProcess": "Dans ce processus",
         "separate": "Worker séparé"
       }
+    },
+    "fb": {
+      "saved": "Enregistré.",
+      "replySent": "Réponse en route vers {email}.",
+      "state": "État",
+      "statuses": {
+        "new": "Nouveaux",
+        "planned": "Prévus",
+        "done": "Faits",
+        "wont": "Ne sera pas fait",
+        "all": "Tous"
+      },
+      "note": "Note de l’équipe",
+      "noteHint": "Seule l’équipe la voit. Les adresses et numéros sont retirés.",
+      "save": "Enregistrer",
+      "writeBack": "Répondre",
+      "replyLabel": "Votre réponse",
+      "replyHint": "Envoyée par e-mail à {email}, dans sa langue, avec vos mots tels quels. Ils ne sont conservés nulle part ailleurs.",
+      "sendReply": "Envoyer la réponse",
+      "monthLabel": "Les 30 derniers jours",
+      "monthCount": "Avis reçus",
+      "monthRating": "Note moyenne",
+      "outOfFive": "sur 5",
+      "waitingReply": "Attendent une réponse",
+      "waitingReplyNote": "Demandée, pas encore envoyée",
+      "stateLabel": "État",
+      "ratingLabel": "Note",
+      "ratings": {
+        "any": "Toutes les notes",
+        "low": "N’a pas marché (1–2)",
+        "high": "A bien marché (4–5)"
+      },
+      "askedReply": "Réponse demandée",
+      "moduleLabel": "Partie de Waypoint",
+      "allParts": "Toutes les parties",
+      "avgShort": "moy. {rating}",
+      "found": "{n, plural, one {# avis} other {# avis}}",
+      "onPage": "Envoyé depuis {page}",
+      "repliedOn": "Réponse envoyée le {when}.",
+      "handled": "Dernière modification par {who}, {when}",
+      "someone": "quelqu’un de l’équipe",
+      "allCaughtUp": "Tout est à jour : rien de nouveau à lire."
     }
   },
   "byText": {

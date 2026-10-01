@@ -9,7 +9,11 @@ describe('emails', () => {
   it('exist for every template in every language, with the link written out too', () => {
     for (const locale of LOCALES)
       for (const template of EMAIL_TEMPLATES) {
-        const mail = renderEmail(template, { url, name: 'Ana', organization: 'Acme' }, locale);
+        const mail = renderEmail(
+          template,
+          { url, name: 'Ana', organization: 'Acme', reply: 'Thanks, fixed now.' },
+          locale,
+        );
         expect(mail, `${locale} ${template}`).not.toBeNull();
         expect(mail?.subject.trim().length).toBeGreaterThan(5);
         expect(mail?.text).toContain(url);
@@ -18,6 +22,18 @@ describe('emails', () => {
         // Nothing left unfilled.
         expect(`${mail?.subject}${mail?.text}`).not.toMatch(/\{\w+\}/);
       }
+  });
+
+  it('quotes the team’s reply to feedback as plain text, and needs one', () => {
+    const mail = renderEmail(
+      'feedback-reply',
+      { url, reply: 'We fixed it {name} <b>today</b>.\nThank you.' },
+      'en',
+    );
+    expect(mail?.text).toContain('> We fixed it {name} <b>today</b>.\n> Thank you.');
+    expect(mail?.html).toContain('We fixed it {name} &lt;b&gt;today&lt;/b&gt;.');
+    expect(mail?.html).not.toContain('<b>today');
+    expect(renderEmail('feedback-reply', { url, reply: '  ' }, 'en')).toBeNull();
   });
 
   it('never carries a link that is not a web address', () => {

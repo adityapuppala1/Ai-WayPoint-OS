@@ -299,16 +299,28 @@ export const dataRequests = pgTable(
   (t) => [index('data_requests_user_idx').on(t.userId)],
 );
 
-export const feedback = pgTable('feedback', {
-  id: pk(),
-  userId: text().references(() => users.id, { onDelete: 'set null' }),
-  module: text().notNull(),
-  page: text(),
-  rating: smallint(),
-  message: text(),
-  wantsReply: boolean().notNull().default(false),
-  createdAt: createdAt(),
-});
+export const feedback = pgTable(
+  'feedback',
+  {
+    id: pk(),
+    userId: text().references(() => users.id, { onDelete: 'set null' }),
+    module: text().notNull(),
+    page: text(),
+    rating: smallint(),
+    message: text(),
+    wantsReply: boolean().notNull().default(false),
+    /** new | planned | done | wont: where the team is with it. */
+    status: text().notNull().default('new'),
+    /** The team's own note. Never shown to the person who sent it. */
+    note: text(),
+    handledBy: text().references(() => users.id, { onDelete: 'set null' }),
+    handledAt: timestamp({ withTimezone: true }),
+    /** When the team last wrote back by email (only to someone who asked for a reply). */
+    repliedAt: timestamp({ withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [index('feedback_status_idx').on(t.status, t.createdAt)],
+);
 
 // ───────────────────────────── Outside services (the console) ─────────────────────────────
 

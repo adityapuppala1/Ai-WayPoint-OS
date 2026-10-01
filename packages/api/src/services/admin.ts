@@ -39,7 +39,6 @@ import {
   type Database,
   desc,
   eq,
-  feedback,
   gte,
   inArray,
   isNull,
@@ -1027,75 +1026,6 @@ export async function reportedScams(
         latest: e.latest.toISOString().slice(0, 10),
       }))
       .sort((a, b) => b.reports - a.reports || b.latest.localeCompare(a.latest)),
-  };
-}
-
-// ─────────────────────────────── Feedback ───────────────────────────────
-
-export const FeedbackItemSchema = z.object({
-  id: z.string(),
-  /** The part of Waypoint it is about. */
-  module: z.string(),
-  page: z.string().nullable(),
-  /** 1 (did not work) to 5 (worked well), when the person gave one. */
-  rating: z.number().int().nullable(),
-  /** What they wrote. Personal details were removed before it was stored. */
-  message: z.string().nullable(),
-  /**
-   * Where to write back, only when the person asked for a reply and has an account with an
-   * address. Everyone else, and every guest, stays unnamed: nothing here says who they are.
-   */
-  replyTo: z.string().nullable(),
-  createdAt: z.string(),
-});
-
-export const FeedbackListSchema = z
-  .object({
-    items: z.array(FeedbackItemSchema),
-    total: z.number().int(),
-    next: z.string().nullable(),
-  })
-  .openapi('FeedbackList');
-
-export type FeedbackList = z.infer<typeof FeedbackListSchema>;
-
-/** What people told us, newest first, a page at a time. */
-export async function feedbackList(
-  db: Database,
-  opts: { before?: string | null; limit?: number } = {},
-): Promise<FeedbackList> {
-  const limit = Math.min(opts.limit ?? 50, 200);
-  const before = opts.before ? new Date(opts.before) : null;
-  const rows = await db
-    .select({
-      entry: feedback,
-      // Read only to decide whether there is an address to reply to; never returned as such.
-      email: users.email,
-      isGuest: users.isAnonymous,
-    })
-    .from(feedback)
-    .leftJoin(users, eq(users.id, feedback.userId))
-    .where(before && !Number.isNaN(before.getTime()) ? lt(feedback.createdAt, before) : sql`true`)
-    .orderBy(desc(feedback.createdAt), desc(feedback.id))
-    .limit(limit + 1);
-  const [total] = await db.select({ n: count() }).from(feedback);
-  const page = rows.slice(0, limit);
-  return {
-    items: page.map((r) => ({
-      id: r.entry.id,
-      module: r.entry.module,
-      page: r.entry.page,
-      rating: r.entry.rating,
-      message: r.entry.message,
-      replyTo:
-        // Phone accounts have a placeholder address that reaches nobody.
-        r.entry.wantsReply && r.email && !r.isGuest && !r.email.endsWith('.invalid')
-          ? r.email
-          : null,
-      createdAt: r.entry.createdAt.toISOString(),
-    })),
-    total: num(total?.n),
-    next: rows.length > limit ? (page.at(-1)?.entry.createdAt.toISOString() ?? null) : null,
   };
 }
 

@@ -12,6 +12,7 @@ export * as admin from './services/admin';
 export * as ask from './services/ask';
 export * as circles from './services/circles';
 export * as civic from './services/civic';
+export * as feedback from './services/feedback';
 export * as forecasts from './services/forecasts';
 export * as goals from './services/goals';
 export * as health from './services/health';

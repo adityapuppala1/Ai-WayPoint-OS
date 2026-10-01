@@ -281,3 +281,54 @@ test('the system page shows how the platform is doing, and what needs a look', a
     page.viewportSize()?.width ?? 0,
   );
 });
+
+test('the team writes back to feedback and moves it on, with a note', async ({
+  browser,
+  page,
+  baseURL,
+}, testInfo) => {
+  test.skip(test.info().project.name !== 'desktop', 'one browser is enough for the round trip');
+  const kofi = await newAccount(browser, baseURL ?? '', 'Kofi', true);
+  try {
+    await kofi.page.goto('/sign-in');
+    await kofi.page.getByLabel('Email').fill(kofi.email);
+    await kofi.page.getByLabel('Password').fill('a long e2e-only password');
+    await kofi.page.getByRole('main').getByRole('button', { name: 'Sign in' }).click();
+    await expect(kofi.page).not.toHaveURL(/sign-in/);
+    // Long runs of digits would be taken out as a phone number: mark it with letters.
+    const mark = Date.now().toString(36).replace(/\d/g, 'q');
+    const message = `The budget page lost my numbers (${mark}).`;
+    const sent = await kofi.page.request.post('/api/feedback', {
+      data: { module: 'money', rating: 2, message, wantsReply: true },
+      headers: { origin: baseURL ?? '' },
+    });
+    expect(sent.status()).toBe(201);
+
+    await asAdmin(browser, page, baseURL ?? '');
+    await page.goto('/admin/feedback?module=money&wantsReply=true');
+    await expect(page.getByRole('heading', { level: 2, name: 'Feedback' })).toBeVisible();
+    const item = page.getByRole('listitem').filter({ hasText: message });
+    await expect(item.getByRole('link', { name: kofi.email })).toBeVisible();
+    await snap(page, testInfo, 'console-feedback');
+
+    await item.getByRole('button', { name: 'Write back' }).click();
+    await item.getByLabel('Your reply').fill('Thank you, Kofi. We found the bug and it is fixed.');
+    await item.getByRole('button', { name: 'Send reply' }).click();
+    await expect(page.getByText(`Reply on its way to ${kofi.email}.`)).toBeVisible();
+    await expect(item.getByText(/Replied /)).toBeVisible();
+
+    await item.getByRole('button', { name: /State/ }).click();
+    await page.getByRole('option', { name: 'Planned' }).click();
+    await item.getByLabel('Team note').fill('Fix in the next release.');
+    await item.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByText('Saved.')).toBeVisible();
+    // It leaves the new ones, and is found with the planned ones.
+    await expect(page.getByRole('listitem').filter({ hasText: message })).toHaveCount(0);
+    await page.getByRole('link', { name: /^Planned/ }).click();
+    const planned = page.getByRole('listitem').filter({ hasText: message });
+    await expect(planned.getByLabel('Team note')).toHaveValue('Fix in the next release.');
+    await expect(planned.getByText(/Last changed by Administrator/)).toBeVisible();
+  } finally {
+    await kofi.close();
+  }
+});

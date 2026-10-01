@@ -8,8 +8,6 @@ import {
   AuditTrailSchema,
   adminOverview,
   auditTrail,
-  FeedbackListSchema,
-  feedbackList,
   ModerationInputSchema,
   ModerationQueueSchema,
   moderatePost,
@@ -20,6 +18,15 @@ import {
   ScamReviewInputSchema,
   scamReportList,
 } from '../services/admin';
+import {
+  FeedbackListSchema,
+  FeedbackQuerySchema,
+  FeedbackReplySchema,
+  FeedbackUpdateSchema,
+  feedbackList,
+  replyToFeedback,
+  updateFeedback,
+} from '../services/feedback';
 import {
   IntegrationCheckSchema,
   IntegrationsSchema,
@@ -163,18 +170,58 @@ app.openapi(
     method: 'get',
     path: '/admin/feedback',
     tags: ['Admin'],
-    summary: 'What people told us worked or did not, newest first',
+    summary: 'What people told us worked or did not, newest first, filtered',
     description:
       'Personal details were removed from each message before it was stored. An address is given only for someone who asked for a reply; guests are never identified.',
-    request: {
-      query: z.object({
-        before: z.iso.datetime().optional(),
-        limit: z.coerce.number().int().min(1).max(200).optional(),
-      }),
-    },
+    request: { query: FeedbackQuerySchema },
     responses: { 200: jsonContent(FeedbackListSchema), 401: errors[401], 403: errors[403] },
   }),
   async (c) => c.json(await feedbackList(c.get('db'), c.req.valid('query')), 200),
+);
+
+app.openapi(
+  createRoute({
+    method: 'patch',
+    path: '/admin/feedback/{id}',
+    tags: ['Admin'],
+    summary: 'Move feedback to another state, or change the team note on it',
+    middleware: [limit('admin-feedback', 600, 3600)] as const,
+    request: { params: IdParam, ...jsonBody(FeedbackUpdateSchema) },
+    responses: {
+      200: jsonContent(OkSchema),
+      401: errors[401],
+      403: errors[403],
+      404: errors[404],
+    },
+  }),
+  async (c) => {
+    await updateFeedback(c.get('db'), actor(c), c.req.valid('param').id, c.req.valid('json'));
+    return c.json({ ok: true as const }, 200);
+  },
+);
+
+app.openapi(
+  createRoute({
+    method: 'post',
+    path: '/admin/feedback/{id}/reply',
+    tags: ['Admin'],
+    summary: 'Write back by email to someone who asked for a reply',
+    description:
+      'The words are sealed in the outbox and kept nowhere else; the activity log records that a reply was sent, not what it said.',
+    middleware: [limit('admin-feedback-reply', 60, 3600)] as const,
+    request: { params: IdParam, ...jsonBody(FeedbackReplySchema) },
+    responses: {
+      200: jsonContent(OkSchema),
+      401: errors[401],
+      403: errors[403],
+      404: errors[404],
+      409: errors[409],
+    },
+  }),
+  async (c) => {
+    await replyToFeedback(c.get('db'), actor(c), c.req.valid('param').id, c.req.valid('json'));
+    return c.json({ ok: true as const }, 200);
+  },
 );
 
 app.openapi(

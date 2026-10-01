@@ -2078,7 +2078,7 @@
     "sWithdrawBody": "Dejará de mostrarse a todo el mundo, también a quienes la guardaron. El registro de actividad conserva su título y su fuente.",
     "sWithdrawn": "Señal retirada",
     "feedbackTitle": "Comentarios",
-    "feedbackLead": "Lo que la gente nos ha contado que funcionó o no, lo más reciente primero. Los datos personales se quitaron de cada mensaje antes de guardarlo. No se nombra a nadie salvo que haya pedido respuesta, y a un invitado no se le puede identificar.",
+    "feedbackLead": "Lo que la gente nos contó que funcionó o no. Avanza cada uno, deja una nota para el equipo y responde a quien lo pidió. Se quitaron los datos personales de cada mensaje antes de guardarlo; nadie aparece con nombre salvo que pidiera respuesta, y a un invitado no se le puede identificar.",
     "feedbackEmpty": "Todavía no hay comentarios.",
     "feedbackRated": "Valoración: {rating, number} de 5",
     "feedbackNoMessage": "Sin mensaje.",
@@ -2536,6 +2536,48 @@
         "inProcess": "En este proceso",
         "separate": "Worker aparte"
       }
+    },
+    "fb": {
+      "saved": "Guardado.",
+      "replySent": "La respuesta va de camino a {email}.",
+      "state": "Estado",
+      "statuses": {
+        "new": "Nuevos",
+        "planned": "Previstos",
+        "done": "Hechos",
+        "wont": "No se harán",
+        "all": "Todos"
+      },
+      "note": "Nota del equipo",
+      "noteHint": "Solo lo ve el equipo. Se quitan direcciones y números.",
+      "save": "Guardar",
+      "writeBack": "Responder",
+      "replyLabel": "Tu respuesta",
+      "replyHint": "Se envía por correo a {email}, en su idioma, con tus palabras tal cual. No se guardan en ningún otro sitio.",
+      "sendReply": "Enviar respuesta",
+      "monthLabel": "Los últimos 30 días",
+      "monthCount": "Comentarios recibidos",
+      "monthRating": "Valoración media",
+      "outOfFive": "sobre 5",
+      "waitingReply": "Esperan respuesta",
+      "waitingReplyNote": "La pidieron y aún no se ha enviado",
+      "stateLabel": "Estado",
+      "ratingLabel": "Valoración",
+      "ratings": {
+        "any": "Cualquier valoración",
+        "low": "No funcionó (1–2)",
+        "high": "Funcionó bien (4–5)"
+      },
+      "askedReply": "Piden respuesta",
+      "moduleLabel": "Parte de Waypoint",
+      "allParts": "Todas las partes",
+      "avgShort": "media {rating}",
+      "found": "{n, plural, one {# comentario} other {# comentarios}}",
+      "onPage": "Enviado desde {page}",
+      "repliedOn": "Respondido el {when}.",
+      "handled": "Último cambio de {who}, {when}",
+      "someone": "alguien del equipo",
+      "allCaughtUp": "Todo al día: nada nuevo que leer."
     }
   },
   "byText": {

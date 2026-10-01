@@ -11,13 +11,15 @@ export type EmailTemplate =
   | 'reset-password'
   | 'account-exists'
   | 'org-invite'
-  | 'staff-invite';
+  | 'staff-invite'
+  | 'feedback-reply';
 export const EMAIL_TEMPLATES: readonly EmailTemplate[] = [
   'verify-email',
   'reset-password',
   'account-exists',
   'org-invite',
   'staff-invite',
+  'feedback-reply',
 ];
 
 export interface RenderedEmail {
@@ -63,7 +65,14 @@ export function renderEmail(
     'account-exists': copy.exists,
     'org-invite': copy.invite,
     'staff-invite': copy.staffInvite,
+    'feedback-reply': copy.feedbackReply,
   }[template];
+  // The team's own words, for a reply to feedback: kept as written, never filled in.
+  const reply =
+    template === 'feedback-reply' && typeof payload.reply === 'string'
+      ? payload.reply.trim().slice(0, 4000)
+      : '';
+  if (template === 'feedback-reply' && !reply) return null;
   const name = plainName(typeof payload.name === 'string' ? payload.name : '', 40);
   const inviter = plainName(typeof payload.inviter === 'string' ? payload.inviter : '');
   const vars = {
@@ -85,7 +94,20 @@ export function renderEmail(
   const fallback = t(copy.linkFallback);
   const button = t(mail.button);
 
-  const text = [greeting, '', body, '', `${button}: ${url}`, '', note, '', '—', footer].join('\n');
+  const quoted = reply ? ['', ...reply.split('\n').map((line) => `> ${line}`)] : [];
+  const text = [
+    greeting,
+    '',
+    body,
+    ...quoted,
+    '',
+    `${button}: ${url}`,
+    '',
+    note,
+    '',
+    '—',
+    footer,
+  ].join('\n');
 
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
   const align = dir === 'rtl' ? 'right' : 'left';
@@ -106,7 +128,12 @@ export function renderEmail(
 <p style="margin:0 0 20px;font-size:18px;font-weight:700;letter-spacing:.2px;"><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#f2c230;margin-${dir === 'rtl' ? 'left' : 'right'}:8px;"></span>Waypoint</p>
 <p style="margin:0 0 16px;font-size:16px;line-height:1.5;">${escapeHtml(greeting)}</p>
 <p style="margin:0 0 24px;font-size:16px;line-height:1.5;">${escapeHtml(body)}</p>
-<p style="margin:0 0 24px;"><a href="${href}" style="display:inline-block;background:#f2c230;color:#1c2230;text-decoration:none;font-weight:700;font-size:16px;padding:14px 22px;border-radius:10px;">${escapeHtml(button)}</a></p>
+${
+  reply
+    ? `<blockquote style="margin:0 0 24px;padding:12px 16px;border-${dir === 'rtl' ? 'right' : 'left'}:4px solid #f2c230;background:#faf8f3;font-size:16px;line-height:1.5;white-space:pre-wrap;" dir="auto">${escapeHtml(reply)}</blockquote>
+`
+    : ''
+}<p style="margin:0 0 24px;"><a href="${href}" style="display:inline-block;background:#f2c230;color:#1c2230;text-decoration:none;font-weight:700;font-size:16px;padding:14px 22px;border-radius:10px;">${escapeHtml(button)}</a></p>
 <p style="margin:0 0 20px;font-size:14px;line-height:1.5;color:#4a5163;">${escapeHtml(note)}</p>
 <p style="margin:0 0 6px;font-size:13px;line-height:1.5;color:#4a5163;">${escapeHtml(fallback)}</p>
 <p style="margin:0 0 24px;font-size:13px;line-height:1.5;word-break:break-all;direction:ltr;text-align:${align};"><a href="${href}" style="color:#1c2230;">${href}</a></p>

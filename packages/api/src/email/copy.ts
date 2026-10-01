@@ -24,6 +24,8 @@ export interface EmailCopy {
   invite: Mail;
   /** An invitation to join the platform's own staff (sent from the console). */
   staffInvite: Mail;
+  /** The team's reply to feedback, to someone who asked for one; the reply follows the body. */
+  feedbackReply: Mail;
   /** The roles a staff invitation can carry, as they read in a sentence ("as {role}"). */
   roles: { admin: string; staff: string };
   linkFallback: string;
@@ -65,6 +67,12 @@ export const EMAIL_COPY: Record<Locale, EmailCopy> = {
       button: 'See the invitation',
       note: "To answer, sign in or create an account with this email address and confirm it. The invitation expires in 7 days. If you weren't expecting it, you can ignore this email.",
     },
+    feedbackReply: {
+      subject: 'A reply to your feedback on Waypoint',
+      body: 'Thank you for telling us what you thought. Someone on the Waypoint team wrote back:',
+      button: 'Open Waypoint',
+      note: "You're getting this because you asked for a reply when you sent your feedback. To add anything, send more feedback from Settings in Waypoint. Please don't reply to this email.",
+    },
     roles: { admin: 'an admin', staff: 'a member of staff' },
     linkFallback: "If the button doesn't work, copy this link into your browser:",
     footer:
@@ -103,6 +111,12 @@ export const EMAIL_COPY: Record<Locale, EmailCopy> = {
       body: '{inviter} ने आपको इस Waypoint को चलाने वाले लोगों में {role} के रूप में शामिल होने का न्योता दिया है।',
       button: 'न्योता देखें',
       note: 'जवाब देने के लिए इसी ईमेल पते से साइन इन करें या खाता बनाएँ और उसकी पुष्टि करें। न्योता 7 दिनों में समाप्त हो जाता है। अगर आपको इसकी उम्मीद नहीं थी, तो इस ईमेल को अनदेखा कर सकते हैं।',
+    },
+    feedbackReply: {
+      subject: 'Waypoint पर आपकी प्रतिक्रिया का जवाब',
+      body: 'हमें अपनी राय बताने के लिए धन्यवाद। Waypoint टीम के किसी सदस्य ने जवाब लिखा है:',
+      button: 'Waypoint खोलें',
+      note: 'यह ईमेल आपको इसलिए मिला क्योंकि प्रतिक्रिया भेजते समय आपने जवाब माँगा था। कुछ और कहना हो तो Waypoint में सेटिंग से फिर प्रतिक्रिया भेजें। कृपया इस ईमेल का जवाब न दें।',
     },
     roles: { admin: 'एडमिन', staff: 'स्टाफ़ सदस्य' },
     linkFallback: 'अगर बटन काम न करे, तो यह लिंक अपने ब्राउज़र में कॉपी करें:',
@@ -143,6 +157,12 @@ export const EMAIL_COPY: Record<Locale, EmailCopy> = {
       button: 'Ver la invitación',
       note: 'Para responder, inicie sesión o cree una cuenta con esta dirección de correo y confírmela. La invitación caduca en 7 días. Si no la esperaba, puede ignorar este correo.',
     },
+    feedbackReply: {
+      subject: 'Respuesta a tus comentarios sobre Waypoint',
+      body: 'Gracias por contarnos tu opinión. Alguien del equipo de Waypoint te ha respondido:',
+      button: 'Abrir Waypoint',
+      note: 'Recibes este correo porque pediste una respuesta al enviar tus comentarios. Si quieres añadir algo, envía más comentarios desde Ajustes en Waypoint. Por favor, no respondas a este correo.',
+    },
     roles: { admin: 'administrador', staff: 'miembro del equipo' },
     linkFallback: 'Si el botón no funciona, copia este enlace en tu navegador:',
     footer:
@@ -181,6 +201,12 @@ export const EMAIL_COPY: Record<Locale, EmailCopy> = {
       body: '{inviter} vous invite à rejoindre les personnes qui gèrent ce Waypoint, en tant que {role}.',
       button: 'Voir l’invitation',
       note: 'Pour répondre, connectez-vous ou créez un compte avec cette adresse e-mail et confirmez-la. L’invitation expire dans 7 jours. Si vous ne l’attendiez pas, vous pouvez ignorer cet e-mail.',
+    },
+    feedbackReply: {
+      subject: 'Une réponse à votre avis sur Waypoint',
+      body: 'Merci de nous avoir donné votre avis. Une personne de l’équipe Waypoint vous a répondu :',
+      button: 'Ouvrir Waypoint',
+      note: 'Vous recevez cet e-mail parce que vous avez demandé une réponse en envoyant votre avis. Pour ajouter quelque chose, envoyez un nouvel avis depuis les Réglages de Waypoint. Merci de ne pas répondre à cet e-mail.',
     },
     roles: { admin: 'administrateur', staff: 'membre de l’équipe' },
     linkFallback: 'Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :',
@@ -221,6 +247,12 @@ export const EMAIL_COPY: Record<Locale, EmailCopy> = {
       button: 'Ver o convite',
       note: 'Para responder, inicie sessão ou crie uma conta com este endereço de e-mail e confirme-o. O convite expira em 7 dias. Se não o esperava, pode ignorar este e-mail.',
     },
+    feedbackReply: {
+      subject: 'Uma resposta à sua opinião sobre o Waypoint',
+      body: 'Obrigado por nos dizer o que achou. Alguém da equipa do Waypoint respondeu:',
+      button: 'Abrir o Waypoint',
+      note: 'Recebe este e-mail porque pediu uma resposta quando enviou a sua opinião. Para acrescentar algo, envie outra opinião nas Definições do Waypoint. Por favor, não responda a este e-mail.',
+    },
     roles: { admin: 'administrador', staff: 'membro da equipa' },
     linkFallback: 'Se o botão não funcionar, copie este link no seu navegador:',
     footer:
@@ -260,6 +292,12 @@ export const EMAIL_COPY: Record<Locale, EmailCopy> = {
       button: 'اطّلع على الدعوة',
       note: 'للرد، سجّل الدخول أو أنشئ حسابًا بعنوان البريد هذا وأكّده. تنتهي الدعوة خلال 7 أيام. إن لم تكن تتوقعها فيمكنك تجاهل هذه الرسالة.',
     },
+    feedbackReply: {
+      subject: 'رد على ملاحظاتك حول Waypoint',
+      body: 'شكرًا لأنك أخبرتنا برأيك. كتب لك أحد أعضاء فريق Waypoint:',
+      button: 'افتح Waypoint',
+      note: 'وصلك هذا البريد لأنك طلبت ردًا عند إرسال ملاحظاتك. لإضافة أي شيء، أرسل ملاحظات جديدة من الإعدادات في Waypoint. يُرجى عدم الرد على هذا البريد.',
+    },
     roles: { admin: 'مسؤول', staff: 'عضو في الفريق' },
     linkFallback: 'إن لم يعمل الزر، فانسخ هذا الرابط في متصفحك:',
     footer:
@@ -298,6 +336,12 @@ export const EMAIL_COPY: Record<Locale, EmailCopy> = {
       body: '{inviter} amekualika ujiunge na watu wanaoendesha Waypoint hii, kama {role}.',
       button: 'Tazama mwaliko',
       note: 'Ili kujibu, ingia au fungua akaunti kwa anwani hii ya barua pepe na uithibitishe. Mwaliko unaisha baada ya siku 7. Ikiwa hukuutarajia, unaweza kupuuza barua pepe hii.',
+    },
+    feedbackReply: {
+      subject: 'Jibu kuhusu maoni yako kwa Waypoint',
+      body: 'Asante kwa kutuambia ulichofikiri. Mtu wa timu ya Waypoint amekujibu:',
+      button: 'Fungua Waypoint',
+      note: 'Unapokea barua pepe hii kwa sababu uliomba jibu ulipotuma maoni yako. Kuongeza chochote, tuma maoni mengine kutoka Mipangilio kwenye Waypoint. Tafadhali usijibu barua pepe hii.',
     },
     roles: { admin: 'msimamizi', staff: 'mfanyakazi' },
     linkFallback: 'Kama kitufe hakifanyi kazi, nakili kiungo hiki kwenye kivinjari chako:',

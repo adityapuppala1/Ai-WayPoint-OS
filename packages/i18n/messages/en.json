@@ -2082,7 +2082,7 @@
     "sWithdrawBody": "It will no longer be shown to anyone, including people who saved it. The activity log keeps its title and source.",
     "sWithdrawn": "Signal withdrawn",
     "feedbackTitle": "Feedback",
-    "feedbackLead": "What people told us worked or didn’t, newest first. Personal details were removed from each message before it was kept. Nobody is named unless they asked for a reply, and a guest can’t be identified at all.",
+    "feedbackLead": "What people told us worked or didn’t. Move each one on, keep a note for the team, and write back to anyone who asked. Personal details were removed from each message before it was kept; nobody is named unless they asked for a reply, and a guest can’t be identified at all.",
     "feedbackEmpty": "No feedback yet.",
     "feedbackRated": "Rated {rating, number} of 5",
     "feedbackNoMessage": "No message.",
@@ -2540,6 +2540,48 @@
         "inProcess": "In this process",
         "separate": "Separate worker"
       }
+    },
+    "fb": {
+      "saved": "Saved.",
+      "replySent": "Reply on its way to {email}.",
+      "state": "State",
+      "statuses": {
+        "new": "New",
+        "planned": "Planned",
+        "done": "Done",
+        "wont": "Won’t do",
+        "all": "All"
+      },
+      "note": "Team note",
+      "noteHint": "Only the team sees it. Addresses and numbers are taken out.",
+      "save": "Save",
+      "writeBack": "Write back",
+      "replyLabel": "Your reply",
+      "replyHint": "Sent by email to {email}, in their language, with your words as written. The words are not kept anywhere else.",
+      "sendReply": "Send reply",
+      "monthLabel": "The last 30 days",
+      "monthCount": "Feedback received",
+      "monthRating": "Average rating",
+      "outOfFive": "out of 5",
+      "waitingReply": "Waiting for a reply",
+      "waitingReplyNote": "Asked for one, not yet sent",
+      "stateLabel": "State",
+      "ratingLabel": "Rating",
+      "ratings": {
+        "any": "Any rating",
+        "low": "Didn’t work (1–2)",
+        "high": "Worked well (4–5)"
+      },
+      "askedReply": "Asked for a reply",
+      "moduleLabel": "Part of Waypoint",
+      "allParts": "Every part",
+      "avgShort": "avg {rating}",
+      "found": "{n, plural, one {# piece of feedback} other {# pieces of feedback}}",
+      "onPage": "Sent from {page}",
+      "repliedOn": "Replied {when}.",
+      "handled": "Last changed by {who}, {when}",
+      "someone": "someone on the team",
+      "allCaughtUp": "All caught up: nothing new to read."
     }
   },
   "byText": {

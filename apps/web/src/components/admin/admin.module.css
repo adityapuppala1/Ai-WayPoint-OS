@@ -1240,3 +1240,35 @@ li.errorRow {
   color: var(--wp-text-secondary);
   font-size: var(--wp-text-small);
 }
+
+/* ───────────── Feedback ───────────── */
+.feedbackActions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-3);
+  padding-block-start: var(--wp-space-3);
+  border-block-start: 1px solid var(--wp-border-subtle);
+}
+
+/* State beside the note on a wide screen; one above the other on a phone. */
+.triageForm {
+  display: grid;
+  grid-template-columns: minmax(10rem, 14rem) minmax(0, 1fr);
+  gap: var(--wp-space-3) var(--wp-space-4);
+  align-items: start;
+}
+
+.triageForm > :last-child {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 40rem) {
+  .triageForm {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.filters a[aria-current="page"] :global(.wp-meta) {
+  color: inherit;
+  opacity: 0.8;
+}

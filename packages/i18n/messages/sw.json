@@ -2078,7 +2078,7 @@
     "sWithdrawBody": "Haitaonyeshwa tena kwa yeyote, hata kwa walioihifadhi. Kumbukumbu ya shughuli huhifadhi kichwa chake na chanzo chake.",
     "sWithdrawn": "Ishara imeondolewa",
     "feedbackTitle": "Maoni",
-    "feedbackLead": "Mambo ambayo watu walituambia yalifanya kazi au hayakufanya, jipya kwanza. Taarifa binafsi ziliondolewa kwenye kila ujumbe kabla ya kuhifadhiwa. Hakuna anayetajwa isipokuwa ameomba jibu, na mgeni hawezi kutambulika kabisa.",
+    "feedbackLead": "Watu walichotuambia kilifanya kazi au hakikufanya. Songesha kila moja, acha dokezo kwa timu, na mjibu aliyeomba. Taarifa binafsi ziliondolewa kwenye kila ujumbe kabla ya kuhifadhiwa; hakuna anayetajwa kwa jina isipokuwa aliomba jibu, na mgeni hawezi kutambuliwa kabisa.",
     "feedbackEmpty": "Bado hakuna maoni.",
     "feedbackRated": "Alama: {rating, number} kati ya 5",
     "feedbackNoMessage": "Hakuna ujumbe.",
@@ -2536,6 +2536,48 @@
         "inProcess": "Katika mchakato huu",
         "separate": "Worker tofauti"
       }
+    },
+    "fb": {
+      "saved": "Imehifadhiwa.",
+      "replySent": "Jibu linatumwa kwa {email}.",
+      "state": "Hali",
+      "statuses": {
+        "new": "Mapya",
+        "planned": "Yamepangwa",
+        "done": "Yamekamilika",
+        "wont": "Hatutafanya",
+        "all": "Yote"
+      },
+      "note": "Dokezo la timu",
+      "noteHint": "Ni timu pekee inayoliona. Anwani na namba huondolewa.",
+      "save": "Hifadhi",
+      "writeBack": "Jibu",
+      "replyLabel": "Jibu lako",
+      "replyHint": "Itatumwa kwa barua pepe kwa {email}, kwa lugha yake, kwa maneno yako kama ulivyoandika. Maneno hayahifadhiwi popote pengine.",
+      "sendReply": "Tuma jibu",
+      "monthLabel": "Siku 30 zilizopita",
+      "monthCount": "Maoni yaliyopokelewa",
+      "monthRating": "Wastani wa alama",
+      "outOfFive": "kati ya 5",
+      "waitingReply": "Wanasubiri jibu",
+      "waitingReplyNote": "Waliomba, bado halijatumwa",
+      "stateLabel": "Hali",
+      "ratingLabel": "Alama",
+      "ratings": {
+        "any": "Alama yoyote",
+        "low": "Haikufanya kazi (1–2)",
+        "high": "Ilifanya kazi vizuri (4–5)"
+      },
+      "askedReply": "Waliomba jibu",
+      "moduleLabel": "Sehemu ya Waypoint",
+      "allParts": "Kila sehemu",
+      "avgShort": "wastani {rating}",
+      "found": "{n, plural, one {maoni #} other {maoni #}}",
+      "onPage": "Yametumwa kutoka {page}",
+      "repliedOn": "Lilijibiwa {when}.",
+      "handled": "Ilibadilishwa mwisho na {who}, {when}",
+      "someone": "mtu wa timu",
+      "allCaughtUp": "Umemaliza yote: hakuna jipya la kusoma."
     }
   },
   "byText": {

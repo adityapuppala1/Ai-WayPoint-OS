@@ -686,7 +686,7 @@ describe('sending queued messages', () => {
     expect(raw).not.toContain('Private words');
     expect(raw).not.toContain('5557770007');
     await api.jobs.dispatchOutbox(db.getDb());
-    const twilioCall = sent.find((s) => s.url.includes('api.twilio.com'));
+    const twilioCall = sent.find((s) => new URL(s.url).hostname === 'api.twilio.com');
     expect(twilioCall?.url).toBe('https://api.twilio.com/2010-04-01/Accounts/ACtest/Messages.json');
     const params = new URLSearchParams(twilioCall?.body);
     expect(params.get('To')).toBe('+15557770007');

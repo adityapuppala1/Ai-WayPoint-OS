@@ -68,7 +68,7 @@ read [docs/AI.md](docs/AI.md#typed-decisions-jev) before switching it on.
 
 | Area | Status |
 | --- | --- |
-| **Today** — one next step (the Sign), this week's route, what changed for you | ✅ |
+| **Today** — one next step from every module (the Sign), with why it comes first and "Not now" for the day; this week's route, what changed for you | ✅ |
 | **Onboarding** — guest-first, two minutes, everything optional, privacy choices off by default | ✅ |
 | **Path** — skills, role suggestions with honest AI-exposure notes, week-by-week plans, step tracking | ✅ |
 | **Scam Shield** — rules engine + optional AI second opinion, report channels per country, scam library | ✅ |

@@ -52,7 +52,7 @@ use in every language, filled in from each installation's own configuration.
     for people who can't read.
 11. **Phone app** (Expo, iOS and Android) — done: Today, Scam Shield on the phone in every
     language, Ask with the support card and approvals, help lines offline, accounts and privacy
-    choices. Still to do: signed-in website pages inside the app, push notifications for
+    choices, and "Not now" on Today's step. Still to do: signed-in website pages inside the app, push notifications for
     reminders and follow-ups, an app lock for shared phones, and native Money, Goals and Mind
     ([MOBILE.md](MOBILE.md)).
 12. **Deployment** — done: a Docker Compose stack behind a reverse proxy, Kubernetes
@@ -69,13 +69,25 @@ use in every language, filled in from each installation's own configuration.
     guardrail cases and a per-language measurement command
     ([AI.md](AI.md#typed-decisions-jev)). Still to do: run `eval:judge` with a real key, tune
     the thresholds (they are starting values) per language, and have TypeSafe's terms reviewed.
+15. **One next step from everything** — done: Today picks a single next step from every
+    module by a fixed order (a safety note, getting started, anything due, money under
+    pressure, the plan, the weekly review, something to explore), says why, and offers "Not
+    now" for the rest of the day, on the website and in the phone app. How far Waypoint reaches
+    into a life, area by area, and what only people can add, is in [COVERAGE.md](COVERAGE.md).
+    Still to do: the content gaps listed there (housing, caring and study checklists among
+    them), written and reviewed by people who know each field.
+16. **Every browser** — done: browser tests in Chrome, Firefox and WebKit (Safari's engine) at
+    desktop and phone sizes on every change; numbers and dates drawn the same by every
+    engine; preference cookies the server sets, so Safari keeps them; a plain notice for
+    browsers too old for the stylesheet. Still to do: testing on real iPhones and Macs, and on
+    Samsung Internet.
 
 ## Before public launch
 
 Clinical and legal review of crisis flows per country, legal review of the privacy notice and
 terms for each country served (with any data protection registration they need), help-line
 verification with each service, a penetration test by an outside firm (the internal review is
-done), a load test on the hardware you will run on (the baseline in `infra/load` is from one
+done), the website and phone app tried on real iPhones, Macs and Android phones, a load test on the hardware you will run on (the baseline in `infra/load` is from one
 laptop), accessibility audit with assistive-technology users, an editorial policy for who may
 publish forecasts and signals, what the second person does when they disagree with a verdict,
 and which sources are acceptable, and a pilot with a partner organisation.

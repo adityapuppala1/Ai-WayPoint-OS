@@ -983,3 +983,172 @@
 .tasks p {
   margin: 0;
 }
+
+/* ───────────── People ───────────── */
+.searchRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-2);
+}
+
+.searchInput {
+  flex: 1 1 16rem;
+  min-block-size: var(--wp-touch-min);
+  padding-inline: var(--wp-space-3);
+  border: 1px solid var(--wp-border-strong);
+  border-radius: var(--wp-radius-sm);
+  background: var(--wp-raised);
+  color: var(--wp-text);
+  font: inherit;
+}
+
+.searchInput:focus-visible,
+.searchButton:focus-visible {
+  outline: 2px solid transparent;
+  box-shadow: var(--wp-focus-shadow);
+}
+
+.searchButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+  min-block-size: var(--wp-touch-min);
+  padding-inline: var(--wp-space-4);
+  border: 1px solid var(--wp-signal-hover);
+  border-radius: var(--wp-radius-sm);
+  background: var(--wp-signal);
+  color: var(--wp-signal-ink);
+  font: inherit;
+  font-weight: var(--wp-weight-semibold);
+  cursor: pointer;
+}
+
+.filterGroups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-3) var(--wp-space-6);
+}
+
+/* Wide tables scroll inside their own box on a phone, never the page. */
+.tableScroll {
+  max-inline-size: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--wp-border-subtle);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-raised);
+}
+
+.dataTable {
+  inline-size: 100%;
+  min-inline-size: 40rem;
+  border-collapse: collapse;
+  font-size: var(--wp-text-small);
+}
+
+.dataTable th,
+.dataTable td {
+  padding: var(--wp-space-3);
+  border-block-end: 1px solid var(--wp-border-subtle);
+  text-align: start;
+  vertical-align: top;
+}
+
+.dataTable thead th {
+  color: var(--wp-text-secondary);
+  font-weight: var(--wp-weight-medium);
+  white-space: nowrap;
+}
+
+.dataTable thead a {
+  color: inherit;
+}
+
+.dataTable thead th[aria-sort="ascending"] a::after {
+  content: " ↑";
+}
+
+.dataTable thead th[aria-sort="descending"] a::after {
+  content: " ↓";
+}
+
+.dataTable tbody th {
+  font-weight: var(--wp-weight-regular);
+}
+
+.dataTable tbody tr:last-child > * {
+  border-block-end: 0;
+}
+
+.dataTable tr[data-held] {
+  background: var(--wp-danger-tint);
+}
+
+.rowLink {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-inline-size: 0;
+  color: inherit;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.rowName {
+  color: var(--wp-text);
+  font-weight: var(--wp-weight-medium);
+}
+
+a.rowLink:hover .rowName {
+  text-decoration: underline;
+}
+
+.tagRow {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--wp-space-2);
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wp-space-3);
+}
+
+.pager a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--wp-touch-min);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
+  gap: var(--wp-space-4);
+  margin: 0;
+}
+
+.facts div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-inline-size: 0;
+}
+
+.facts dt {
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-meta);
+}
+
+.facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.roleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--wp-space-3);
+}

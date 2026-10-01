@@ -658,6 +658,9 @@ test('on a phone the go-to palette is a sheet that opens from its button', async
 test('figures say what they show: a line, a ring and a number that counts to its value', async ({
   page,
 }) => {
+  // The page's clock is the test's to move (below, while the number counts); until then
+  // it runs as usual.
+  await page.clock.install();
   await open(page);
   // A line of values is a picture with words, not a chart to be deciphered.
   const line = page.getByRole('img', { name: /^Savings over 6 weeks/ });
@@ -702,17 +705,27 @@ test('figures say what they show: a line, a ring and a number that counts to its
       if (moving?.textContent) seen.push(moving.textContent);
     }).observe(target, { childList: true, subtree: true, characterData: true });
   });
+  // Time stands still while the count is stepped through a frame or three at a time, so
+  // what is seen does not depend on how fast the machine draws.
+  await page.clock.pauseAt((await page.evaluate(() => Date.now())) + 1000);
   await page.getByRole('button', { name: "Add this week's saving" }).click();
   // While it counts, a screen reader is given the number it will arrive at.
+  await expect(number.locator('.wp-visually-hidden')).toHaveText('1,500');
+  await expect(arabic.locator('.wp-visually-hidden')).toHaveText('١٬٥٠٠');
+  for (let step = 0; step < 12; step++) {
+    await page.clock.runFor(48);
+    await page.evaluate(() => new Promise((done) => queueMicrotask(() => done(null))));
+  }
+  await page.clock.resume();
+  // And it arrives there.
   await expect(number).toHaveText('1,500');
   await expect(arabic).toHaveText('١٬٥٠٠');
   await expect(arabic.locator('[aria-hidden="true"]')).toHaveCount(0);
   const counted = await page.evaluate(
     () => (window as unknown as { __counted: string[] }).__counted,
   );
-  // It passed through numbers in between (on a slow machine only a couple of frames are
-  // drawn, but it never jumps straight there), every one of them in Arabic digits.
-  expect(new Set(counted).size).toBeGreaterThan(1);
+  // It passed through numbers in between, every one of them in Arabic digits.
+  expect(new Set(counted).size).toBeGreaterThan(2);
   for (const text of counted) expect(text).toMatch(/^[٠-٩٬]+$/);
 
   // A strip of figures is a list.

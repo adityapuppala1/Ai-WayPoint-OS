@@ -15,7 +15,6 @@ import { scrubLogText } from '@waypoint/core/privacy';
 import {
   and,
   apiErrors,
-  apiMetrics,
   type Database,
   dbKind,
   desc,

@@ -14,6 +14,9 @@ regexes = [
   '''ci-only-database-password''',
   # The made-up TypeSafe key in the judge's unit tests; nothing is ever sent with it.
   '''ts_test_key_0123456789abcdef''',
+  # Made-up Twilio tokens the console's tests save and replace; never sent anywhere.
+  '''tok_secret_1234''',
+  '''tok_new_5678''',
 ]
 paths = [
   '''\.env\.example$''',

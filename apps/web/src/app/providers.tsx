@@ -23,12 +23,16 @@ function useCountPages() {
   const pathname = usePathname();
   useEffect(() => {
     if (!pathname || /^\/(admin|design|poster)(\/|$)/.test(pathname)) return;
+    const body = JSON.stringify({ path: pathname });
+    // A beacon is sent even when the page is left at once, and a browser never reports one
+    // as a failed request; a plain fetch is the fallback.
+    if (typeof navigator.sendBeacon === 'function' && navigator.sendBeacon('/api/activity', body))
+      return;
     void fetch('/api/activity', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ path: pathname }),
+      body,
       credentials: 'same-origin',
-      keepalive: true,
     }).catch(() => undefined);
   }, [pathname]);
 }

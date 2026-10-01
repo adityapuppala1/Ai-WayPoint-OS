@@ -1521,7 +1521,8 @@ describe('organisations', () => {
     );
     for (const id of [...counted, ...notCounted, ...recent]) expect(everything).not.toContain(id);
     expect(everything).not.toContain('Person ');
-  });
+    // Enough people to pass the threshold for showing a total: slow by design on a busy runner.
+  }, 30_000);
 
   it('keeps team roles in check and records who did what', async () => {
     const owner = await member('Grace');

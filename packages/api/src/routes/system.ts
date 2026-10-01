@@ -108,6 +108,8 @@ app.openapi(
   },
 );
 
+const ActivitySchema = z.object({ path: z.string().max(300) });
+
 /** Browsers that ask not to be tracked (Global Privacy Control, Do Not Track). */
 const asksNotToBeCounted = (headers: Headers) =>
   headers.get('sec-gpc') === '1' || headers.get('dnt') === '1';
@@ -121,12 +123,33 @@ app.openapi(
     description:
       'Records that the signed-in person used Waypoint today (not what they did), and adds one to an anonymous count for the part of Waypoint, hour, platform, kind of visitor, country and language. Nothing is counted for staff, or when the browser sends Global Privacy Control or Do Not Track.',
     middleware: [limit('activity', 900, 3600)] as const,
-    request: jsonBody(z.object({ path: z.string().max(300) })),
-    responses: { 204: { description: 'Counted, or deliberately not' }, 429: errors[429] },
+    // A browser sends it as a beacon (plain text that holds JSON), which survives the page
+    // being left; the phone app sends JSON. Both are read here, the same way.
+    request: {
+      body: {
+        content: {
+          'application/json': { schema: ActivitySchema },
+          'text/plain': { schema: ActivitySchema },
+        },
+      },
+    },
+    responses: {
+      204: { description: 'Counted, or deliberately not' },
+      400: errors[400],
+      429: errors[429],
+    },
   }),
   async (c) => {
     const user = c.get('user');
-    const module = moduleOfPath(c.req.valid('json').path);
+    let body: unknown = null;
+    try {
+      body = JSON.parse((await c.req.text()).slice(0, 2000));
+    } catch {
+      // Not JSON: nothing to count.
+    }
+    const parsed = ActivitySchema.safeParse(body);
+    if (!parsed.success) return c.body(null, 400);
+    const module = moduleOfPath(parsed.data.path);
     if (!module || asksNotToBeCounted(c.req.raw.headers) || isStaffRole(user?.role))
       return c.body(null, 204);
     const [profile] = user

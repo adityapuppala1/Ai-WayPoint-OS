@@ -142,6 +142,24 @@ describe('what the analytics count', () => {
     expect(days).toHaveLength(0);
   });
 
+  it('takes a browser beacon (plain text holding JSON), but not from another site', async () => {
+    const before = await viewsOf('goals');
+    const beacon = (origin: string) =>
+      app.request(`${ORIGIN}/api/activity`, {
+        method: 'POST',
+        headers: {
+          origin,
+          'content-type': 'text/plain;charset=UTF-8',
+          'x-forwarded-for': address(),
+        },
+        body: JSON.stringify({ path: '/goals' }),
+      });
+    expect((await beacon(ORIGIN)).status).toBe(204);
+    expect(await viewsOf('goals')).toBe(before + 1);
+    expect((await beacon('https://elsewhere.example')).status).toBe(403);
+    expect(await viewsOf('goals')).toBe(before + 1);
+  });
+
   it('counts someone signed out as a visitor, with nobody attached', async () => {
     await open('/welcome');
     const view = await analytics.analyticsView(db.getDb(), { range: '7d' });

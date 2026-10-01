@@ -405,3 +405,25 @@ export const platformState = pgTable('platform_state', {
   updatedBy: text().references(() => users.id, { onDelete: 'set null' }),
   updatedAt: updatedAt(),
 });
+
+/**
+ * Invitations to join the platform's staff, sent by an admin to an email address. Only someone
+ * signed in with that address (confirmed) can answer; an invitation lasts 7 days.
+ */
+export const staffInvitations = pgTable(
+  'staff_invitations',
+  {
+    id: text().primaryKey(),
+    /** Lower case. */
+    email: text().notNull(),
+    /** admin | staff */
+    role: text().notNull(),
+    /** pending | accepted | declined | revoked */
+    status: text().notNull().default('pending'),
+    inviterId: text().references(() => users.id, { onDelete: 'set null' }),
+    expiresAt: timestamp({ withTimezone: true }).notNull(),
+    answeredAt: timestamp({ withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [index('staff_invitations_email_idx').on(t.email, t.status)],
+);

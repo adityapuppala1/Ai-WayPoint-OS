@@ -23,6 +23,7 @@ export * as mind from './services/mind';
 export * as money from './services/money';
 export * as org from './services/org';
 export * as path from './services/path';
+export * as people from './services/people';
 export * as privacy from './services/privacy';
 export * as shield from './services/shield';
 export * as signals from './services/signals';

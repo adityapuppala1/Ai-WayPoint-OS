@@ -6,12 +6,18 @@ import { LOCALES, type Locale } from '@waypoint/core';
 import { plainName } from '@waypoint/core/privacy';
 import { EMAIL_COPY } from './copy';
 
-export type EmailTemplate = 'verify-email' | 'reset-password' | 'account-exists' | 'org-invite';
+export type EmailTemplate =
+  | 'verify-email'
+  | 'reset-password'
+  | 'account-exists'
+  | 'org-invite'
+  | 'staff-invite';
 export const EMAIL_TEMPLATES: readonly EmailTemplate[] = [
   'verify-email',
   'reset-password',
   'account-exists',
   'org-invite',
+  'staff-invite',
 ];
 
 export interface RenderedEmail {
@@ -56,12 +62,14 @@ export function renderEmail(
     'reset-password': copy.reset,
     'account-exists': copy.exists,
     'org-invite': copy.invite,
+    'staff-invite': copy.staffInvite,
   }[template];
   const name = plainName(typeof payload.name === 'string' ? payload.name : '', 40);
   const inviter = plainName(typeof payload.inviter === 'string' ? payload.inviter : '');
   const vars = {
     name,
     inviter: inviter && !PLACEHOLDER_NAMES.has(inviter.toLowerCase()) ? inviter : copy.someone,
+    role: payload.role === 'admin' ? copy.roles.admin : copy.roles.staff,
     organisation: plainName(
       typeof payload.organization === 'string' ? payload.organization : '',
       80,

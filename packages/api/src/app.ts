@@ -42,6 +42,7 @@ import mind from './routes/mind';
 import money from './routes/money';
 import org from './routes/org';
 import path from './routes/path';
+import people from './routes/people';
 import preferences, { forgetPersonalCookies } from './routes/preferences';
 import shield from './routes/shield';
 import signals from './routes/signals';
@@ -433,6 +434,7 @@ export function createApp() {
   app.route('/', system);
   app.route('/', me);
   app.route('/', preferences);
+  app.route('/', people);
   app.route('/', today);
   app.route('/', support);
   app.route('/', shield);

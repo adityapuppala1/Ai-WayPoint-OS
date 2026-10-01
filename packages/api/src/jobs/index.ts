@@ -450,6 +450,7 @@ const SEND_WITHIN_MINUTES: Record<string, number> = {
   'verify-email': 24 * 60,
   'account-exists': 24 * 60,
   'org-invite': 7 * 24 * 60,
+  'staff-invite': 7 * 24 * 60,
   // A late reply to a text is confusing, and WhatsApp refuses free-form replies after a day.
   text: 24 * 60,
 };

@@ -207,21 +207,24 @@ export const WITHOUT_WORKER = { serviceWorkers: 'block' } as const;
  * has arrived. Start waiting before the press that refreshes, and leave or reload the page only
  * after: one cut off half-way is logged as an error in Firefox, and in WebKit ("Load failed")
  * it even reaches the page's error boundary. Its headers come first, so waiting for those is
- * not enough.
+ * not enough; and Playwright cannot always tell when the rest has come (its `finished()` never
+ * answered for Ask's refresh), but the page can: a fetch enters its resource timing once all
+ * of it has arrived.
  */
-export function refreshOf(page: Page): Promise<void> {
+export async function refreshOf(page: Page): Promise<void> {
   const path = new URL(page.url()).pathname;
-  return page
-    .waitForResponse(
-      (r) =>
-        r.request().method() === 'GET' &&
-        new URL(r.url()).pathname === path &&
-        r.url().includes('_rsc=') &&
-        !r.request().headers()['next-router-prefetch'],
-    )
-    .then(async (r) => {
-      await r.finished();
-    });
+  const response = await page.waitForResponse(
+    (r) =>
+      r.request().method() === 'GET' &&
+      new URL(r.url()).pathname === path &&
+      r.url().includes('_rsc=') &&
+      !r.request().headers()['next-router-prefetch'],
+  );
+  await page.waitForFunction(
+    (url) => performance.getEntriesByName(url).length > 0,
+    response.url(),
+    { timeout: 15_000 },
+  );
 }
 
 /** A full-page screenshot saved with the test's results, for looking over by eye. */

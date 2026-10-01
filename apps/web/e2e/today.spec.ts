@@ -26,7 +26,7 @@ const MODULES = [
 /** Getting started as a guest who says what is going on for them. Ends wherever it leads. */
 async function startWith(page: Page, situation: string, from = '/welcome'): Promise<void> {
   await page.goto(from);
-  await page.getByRole('link', { name: 'Get started' }).first().click();
+  await page.getByRole('link', { name: 'Start, no sign-up needed' }).first().click();
   await gettingStartedReady(page);
   // The radio's input sits under its label; press the label, as a person would.
   await page.getByText(situation, { exact: true }).click();
@@ -380,7 +380,8 @@ test('the welcome page shows every module, and what it says works without an acc
   // Every module is on the page: open as it is, or through getting started.
   const open = ['/shield', '/support', '/civic', '/surroundings', '/signals/forecasts'];
   const main = page.getByRole('main');
-  for (const href of open) await expect(main.locator(`a[href="${href}"]`), href).toBeVisible();
+  for (const href of open)
+    await expect(main.locator(`a[href="${href}"]`).first(), href).toBeVisible();
   for (const href of MODULES.filter((m) => !open.includes(m))) {
     const through = href === '/' ? '/start' : `/start?next=${encodeURIComponent(href)}`;
     await expect(main.locator(`a[href="${through}"]`).first(), href).toBeVisible();
@@ -388,7 +389,7 @@ test('the welcome page shows every module, and what it says works without an acc
   await expect(
     main
       .getByRole('link', { name: /Money/ })
-      .filter({ hasText: 'Budget, runway and money safety.' }),
+      .filter({ hasText: 'How long your money lasts, and what helps most.' }),
   ).toBeVisible();
 
   // The five that need no account really open: no trip back to the welcome page.
@@ -402,10 +403,9 @@ test('the welcome page shows every module, and what it says works without an acc
 test('getting started ends where the person was heading', async ({ page }) => {
   await page.goto('/money');
   await expect(page).toHaveURL(/\/welcome\?next=%2Fmoney/);
-  await expect(page.getByRole('link', { name: 'Get started' }).first()).toHaveAttribute(
-    'href',
-    '/start?next=%2Fmoney',
-  );
+  await expect(
+    page.getByRole('link', { name: 'Start, no sign-up needed' }).first(),
+  ).toHaveAttribute('href', '/start?next=%2Fmoney');
   await startWith(page, 'I do gig or freelance work', '/welcome?next=%2Fmoney');
   await expect(page).toHaveURL(/\/money$/, { timeout: 30_000 });
   await expect(page.getByRole('heading', { level: 1, name: 'Money' })).toBeVisible();

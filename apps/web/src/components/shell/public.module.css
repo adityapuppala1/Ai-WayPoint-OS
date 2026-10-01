@@ -69,6 +69,12 @@
   outline: none;
 }
 
+/* A page that runs edge to edge and sets its own gutters (the welcome page). */
+.mainBleed {
+  flex: 1;
+  outline: none;
+}
+
 /* Footer: the privacy notice and terms, reachable from every public page. */
 .footer {
   padding-block: var(--wp-space-5) calc(var(--wp-space-5) + env(safe-area-inset-bottom));

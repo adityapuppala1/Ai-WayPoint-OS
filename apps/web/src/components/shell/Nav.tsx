@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { LogoMark } from '@/components/Logo';
+import { LogoMark, Wordmark } from '@/components/brand/Logo';
 import { GoToButton } from './GoTo';
 import { type DirectoryRow, NAV, PRIMARY_TABS } from './nav-items';
 import { LinkPending } from './pending';
@@ -39,10 +39,8 @@ export function NavRail({ accountSlot }: { accountSlot: React.ReactNode }) {
   return (
     <nav className={cn(styles.rail, viewTransition.rail)} aria-label={a11y('mainNav')}>
       <Link href="/" className={styles.brand} aria-label={shell('home')}>
-        <span className={styles.brandMark} aria-hidden>
-          <LogoMark size={28} />
-        </span>
-        <span className={styles.brandText}>Waypoint</span>
+        <LogoMark size={28} className={styles.brandMark} />
+        <Wordmark className={styles.brandText} />
       </Link>
       <div className={styles.railSearch}>
         <GoToButton withShortcut />

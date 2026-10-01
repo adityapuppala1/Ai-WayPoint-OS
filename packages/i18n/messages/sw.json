@@ -3137,5 +3137,159 @@
     "how6": "Mfanyakazi wa pili huhakiki kila matokeo. Hadi hapo, kadirio huwekewa alama “bado halijahakikiwa mara ya pili”.",
     "uncheckedCount": "{count, plural, one {Matokeo # bado hayajahakikiwa} other {Matokeo # bado hayajahakikiwa}} mara ya pili.",
     "historyTrend": "Uwezekano kwa muda: kutoka {first} hadi {last}"
+  },
+  "landing": {
+    "hero": {
+      "title": "Maisha yanapobadilika, jua hatua yako inayofuata.",
+      "lead": "Waypoint ni mwenzi wa bure kwa nyakati ngumu na mabadiliko makubwa: kupoteza kazi, ujumbe unaoweza kuwa ulaghai, shida ya pesa, nchi mpya, siku ngumu. Hatua moja iliyo wazi kwa wakati, kwa lugha yako.",
+      "start": "Anza, bila kujisajili",
+      "factsLabel": "Waypoint kwa ufupi",
+      "free": "Ni bure",
+      "languages": "Kwa lugha 7",
+      "offline": "Namba za msaada hufanya kazi bila mtandao",
+      "urgent": "Uko hatarini, au unahitaji kuzungumza na mtu sasa?"
+    },
+    "situations": {
+      "title": "Chochote kilichokuleta hapa",
+      "lead": "Chagua kinachofanana na hali yako. Kila kimoja kinaanzia pale kinaposaidia zaidi.",
+      "job": {
+        "title": "Nimepoteza kazi",
+        "body": "Anza na orodha ya mtu aliyepoteza kazi: unachoweza kudai na cha kufanya wiki hii. Kisha mpango wa ujuzi na kazi unaolingana na saa ulizo nazo.",
+        "action": "Anza na kazi"
+      },
+      "scam": {
+        "title": "Ujumbe fulani hauko sawa",
+        "body": "Ibandike kwenye Ngao ya Ulaghai. Inatafuta shinikizo, maombi ya malipo na viungo bandia, inakueleza kwa nini, na wapi pa kuripoti. Hakuna unachobandika kinachohifadhiwa."
+      },
+      "money": {
+        "title": "Pesa ni chache",
+        "body": "Ona pesa zako zitadumu kwa muda gani kwa kipato cha tahadhari, hatua chache zinazosaidia zaidi, na jinsi ya kuzilinda dhidi ya ulaghai.",
+        "action": "Anza na pesa"
+      },
+      "hardDay": {
+        "title": "Leo ni siku ngumu",
+        "body": "Kwanza, namba za msaada za nchi yako, zilizothibitishwa na vyanzo rasmi. Kisha, ukiwa tayari, mazoezi ya kupumua, ya kutuliza akili na shajara ya faragha."
+      },
+      "moving": {
+        "title": "Ninahamia nchi mpya",
+        "body": "Orodha ya kuhamia nchi nyingine yenye viungo rasmi, Waypoint kwa lugha yako, na kikundi cha watu waliofanya safari hiyo hiyo.",
+        "action": "Anza na kuhama"
+      },
+      "caring": {
+        "title": "Ninamhudumia mtu",
+        "body": "Waypoint inakuuliza hali yako badala ya kukusukuma kwenye mpango wa kazi. Vikumbusho vya faragha, tathmini ya kila wiki, na kikundi cha watu wanaohudumia wengine pia.",
+        "action": "Anza na huduma kwa mwingine"
+      }
+    },
+    "how": {
+      "title": "Jinsi inavyofanya kazi",
+      "lead": "Kutoka kinachoendelea leo hadi mpango unaoweza kuufuata.",
+      "label": "Jinsi Waypoint inavyofanya kazi, hatua kwa hatua",
+      "tell": {
+        "title": "Eleza kinachoendelea",
+        "body": "Maswali matano mafupi, kama dakika mbili. Unaweza kuruka yote."
+      },
+      "next": {
+        "title": "Ona hatua moja inayofuata",
+        "body": "Kila siku unaona jambo moja linalokusogeza mbele, kwa nini linatangulia na litachukua muda gani. “Si sasa” ni sawa kila wakati."
+      },
+      "plan": {
+        "title": "Fuata mpango unaoendana na wiki yako",
+        "body": "Mipango ya wiki kwa wiki iliyojengwa kwa ujuzi halisi na kozi za bure, kulingana na saa ulizo nazo kweli."
+      },
+      "help": {
+        "title": "Msaada uko mguso mmoja tu",
+        "body": "“Pata msaada sasa” na “Toka haraka” vipo kwenye kila ukurasa, na vinafanya kazi hata AI ikiwa imezimwa."
+      },
+      "setupTitle": "Kinachoulizwa unapoanza"
+    },
+    "modules": {
+      "title": "Unachopata",
+      "lead": "Kila sehemu ni bure. Baadhi hufunguka mara moja; nyingine baada ya dakika mbili za kuanza.",
+      "openTitle": "Wazi sasa, bila akaunti",
+      "afterTitle": "Baada ya kuanza",
+      "benefit": {
+        "today": "Hatua moja inayofuata kila siku, na kilichobadilika kwako.",
+        "path": "Mpango wa wiki kwa wiki kwa ujuzi mpya na kazi.",
+        "shield": "Kagua ujumbe, kiungo au ofa kama ni ulaghai.",
+        "ask": "Zungumzia swali, usalama wako ukiwa wa kwanza.",
+        "signals": "Mabadiliko yanayokuhusu, kila moja na chanzo chake.",
+        "circles": "Kikundi kidogo kinachopitia mabadiliko yale yale.",
+        "money": "Pesa zako zitadumu kwa muda gani, na kipi kinasaidia zaidi.",
+        "mind": "Kujipima hali, shajara ya faragha, kupumua na kutuliza akili.",
+        "health": "Kumbukumbu rahisi ya kila siku, vikumbusho na mahali pa kupata huduma.",
+        "civic": "Orodha za matukio ya maisha, zenye viungo rasmi.",
+        "surroundings": "Hali ya hewa na ubora wa hewa kwa ushauri rahisi.",
+        "goals": "Malengo machache muhimu, na tathmini ya kila wiki.",
+        "support": "Namba za dharura na namba za msaada zilizothibitishwa.",
+        "forecasts": "Kinachoweza kutokea, pamoja na uwezekano na vyanzo."
+      }
+    },
+    "access": {
+      "title": "Kwa njia yoyote unayoweza",
+      "web": {
+        "title": "Kwenye wavuti",
+        "body": "Kivinjari chochote cha karibuni, kwenye simu ya bei nafuu au kompyuta ya pamoja. Hali nyepesi huokoa data mtandao ukiwa wa polepole."
+      },
+      "app": {
+        "title": "Kwenye programu ya simu",
+        "body": "Kwa Android na iPhone. Ukaguzi wa ulaghai na namba za msaada hufanya kazi bila mtandao."
+      },
+      "text": {
+        "title": "Kwa ujumbe mfupi",
+        "body": "SMS, WhatsApp na USSD kwa simu za kawaida, pale Waypoint ina namba: namba za msaada, ukaguzi wa ulaghai na majibu mafupi."
+      },
+      "offline": {
+        "title": "Bila mtandao",
+        "body": "Baada ya ziara yako ya kwanza, namba za msaada za nchi yako hubaki kwenye kifaa chako na huonekana hata bila mtandao."
+      },
+      "languages": {
+        "title": "Kwa lugha yako",
+        "body": "Kiingereza kimekamilika. Lugha sita nyingine ziko katika majaribio hadi wazungumzaji asilia wazikague."
+      },
+      "languagesLabel": "Lugha",
+      "free": {
+        "title": "Bure, bila kujisajili kujaribu",
+        "body": "Anza kama mgeni. Fungua akaunti baadaye, ikiwa tu unataka mpango wako kwenye kifaa kingine."
+      }
+    },
+    "safety": {
+      "title": "Usalama kwanza. Taarifa zako zinabaki kuwa zako.",
+      "lead": "Kile ambacho Waypoint hufanya kila wakati, na kile isichofanya kamwe.",
+      "crisis": {
+        "title": "Katika dharura, msaada huja kwanza",
+        "body": "Ukiandika jambo linaloonyesha uko hatarini, Waypoint inaonyesha namba za msaada za nchi yako kabla ya kitu kingine chochote. Hufanya kazi vivyo hivyo hata AI ikiwa imezimwa."
+      },
+      "exit": {
+        "title": "“Toka haraka” kwenye kila ukurasa",
+        "body": "Ibonyeze, au bonyeza Escape mara tatu kwenye kibodi, na ukurasa unabadilishwa mara moja na utabiri wa hali ya hewa."
+      },
+      "encrypted": {
+        "title": "Unachoandika kwa faragha kimesimbwa",
+        "body": "Shajara, maelezo ya hisia na afya, malengo, takwimu za pesa na watu unaowaamini husimbwa kwa ufunguo wako mwenyewe."
+      },
+      "noAds": {
+        "title": "Hakuna matangazo. Hakuna kinachouzwa."
+      },
+      "ai": {
+        "title": "AI pale tu unapochagua",
+        "body": "Hakuna unachoandika kinachotumwa kwa huduma ya AI ya nje usipoiwasha mwenyewe, na namba za simu, anwani za barua pepe na namba za kadi huondolewa kwanza."
+      },
+      "delete": {
+        "title": "Ondoka wakati wowote",
+        "body": "Kutoka Mipangilio, pakua kila kitu Waypoint ilicho nacho kukuhusu, au futa akaunti yako na vyote hivyo kwa mara moja."
+      }
+    },
+    "cta": {
+      "title": "Hatua yako inayofuata inaweza kuwa ndogo.",
+      "body": "Dakika mbili, bila akaunti, na kila swali linaweza kurukwa."
+    },
+    "shots": {
+      "note": "Skrini halisi za Waypoint, zenye majibu ya mfano.",
+      "today": "Ukurasa wa Leo kwenye simu, kwa mtu aliyepoteza kazi: hatua inayofuata kwenye ubao mweusi, kupata uamuzi na maelezo ya malipo ya mwisho kwa maandishi, pamoja na sababu ya kuonyeshwa na vitufe vya kuanza, kuweka alama imekamilika au kuiacha kwa sasa.",
+      "shield": "Ngao ya Ulaghai kwenye simu baada ya kukagua ujumbe unaodai ada ya kifurushi: huu kwa hakika ni ulaghai, pamoja na dalili za hatari, kama kiungo kinachoiga dhl.com.",
+      "ask": "Uliza katika hali ya mwongozo kwenye simu: swali la mtu aliyepoteza kazi wiki iliyopita na hajui aanzie wapi, na jibu linalomwelekeza kuweka mpango na kwenye orodha ya aliyepoteza kazi.",
+      "help": "Pata msaada sasa kwenye simu, kwa Kenya: kitufe cha kupiga 999 wakati wa dharura, kisha namba za msaada za kuzungumza na mtu."
+    }
   }
 }

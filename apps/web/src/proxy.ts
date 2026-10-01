@@ -55,7 +55,7 @@ export const config: ProxyConfig = {
   matcher: [
     {
       source:
-        '/((?!api|_next/static|_next/image|favicon.ico|icon|apple-icon|icons|fonts|sw.js|offline.html|manifest.webmanifest|robots.txt|sitemap.xml|.well-known).*)',
+        '/((?!api|_next/static|_next/image|favicon.ico|icon|apple-icon|icons|brand|landing|fonts|sw.js|offline.html|manifest.webmanifest|robots.txt|sitemap.xml|.well-known).*)',
       missing: [
         { type: 'header', key: 'next-router-prefetch' },
         { type: 'header', key: 'purpose', value: 'prefetch' },

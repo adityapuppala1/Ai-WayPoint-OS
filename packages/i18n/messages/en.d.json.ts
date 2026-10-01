@@ -3144,6 +3144,160 @@ declare const messages: {
     "how6": "A second member of staff checks each outcome. Until they have, the forecast is marked “not yet double-checked”.",
     "uncheckedCount": "{count, plural, one {# outcome has} other {# outcomes have}} not been double-checked yet.",
     "historyTrend": "The chance over time: from {first} to {last}"
+  },
+  "landing": {
+    "hero": {
+      "title": "Know your next step when life changes.",
+      "lead": "Waypoint is a free companion for hard moments and big changes: losing work, a message that might be a scam, money pressure, a new country, a hard day. One clear step at a time, in your language.",
+      "start": "Start, no sign-up needed",
+      "factsLabel": "Waypoint in short",
+      "free": "Free to use",
+      "languages": "In 7 languages",
+      "offline": "Help numbers work offline",
+      "urgent": "In danger, or need to talk to someone now?"
+    },
+    "situations": {
+      "title": "Whatever brought you here",
+      "lead": "Pick what sounds like you. Each one starts where it helps most.",
+      "job": {
+        "title": "I lost my job",
+        "body": "Start with the job-loss checklist: what to claim and what to do this week. Then a plan for skills and roles that fit the hours you have.",
+        "action": "Start with work"
+      },
+      "scam": {
+        "title": "A message feels wrong",
+        "body": "Paste it into Scam Shield. It looks for pressure, payment requests and fake links, tells you why, and where to report it. Nothing you paste is kept."
+      },
+      "money": {
+        "title": "Money is tight",
+        "body": "See how long your money lasts on a cautious income, the few steps that help most, and how to keep it safe from scams.",
+        "action": "Start with money"
+      },
+      "hardDay": {
+        "title": "Today is hard",
+        "body": "Help lines for your country first, checked against official sources. Then breathing, grounding and a private journal, when you are ready."
+      },
+      "moving": {
+        "title": "I’m moving to a new country",
+        "body": "A moving-country checklist with official links, Waypoint in your language, and a circle of people who have made the same move.",
+        "action": "Start with moving"
+      },
+      "caring": {
+        "title": "I’m caring for someone",
+        "body": "Waypoint asks how you are instead of pushing a career plan. Private reminders, a weekly review, and a circle of people who care for someone too.",
+        "action": "Start with caring"
+      }
+    },
+    "how": {
+      "title": "How it works",
+      "lead": "From what is going on today to a plan you can keep up with.",
+      "label": "How Waypoint works, step by step",
+      "tell": {
+        "title": "Say what is going on",
+        "body": "Five short questions, about two minutes. You can skip every one."
+      },
+      "next": {
+        "title": "See one next step",
+        "body": "Each day shows the one thing that moves you forward, why it comes first and how long it takes. “Not now” is always fine."
+      },
+      "plan": {
+        "title": "Follow a plan that fits your week",
+        "body": "Week-by-week plans built from real skills and free courses, sized to the hours you actually have."
+      },
+      "help": {
+        "title": "Help is always one tap away",
+        "body": "Get help now and Quick exit are on every page, and both work with AI switched off."
+      },
+      "setupTitle": "What getting started asks"
+    },
+    "modules": {
+      "title": "What you get",
+      "lead": "Every part is free. Some open straight away; the rest take two minutes of getting started.",
+      "openTitle": "Open now, no account",
+      "afterTitle": "After getting started",
+      "benefit": {
+        "today": "One next step each day, and what changed for you.",
+        "path": "A week-by-week plan for new skills and work.",
+        "shield": "Check a message, link or offer for scams.",
+        "ask": "Talk a question through, with your safety first.",
+        "signals": "Changes that matter to you, each with its source.",
+        "circles": "A small group going through the same change.",
+        "money": "How long your money lasts, and what helps most.",
+        "mind": "Check-ins, a private journal, breathing and grounding.",
+        "health": "A simple daily log, reminders and where to get care.",
+        "civic": "Checklists for life events, with official links.",
+        "surroundings": "Weather and air quality turned into plain advice.",
+        "goals": "A few goals that matter, and a weekly review.",
+        "support": "Emergency numbers and checked help lines.",
+        "forecasts": "What may happen next, with the odds and the sources."
+      }
+    },
+    "access": {
+      "title": "However you reach it",
+      "web": {
+        "title": "On the web",
+        "body": "Any recent browser, on a low-cost phone or a shared computer. Lite mode saves data on slow connections."
+      },
+      "app": {
+        "title": "In the phone app",
+        "body": "For Android and iPhone. Scam checks and help numbers work with no connection."
+      },
+      "text": {
+        "title": "By text message",
+        "body": "SMS, WhatsApp and USSD for basic phones, where Waypoint has a number: help lines, scam checks and short answers."
+      },
+      "offline": {
+        "title": "Without a connection",
+        "body": "After your first visit, the help numbers for your country stay on your device and still show when you are offline."
+      },
+      "languages": {
+        "title": "In your language",
+        "body": "English is complete. The six others are in beta until native speakers have reviewed them."
+      },
+      "languagesLabel": "Languages",
+      "free": {
+        "title": "Free, with no sign-up to try",
+        "body": "Start as a guest. Create an account later, only if you want your plan on another device."
+      }
+    },
+    "safety": {
+      "title": "Safety first. Your information stays yours.",
+      "lead": "What Waypoint always does, and what it never does.",
+      "crisis": {
+        "title": "Crisis help comes first",
+        "body": "If something you write sounds like you are in danger, Waypoint shows help lines for your country before anything else. It works the same with AI switched off."
+      },
+      "exit": {
+        "title": "Quick exit on every page",
+        "body": "Press it, or Escape three times on a keyboard, and the page is replaced by a weather forecast at once."
+      },
+      "encrypted": {
+        "title": "Private writing is encrypted",
+        "body": "Journal entries, mood and health notes, goals, money figures and trusted contacts are encrypted with a key of your own."
+      },
+      "noAds": {
+        "title": "No ads. Nothing sold."
+      },
+      "ai": {
+        "title": "AI only when you choose",
+        "body": "Nothing you write goes to an outside AI service unless you switch it on, and phone numbers, email addresses and card numbers are removed first."
+      },
+      "delete": {
+        "title": "Leave whenever you like",
+        "body": "Download everything Waypoint has about you, or delete your account and all of it at once, from Settings."
+      }
+    },
+    "cta": {
+      "title": "Your next step can be a small one.",
+      "body": "Two minutes, no account, and every question can be skipped."
+    },
+    "shots": {
+      "note": "Screens from Waypoint itself, with example answers.",
+      "today": "Today on a phone, for someone who lost their job: the next step on a dark sign, “Get the decision and your final pay details in writing”, with why it is shown and buttons to start it, mark it done or leave it for now.",
+      "shield": "Scam Shield on a phone after checking a message that asks for a parcel fee: “This is very likely a scam”, with its warning signs, such as a link that imitates dhl.com.",
+      "ask": "Ask in guided mode on a phone: the question “I lost my job last week. Where do I start?” and an answer that points to making a plan and the job-loss checklist.",
+      "help": "Get help now on a phone, for Kenya: a button to call 999 in an emergency, then help lines to talk to someone."
+    }
   }
 };
 export default messages;

@@ -249,7 +249,7 @@ export async function gettingStartedReady(page: Page): Promise<void> {
  */
 export async function startAsGuest(page: Page, name = 'Amani'): Promise<void> {
   await page.goto('/welcome');
-  await page.getByRole('link', { name: 'Get started' }).first().click();
+  await page.getByRole('link', { name: 'Start, no sign-up needed' }).first().click();
   await gettingStartedReady(page);
   // The first question is what is going on; like every answer here, it can be left open.
   await page.getByRole('button', { name: 'Continue' }).click();

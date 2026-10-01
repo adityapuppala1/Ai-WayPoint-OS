@@ -199,10 +199,17 @@ test('a browser too old for the stylesheet is told so, and can still read the he
     const box = link.getBoundingClientRect();
     const onTop = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
     // Without the stylesheet no picture may swallow the screen (an icon with no size of its
-    // own would grow to the full width of the page).
+    // own would grow to the full width of the page). The widest picture with a size of its own
+    // is the drawn name in the logo, 4.25em wide at the size of the text around it, so each
+    // picture is measured in its own text size (it differs between engines without the
+    // stylesheet). An icon with no size of its own is hundreds of pixels wide: 20em and more.
     const widest = Math.max(
       0,
-      ...[...document.querySelectorAll('svg, img')].map((el) => el.getBoundingClientRect().width),
+      ...[...document.querySelectorAll('svg, img')].map(
+        (el) =>
+          el.getBoundingClientRect().width /
+          (Number.parseFloat(getComputedStyle(el).fontSize) || 16),
+      ),
     );
     return {
       onTop: Boolean(onTop && (onTop === link || link.contains(onTop))),
@@ -212,7 +219,7 @@ test('a browser too old for the stylesheet is told so, and can still read the he
   });
   expect(readable.onTop).toBe(true);
   expect(readable.text).toBe(true);
-  expect(readable.widest).toBeLessThanOrEqual(64);
+  expect(readable.widest).toBeLessThanOrEqual(5);
   await snap(page, testInfo, 'old-browser-support');
 });
 

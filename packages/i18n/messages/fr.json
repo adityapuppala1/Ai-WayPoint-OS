@@ -3137,5 +3137,159 @@
     "how6": "Une seconde personne de l’équipe vérifie chaque résultat. Tant que ce n’est pas fait, la prévision porte la mention « pas encore vérifié une seconde fois ».",
     "uncheckedCount": "{count, plural, one {# résultat n’a pas encore été vérifié} other {# résultats n’ont pas encore été vérifiés}} une seconde fois.",
     "historyTrend": "La chance au fil du temps : de {first} à {last}"
+  },
+  "landing": {
+    "hero": {
+      "title": "Quand la vie change, connaissez votre prochaine étape.",
+      "lead": "Waypoint est un compagnon gratuit pour les moments difficiles et les grands changements : perdre son travail, un message qui ressemble à une arnaque, les soucis d’argent, un nouveau pays, une journée pénible. Une étape claire à la fois, dans votre langue.",
+      "start": "Commencer, sans inscription",
+      "factsLabel": "Waypoint en bref",
+      "free": "Gratuit",
+      "languages": "En 7 langues",
+      "offline": "Numéros d’aide disponibles hors ligne",
+      "urgent": "En danger, ou besoin de parler à quelqu’un maintenant ?"
+    },
+    "situations": {
+      "title": "Quelle que soit la raison de votre venue",
+      "lead": "Choisissez ce qui vous ressemble. Chaque situation commence là où cela aide le plus.",
+      "job": {
+        "title": "J’ai perdu mon emploi",
+        "body": "Commencez par la liste pour une perte d’emploi : ce que vous pouvez demander et quoi faire cette semaine. Puis un plan de compétences et de métiers adapté au temps dont vous disposez.",
+        "action": "Commencer par le travail"
+      },
+      "scam": {
+        "title": "Un message me paraît louche",
+        "body": "Collez-le dans le Bouclier anti-arnaque. Il repère la pression, les demandes de paiement et les faux liens, vous explique pourquoi et où le signaler. Rien de ce que vous collez n’est conservé."
+      },
+      "money": {
+        "title": "L’argent manque",
+        "body": "Voyez combien de temps votre argent tiendra avec un revenu estimé prudemment, les quelques gestes qui aident le plus, et comment le protéger des arnaques.",
+        "action": "Commencer par l’argent"
+      },
+      "hardDay": {
+        "title": "Aujourd’hui, c’est dur",
+        "body": "D’abord, les lignes d’écoute de votre pays, vérifiées auprès de sources officielles. Ensuite, quand vous êtes prêt, respiration, ancrage et un journal privé."
+      },
+      "moving": {
+        "title": "Je pars vivre dans un autre pays",
+        "body": "Une liste pour changer de pays avec des liens officiels, Waypoint dans votre langue, et un cercle de personnes qui ont fait le même chemin.",
+        "action": "Commencer par le départ"
+      },
+      "caring": {
+        "title": "Je m’occupe d’un proche",
+        "body": "Waypoint vous demande comment vous allez au lieu de vous pousser vers un plan de carrière. Des rappels privés, un bilan de la semaine et un cercle de personnes qui s’occupent aussi d’un proche.",
+        "action": "Commencer par l’aide à un proche"
+      }
+    },
+    "how": {
+      "title": "Comment ça marche",
+      "lead": "De ce qui se passe aujourd’hui à un plan que vous pouvez tenir.",
+      "label": "Comment fonctionne Waypoint, étape par étape",
+      "tell": {
+        "title": "Dites ce qui se passe",
+        "body": "Cinq courtes questions, environ deux minutes. Vous pouvez toutes les passer."
+      },
+      "next": {
+        "title": "Voyez une prochaine étape",
+        "body": "Chaque jour, vous voyez la seule chose qui vous fait avancer, pourquoi elle passe en premier et combien de temps elle prend. « Pas maintenant » est toujours possible."
+      },
+      "plan": {
+        "title": "Suivez un plan qui tient dans votre semaine",
+        "body": "Des plans semaine par semaine, faits de vraies compétences et de cours gratuits, à la mesure des heures dont vous disposez vraiment."
+      },
+      "help": {
+        "title": "L’aide, toujours à portée de main",
+        "body": "« Obtenir de l’aide » et « Sortie rapide » sont sur chaque page, et fonctionnent même sans IA."
+      },
+      "setupTitle": "Ce qui vous est demandé au départ"
+    },
+    "modules": {
+      "title": "Ce que vous y trouvez",
+      "lead": "Tout est gratuit. Certaines parties s’ouvrent tout de suite ; les autres après deux minutes de configuration.",
+      "openTitle": "Ouvert tout de suite, sans compte",
+      "afterTitle": "Après la configuration",
+      "benefit": {
+        "today": "Une prochaine étape chaque jour, et ce qui a changé pour vous.",
+        "path": "Un plan semaine par semaine pour de nouvelles compétences et un emploi.",
+        "shield": "Vérifiez si un message, un lien ou une offre est une arnaque.",
+        "ask": "Réfléchissez à une question, votre sécurité d’abord.",
+        "signals": "Les changements qui comptent pour vous, chacun avec sa source.",
+        "circles": "Un petit groupe qui traverse le même changement.",
+        "money": "Combien de temps votre argent tiendra, et ce qui aide le plus.",
+        "mind": "Points sur l’humeur, journal privé, respiration et ancrage.",
+        "health": "Un suivi quotidien simple, des rappels et où se faire soigner.",
+        "civic": "Des listes pour les grands moments de la vie, avec liens officiels.",
+        "surroundings": "La météo et la qualité de l’air, en conseils simples.",
+        "goals": "Quelques objectifs qui comptent, et un bilan chaque semaine.",
+        "support": "Numéros d’urgence et lignes d’aide vérifiées.",
+        "forecasts": "Ce qui pourrait arriver, avec les probabilités et les sources."
+      }
+    },
+    "access": {
+      "title": "Par le moyen qui vous convient",
+      "web": {
+        "title": "Sur le web",
+        "body": "N’importe quel navigateur récent, sur un téléphone bon marché ou un ordinateur partagé. Le mode léger économise les données sur les connexions lentes."
+      },
+      "app": {
+        "title": "Dans l’application mobile",
+        "body": "Pour Android et iPhone. La vérification des arnaques et les numéros d’aide marchent sans connexion."
+      },
+      "text": {
+        "title": "Par SMS",
+        "body": "SMS, WhatsApp et USSD pour les téléphones simples, là où Waypoint a un numéro : lignes d’aide, vérification des arnaques et réponses courtes."
+      },
+      "offline": {
+        "title": "Sans connexion",
+        "body": "Après votre première visite, les numéros d’aide de votre pays restent sur votre appareil et s’affichent même hors ligne."
+      },
+      "languages": {
+        "title": "Dans votre langue",
+        "body": "L’anglais est complet. Les six autres langues sont en bêta jusqu’à leur relecture par des locuteurs natifs."
+      },
+      "languagesLabel": "Langues",
+      "free": {
+        "title": "Gratuit, sans inscription pour essayer",
+        "body": "Commencez en tant qu’invité. Créez un compte plus tard, seulement si vous voulez retrouver votre plan sur un autre appareil."
+      }
+    },
+    "safety": {
+      "title": "La sécurité d’abord. Vos informations restent à vous.",
+      "lead": "Ce que Waypoint fait toujours, et ce qu’il ne fait jamais.",
+      "crisis": {
+        "title": "En cas de crise, l’aide passe en premier",
+        "body": "Si ce que vous écrivez laisse penser que vous êtes en danger, Waypoint affiche d’abord les lignes d’aide de votre pays. Cela fonctionne de la même façon sans IA."
+      },
+      "exit": {
+        "title": "« Sortie rapide » sur chaque page",
+        "body": "Appuyez dessus, ou trois fois sur Échap au clavier, et la page est aussitôt remplacée par une page météo."
+      },
+      "encrypted": {
+        "title": "Ce que vous écrivez en privé est chiffré",
+        "body": "Journal, notes d’humeur et de santé, objectifs, chiffres d’argent et contacts de confiance sont chiffrés avec une clé qui n’est qu’à vous."
+      },
+      "noAds": {
+        "title": "Pas de publicité. Rien n’est vendu."
+      },
+      "ai": {
+        "title": "L’IA seulement si vous le choisissez",
+        "body": "Rien de ce que vous écrivez n’est envoyé à un service d’IA externe sans votre accord, et les numéros de téléphone, adresses e-mail et numéros de carte sont d’abord retirés."
+      },
+      "delete": {
+        "title": "Partez quand vous voulez",
+        "body": "Depuis les Réglages, téléchargez tout ce que Waypoint sait de vous, ou supprimez votre compte et tout son contenu d’un coup."
+      }
+    },
+    "cta": {
+      "title": "Votre prochaine étape peut être toute petite.",
+      "body": "Deux minutes, sans compte, et chaque question peut être passée."
+    },
+    "shots": {
+      "note": "De vrais écrans de Waypoint, avec des réponses d’exemple.",
+      "today": "La page Aujourd’hui sur un téléphone, pour quelqu’un qui a perdu son emploi : la prochaine étape sur un panneau sombre, obtenir par écrit la décision et le détail du dernier salaire, avec la raison de son affichage et des boutons pour la commencer, la marquer comme faite ou la remettre à plus tard.",
+      "shield": "Le Bouclier anti-arnaque sur un téléphone après la vérification d’un message réclamant des frais de colis : c’est très probablement une arnaque, avec ses signaux d’alerte, comme un lien qui imite dhl.com.",
+      "ask": "Parler en mode guidé sur un téléphone : la question de quelqu’un qui a perdu son emploi la semaine dernière et ne sait pas par où commencer, et une réponse qui renvoie vers un plan et la liste pour une perte d’emploi.",
+      "help": "Obtenir de l’aide sur un téléphone, pour le Kenya : un bouton pour appeler le 999 en cas d’urgence, puis des lignes d’écoute pour parler à quelqu’un."
+    }
   }
 }

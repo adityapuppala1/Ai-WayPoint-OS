@@ -2,7 +2,7 @@ import { createRoute, z } from '@hono/zod-openapi';
 import type { Context } from 'hono';
 import { errors, IdParam, jsonBody, jsonContent, OkSchema, router } from '../lib/openapi';
 import { ipHash } from '../lib/request';
-import { limit, noStore, requireAdmin, requireUser } from '../middleware';
+import { limit, noStore, requireArea, requireUser } from '../middleware';
 import { getConsents, getProfile } from '../services/me';
 import { getUserSkills } from '../services/path';
 import {
@@ -105,8 +105,8 @@ app.openapi(
 
 // ─────────────────────────────── Staff ───────────────────────────────
 
-app.use('/admin/signals', requireAdmin, noStore);
-app.use('/admin/signals/*', requireAdmin, noStore);
+app.use('/admin/signals', requireArea('signals'), noStore);
+app.use('/admin/signals/*', requireArea('signals'), noStore);
 
 const actor = (c: Context<AppEnv>) => ({
   userId: c.get('user')!.id,

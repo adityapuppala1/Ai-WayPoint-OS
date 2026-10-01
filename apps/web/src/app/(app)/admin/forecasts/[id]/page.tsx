@@ -6,7 +6,7 @@ import { notFound } from 'next/navigation';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import styles from '@/components/admin/admin.module.css';
 import { ForecastEditForm } from '@/components/admin/ForecastEditForm';
-import { requireAdmin } from '@/lib/server';
+import { requireConsole } from '@/lib/server';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('admin');
@@ -22,7 +22,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  */
 export default async function EditForecastPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const viewer = await requireAdmin(`/admin/forecasts/${id}`);
+  const viewer = await requireConsole('forecasts', `/admin/forecasts/${id}`);
   if (!UUID.test(id)) notFound();
   const [t, words, format] = await Promise.all([
     getTranslations('admin'),

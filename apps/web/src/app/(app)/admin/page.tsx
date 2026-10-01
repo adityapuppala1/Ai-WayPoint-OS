@@ -7,7 +7,7 @@ import { getFormatter, getLocale, getTranslations } from 'next-intl/server';
 import type { CSSProperties, ReactNode } from 'react';
 import styles from '@/components/admin/admin.module.css';
 import { Facts, fact } from '@/components/Facts';
-import { requireAdmin } from '@/lib/server';
+import { requireConsole } from '@/lib/server';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('admin');
@@ -55,7 +55,7 @@ function Tile({
 }
 
 export default async function AdminOverviewPage() {
-  const viewer = await requireAdmin('/admin');
+  const viewer = await requireConsole('overview', '/admin');
   const [t, format, locale] = await Promise.all([
     getTranslations('admin'),
     getFormatter(),

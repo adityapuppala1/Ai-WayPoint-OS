@@ -4,7 +4,7 @@ import type { Metadata, Route } from 'next';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import styles from '@/components/admin/admin.module.css';
 import { Facts } from '@/components/Facts';
-import { requireAdmin } from '@/lib/server';
+import { requireConsole } from '@/lib/server';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('admin');
@@ -16,7 +16,7 @@ export default async function AuditPage({
 }: {
   searchParams: Promise<{ before?: string }>;
 }) {
-  const viewer = await requireAdmin('/admin/audit');
+  const viewer = await requireConsole('audit', '/admin/audit');
   const { before } = await searchParams;
   const [t, format] = await Promise.all([getTranslations('admin'), getFormatter()]);
   const trail = await admin.auditTrail(viewer.db, { before: before ?? null, limit: 50 });

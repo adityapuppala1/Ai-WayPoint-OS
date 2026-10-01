@@ -8,7 +8,7 @@ import { getEnv } from '@waypoint/core/env';
 import type { Context } from 'hono';
 import { errors, IdParam, jsonBody, jsonContent, OkSchema, router } from '../lib/openapi';
 import { ipHash } from '../lib/request';
-import { limit, noStore, requireAdmin } from '../middleware';
+import { limit, noStore, requireArea } from '../middleware';
 import {
   ADMIN_FORECAST_FILTERS,
   AdminForecastDetailSchema,
@@ -90,8 +90,8 @@ app.openapi(
 
 // ─────────────────────────────── Staff ───────────────────────────────
 
-app.use('/admin/forecasts', requireAdmin, noStore);
-app.use('/admin/forecasts/*', requireAdmin, noStore);
+app.use('/admin/forecasts', requireArea('forecasts'), noStore);
+app.use('/admin/forecasts/*', requireArea('forecasts'), noStore);
 
 const actor = (c: Context<AppEnv>) => ({
   userId: c.get('user')!.id,

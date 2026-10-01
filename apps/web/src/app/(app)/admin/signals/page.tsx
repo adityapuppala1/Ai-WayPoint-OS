@@ -7,7 +7,7 @@ import { getFormatter, getLocale, getTranslations } from 'next-intl/server';
 import styles from '@/components/admin/admin.module.css';
 import { SignalForm } from '@/components/admin/SignalForm';
 import { SignalWithdraw } from '@/components/admin/SignalWithdraw';
-import { requireAdmin } from '@/lib/server';
+import { requireConsole } from '@/lib/server';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('admin');
@@ -23,7 +23,7 @@ const DAY = 86_400_000;
  * and summarised themselves, with the source: nothing on this page writes one for them.
  */
 export default async function AdminSignalsPage() {
-  const viewer = await requireAdmin('/admin/signals');
+  const viewer = await requireConsole('signals', '/admin/signals');
   const [t, words, today, format, locale] = await Promise.all([
     getTranslations('admin'),
     getTranslations('forecasts'),

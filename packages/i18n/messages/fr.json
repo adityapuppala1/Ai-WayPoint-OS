@@ -1787,7 +1787,13 @@
       "audit": "Journal d’activité",
       "forecasts": "Prévisions",
       "signals": "Signaux",
-      "feedback": "Avis"
+      "feedback": "Avis",
+      "users": "Comptes",
+      "staff": "Équipe et invitations",
+      "analytics": "Statistiques",
+      "integrations": "Services connectés",
+      "system": "État du système",
+      "maintenance": "Maintenance"
     },
     "generatedAt": "À {time}",
     "peopleTitle": "Personnes",
@@ -2077,7 +2083,15 @@
     "cAlready": "Quelqu’un d’autre a déjà confirmé ce résultat.",
     "cOwnVerdict": "Vous avez enregistré ce résultat : c’est à quelqu’un d’autre de le confirmer.",
     "cNotJudged": "Il n’y a pas encore de résultat à confirmer.",
-    "sWasWithdrawn": "Ce signal a été retiré : il ne peut pas être publié de nouveau."
+    "sWasWithdrawn": "Ce signal a été retiré : il ne peut pas être publié de nouveau.",
+    "groups": {
+      "home": "Accueil",
+      "people": "Personnes",
+      "safety": "Sécurité",
+      "content": "Contenu",
+      "insights": "Analyses",
+      "platform": "Plateforme"
+    }
   },
   "byText": {
     "title": "Waypoint par message",

@@ -1794,7 +1794,13 @@ declare const messages: {
       "audit": "Activity log",
       "forecasts": "Forecasts",
       "signals": "Signals",
-      "feedback": "Feedback"
+      "feedback": "Feedback",
+      "users": "Accounts",
+      "staff": "Staff and invitations",
+      "analytics": "Analytics",
+      "integrations": "Integrations",
+      "system": "System health",
+      "maintenance": "Maintenance"
     },
     "generatedAt": "As of {time}",
     "peopleTitle": "People",
@@ -2084,7 +2090,15 @@ declare const messages: {
     "cAlready": "Someone else has already confirmed this outcome.",
     "cOwnVerdict": "You recorded this outcome, so someone else has to confirm it.",
     "cNotJudged": "There is no outcome to confirm yet.",
-    "sWasWithdrawn": "This signal was withdrawn, so it can’t be published again."
+    "sWasWithdrawn": "This signal was withdrawn, so it can’t be published again.",
+    "groups": {
+      "home": "Home",
+      "people": "People",
+      "safety": "Safety",
+      "content": "Content",
+      "insights": "Insights",
+      "platform": "Platform"
+    }
   },
   "byText": {
     "title": "Waypoint by text",

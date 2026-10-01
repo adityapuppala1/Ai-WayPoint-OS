@@ -3,7 +3,7 @@ import { EmptyState, LinkButton, Panel } from '@waypoint/ui';
 import type { Metadata, Route } from 'next';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import styles from '@/components/admin/admin.module.css';
-import { requireAdmin } from '@/lib/server';
+import { requireConsole } from '@/lib/server';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('admin');
@@ -20,7 +20,7 @@ export default async function AdminFeedbackPage({
 }: {
   searchParams: Promise<{ before?: string }>;
 }) {
-  const viewer = await requireAdmin('/admin/feedback');
+  const viewer = await requireConsole('feedback', '/admin/feedback');
   const { before } = await searchParams;
   const [t, nav, settings, format] = await Promise.all([
     getTranslations('admin'),

@@ -1,45 +1,54 @@
 'use client';
 
+import { CONSOLE_PATHS, type ConsoleArea, type ConsoleGroup } from '@waypoint/core/console';
 import type { Route } from 'next';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import styles from './admin.module.css';
 
-const SECTIONS = [
-  { key: 'overview', href: '/admin' },
-  { key: 'moderation', href: '/admin/moderation' },
-  { key: 'reports', href: '/admin/reports' },
-  { key: 'forecasts', href: '/admin/forecasts' },
-  { key: 'signals', href: '/admin/signals' },
-  { key: 'feedback', href: '/admin/feedback' },
-  { key: 'audit', href: '/admin/audit' },
-] as const;
+type Waiting = Partial<Record<ConsoleArea, number>>;
 
-type Waiting = { moderation: number; reports: number; forecasts: number };
-
-/** Section links for the admin console, with counts of what is waiting. */
-export function AdminNav({ waiting }: { waiting: Waiting }) {
+/**
+ * The console's sections, grouped (Home, People, Safety, Content, Insights, Platform), showing
+ * only what this member of staff may open, with counts of what is waiting. A side list on
+ * wide screens; a row that scrolls sideways on a phone.
+ */
+export function AdminNav({
+  groups,
+  waiting,
+}: {
+  groups: Array<{ group: ConsoleGroup; areas: ConsoleArea[] }>;
+  waiting: Waiting;
+}) {
   const t = useTranslations('admin');
   const pathname = usePathname();
   return (
-    <nav aria-label={t('navLabel')}>
-      <ul className={styles.nav}>
-        {SECTIONS.map((s) => {
-          const count = s.key in waiting ? waiting[s.key as keyof Waiting] : 0;
-          // A page inside a section (editing one forecast) still belongs to that section.
-          const here =
-            pathname === s.href || (s.href !== '/admin' && pathname.startsWith(`${s.href}/`));
-          return (
-            <li key={s.key}>
-              <Link href={s.href as Route} aria-current={here ? 'page' : undefined}>
-                {t(`nav.${s.key}`)}
-                {count ? <span className={styles.badge}>{count}</span> : null}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+    <nav aria-label={t('navLabel')} className={styles.consoleNav}>
+      {groups.map(({ group, areas }) => (
+        <div key={group} className={styles.navGroup}>
+          <p className={styles.navGroupLabel} id={`console-${group}`}>
+            {t(`groups.${group}`)}
+          </p>
+          <ul className={styles.nav} aria-labelledby={`console-${group}`}>
+            {areas.map((area) => {
+              const href = CONSOLE_PATHS[area];
+              const count = waiting[area] ?? 0;
+              // A page inside a section (editing one forecast) still belongs to that section.
+              const here =
+                pathname === href || (href !== '/admin' && pathname.startsWith(`${href}/`));
+              return (
+                <li key={area}>
+                  <Link href={href as Route} aria-current={here ? 'page' : undefined}>
+                    {t(`nav.${area}`)}
+                    {count ? <span className={styles.badge}>{count}</span> : null}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
     </nav>
   );
 }

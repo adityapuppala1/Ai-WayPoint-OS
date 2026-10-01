@@ -1,3 +1,4 @@
+import { isStaffRole } from '@waypoint/core/console';
 import { getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { getViewer } from '@/lib/server';
@@ -179,7 +180,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
       (viewer && !viewer.user.isGuest ? viewer.user.name : null) ??
       null,
     email: viewer && !viewer.user.isGuest ? viewer.user.email : null,
-    isAdmin: viewer?.user.role === 'admin',
+    isAdmin: isStaffRole(viewer?.user.role),
   };
   return (
     <GoToProvider groups={groups} canAsk={Boolean(viewer)}>

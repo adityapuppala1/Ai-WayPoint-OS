@@ -1890,9 +1890,9 @@ describe('organisations', () => {
 });
 
 describe('administration', () => {
-  async function admin() {
+  async function admin(role: 'admin' | 'staff' = 'admin') {
     const a = await member('Ada');
-    await db.getDb().update(db.users).set({ role: 'admin' }).where(db.eq(db.users.id, a.id));
+    await db.getDb().update(db.users).set({ role }).where(db.eq(db.users.id, a.id));
     // Drop the cached session data so the new role is read from the database.
     return {
       ...a,
@@ -1908,6 +1908,22 @@ describe('administration', () => {
     expect((await req('/api/admin/overview', { cookie: await guest() })).status).toBe(403);
     const someone = await member('Bea');
     expect((await req('/api/admin/moderation', { cookie: someone.cookie })).status).toBe(403);
+  });
+
+  it('lets staff look after content and safety, and keeps the platform for admins', async () => {
+    const staff = await admin('staff');
+    for (const path of [
+      '/api/admin/overview',
+      '/api/admin/moderation',
+      '/api/admin/scam-reports',
+      '/api/admin/feedback',
+      '/api/admin/forecasts',
+      '/api/admin/signals',
+    ])
+      expect((await req(path, { cookie: staff.cookie })).status, path).toBe(200);
+    expect((await req('/api/admin/audit', { cookie: staff.cookie })).status).toBe(403);
+    const boss = await admin();
+    expect((await req('/api/admin/audit', { cookie: boss.cookie })).status).toBe(200);
   });
 
   it('reviews held and reported posts, tells the writer, and never shows safety holds', async () => {

@@ -3,21 +3,75 @@
  * per day) is a single-series column chart in the Ask line colour.
  */
 
-/* ───────────── Section navigation ───────────── */
-.nav {
+/* ───────────── Console layout and section navigation ─────────────
+ * A row of grouped sections that scrolls sideways on a phone; a side list beside the page
+ * from 64rem, where thirteen sections no longer fit in a row. */
+.consoleLayout {
+  display: grid;
+  gap: var(--wp-space-5);
+}
+
+.consoleNav {
   display: flex;
-  gap: var(--wp-space-1);
-  margin: 0;
-  padding: 0 0 var(--wp-space-1);
+  gap: var(--wp-space-4);
+  padding-block-end: var(--wp-space-1);
   border-block-end: 1px solid var(--wp-border-subtle);
-  list-style: none;
   overflow-x: auto;
   scrollbar-width: none;
 }
 
 /* Safari before 18.2 and older Chrome do not know scrollbar-width. */
-.nav::-webkit-scrollbar {
+.consoleNav::-webkit-scrollbar {
   display: none;
+}
+
+.navGroup {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--wp-space-1);
+}
+
+.navGroupLabel {
+  margin: 0;
+  padding-inline: var(--wp-space-2);
+  color: var(--wp-text-muted);
+  font-size: var(--wp-text-meta);
+  font-weight: var(--wp-weight-semibold);
+  white-space: nowrap;
+}
+
+.nav {
+  display: flex;
+  gap: var(--wp-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 64rem) {
+  .consoleLayout {
+    grid-template-columns: 13.5rem minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .consoleNav {
+    position: sticky;
+    inset-block-start: var(--wp-space-4);
+    flex-direction: column;
+    padding: 0;
+    border: 0;
+    overflow: visible;
+  }
+
+  .navGroup {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .nav {
+    flex-direction: column;
+  }
 }
 
 .nav a {
@@ -50,12 +104,33 @@
   color: var(--wp-text);
 }
 
-/* The marker under the chosen section: --wp-marker, 3:1 on every surface. */
+/* The marker under the chosen section (beside it in the side list): --wp-marker, 3:1 on
+   every surface. */
 .nav a[aria-current="page"] {
   color: var(--wp-text);
   box-shadow: inset 0 -3px 0 var(--wp-marker);
   border-end-start-radius: 0;
   border-end-end-radius: 0;
+}
+
+@media (min-width: 64rem) {
+  .nav a {
+    display: flex;
+    justify-content: space-between;
+    border-inline-start: 3px solid transparent;
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+  }
+
+  .nav a[aria-current="page"] {
+    border-inline-start-color: var(--wp-marker);
+    background: var(--wp-fill-hover);
+    box-shadow: none;
+  }
+
+  .nav a[aria-current="page"]:focus-visible {
+    box-shadow: var(--wp-focus-shadow-inset);
+  }
 }
 
 /* Flush in the row of sections: the ring is drawn inside, the marker stays under it. */
@@ -623,4 +698,11 @@
 
 .check[data-state="done"] {
   color: var(--wp-safe);
+}
+
+.consoleMain {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-5);
+  min-inline-size: 0;
 }

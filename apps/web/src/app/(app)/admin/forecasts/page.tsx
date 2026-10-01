@@ -9,7 +9,7 @@ import { ForecastActions } from '@/components/admin/ForecastActions';
 import { ForecastConfirm } from '@/components/admin/ForecastConfirm';
 import { ForecastForm } from '@/components/admin/ForecastForm';
 import { wordKey } from '@/components/forecasts/words';
-import { requireAdmin } from '@/lib/server';
+import { requireConsole } from '@/lib/server';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('admin');
@@ -26,7 +26,7 @@ export default async function AdminForecastsPage({
 }: {
   searchParams: Promise<{ state?: string }>;
 }) {
-  const viewer = await requireAdmin('/admin/forecasts');
+  const viewer = await requireConsole('forecasts', '/admin/forecasts');
   const { state: asked } = await searchParams;
   const state: Filter = (forecasts.ADMIN_FORECAST_FILTERS as readonly string[]).includes(
     asked ?? '',

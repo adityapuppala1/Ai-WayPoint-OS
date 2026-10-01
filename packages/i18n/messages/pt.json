@@ -1787,7 +1787,13 @@
       "audit": "Registro de atividades",
       "forecasts": "Previsões",
       "signals": "Sinais",
-      "feedback": "Comentários"
+      "feedback": "Comentários",
+      "users": "Contas",
+      "staff": "Equipa e convites",
+      "analytics": "Análise",
+      "integrations": "Integrações",
+      "system": "Estado do sistema",
+      "maintenance": "Manutenção"
     },
     "generatedAt": "Às {time}",
     "peopleTitle": "Pessoas",
@@ -2077,7 +2083,15 @@
     "cAlready": "Outra pessoa já confirmou este resultado.",
     "cOwnVerdict": "Você registrou este resultado, então outra pessoa precisa confirmá-lo.",
     "cNotJudged": "Ainda não há resultado para confirmar.",
-    "sWasWithdrawn": "Este sinal foi retirado, então não pode ser publicado de novo."
+    "sWasWithdrawn": "Este sinal foi retirado, então não pode ser publicado de novo.",
+    "groups": {
+      "home": "Início",
+      "people": "Pessoas",
+      "safety": "Segurança",
+      "content": "Conteúdo",
+      "insights": "Análises",
+      "platform": "Plataforma"
+    }
   },
   "byText": {
     "title": "Waypoint por mensagem",

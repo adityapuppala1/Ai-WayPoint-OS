@@ -6,7 +6,7 @@ import { getFormatter, getLocale, getTranslations } from 'next-intl/server';
 import styles from '@/components/admin/admin.module.css';
 import { ScamReportActions } from '@/components/admin/ScamReportActions';
 import { Facts } from '@/components/Facts';
-import { requireAdmin } from '@/lib/server';
+import { requireConsole } from '@/lib/server';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('admin');
@@ -20,7 +20,7 @@ export default async function ScamReportsPage({
 }: {
   searchParams: Promise<{ status?: string }>;
 }) {
-  const viewer = await requireAdmin('/admin/reports');
+  const viewer = await requireConsole('reports', '/admin/reports');
   const { status: asked } = await searchParams;
   const status: Status = (admin.SCAM_REPORT_STATUSES as readonly string[]).includes(asked ?? '')
     ? (asked as Status)

@@ -23,6 +23,7 @@
     "./text": "./src/text/index.ts",
     "./mind": "./src/mind/index.ts",
     "./community": "./src/community/index.ts",
+    "./console": "./src/console/index.ts",
     "./health": "./src/health/index.ts",
     "./surroundings": "./src/surroundings/index.ts",
     "./org": "./src/org/index.ts",

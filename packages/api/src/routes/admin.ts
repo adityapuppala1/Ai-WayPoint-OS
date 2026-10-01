@@ -2,7 +2,7 @@ import { createRoute, z } from '@hono/zod-openapi';
 import type { Context } from 'hono';
 import { errors, IdParam, jsonBody, jsonContent, OkSchema, router } from '../lib/openapi';
 import { ipHash } from '../lib/request';
-import { limit, noStore, requireAdmin } from '../middleware';
+import { limit, noStore, requireArea, requireStaff } from '../middleware';
 import {
   AdminOverviewSchema,
   AuditTrailSchema,
@@ -23,8 +23,20 @@ import {
 import type { AppEnv } from '../types';
 
 const app = router();
-app.use('/admin', requireAdmin, noStore);
-app.use('/admin/*', requireAdmin, noStore);
+app.use('/admin', requireStaff, noStore);
+app.use('/admin/*', requireStaff, noStore);
+// Each part of the console checks its own area (@waypoint/core/console): staff look after
+// content and safety; only an admin sees the activity log.
+for (const [path, area] of [
+  ['/admin/overview', 'overview'],
+  ['/admin/moderation', 'moderation'],
+  ['/admin/scam-reports', 'reports'],
+  ['/admin/feedback', 'feedback'],
+  ['/admin/audit', 'audit'],
+] as const) {
+  app.use(path, requireArea(area));
+  app.use(`${path}/*`, requireArea(area));
+}
 
 const actor = (c: Context<AppEnv>) => ({
   userId: c.get('user')!.id,

@@ -22,6 +22,7 @@ import type { Route } from 'next';
 import { useRouter } from 'next/navigation';
 import { useFormatter, useTranslations } from 'next-intl';
 import { type FormEvent, useState } from 'react';
+import { Facts } from '@/components/Facts';
 import { ApiProblem, api, problemKey } from '@/lib/api';
 import { copyText } from '@/lib/clipboard';
 import styles from './org.module.css';
@@ -32,11 +33,14 @@ type Invitation = OrgView['invitations'][number];
 function InviteDialog({
   orgId,
   baseUrl,
+  canInviteAdmin,
   isOpen,
   onOpenChange,
 }: {
   orgId: string;
   baseUrl: string;
+  /** Only an owner decides who else may manage the organisation. */
+  canInviteAdmin: boolean;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -136,9 +140,11 @@ function InviteDialog({
             <Radio value="member" description={t('roleHints.member')}>
               {t('roles.member')}
             </Radio>
-            <Radio value="admin" description={t('roleHints.admin')}>
-              {t('roles.admin')}
-            </Radio>
+            {canInviteAdmin ? (
+              <Radio value="admin" description={t('roleHints.admin')}>
+                {t('roles.admin')}
+              </Radio>
+            ) : null}
           </RadioGroup>
           {error ? <Notice tone="danger" role="alert" title={error} /> : null}
           <div className="wp-row">
@@ -224,10 +230,10 @@ export function TeamPanel({
             <li key={m.id} className={styles.person}>
               <Avatar name={m.name} size={36} />
               <div className={styles.personText}>
-                <span className={styles.personName}>
+                <Facts className={styles.personName}>
                   {m.name}
-                  {m.isMe ? <span className="wp-meta"> · {common('you')}</span> : null}
-                </span>
+                  {m.isMe ? <span className="wp-meta">{common('you')}</span> : null}
+                </Facts>
                 <span className={styles.personMeta} dir="ltr">
                   {m.email}
                 </span>
@@ -295,9 +301,10 @@ export function TeamPanel({
                   <span className={styles.personName} dir="ltr">
                     {i.email}
                   </span>
-                  <span className={styles.personMeta}>
-                    {t(`roles.${i.role}`)} · {t('pendingExpires', { date: date(i.expiresAt) })}
-                  </span>
+                  <Facts className={styles.personMeta}>
+                    {t(`roles.${i.role}`)}
+                    {t('pendingExpires', { date: date(i.expiresAt) })}
+                  </Facts>
                 </div>
                 <div className={styles.personActions}>
                   <IconButton
@@ -349,7 +356,13 @@ export function TeamPanel({
         />
       ) : null}
 
-      <InviteDialog orgId={orgId} baseUrl={baseUrl} isOpen={inviting} onOpenChange={setInviting} />
+      <InviteDialog
+        orgId={orgId}
+        baseUrl={baseUrl}
+        canInviteAdmin={myRole === 'owner'}
+        isOpen={inviting}
+        onOpenChange={setInviting}
+      />
 
       <ConfirmDialog
         isOpen={removing !== null}

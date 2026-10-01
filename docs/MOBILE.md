@@ -12,7 +12,7 @@ tokens with the website, and talks to the same API.
 
 | Screen | What it does | Without a connection |
 | --- | --- | --- |
-| **Today** | The next step on the Sign (marking a plan step done flips it to the next), this week's route, notes for today, what changed for you, and the tools | Shows that you're offline; the tools below still work |
+| **Today** | The next step on the Sign (marking a plan step done flips it to the next; "Not now" sets it aside for the day, kept on the phone and sent with each Today request), this week's route, notes for today, what changed for you, and the tools | Shows that you're offline; the tools below still work |
 | **Shield** | Paste or type a message: the same rules as the website check it **on the phone**, in all seven languages, with the warning signs, what to do and where to report. "Get a second opinion online" re-checks it on Waypoint's server (not stored) and, where set up, with the AI check on a redacted copy. Report a scam without an account | The whole check works; the second opinion and reports need a connection |
 | **Ask** | Talk it through. Replies stream in; the crisis check runs on the server before any AI call and shows the support card with local numbers; anything the assistant wants to save waits for **Allow**; earlier conversations can be opened or deleted | The crisis check runs on the phone and shows the same support card |
 | **Help** | Emergency numbers for 48 countries, checked help lines for 47, and the global directories, with call, text and WhatsApp buttons; a breathing exercise; "reach us by text" numbers | Everything (the text-us numbers are the last ones seen) |

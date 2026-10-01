@@ -261,6 +261,11 @@ export const sw: ShieldText = {
       explanation:
         'Jumbe za kazi na zawadi kutoka nambari za kimataifa usizozitarajia ni mtindo wa kawaida wa ulaghai.',
     },
+    'hidden-instructions': {
+      title: 'Una maagizo yanayolenga zana ya ukaguzi, si wewe',
+      explanation:
+        'Ujumbe halisi huandikwa kwa ajili ya mtu anayeusoma. Maandishi yanayoiambia kompyuta jinsi ya kuupima ujumbe yanajaribu kukwepa ukaguzi.',
+    },
   },
   advice: {
     'check-anyway':

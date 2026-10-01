@@ -12,6 +12,8 @@ export interface PanelProps {
   /** `flush` removes body padding so a List's hairlines run edge to edge. */
   flush?: boolean;
   tone?: 'raised' | 'quiet';
+  /** For a panel that is itself a way in (it holds one link or action): lifts on hover. */
+  interactive?: boolean;
   as?: 'section' | 'div' | 'article' | 'aside';
   headingLevel?: 2 | 3 | 4;
   id?: string;
@@ -28,6 +30,7 @@ export function Panel({
   children,
   flush,
   tone = 'raised',
+  interactive,
   as: Tag = 'section',
   headingLevel = 2,
   id,
@@ -39,7 +42,12 @@ export function Panel({
   return (
     <Tag
       id={id}
-      className={cn(styles.panel, tone === 'quiet' && styles.quiet, className)}
+      className={cn(
+        styles.panel,
+        tone === 'quiet' && styles.quiet,
+        interactive && styles.interactive,
+        className,
+      )}
       aria-labelledby={title && headingId ? headingId : undefined}
       {...aria}
     >

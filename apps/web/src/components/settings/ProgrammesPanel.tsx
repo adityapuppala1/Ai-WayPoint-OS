@@ -6,6 +6,7 @@ import type { Route } from 'next';
 import { useRouter } from 'next/navigation';
 import { useFormatter, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
+import { Facts } from '@/components/Facts';
 import { api, problemKey } from '@/lib/api';
 import styles from './settings.module.css';
 
@@ -82,15 +83,17 @@ export function ProgrammesPanel({
                       {p.name}
                     </p>
                     <p className="wp-secondary">
-                      <span dir="auto">{p.organisation}</span> ·{' '}
-                      {t('programmeJoined', {
-                        date: format.dateTime(new Date(p.joinedAt), {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                        }),
-                      })}
-                      {p.archived ? ` · ${t('programmeClosed')}` : ''}
+                      <Facts>
+                        <span dir="auto">{p.organisation}</span>
+                        {t('programmeJoined', {
+                          date: format.dateTime(new Date(p.joinedAt), {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                          }),
+                        })}
+                        {p.archived ? t('programmeClosed') : null}
+                      </Facts>
                     </p>
                   </div>
                   <Button

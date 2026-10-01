@@ -16,8 +16,9 @@
     margin-inline: auto;
   }
 
+  /* Wide enough for the two columns of .wp-split: the main column, the gap and the aside. */
   .wp-page-wide {
-    max-inline-size: 64rem;
+    max-inline-size: calc(var(--wp-content-max) + var(--wp-space-8) + var(--wp-aside-width));
   }
 
   .wp-page-head {
@@ -49,9 +50,31 @@
     font-size: var(--wp-text-h4);
   }
 
+  /*
+   * Two columns for a wide screen, inside a .wp-page.wp-page-wide:
+   *
+   *   <div class="wp-split">
+   *     <div class="wp-split-main">what the page is for</div>
+   *     <div class="wp-split-aside">what goes with it</div>
+   *   </div>
+   *
+   * (A div, not an <aside>: inside <main> an aside is a landmark in the wrong place.)
+   * Below 72rem it is one column, the aside after the main part, with the same space
+   * between things as .wp-page has: moving panels into a split changes nothing on a phone.
+   * From 72rem the aside sits beside the main column, on the right, or on the left in
+   * right-to-left languages (grid columns follow the reading direction).
+   */
   .wp-split {
     display: grid;
-    gap: var(--wp-space-6);
+    gap: var(--wp-space-8);
+  }
+
+  .wp-split-main,
+  .wp-split-aside {
+    display: flex;
+    flex-direction: column;
+    gap: var(--wp-space-8);
+    min-inline-size: 0;
   }
 
   @media (min-width: 72rem) {

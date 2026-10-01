@@ -35,6 +35,9 @@ export function proxy(request: NextRequest) {
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-nonce', nonce);
+  // Which page this is, for the layout (maintenance closes some pages and not others).
+  // Always set here, so a visitor can never send their own.
+  requestHeaders.set('x-wp-path', request.nextUrl.pathname);
   // Next reads the nonce from the request CSP header and applies it to its own scripts.
   requestHeaders.set('Content-Security-Policy', csp);
 
@@ -52,7 +55,7 @@ export const config: ProxyConfig = {
   matcher: [
     {
       source:
-        '/((?!api|_next/static|_next/image|favicon.ico|icon|apple-icon|icons|fonts|sw.js|offline.html|manifest.webmanifest|robots.txt|sitemap.xml|.well-known).*)',
+        '/((?!api|_next/static|_next/image|favicon.ico|icon|apple-icon|icons|brand|landing|fonts|sw.js|offline.html|manifest.webmanifest|robots.txt|sitemap.xml|.well-known).*)',
       missing: [
         { type: 'header', key: 'next-router-prefetch' },
         { type: 'header', key: 'purpose', value: 'prefetch' },

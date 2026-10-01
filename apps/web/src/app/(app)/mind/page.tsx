@@ -1,5 +1,5 @@
 import { mind as mindService } from '@waypoint/api';
-import { LinkButton, ModuleMark, Notice, Panel } from '@waypoint/ui';
+import { LinkButton, Notice, PageHeader, Panel } from '@waypoint/ui';
 import type { Metadata, Route } from 'next';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
@@ -8,6 +8,7 @@ import { Journal } from '@/components/mind/Journal';
 import { MoodCheckin } from '@/components/mind/MoodCheckin';
 import { MoodTrend } from '@/components/mind/MoodTrend';
 import styles from '@/components/mind/mind.module.css';
+import { NextStops } from '@/components/NextStops';
 import { requireViewer } from '@/lib/server';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -22,16 +23,12 @@ export default async function MindPage() {
 
   return (
     <div className="wp-page">
-      <header className="wp-page-head">
-        <div className="wp-row">
-          <ModuleMark module="mind" size="lg" />
-          <h1>{t('title')}</h1>
-        </div>
-        <p className="wp-lead">{t('lead')}</p>
+      <div className="wp-section">
+        <PageHeader module="mind" title={t('title')} lead={t('lead')} />
         <p className="wp-secondary">
           {t('notTherapy')} <Link href={'/support' as Route}>{t('getHelp')}</Link>
         </p>
-      </header>
+      </div>
 
       {view.summary.suggestSupport ? (
         <Notice tone="support" title={t('supportTitle')}>
@@ -47,12 +44,12 @@ export default async function MindPage() {
         </Notice>
       ) : null}
 
-      <Panel title={t('checkinTitle')} description={t('checkinLead')} as="section">
+      <Panel title={t('checkinTitle')} description={t('checkinLead')} as="section" id="checkin">
         <MoodCheckin />
       </Panel>
 
       <Panel title={t('trendTitle')} as="section">
-        <MoodTrend summary={view.summary} />
+        <MoodTrend summary={view.summary} checkinId="checkin" />
       </Panel>
 
       <Panel title={t('journalTitle')} description={t('journalLead')} as="section">
@@ -73,6 +70,8 @@ export default async function MindPage() {
           ))}
         </ol>
       </Panel>
+
+      <NextStops stops={['circles', 'ask']} />
     </div>
   );
 }

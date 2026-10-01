@@ -1,8 +1,8 @@
 /**
  * Platform administration: the moderation queue for Circles, scam reports waiting for review,
  * AI spend against the budget, message delivery, conversations by SMS, WhatsApp and USSD
- * (counts only), and how recently the lifeline data (crisis lines, emergency numbers, health
- * lines) was checked against its sources.
+ * (counts only), how recently the lifeline data (crisis lines, emergency numbers, health
+ * lines) was checked against its sources, and the feedback people sent.
  *
  * Every action is written to the audit log. Posts held because the writer may be in danger are
  * never shown to moderators — only counted; the writer was offered support when they posted.
@@ -60,6 +60,7 @@ import { channelsReady } from '../channels/providers';
 import { emailReady } from '../email/send';
 import { type Actor, audit } from '../lib/audit';
 import { ApiError, notFound } from '../lib/problem';
+import { forecastsToJudge, verdictsToCheck } from './forecasts';
 import { SCAM_CATEGORIES } from './shield';
 
 // ─────────────────────────────── Overview ───────────────────────────────
@@ -554,17 +555,31 @@ export async function adminOverview(db: Database, now = new Date()): Promise<Adm
   };
 }
 
-/** What is waiting for staff: shown as counts in the admin navigation. */
-export async function adminCounts(db: Database): Promise<{ moderation: number; reports: number }> {
-  const [posts, [reports]] = await Promise.all([
+/**
+ * What is waiting for staff: shown as counts in the admin navigation. For forecasts that is
+ * the ones to judge and, for the staff member looking, the verdicts someone else recorded
+ * that they could confirm.
+ */
+export async function adminCounts(
+  db: Database,
+  viewerId?: string,
+): Promise<{ moderation: number; reports: number; forecasts: number }> {
+  const [posts, [reports], toJudge, toCheck] = await Promise.all([
     db.execute<{ n: number }>(sql`
       select count(*)::int as n from circle_posts p
       where p.hidden_reason in ('scam', 'reports')
         or (p.hidden_reason is distinct from 'crisis' and exists (
           select 1 from circle_reports r where r.post_id = p.id and r.resolved_at is null))`),
     db.select({ n: count() }).from(scamReports).where(eq(scamReports.status, 'new')),
+    // Forecasts whose date has passed and that nobody has judged yet.
+    forecastsToJudge(db),
+    viewerId ? verdictsToCheck(db, viewerId) : 0,
   ]);
-  return { moderation: num(posts.rows[0]?.n), reports: num(reports?.n) };
+  return {
+    moderation: num(posts.rows[0]?.n),
+    reports: num(reports?.n),
+    forecasts: toJudge + toCheck,
+  };
 }
 
 // ─────────────────────────────── Moderation ───────────────────────────────
@@ -785,6 +800,13 @@ export async function moderatePost(
 
   await db.transaction(async (tx) => {
     if (action === 'remove') {
+      // A reply held because its writer may be in danger is theirs alone to see, and no
+      // moderator ever reads it: it is set loose from the post being removed rather than
+      // deleted with it, so the writer still finds their words and the support card.
+      await tx
+        .update(circlePosts)
+        .set({ parentId: null })
+        .where(and(eq(circlePosts.parentId, postId), eq(circlePosts.hiddenReason, 'crisis')));
       await tx
         .delete(circlePosts)
         .where(or(eq(circlePosts.id, postId), eq(circlePosts.parentId, postId)));
@@ -1046,7 +1068,7 @@ export async function auditTrail(
       and(
         // Staff and organisation actions only: what people do for themselves (such as
         // downloading their data) stays out of the admin view.
-        sql`(${auditLog.action} like 'org.%' or ${auditLog.action} like 'moderation.%' or ${auditLog.action} like 'scam-report.%')`,
+        sql`(${auditLog.action} like 'org.%' or ${auditLog.action} like 'moderation.%' or ${auditLog.action} like 'scam-report.%' or ${auditLog.action} like 'forecast.%' or ${auditLog.action} like 'signal.%')`,
         before && !Number.isNaN(before.getTime()) ? lt(auditLog.createdAt, before) : sql`true`,
       ),
     )

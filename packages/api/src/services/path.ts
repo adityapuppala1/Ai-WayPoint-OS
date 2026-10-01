@@ -29,6 +29,7 @@ import {
   type SkillLevel,
   suggestRoles,
 } from '@waypoint/core';
+import { currentStepHref } from '@waypoint/core/path';
 import {
   and,
   asc,
@@ -315,7 +316,8 @@ function stepView(s: StepRow, r?: Renderer): PlanStepView {
     status: (STEP_STATUSES as readonly string[]).includes(s.status)
       ? (s.status as PlanStepView['status'])
       : 'todo',
-    href: s.href,
+    // Plans saved earlier may still carry an address for a page that was never built.
+    href: currentStepHref(s.href),
     skillIds: s.skillIds,
     resource: resourceView(s.resourceId),
     doneAt: s.doneAt?.toISOString() ?? null,
@@ -499,6 +501,10 @@ export async function createPlan(
     templates: await templatesFor(locale),
   });
   if (input.personalise && consents.personalization) {
+    // A model may reword the plan; it cannot change its steps. Where the judge may be asked
+    // (ai_external consent, a language switched on for it) the new wording is checked, and a
+    // rewrite that promises a result or names a course the planner did not comes back as
+    // the template, unchanged.
     draft = await personalisePlan(
       { db, userId: who.userId, isGuest: who.isGuest, allowExternal: consents.ai_external },
       draft,
@@ -516,9 +522,12 @@ export async function createPlan(
   return getPlan(db, who.userId, planId, locale);
 }
 
-export const StepUpdateSchema = z
-  .object({ status: z.enum(STEP_STATUSES), note: z.string().trim().max(500).optional() })
-  .openapi('StepUpdate');
+/**
+ * A step takes a status and nothing else. It used to accept a free-text note that no screen
+ * showed, that was stored readable and that was never screened for signs of danger like other
+ * writing: words people type belong in the journal, where they are sealed and screened.
+ */
+export const StepUpdateSchema = z.object({ status: z.enum(STEP_STATUSES) }).openapi('StepUpdate');
 
 export async function updateStep(
   db: Database,
@@ -535,7 +544,6 @@ export async function updateStep(
     .set({
       status: input.status,
       doneAt: input.status === 'done' ? now : null,
-      ...(input.note !== undefined ? { note: input.note } : {}),
       updatedAt: now,
     })
     .where(and(eq(planSteps.id, stepId), eq(planSteps.planId, plan.id)))

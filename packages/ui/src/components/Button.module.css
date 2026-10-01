@@ -4,6 +4,7 @@
     --btn-fg: var(--wp-text);
     --btn-border: var(--wp-border-strong);
     --btn-bg-hover: var(--wp-sunken);
+    --btn-bg-pressed: var(--btn-bg-hover);
 
     position: relative;
     display: inline-flex;
@@ -30,36 +31,39 @@
     transition:
       background-color var(--wp-duration-fast) var(--wp-ease-out),
       border-color var(--wp-duration-fast) var(--wp-ease-out),
-      transform var(--wp-duration-fast) var(--wp-ease-out);
+      box-shadow var(--wp-duration-fast) var(--wp-ease-out),
+      scale var(--wp-duration-fast) var(--wp-ease-out);
   }
 
-  .button[data-hovered],
-  .button:hover {
-    background: var(--btn-bg-hover);
+  /* Hover only where a pointer hovers: on a phone the fill would stay on after a tap. */
+  @media (hover: hover) {
+    .button[data-hovered],
+    .button:hover {
+      background: var(--btn-bg-hover);
+    }
   }
 
+  /* Pressed: the button gives a little under the finger, on touch as well as with a mouse. */
   .button[data-pressed] {
-    transform: translateY(1px);
+    background: var(--btn-bg-pressed);
+    scale: var(--wp-press-scale);
   }
 
   .button[data-focus-visible] {
     outline: 2px solid transparent;
-    box-shadow:
-      0 0 0 2px var(--wp-canvas),
-      0 0 0 4px var(--wp-focus-ring),
-      0 0 0 7px var(--wp-signal);
+    box-shadow: var(--wp-focus-shadow);
   }
 
   .button[data-disabled] {
     cursor: not-allowed;
     opacity: 0.5;
-    transform: none;
+    scale: none;
   }
 
   .primary {
     --btn-bg: var(--wp-signal);
     --btn-fg: var(--wp-signal-ink);
-    --btn-border: color-mix(in oklch, var(--wp-signal-ink) 18%, var(--wp-signal));
+    --btn-border: var(--wp-signal-hover);
     --btn-bg-hover: var(--wp-signal-hover);
   }
 
@@ -71,29 +75,50 @@
   .quiet {
     --btn-bg: transparent;
     --btn-border: transparent;
-    --btn-bg-hover: color-mix(in oklch, var(--wp-text) 7%, transparent);
+    --btn-bg-hover: var(--wp-fill-hover);
+    --btn-bg-pressed: var(--wp-fill-pressed);
   }
 
   .danger {
     --btn-bg: var(--wp-danger);
     --btn-fg: var(--wp-raised);
     --btn-border: var(--wp-danger);
-    --btn-bg-hover: color-mix(in oklch, var(--wp-danger) 88%, black);
+    --btn-bg-hover: var(--wp-danger);
   }
 
   .support {
     --btn-bg: var(--wp-support);
     --btn-fg: var(--wp-raised);
     --btn-border: var(--wp-support);
-    --btn-bg-hover: color-mix(in oklch, var(--wp-support) 88%, black);
+    --btn-bg-hover: var(--wp-support);
   }
 
   /* On the dark slate sign, secondary actions read as outlined white. */
   .onSign {
     --btn-bg: transparent;
     --btn-fg: var(--wp-sign-text);
-    --btn-border: color-mix(in oklch, var(--wp-sign-text) 40%, transparent);
-    --btn-bg-hover: color-mix(in oklch, var(--wp-sign-text) 10%, transparent);
+    --btn-border: var(--wp-sign-border);
+    --btn-bg-hover: var(--wp-sign-fill-hover);
+    --btn-bg-pressed: var(--wp-sign-fill-pressed);
+  }
+
+  /*
+   * The three shades that have to be mixed. A browser without color-mix() keeps the plain
+   * values above (a custom property accepts anything, so an unreadable mix would only fail
+   * where it is used and take the border or the fill with it; hence the guard).
+   */
+  @supports (color: color-mix(in oklch, red, blue)) {
+    .primary {
+      --btn-border: color-mix(in oklch, var(--wp-signal-ink) 18%, var(--wp-signal));
+    }
+
+    .danger {
+      --btn-bg-hover: color-mix(in oklch, var(--wp-danger) 88%, black);
+    }
+
+    .support {
+      --btn-bg-hover: color-mix(in oklch, var(--wp-support) 88%, black);
+    }
   }
 
   .sm {

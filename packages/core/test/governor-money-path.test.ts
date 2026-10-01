@@ -318,6 +318,25 @@ describe('path', () => {
     expect(plan.title).toBe('Your next steps');
     expect(plan.weeks).toHaveLength(4);
     expect(plan.weeks[0]!.steps.some((s) => s.href === '/civic/job-loss')).toBe(false);
+    // With no role to name, the project step has wording of its own — not the plan's title
+    // dropped into the sentence ("Make a proof project for Your next steps").
+    const titles = plan.weeks.flatMap((w) => w.steps.map((s) => s.title));
+    expect(titles).toContain('Make a small project that shows what you can do');
+    expect(titles.join(' | ')).not.toContain('Your next steps');
+  });
+
+  it('rewrites the old no-role project title when an earlier plan is read again', () => {
+    const names = { skill: (id: string) => id, role: (id: string) => id };
+    // How plans made before the fix stored that step.
+    const old = { key: 'projectTitle', vars: { role: { template: 'titleGeneral' as const } } };
+    expect(renderPlanText(old, PLAN_TEMPLATES_EN, names)).toBe(
+      'Make a small project that shows what you can do',
+    );
+    // A plan towards a role still names it.
+    const withRole = { key: 'projectTitle', vars: { role: { role: 'data-analyst' } } };
+    expect(renderPlanText(withRole, PLAN_TEMPLATES_EN, names)).toBe(
+      'Make a proof project for data-analyst',
+    );
   });
 
   it('keeps how each piece of text was made, so it can be written in another language', () => {

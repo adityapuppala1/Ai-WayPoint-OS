@@ -13,6 +13,12 @@ export interface ProbabilityProps {
   /** e.g. "Our record: 42 forecasts, Brier 0.18" */
   record?: ReactNode;
   label: string;
+  /**
+   * The percentages written in the reader's language ("٦٢٪", "62 %"). Without them the number
+   * is shown as "62%".
+   */
+  valueText?: string;
+  baseRateText?: string;
   className?: string;
 }
 
@@ -26,12 +32,15 @@ export function Probability({
   baseRateLabel,
   record,
   label,
+  valueText,
+  baseRateText,
   className,
 }: ProbabilityProps) {
+  const shown = valueText ?? pct(value);
   return (
     <div className={cn(styles.probability, className)}>
       <div className={styles.headline}>
-        <span className={styles.value}>{pct(value)}</span>
+        <span className={styles.value}>{shown}</span>
         <span className={styles.words}>{words}</span>
       </div>
       {/* biome-ignore lint/a11y/useSemanticElements: a styled track with a marker for the base rate; <meter> cannot draw it */}
@@ -42,7 +51,7 @@ export function Probability({
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={Math.round(value * 100)}
-        aria-valuetext={`${pct(value)}`}
+        aria-valuetext={shown}
       >
         <span className={styles.fill} style={{ inlineSize: pct(value) }} />
         {baseRate !== undefined ? (
@@ -56,7 +65,7 @@ export function Probability({
         <div className={styles.legend}>
           {baseRate !== undefined ? (
             <span className={styles.baseKey}>
-              {baseRateLabel} {pct(baseRate)}
+              {baseRateLabel} {baseRateText ?? pct(baseRate)}
             </span>
           ) : null}
           {record ? <span>{record}</span> : null}

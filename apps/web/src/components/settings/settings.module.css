@@ -55,6 +55,8 @@
   background: var(--wp-raised);
   color: var(--wp-text);
   font: inherit;
+  /* Body size, not the label's: an iPhone zooms the page when a smaller field is focused. */
+  font-size: var(--wp-text-body);
   font-variant-numeric: tabular-nums;
 }
 

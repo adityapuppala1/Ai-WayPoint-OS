@@ -64,17 +64,27 @@
   border-radius: var(--wp-radius-md);
   background: var(--wp-raised);
   box-shadow: var(--wp-shadow-raised);
-  transition: border-color var(--wp-duration-fast) var(--wp-ease-out);
+  transition:
+    border-color var(--wp-duration-fast) var(--wp-ease-out),
+    box-shadow var(--wp-duration-fast) var(--wp-ease-out),
+    scale var(--wp-duration-fast) var(--wp-ease-out);
 }
 
-.card:hover {
-  border-color: var(--wp-border-strong);
-  border-inline-start-color: var(--wp-line-circles);
+/* The whole card is a way in: it lifts one step under the pointer and gives when pressed. */
+@media (hover: hover) {
+  .card:hover {
+    border-color: var(--wp-border-strong);
+    border-inline-start-color: var(--wp-line-circles);
+    box-shadow: var(--wp-shadow-2);
+  }
+}
+
+.card:active {
+  scale: var(--wp-press-scale);
 }
 
 .card:focus-within {
-  outline: 2px solid var(--wp-focus-ring);
-  outline-offset: 2px;
+  box-shadow: var(--wp-focus-shadow);
 }
 
 .cardBody {
@@ -249,6 +259,15 @@
   font-weight: var(--wp-weight-medium);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--wp-duration-fast) var(--wp-ease-out),
+    scale var(--wp-duration-fast) var(--wp-ease-out);
+}
+
+@media (hover: hover) {
+  .chip[data-hovered]:not([data-selected]) {
+    background: var(--wp-fill-hover);
+  }
 }
 
 .chip[data-selected] {
@@ -257,9 +276,18 @@
   box-shadow: inset 0 0 0 1px var(--wp-line-circles);
 }
 
+.chip[data-pressed] {
+  scale: var(--wp-press-scale);
+}
+
 .chip[data-focus-visible] {
-  outline: 2px solid var(--wp-focus-ring);
-  outline-offset: 2px;
+  box-shadow: var(--wp-focus-shadow);
+}
+
+.chip[data-selected][data-focus-visible] {
+  box-shadow:
+    inset 0 0 0 1px var(--wp-line-circles),
+    var(--wp-focus-shadow);
 }
 
 /* ───────────── Posts ───────────── */
@@ -410,11 +438,23 @@
   font-weight: var(--wp-weight-medium);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--wp-duration-fast) var(--wp-ease-out),
+    color var(--wp-duration-fast) var(--wp-ease-out),
+    scale var(--wp-duration-fast) var(--wp-ease-out);
 }
 
-.reaction:hover {
-  border-color: var(--wp-border-strong);
-  color: var(--wp-text);
+@media (hover: hover) {
+  .reaction[data-hovered] {
+    border-color: var(--wp-border-strong);
+    background: var(--wp-fill-hover);
+    color: var(--wp-text);
+  }
+}
+
+.reaction[data-pressed] {
+  background: var(--wp-fill-pressed);
+  scale: var(--wp-press-scale);
 }
 
 .reaction[data-selected] {
@@ -424,8 +464,7 @@
 }
 
 .reaction[data-focus-visible] {
-  outline: 2px solid var(--wp-focus-ring);
-  outline-offset: 2px;
+  box-shadow: var(--wp-focus-shadow);
 }
 
 .reaction[data-disabled] {

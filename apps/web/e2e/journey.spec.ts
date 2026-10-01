@@ -69,12 +69,27 @@ test('a guest gets started, asks for help, keeps their choices and creates an ac
   await expect(page.getByText(/moves into your account the first time you sign in/)).toBeVisible();
   await snap(page, testInfo, 'check-email');
 
-  // Signing in before confirming says so (and sends a fresh link).
+  // Signing in before confirming answers exactly like a wrong password (anything else would
+  // show whether the address already had an account) and says what to do if the account is
+  // new: with the right password, a fresh link is emailed.
+  const signIn = async (withPassword: string) => {
+    await page.getByLabel('Email').fill(email);
+    await page.getByLabel('Password').fill(withPassword);
+    await Promise.all([
+      page.waitForResponse((r) => r.url().includes('/api/auth/sign-in/email')),
+      page.getByRole('main').getByRole('button', { name: 'Sign in' }).click(),
+    ]);
+  };
   await page.goto('/sign-in');
-  await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Password').fill(password);
-  await page.getByRole('main').getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByText(/Please confirm your email address first/)).toBeVisible();
+  await signIn(password);
+  const answer = page.getByRole('main').getByRole('alert');
+  await expect(answer).toContainText('We couldn’t sign you in with that email and password.');
+  await expect(answer).toContainText('Please confirm your email address first');
+  await expect(answer).toContainText(`open the link we emailed to ${email}`);
+  const beforeConfirming = await answer.innerText();
+  await signIn('not the password at all');
+  await expect(answer).toBeVisible();
+  expect(await answer.innerText()).toBe(beforeConfirming);
 
   // The link in the email confirms the address, and says what happens next.
   await page.goto(await linkFromEmail(email, '/api/auth/verify-email'));
@@ -91,10 +106,26 @@ test('a guest gets started, asks for help, keeps their choices and creates an ac
   await page.goto('/ask');
   await expect(page.getByText('I lost my job last week').first()).toBeVisible();
 
-  // Signing out, then back in.
+  // Signing out, then back in. Signing out leaves nothing of theirs for whoever uses the device
+  // next: not their language or display choices (the profile puts them back at sign-in), not
+  // the steps they set aside today. The device's time zone stays.
+  const url = new URL(page.url()).origin;
+  await page.context().addCookies(
+    [
+      ['NEXT_LOCALE', 'en'],
+      ['wp-theme', 'light'],
+      ['wp-lite', '0'],
+      ['wp-not-now', '2026-09-30:abc'],
+      ['wp-tz', 'Africa%2FNairobi'],
+    ].map(([name = '', value = '']) => ({ name, value, url })),
+  );
   await page.getByRole('button', { name: /Amani/ }).first().click();
   await page.getByRole('menuitem', { name: 'Sign out' }).click();
   await expect(page).toHaveURL(/\/welcome/);
+  const left = (await page.context().cookies()).map((c) => c.name);
+  for (const name of ['NEXT_LOCALE', 'wp-theme', 'wp-lite', 'wp-not-now'])
+    expect(left, name).not.toContain(name);
+  expect(left).toContain('wp-tz');
   await page.goto('/sign-in');
   await page.getByLabel('Email').fill(email);
   await page.getByLabel('Password').fill(password);

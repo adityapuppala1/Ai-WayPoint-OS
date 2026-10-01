@@ -36,6 +36,30 @@ export const isLocale = (v: unknown): v is Locale =>
 
 export const textDirection = (l: Locale): 'ltr' | 'rtl' => (l === 'ar' ? 'rtl' : 'ltr');
 
+/**
+ * Digits named for languages whose default ICU versions disagree on. Node and current
+ * browsers write Arabic numbers in Latin digits ("12"); older ICU, as in Linux WebKit and
+ * older iPhones and Macs, in Arabic-Indic ones ("١٢"). Left to each engine, a page was drawn
+ * one way on the server and another in the browser, and React threw it away.
+ */
+const DIGITS: Partial<Record<Locale, string>> = { ar: 'latn' };
+
+/**
+ * The locale to give Intl (and libraries that format with it) for text drawn both on the
+ * server and in the browser: the language, with its digits named where engines disagree
+ * ("ar-u-nu-latn").
+ */
+export function formattingLocale(locale: Locale): string {
+  const digits = DIGITS[locale];
+  return digits ? `${locale}-u-nu-${digits}` : locale;
+}
+
+/** The language of a locale that may name its digits: "ar-u-nu-latn" is "ar". */
+export function languageOf(locale: string): Locale {
+  const language = locale.split('-u-')[0];
+  return isLocale(language) ? language : defaultLocale;
+}
+
 export function resolveLocale(cookie?: string | null, acceptLanguage?: string | null): Locale {
   if (isLocale(cookie)) return cookie;
   const ranked = (acceptLanguage ?? '')
@@ -65,10 +89,13 @@ export const SERVER_ONLY_NAMESPACES = [
   'supportKinds',
   'planTemplates',
   'signals',
+  'forecasts',
   'explore',
   'byText',
   'legal',
   'mobile',
+  // The welcome page is drawn on the server; its few client parts take their words as props.
+  'landing',
 ] as const;
 
 export type Messages = typeof en;

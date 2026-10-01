@@ -16,23 +16,29 @@ import {
   nextOccurrence,
   parseSchedule,
   planDelivery,
+  quietHoursEnd,
   UNCONFIRMED_ACCOUNT_DAYS,
 } from '@waypoint/core';
 import { otpText } from '@waypoint/core/channels';
 import { getEnv } from '@waypoint/core/env';
-import { openWithKek } from '@waypoint/core/privacy';
+import { getKeyring, openWithKek, rewrapIfNeeded, sealWithKek } from '@waypoint/core/privacy';
 import {
   and,
+  asc,
   type ClaimedMessage,
   cancelOutbox,
+  channelIdentities,
   claimOutbox,
   crisisEvents,
   type Database,
   eq,
+  gte,
   inArray,
+  integrationSettings,
   isNotNull,
   lte,
   markOutbox,
+  ne,
   nudges,
   onMessageQueued,
   openOutboxPayload,
@@ -45,6 +51,7 @@ import { countMessage, stoppedMessages } from '../channels/service';
 import { isEmailTemplate, renderEmail, toLocale } from '../email/render';
 import { emailReady, sendEmail } from '../email/send';
 import { errorFields, log } from '../lib/log';
+import { takeWeeklySnapshots } from '../services/org';
 
 const FOLLOW_UP: Record<Locale, { title: string; body: string }> = {
   en: {
@@ -89,12 +96,19 @@ export async function crisisFollowUps(db: Database, now = new Date()): Promise<n
         isNotNull(crisisEvents.userId),
       ),
     )
+    // Oldest first, so a backlog never leaves the same people waiting round after round.
+    .orderBy(asc(crisisEvents.followUpAt))
     .limit(100);
   let created = 0;
   for (const e of due) {
     if (!e.userId) continue;
     const [p] = await db
-      .select({ locale: profiles.locale })
+      .select({
+        locale: profiles.locale,
+        timezone: profiles.timezone,
+        quietStart: profiles.quietStart,
+        quietEnd: profiles.quietEnd,
+      })
       .from(profiles)
       .where(eq(profiles.userId, e.userId))
       .limit(1);
@@ -102,23 +116,35 @@ export async function crisisFollowUps(db: Database, now = new Date()): Promise<n
       ? (p?.locale as Locale)
       : 'en';
     const copy = FOLLOW_UP[locale];
-    await db.transaction(async (tx) => {
-      await tx.insert(nudges).values({
-        userId: e.userId as string,
-        module: 'today',
-        priority: 'high',
-        title: copy.title,
-        body: copy.body,
-        href: '/support',
-        dedupeKey: 'crisis-follow-up',
-        expiresAt: new Date(now.getTime() + 3 * 86_400_000),
+    // One row that cannot be handled must not hold up everyone behind it, round after round.
+    try {
+      await db.transaction(async (tx) => {
+        await tx.insert(nudges).values({
+          userId: e.userId as string,
+          module: 'today',
+          // Safety-critical: it is not held back by the daily budget (someone who asked for no
+          // other messages still gets this one) — but it waits for their quiet hours to end.
+          priority: 'critical',
+          title: copy.title,
+          body: copy.body,
+          href: '/support',
+          dedupeKey: 'crisis-follow-up',
+          deliverAfter: quietHoursEnd(now, {
+            timezone: p?.timezone ?? 'UTC',
+            quietHours:
+              p?.quietStart && p?.quietEnd ? { start: p.quietStart, end: p.quietEnd } : undefined,
+          }),
+          expiresAt: new Date(now.getTime() + 3 * 86_400_000),
+        });
+        await tx
+          .update(crisisEvents)
+          .set({ followUpStatus: 'sent' })
+          .where(eq(crisisEvents.id, e.id));
       });
-      await tx
-        .update(crisisEvents)
-        .set({ followUpStatus: 'sent' })
-        .where(eq(crisisEvents.id, e.id));
-    });
-    created += 1;
+      created += 1;
+    } catch (err) {
+      log.error('check-in not created for one person', errorFields(err));
+    }
   }
   return created;
 }
@@ -143,6 +169,7 @@ export async function dueReminders(db: Database, now = new Date()): Promise<numb
     .select()
     .from(reminders)
     .where(and(eq(reminders.enabled, true), lte(reminders.nextAt, now)))
+    .orderBy(asc(reminders.nextAt))
     .limit(200);
   let created = 0;
   for (const r of due) {
@@ -196,6 +223,7 @@ export async function deliverNudges(
         sql`(${nudges.deliverAfter} is null or ${nudges.deliverAfter} <= ${now})`,
       ),
     )
+    .orderBy(asc(nudges.createdAt))
     .limit(500);
   const byUser = new Map<string, typeof pending>();
   for (const n of pending) byUser.set(n.userId, [...(byUser.get(n.userId) ?? []), n]);
@@ -204,79 +232,90 @@ export async function deliverNudges(
   let deferred = 0;
   let dropped = 0;
   for (const [userId, list] of byUser) {
-    const [p] = await db.select().from(profiles).where(eq(profiles.userId, userId)).limit(1);
-    const prefs: AttentionPrefs = {
-      budgetPerDay: Math.max(
-        0,
-        Math.min(3, p?.attentionBudget ?? 1),
-      ) as AttentionPrefs['budgetPerDay'],
-      quietHours:
-        p?.quietStart && p?.quietEnd ? { start: p.quietStart, end: p.quietEnd } : undefined,
-      timezone: p?.timezone ?? 'UTC',
-    };
-    const today = localDayKey(now, prefs.timezone);
-    const [{ n: deliveredToday } = { n: 0 }] = await db
-      .select({ n: sql<number>`count(*)::int` })
-      .from(nudges)
-      .where(
-        and(
-          eq(nudges.userId, userId),
-          isNotNull(nudges.deliveredAt),
-          sql`to_char(${nudges.deliveredAt} at time zone ${prefs.timezone}, 'YYYY-MM-DD') = ${today}`,
+    // One person's broken settings or data must never stop everyone else's messages.
+    try {
+      const [p] = await db.select().from(profiles).where(eq(profiles.userId, userId)).limit(1);
+      const prefs: AttentionPrefs = {
+        budgetPerDay: Math.max(
+          0,
+          Math.min(3, p?.attentionBudget ?? 1),
+        ) as AttentionPrefs['budgetPerDay'],
+        quietHours:
+          p?.quietStart && p?.quietEnd ? { start: p.quietStart, end: p.quietEnd } : undefined,
+        timezone: p?.timezone ?? 'UTC',
+      };
+      // Counted here rather than in SQL: the database and JavaScript do not agree on every
+      // time zone value, and the governor's own reading of the person's day is the one that counts.
+      const today = localDayKey(now, prefs.timezone);
+      const recent = await db
+        .select({ at: nudges.deliveredAt })
+        .from(nudges)
+        .where(
+          and(
+            eq(nudges.userId, userId),
+            gte(nudges.deliveredAt, new Date(now.getTime() - 36 * 3_600_000)),
+            // Critical messages never count against the budget.
+            ne(nudges.priority, 'critical'),
+          ),
+        );
+      const deliveredToday = recent.filter(
+        (r) => r.at && localDayKey(r.at, prefs.timezone) === today,
+      ).length;
+      const plan = planDelivery(
+        list.map(
+          (n): Nudge => ({
+            id: n.id,
+            module: n.module as Nudge['module'],
+            priority: n.priority as Nudge['priority'],
+            title: n.title,
+            body: n.body ?? undefined,
+            href: n.href ?? undefined,
+            createdAt: n.createdAt,
+            expiresAt: n.expiresAt ?? undefined,
+            dedupeKey: n.dedupeKey ?? undefined,
+          }),
         ),
+        prefs,
+        { now, deliveredToday },
       );
-    const plan = planDelivery(
-      list.map(
-        (n): Nudge => ({
-          id: n.id,
-          module: n.module as Nudge['module'],
-          priority: n.priority as Nudge['priority'],
-          title: n.title,
-          body: n.body ?? undefined,
-          href: n.href ?? undefined,
-          createdAt: n.createdAt,
-          expiresAt: n.expiresAt ?? undefined,
-          dedupeKey: n.dedupeKey ?? undefined,
-        }),
-      ),
-      prefs,
-      { now, deliveredToday: Number(deliveredToday) },
-    );
-    if (plan.deliverNow.length) {
-      await db
-        .update(nudges)
-        .set({ status: 'delivered', deliveredAt: now })
-        .where(
-          inArray(
-            nudges.id,
-            plan.deliverNow.map((n) => n.id),
-          ),
-        );
-      delivered += plan.deliverNow.length;
-    }
-    if (plan.defer.length) {
-      await db
-        .update(nudges)
-        .set({ status: 'deferred', deliverAfter: new Date(now.getTime() + 30 * 60_000) })
-        .where(
-          inArray(
-            nudges.id,
-            plan.defer.map((n) => n.id),
-          ),
-        );
-      deferred += plan.defer.length;
-    }
-    if (plan.drop.length) {
-      await db
-        .update(nudges)
-        .set({ status: 'dropped' })
-        .where(
-          inArray(
-            nudges.id,
-            plan.drop.map((n) => n.id),
-          ),
-        );
-      dropped += plan.drop.length;
+      if (plan.deliverNow.length) {
+        await db
+          .update(nudges)
+          .set({ status: 'delivered', deliveredAt: now })
+          .where(
+            inArray(
+              nudges.id,
+              plan.deliverNow.map((n) => n.id),
+            ),
+          );
+        delivered += plan.deliverNow.length;
+      }
+      if (plan.defer.length) {
+        await db
+          .update(nudges)
+          .set({ status: 'deferred', deliverAfter: new Date(now.getTime() + 30 * 60_000) })
+          .where(
+            inArray(
+              nudges.id,
+              plan.defer.map((n) => n.id),
+            ),
+          );
+        deferred += plan.defer.length;
+      }
+      if (plan.drop.length) {
+        await db
+          .update(nudges)
+          .set({ status: 'dropped' })
+          .where(
+            inArray(
+              nudges.id,
+              plan.drop.map((n) => n.id),
+            ),
+          );
+        dropped += plan.drop.length;
+      }
+    } catch (err) {
+      log.error('nudges not delivered for one person', errorFields(err));
     }
   }
   return { delivered, deferred, dropped };
@@ -296,6 +335,14 @@ export async function retention(db: Database): Promise<{
   messages: number;
   numbers: number;
   stats: number;
+  codes: number;
+  safety: number;
+  /** The API's own counts (90 days) and server errors (30 days) past their time. */
+  health: number;
+  /** The analytics' days of use and anonymous counts, after 400 days. */
+  usage: number;
+  /** Key rotation: what was re-wrapped this run, and what is still under an older key. */
+  keys: { dataKeys: number; numbers: number; unreadable: number; remaining: number };
 }> {
   const convos = await db.execute<{ id: string }>(sql`
     delete from conversations c
@@ -353,6 +400,32 @@ export async function retention(db: Database): Promise<{
   const stats = await db.execute<{ day: string }>(sql`
     delete from channel_stats where day < current_date - 400
     returning day`);
+  // Sign-in codes and one-time links that have expired serve no purpose, and the auth library
+  // never removes them itself (a code row names the phone number it was sent to).
+  const codes = await db.execute<{ id: string }>(sql`
+    delete from verifications where expires_at < now() - interval '1 day'
+    returning id`);
+  // Safety records of numbers that never linked an account (tier and rule ids only) go when
+  // the number itself is forgotten: after 180 days.
+  const safety = await db.execute<{ id: string }>(sql`
+    delete from crisis_events
+    where user_id is null and created_at < now() - interval '180 days'
+    returning id`);
+  // What the console's analytics count is kept for 13 months, to compare a year on year.
+  const usageCounts = await db.execute<{ n: number }>(sql`
+    with days as (
+      delete from activity_days where day < current_date - 400 returning 1
+    ), views as (
+      delete from usage_views where day < current_date - 400 returning 1
+    )
+    select (select count(*) from days)::int + (select count(*) from views)::int as n`);
+  const healthCounts = await db.execute<{ n: number }>(sql`
+    with gone as (
+      delete from api_metrics where bucket < now() - interval '90 days' returning 1
+    ), errors as (
+      delete from api_errors where created_at < now() - interval '30 days' returning 1
+    )
+    select (select count(*) from gone)::int + (select count(*) from errors)::int as n`);
   const recounted = await db.execute<{ id: string }>(sql`
     update circles c
     set member_count = m.n
@@ -373,6 +446,11 @@ export async function retention(db: Database): Promise<{
     messages: messages.rows.length,
     numbers: numbers.rows.length,
     stats: stats.rows.length,
+    codes: codes.rows.length,
+    safety: safety.rows.length,
+    health: Number(healthCounts.rows[0]?.n ?? 0),
+    usage: Number(usageCounts.rows[0]?.n ?? 0),
+    keys: await rewrapKeys(db),
   };
 }
 
@@ -383,11 +461,16 @@ const SEND_WITHIN_MINUTES: Record<string, number> = {
   'verify-email': 24 * 60,
   'account-exists': 24 * 60,
   'org-invite': 7 * 24 * 60,
+  'staff-invite': 7 * 24 * 60,
+  'feedback-reply': 7 * 24 * 60,
   // A late reply to a text is confusing, and WhatsApp refuses free-form replies after a day.
   text: 24 * 60,
 };
 
 type Sent = 'sent' | 'logged' | { cancelled: string };
+
+/** Messages claimed at a time; a run goes on claiming until the queue is empty or time is up. */
+const OUTBOX_BATCH = 20;
 
 async function localeFor(db: Database, payload: Record<string, unknown>): Promise<Locale> {
   const chosen = toLocale(payload.locale);
@@ -464,27 +547,135 @@ async function deliver(db: Database, item: ClaimedMessage, fetchImpl: typeof fet
 export async function dispatchOutbox(
   db: Database,
   fetchImpl: typeof fetch = outboundFetch(),
+  budgetMs = 25_000,
 ): Promise<number> {
-  const batch = await claimOutbox(db, 20);
-  for (const item of batch) {
+  const started = Date.now();
+  let handled = 0;
+  // Keep going until the queue is empty or the time is up: under a burst of sign-ups, one
+  // batch a round would let codes and reset links expire while they wait their turn.
+  for (;;) {
+    const batch = await claimOutbox(db, OUTBOX_BATCH);
+    for (const item of batch) {
+      try {
+        const result = await deliver(db, item, fetchImpl);
+        if (typeof result === 'object') await cancelOutbox(db, item.id, result.cancelled);
+        else await markOutbox(db, item.id, { ok: true });
+      } catch (err) {
+        log.warn('message not sent', {
+          channel: item.channel,
+          attempt: item.attempts,
+          ...errorFields(err),
+        });
+        await markOutbox(db, item.id, {
+          ok: false,
+          error: err instanceof Error ? err.message : String(err),
+          attempts: item.attempts,
+        });
+      }
+    }
+    handled += batch.length;
+    if (batch.length < OUTBOX_BATCH || Date.now() - started >= budgetMs) return handled;
+  }
+}
+
+/**
+ * After the server key is rotated (a new WAYPOINT_KEK, the old one in WAYPOINT_KEK_PREVIOUS):
+ * wrap everything still under the old key with the new one — each person's data key, and the
+ * sealed phone numbers of people who text. When `remaining` reaches 0 nothing needs the old
+ * key any more and WAYPOINT_KEK_PREVIOUS can be removed. Runs with the retention job; safe to
+ * repeat, and safe with several workers (each row is only replaced if it has not changed).
+ */
+export async function rewrapKeys(
+  db: Database,
+  limit = 500,
+): Promise<{ dataKeys: number; numbers: number; unreadable: number; remaining: number }> {
+  const current = `${getKeyring().currentId}:%`;
+  let dataKeys = 0;
+  let numbers = 0;
+  let unreadable = 0;
+  const staleKeys = await db
+    .select({ userId: profiles.userId, dekWrapped: profiles.dekWrapped })
+    .from(profiles)
+    .where(and(isNotNull(profiles.dekWrapped), sql`${profiles.dekWrapped} not like ${current}`))
+    .limit(limit);
+  for (const row of staleKeys) {
+    if (!row.dekWrapped) continue;
     try {
-      const result = await deliver(db, item, fetchImpl);
-      if (typeof result === 'object') await cancelOutbox(db, item.id, result.cancelled);
-      else await markOutbox(db, item.id, { ok: true });
-    } catch (err) {
-      log.warn('message not sent', {
-        channel: item.channel,
-        attempt: item.attempts,
-        ...errorFields(err),
-      });
-      await markOutbox(db, item.id, {
-        ok: false,
-        error: err instanceof Error ? err.message : String(err),
-        attempts: item.attempts,
-      });
+      const next = rewrapIfNeeded(row.dekWrapped);
+      if (!next) continue;
+      const done = await db
+        .update(profiles)
+        .set({ dekWrapped: next })
+        .where(and(eq(profiles.userId, row.userId), eq(profiles.dekWrapped, row.dekWrapped)))
+        .returning({ userId: profiles.userId });
+      dataKeys += done.length;
+    } catch {
+      // Wrapped with a key this server does not have: what it protects cannot be read.
+      unreadable += 1;
     }
   }
-  return batch.length;
+  const staleNumbers = await db
+    .select({ id: channelIdentities.id, addressCt: channelIdentities.addressCt })
+    .from(channelIdentities)
+    .where(sql`${channelIdentities.addressCt} not like ${current}`)
+    .limit(limit);
+  for (const row of staleNumbers) {
+    try {
+      const next = sealWithKek(openWithKek(row.addressCt, 'channel'), 'channel');
+      const done = await db
+        .update(channelIdentities)
+        .set({ addressCt: next })
+        .where(
+          and(eq(channelIdentities.id, row.id), eq(channelIdentities.addressCt, row.addressCt)),
+        )
+        .returning({ id: channelIdentities.id });
+      numbers += done.length;
+    } catch {
+      unreadable += 1;
+    }
+  }
+  // Keys for outside services an admin set in the console (few, so all at once).
+  const staleSettings = await db
+    .select({ key: integrationSettings.key, valueCt: integrationSettings.valueCt })
+    .from(integrationSettings)
+    .where(sql`${integrationSettings.valueCt} not like ${current}`);
+  for (const row of staleSettings) {
+    try {
+      const next = sealWithKek(openWithKek(row.valueCt, 'integration'), 'integration');
+      const done = await db
+        .update(integrationSettings)
+        .set({ valueCt: next })
+        .where(
+          and(eq(integrationSettings.key, row.key), eq(integrationSettings.valueCt, row.valueCt)),
+        )
+        .returning({ key: integrationSettings.key });
+      numbers += done.length;
+    } catch {
+      unreadable += 1;
+    }
+  }
+  const [[keysLeft], [numbersLeft]] = await Promise.all([
+    db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(profiles)
+      .where(and(isNotNull(profiles.dekWrapped), sql`${profiles.dekWrapped} not like ${current}`)),
+    db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(channelIdentities)
+      .where(sql`${channelIdentities.addressCt} not like ${current}`),
+  ]);
+  const remaining = Number(keysLeft?.n ?? 0) + Number(numbersLeft?.n ?? 0);
+  if (unreadable)
+    log.error('some keys are wrapped with a server key that is not configured', {
+      unreadable,
+      hint: 'Set WAYPOINT_KEK_PREVIOUS to the key that was in use before the last rotation.',
+    });
+  return { dataKeys, numbers, unreadable, remaining };
+}
+
+/** This week's totals for every programme that has none yet (see takeWeeklySnapshots). */
+export async function orgSnapshots(db: Database): Promise<number> {
+  return takeWeeklySnapshots(db);
 }
 
 export async function runDueWork(db: Database, workerId: string): Promise<void> {
@@ -494,6 +685,7 @@ export async function runDueWork(db: Database, workerId: string): Promise<void> 
     ['followUps', () => crisisFollowUps(db)],
     ['reminders', () => dueReminders(db)],
     ['nudges', () => deliverNudges(db)],
+    ['orgSnapshots', () => orgSnapshots(db)],
     ['outbox', () => dispatchOutbox(db)],
   ] as const) {
     try {
@@ -504,6 +696,19 @@ export async function runDueWork(db: Database, workerId: string): Promise<void> 
   }
   log.debug('jobs ran', { workerId, ...results, ms: Date.now() - started });
 }
+
+/**
+ * The worker's pause between rounds, from WORKER_INTERVAL_MS: 30 seconds unless it is a positive
+ * number, and never under a second (a value that is not a number would otherwise spin the loop).
+ */
+export function workerIntervalMs(raw: string | undefined): number {
+  const n = Number(raw);
+  if (!raw?.trim() || !Number.isFinite(n) || n <= 0) return 30_000;
+  return Math.max(1_000, Math.round(n));
+}
+
+/** For the worker's own log lines: the same scrubbed error fields the API logs. */
+export { errorFields } from '../lib/log';
 
 let timer: ReturnType<typeof setInterval> | undefined;
 let retentionTimer: ReturnType<typeof setInterval> | undefined;

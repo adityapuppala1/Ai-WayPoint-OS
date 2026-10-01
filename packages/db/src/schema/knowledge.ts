@@ -114,6 +114,11 @@ export const signals = pgTable(
       sql`to_tsvector('simple', coalesce(title, '') || ' ' || coalesce(summary, ''))`,
     ),
     isDemo: boolean().notNull().default(false),
+    /**
+     * When staff took it down. The row is kept, so its content hash still stops the seed (or
+     * anyone) from quietly adding it again; every read leaves withdrawn signals out.
+     */
+    withdrawnAt: timestamp({ withTimezone: true }),
     createdAt: createdAt(),
   },
   (t) => [
@@ -146,6 +151,17 @@ export const signalStates = pgTable(
   (t) => [primaryKey({ columns: [t.userId, t.signalId] })],
 );
 
+/** Where a forecast's evidence comes from: a name people recognise and a page they can open. */
+export type ForecastSource = { name: string; url: string };
+
+/** A forecast's words in another language, written by staff (never machine-translated). */
+export type ForecastTranslation = {
+  question: string;
+  description?: string;
+  whatToDo: string;
+  resolutionCriteria: string;
+};
+
 /** A question with a checkable yes/no outcome and a resolution date. */
 export const forecasts = pgTable(
   'forecasts',
@@ -154,6 +170,16 @@ export const forecasts = pgTable(
     question: text().notNull(),
     description: text().notNull(),
     resolutionCriteria: text().notNull(),
+    /** What someone can do about it, whichever way it turns out. */
+    whatToDo: text().notNull().default(''),
+    /** The evidence the chance is based on. A forecast is never published without any. */
+    sources: jsonb().$type<ForecastSource[]>().notNull().default([]),
+    /** The language the words above are written in. */
+    language: text().notNull().default('en'),
+    /** The same words in other languages, keyed by locale. */
+    translations: jsonb().$type<Record<string, ForecastTranslation>>().notNull().default({}),
+    /** How often this kind of thing usually happens (0..1), when that is known. */
+    baseRate: numeric({ precision: 5, scale: 4, mode: 'number' }),
     category: text().notNull(),
     regions: text().array().notNull().default([]),
     sectors: text().array().notNull().default([]),

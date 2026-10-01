@@ -4,12 +4,7 @@
  * configuration (see `legal.legalFacts`).
  */
 import { legal } from '@waypoint/api';
-import {
-  CONSENT_PURPOSES,
-  LEGAL_UPDATED,
-  MINIMUM_AGE,
-  UNCONFIRMED_ACCOUNT_DAYS,
-} from '@waypoint/core';
+import { LEGAL_UPDATED, MINIMUM_AGE, UNCONFIRMED_ACCOUNT_DAYS } from '@waypoint/core';
 import { LinkButton } from '@waypoint/ui';
 import type { Metadata, Route } from 'next';
 import { getFormatter, getTranslations } from 'next-intl/server';
@@ -24,6 +19,7 @@ import {
   WhoRuns,
 } from '@/components/legal/LegalDocument';
 import { PublicShell } from '@/components/shell/PublicShell';
+import { OFFERED_CONSENTS } from '@/lib/options';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('legal.privacy');
@@ -55,7 +51,9 @@ export default async function PrivacyNoticePage() {
         <>
           <p>{t('collect.lead')}</p>
           <Rows
-            rows={(['account', 'profile', 'writing', 'phone', 'security'] as const).map((id) => ({
+            rows={(
+              ['account', 'profile', 'writing', 'feedback', 'phone', 'security', 'usage'] as const
+            ).map((id) => ({
               id,
               term: t(`collect.${id}`),
               detail: t(`collect.${id}Why`),
@@ -83,7 +81,8 @@ export default async function PrivacyNoticePage() {
         <>
           <p>{t('choices.lead')}</p>
           <Rows
-            rows={CONSENT_PURPOSES.map((purpose) => ({
+            // Only the choices Privacy settings offers: a purpose nothing acts on is not listed.
+            rows={OFFERED_CONSENTS.map((purpose) => ({
               id: purpose,
               term: consents(purpose),
               detail: consents(`${purpose}Hint`),
@@ -206,7 +205,7 @@ export default async function PrivacyNoticePage() {
               term: t('keep.unconfirmed'),
               detail: t('keep.unconfirmedTime', { count: UNCONFIRMED_ACCOUNT_DAYS }),
             },
-            ...(['numbers', 'outbox', 'totals', 'reports', 'rest'] as const).map((id) => ({
+            ...(['numbers', 'outbox', 'totals', 'usage', 'reports', 'rest'] as const).map((id) => ({
               id,
               term: t(`keep.${id}`),
               detail: t(`keep.${id}Time`),
@@ -243,10 +242,12 @@ export default async function PrivacyNoticePage() {
         <>
           <p>{t('rights.lead')}</p>
           <Points
-            items={(['see', 'correct', 'delete', 'withdraw', 'complain'] as const).map((id) => ({
-              id,
-              text: t(`rights.${id}`),
-            }))}
+            items={(['see', 'memory', 'correct', 'delete', 'withdraw', 'complain'] as const).map(
+              (id) => ({
+                id,
+                text: t(`rights.${id}`),
+              }),
+            )}
           />
           <p className="wp-meta">{common('appNote')}</p>
           <Actions>

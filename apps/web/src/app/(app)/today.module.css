@@ -1,10 +1,33 @@
+/* One column on phones and tablets. From 72rem the module list sits beside the sign
+   (the split itself is .wp-split), so the page needs the room for both. */
+@media (min-width: 72rem) {
+  .page {
+    max-inline-size: 68rem;
+  }
+}
+
+.main,
+.aside {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.main {
+  gap: var(--wp-space-8);
+}
+
+.aside {
+  gap: var(--wp-space-4);
+}
+
 .panelLink {
   font-size: var(--wp-text-small);
   font-weight: var(--wp-weight-medium);
 }
 
 .empty {
-  padding: var(--wp-space-4);
+  padding: var(--wp-space-4) var(--wp-panel-gutter, var(--wp-space-4));
   color: var(--wp-text-secondary);
 }
 

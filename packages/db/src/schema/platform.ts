@@ -299,13 +299,186 @@ export const dataRequests = pgTable(
   (t) => [index('data_requests_user_idx').on(t.userId)],
 );
 
-export const feedback = pgTable('feedback', {
-  id: pk(),
-  userId: text().references(() => users.id, { onDelete: 'set null' }),
-  module: text().notNull(),
-  page: text(),
-  rating: smallint(),
-  message: text(),
-  wantsReply: boolean().notNull().default(false),
-  createdAt: createdAt(),
+export const feedback = pgTable(
+  'feedback',
+  {
+    id: pk(),
+    userId: text().references(() => users.id, { onDelete: 'set null' }),
+    module: text().notNull(),
+    page: text(),
+    rating: smallint(),
+    message: text(),
+    wantsReply: boolean().notNull().default(false),
+    /** new | planned | done | wont: where the team is with it. */
+    status: text().notNull().default('new'),
+    /** The team's own note. Never shown to the person who sent it. */
+    note: text(),
+    handledBy: text().references(() => users.id, { onDelete: 'set null' }),
+    handledAt: timestamp({ withTimezone: true }),
+    /** When the team last wrote back by email (only to someone who asked for a reply). */
+    repliedAt: timestamp({ withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [index('feedback_status_idx').on(t.status, t.createdAt)],
+);
+
+// ───────────────────────────── Outside services (the console) ─────────────────────────────
+
+/**
+ * Keys and options for outside services that an admin set in the platform console
+ * (@waypoint/core/console lists which). Every value is sealed with the KEK; `hint` is what the
+ * console may show again: a secret's last four characters, or an ordinary value in full.
+ * A value in the server's environment always wins over one here.
+ */
+export const integrationSettings = pgTable('integration_settings', {
+  key: text().primaryKey(),
+  valueCt: text().notNull(),
+  hint: text().notNull(),
+  updatedBy: text().references(() => users.id, { onDelete: 'set null' }),
+  updatedAt: updatedAt(),
 });
+
+/** The last time each outside service was checked from the console, and what it answered. */
+export const integrationChecks = pgTable('integration_checks', {
+  provider: text().primaryKey(),
+  ok: boolean().notNull(),
+  /** A short account of the answer, never a key: "Account active", "401: key refused". */
+  detail: text().notNull(),
+  latencyMs: integer(),
+  /** Models the service offers, when it lists them (to choose from in the console). */
+  models: jsonb().$type<string[]>(),
+  checkedBy: text().references(() => users.id, { onDelete: 'set null' }),
+  checkedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+});
+
+// ───────────────────────────── The API's own health ─────────────────────────────
+
+/**
+ * Requests per hour, route and kind of answer: counted in memory and added here every half
+ * minute (never a row per request). Response times are kept as a histogram, so medians and
+ * the slowest 5% can be worked out without keeping each request. Kept 90 days.
+ */
+export const apiMetrics = pgTable(
+  'api_metrics',
+  {
+    bucket: timestamp({ withTimezone: true }).notNull(),
+    method: text().notNull(),
+    /** The route as written in the code ("/api/admin/integrations/:id"), never a real path. */
+    route: text().notNull(),
+    /** 2, 3, 4 or 5: the hundreds of the status code. */
+    statusClass: smallint().notNull(),
+    n: integer().notNull().default(0),
+    sumMs: integer().notNull().default(0),
+    maxMs: integer().notNull().default(0),
+    /** How many took under 50, 100, 250, 500, 1000, 2500, 5000 ms, and longer. */
+    h0: integer().notNull().default(0),
+    h1: integer().notNull().default(0),
+    h2: integer().notNull().default(0),
+    h3: integer().notNull().default(0),
+    h4: integer().notNull().default(0),
+    h5: integer().notNull().default(0),
+    h6: integer().notNull().default(0),
+    h7: integer().notNull().default(0),
+  },
+  (t) => [
+    primaryKey({ columns: [t.bucket, t.method, t.route, t.statusClass] }),
+    index('api_metrics_bucket_idx').on(t.bucket),
+  ],
+);
+
+/**
+ * Server errors (5xx), for the console: when, where and what went wrong, in words with
+ * personal details and tokens taken out, and the request id to find it in the logs. Kept 30
+ * days.
+ */
+export const apiErrors = pgTable(
+  'api_errors',
+  {
+    id: pk(),
+    method: text().notNull(),
+    route: text().notNull(),
+    status: smallint().notNull(),
+    code: text(),
+    message: text().notNull(),
+    requestId: text(),
+    createdAt: createdAt(),
+  },
+  (t) => [index('api_errors_created_idx').on(t.createdAt)],
+);
+
+/**
+ * The platform's own switches, set by an admin in the console: maintenance (with its message
+ * and window), an announcement shown on every page, and the last backup someone recorded.
+ * One row per switch; every change is audited.
+ */
+export const platformState = pgTable('platform_state', {
+  key: text().primaryKey(),
+  value: jsonb().$type<Record<string, unknown>>().notNull(),
+  updatedBy: text().references(() => users.id, { onDelete: 'set null' }),
+  updatedAt: updatedAt(),
+});
+
+/**
+ * Invitations to join the platform's staff, sent by an admin to an email address. Only someone
+ * signed in with that address (confirmed) can answer; an invitation lasts 7 days.
+ */
+export const staffInvitations = pgTable(
+  'staff_invitations',
+  {
+    id: text().primaryKey(),
+    /** Lower case. */
+    email: text().notNull(),
+    /** admin | staff */
+    role: text().notNull(),
+    /** pending | accepted | declined | revoked */
+    status: text().notNull().default('pending'),
+    inviterId: text().references(() => users.id, { onDelete: 'set null' }),
+    expiresAt: timestamp({ withTimezone: true }).notNull(),
+    answeredAt: timestamp({ withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [index('staff_invitations_email_idx').on(t.email, t.status)],
+);
+
+// ───────────────────────────── Usage (the console's analytics) ─────────────────────────────
+
+/**
+ * That someone used Waypoint on a day, and how (a bit per platform: 1 web, 2 phone app,
+ * 4 texts). Nothing about what they did or which parts they opened. Goes with the account,
+ * and is forgotten after 400 days. Read only in totals, never for one person.
+ */
+export const activityDays = pgTable(
+  'activity_days',
+  {
+    userId: text()
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    day: date().notNull(),
+    platforms: smallint().notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.day] }), index('activity_days_day_idx').on(t.day)],
+);
+
+/**
+ * Pages and screens opened, counted with nobody attached: per day and hour (UTC), part of
+ * Waypoint, platform, kind of visitor (guest, account, or not signed in), country and
+ * language. Forgotten after 400 days.
+ */
+export const usageViews = pgTable(
+  'usage_views',
+  {
+    day: date().notNull(),
+    hour: smallint().notNull(),
+    module: text().notNull(),
+    platform: text().notNull(),
+    audience: text().notNull(),
+    country: text().notNull().default(''),
+    locale: text().notNull().default(''),
+    n: integer().notNull().default(0),
+  },
+  (t) => [
+    primaryKey({
+      columns: [t.day, t.hour, t.module, t.platform, t.audience, t.country, t.locale],
+    }),
+  ],
+);

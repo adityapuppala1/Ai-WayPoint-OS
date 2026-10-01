@@ -80,7 +80,10 @@ export function openOutboxPayload(payload: Record<string, unknown>): Record<stri
   return { ...rest, ...(opened as Record<string, unknown>) };
 }
 
-/** What stays of a message once it is done with: the kind of message, nothing more. */
+/**
+ * What stays of a message once it is done with: the kind of message, nothing more — the sealed
+ * recipient is blanked too, so a finished message no longer says who it was for.
+ */
 const DONE_PAYLOAD = sql`jsonb_build_object('template', ${outbox.payload}->'template')`;
 
 export async function enqueueJob(
@@ -198,6 +201,13 @@ export interface ClaimedMessage {
   createdAt: Date;
 }
 
+/**
+ * What goes out first when many messages wait: a sign-in code is useless after five minutes and
+ * a reset link after an hour, so a flood of other mail must not make them expire in the queue.
+ */
+const URGENCY = sql`case ${outbox.payload}->>'template'
+  when 'otp' then 0 when 'reset-password' then 0 when 'verify-email' then 1 else 2 end`;
+
 export async function claimOutbox(db: Executor, limit = 20): Promise<ClaimedMessage[]> {
   const res = await db.execute<{
     id: string;
@@ -211,19 +221,31 @@ export async function claimOutbox(db: Executor, limit = 20): Promise<ClaimedMess
     where id in (
       select id from ${outbox}
       where status = 'queued' and next_attempt_at <= now()
-      order by next_attempt_at
+      order by ${URGENCY}, next_attempt_at
       limit ${limit}
       for update skip locked
     )
     returning id, channel, recipient_ref, payload, attempts, created_at`);
-  return res.rows.map((r) => ({
-    id: r.id,
-    channel: r.channel,
-    recipientRef: r.recipient_ref,
-    payload: r.payload,
-    attempts: r.attempts,
-    createdAt: new Date(r.created_at),
-  }));
+  // RETURNING does not promise the order the rows were chosen in: put the urgent ones first.
+  return res.rows
+    .map((r) => ({
+      id: r.id,
+      channel: r.channel,
+      recipientRef: r.recipient_ref,
+      payload: r.payload,
+      attempts: r.attempts,
+      createdAt: new Date(r.created_at),
+    }))
+    .sort(
+      (a, b) =>
+        urgency(a.payload) - urgency(b.payload) || a.createdAt.getTime() - b.createdAt.getTime(),
+    );
+}
+
+function urgency(payload: Record<string, unknown>): number {
+  const template = payload.template;
+  if (template === 'otp' || template === 'reset-password') return 0;
+  return template === 'verify-email' ? 1 : 2;
 }
 
 /** Tries before a message is given up on (backing off 2, 4, 8… minutes). */
@@ -237,7 +259,7 @@ export async function markOutbox(
   if (result.ok) {
     await db
       .update(outbox)
-      .set({ status: 'sent', sentAt: new Date(), payload: DONE_PAYLOAD })
+      .set({ status: 'sent', sentAt: new Date(), payload: DONE_PAYLOAD, recipientRef: '' })
       .where(eq(outbox.id, id));
     return;
   }
@@ -248,7 +270,7 @@ export async function markOutbox(
       status: giveUp ? 'failed' : 'queued',
       lastError: safeError(result.error),
       nextAttemptAt: new Date(Date.now() + 60_000 * 2 ** result.attempts),
-      ...(giveUp ? { payload: DONE_PAYLOAD } : {}),
+      ...(giveUp ? { payload: DONE_PAYLOAD, recipientRef: '' } : {}),
     })
     .where(eq(outbox.id, id));
 }
@@ -257,6 +279,11 @@ export async function markOutbox(
 export async function cancelOutbox(db: Executor, id: string, reason: string): Promise<void> {
   await db
     .update(outbox)
-    .set({ status: 'cancelled', lastError: safeError(reason), payload: DONE_PAYLOAD })
+    .set({
+      status: 'cancelled',
+      lastError: safeError(reason),
+      payload: DONE_PAYLOAD,
+      recipientRef: '',
+    })
     .where(eq(outbox.id, id));
 }

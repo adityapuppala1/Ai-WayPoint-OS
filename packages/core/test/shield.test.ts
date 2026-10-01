@@ -123,6 +123,16 @@ describe('link analysis', () => {
     expect(extractUrls('see photo.jpg and e.g. this')).toEqual([]);
   });
 
+  it('leaves the punctuation after a link, and answers at once for a run of it', () => {
+    expect(extractUrls('Go to https://bank-verify.top/login!!! now, or www.x-pay.in/a).')).toEqual([
+      'https://bank-verify.top/login',
+      'www.x-pay.in/a',
+    ]);
+    const started = performance.now();
+    extractUrls(`https://a.example/${'!'.repeat(50_000)}a`);
+    expect(performance.now() - started).toBeLessThan(250);
+  });
+
   it('detects look-alikes but never flags the official domain', () => {
     expect(lookalikeOf('paypa1.com')).toBe('paypal.com');
     expect(lookalikeOf('netf1ix-billing.com')).toBeDefined();

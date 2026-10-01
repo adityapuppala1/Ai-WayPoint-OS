@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
   ADVICE,
+  AI_SIGNALS,
   checkMessage,
   mergeAiOpinion,
+  SHIELD_RULES,
   SHIELD_SIGNAL_IDS,
   SHIELD_TEXT,
+  shieldSignalTitle,
   URL_SIGNALS,
 } from '../src/shield';
 import { LOCALES } from '../src/types';
@@ -81,6 +84,31 @@ describe('Scam Shield translations', () => {
     const ai = merged.signals.find((s) => s.id === 'ai-1');
     expect(ai?.explanation).toBe(SHIELD_TEXT.sw.aiExplanation);
     expect(merged.advice[0]).toBe(SHIELD_TEXT.sw.advice['cat-romance']);
+  });
+
+  it('gives a second opinion that cannot write its reasons in words people wrote', () => {
+    // The judge answers yes or no about a warning sign; the reason shown is the sign's own
+    // title, already translated, never text from a model.
+    expect(shieldSignalTitle('share-otp')).toBe('Asks for a code, PIN or password');
+    expect(shieldSignalTitle('share-otp', 'en')).toBe('Asks for a code, PIN or password');
+    for (const locale of translated) {
+      expect(shieldSignalTitle('share-otp', locale)).toBe(
+        SHIELD_TEXT[locale].signals['share-otp']?.title,
+      );
+      expect(shieldSignalTitle('share-otp', locale)).not.toBe('Asks for a code, PIN or password');
+    }
+    // Not a sign: no words, rather than the id shown to a person.
+    expect(shieldSignalTitle('made-up-sign', 'es')).toBeUndefined();
+    expect(shieldSignalTitle('toString', 'es')).toBeUndefined();
+  });
+
+  it('has words in every language for the one sign only a second opinion can raise', () => {
+    expect(Object.keys(AI_SIGNALS)).toEqual(['hidden-instructions']);
+    expect(SHIELD_SIGNAL_IDS).toContain('hidden-instructions');
+    for (const locale of LOCALES)
+      expect(shieldSignalTitle('hidden-instructions', locale)).toBeTruthy();
+    // No rule raises it: the rules have no pattern for text written at a checking tool.
+    expect(SHIELD_RULES.map((r) => r.id)).not.toContain('hidden-instructions');
   });
 
   it('keeps English output unchanged', () => {

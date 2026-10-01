@@ -1,6 +1,6 @@
 import { channels, support } from '@waypoint/api';
 import { COUNTRIES, normalizeCountry } from '@waypoint/content';
-import { Icon, LinkButton, Panel } from '@waypoint/ui';
+import { Icon, LinkButton, PageHeader, Panel } from '@waypoint/ui';
 import type { Metadata, Route } from 'next';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { CountryPicker } from '@/components/support/CountryPicker';
@@ -124,10 +124,7 @@ export default async function SupportPage({
 
   return (
     <div className="wp-page">
-      <header className="wp-page-head">
-        <h1>{t('title')}</h1>
-        <p className="wp-lead">{t('lead')}</p>
-      </header>
+      <PageHeader module="support" title={t('title')} lead={t('lead')} />
 
       <section className={styles.danger} aria-labelledby="danger-title">
         <h2 id="danger-title" className={styles.dangerTitle}>

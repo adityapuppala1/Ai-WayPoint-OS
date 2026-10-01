@@ -228,6 +228,30 @@ describe('guided mode replies', () => {
     expect(sw).not.toContain('Asks you to pay');
   });
 
+  it('never says a question about a scam showed no scam signs: it points to Shield instead', () => {
+    // Someone describing a call has no message to check, so the rules find nothing: that is
+    // not a reason to reassure them.
+    const caller =
+      'A man phoned me saying he is from my bank and asked for the number they just texted me. Should I give it?';
+    const byKeyword = 'Is this a scam? A man phoned me from my bank asking for the code';
+    for (const [text, opts] of [
+      [caller, { locale: 'en', intent: 'scam' as const }],
+      [byKeyword, { locale: 'en' }],
+    ] as const) {
+      const reply = ai.offlineReply(text, { country: 'IN', ...opts });
+      expect(reply).toBe('[Shield: check a message for scams](/shield)');
+    }
+    const es = ai.offlineReply(caller, { locale: 'es', intent: 'scam' });
+    expect(es).toBe('[Escudo: revisar si un mensaje es una estafa](/shield)');
+    // A message that does show warning signs still gets the rules' verdict.
+    expect(
+      ai.offlineReply('Is this a scam? Pay the registration fee of Rs 999 today to get the job.', {
+        locale: 'en',
+        country: 'IN',
+      }),
+    ).toMatch(/Shield’s rules: (some warning signs|high risk|very high risk)/);
+  });
+
   it('uses translated module names in the menu', () => {
     const es = ai.offlineReply('hola', { locale: 'es' });
     expect(es).toContain('[Escudo: revisar si un mensaje es una estafa](/shield)');

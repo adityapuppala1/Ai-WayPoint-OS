@@ -23,14 +23,22 @@
     transition: background-color var(--wp-duration-fast) var(--wp-ease-out);
   }
 
-  a.row:hover {
-    background: color-mix(in oklch, var(--wp-text) 4%, transparent);
+  @media (hover: hover) {
+    a.row:hover {
+      background: var(--wp-fill-hover);
+    }
   }
 
+  /* Pressed: a shade, so a tap on a phone is answered before the next page arrives. */
+  a.row:active {
+    background: var(--wp-fill-pressed);
+  }
+
+  /* The ring is drawn inside the row: rows sit flush in a panel that would clip it. */
   a.row:focus-visible {
     background: var(--wp-signal-tint);
     color: inherit;
-    box-shadow: inset 4px 0 0 var(--wp-focus-ring);
+    box-shadow: var(--wp-focus-shadow-inset);
   }
 
   .leading {

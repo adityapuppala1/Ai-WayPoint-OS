@@ -1,10 +1,11 @@
 import { circles as circlesService } from '@waypoint/api';
-import { Icon, type IconName, LinkButton, ModuleMark, Notice, Panel } from '@waypoint/ui';
+import { Icon, type IconName, LinkButton, Notice, PageHeader, Panel } from '@waypoint/ui';
 import type { Metadata, Route } from 'next';
 import Link from 'next/link';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { CircleCard } from '@/components/circles/CircleCard';
 import styles from '@/components/circles/circles.module.css';
+import { EmptyNote } from '@/components/EmptyNote';
 import { requireViewer } from '@/lib/server';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -31,17 +32,15 @@ export default async function CirclesPage() {
     locale,
   );
   const guest = viewer.user.isGuest;
+  // Where "pick one below" leads: the circles suggested for this person, or all of them.
+  const firstList = view.suggested.length
+    ? { id: 'circles-suggested', name: t('suggested') }
+    : { id: 'circles-browse', name: t('browse') };
   const max = [...view.mine, ...view.suggested, ...view.browse][0]?.maxMembers ?? 12;
 
   return (
     <div className="wp-page">
-      <header className="wp-page-head">
-        <div className="wp-row">
-          <ModuleMark module="circles" size="lg" />
-          <h1>{t('title')}</h1>
-        </div>
-        <p className="wp-lead">{t('lead')}</p>
-      </header>
+      <PageHeader module="circles" title={t('title')} lead={t('lead')} />
 
       {guest ? (
         <Notice
@@ -72,7 +71,9 @@ export default async function CirclesPage() {
               ))}
             </ul>
           ) : (
-            <p className={styles.hint}>{t('mineEmpty')}</p>
+            <EmptyNote action={<a href={`#${firstList.id}`}>{firstList.name}</a>}>
+              {t('mineEmpty')}
+            </EmptyNote>
           )}
         </section>
       )}

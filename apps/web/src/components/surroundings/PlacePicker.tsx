@@ -2,8 +2,9 @@
 
 import { geocodeUrl, type Place, parseGeocoding, roundCoord } from '@waypoint/core/surroundings';
 import { Button, Icon, SearchField } from '@waypoint/ui';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
+import { useLanguage } from '@/lib/language';
 import styles from './surroundings.module.css';
 
 /**
@@ -18,7 +19,7 @@ export function PlacePicker({
   onCancel?: () => void;
 }) {
   const t = useTranslations('surroundings');
-  const locale = useLocale();
+  const locale = useLanguage();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Place[] | null>(null);
   const [busy, setBusy] = useState<'search' | 'locate' | null>(null);

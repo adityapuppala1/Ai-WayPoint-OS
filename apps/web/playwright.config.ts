@@ -1,23 +1,28 @@
 /**
- * End-to-end tests: the real app, in a real browser, at phone and desktop widths.
+ * End-to-end tests: the real app, in real browsers, at phone and desktop widths. Five
+ * projects: `desktop` and `phone` (Chrome), `firefox`, and `safari` and `iphone` (WebKit, the
+ * engine of Safari and of every browser on an iPhone).
  *
  *   pnpm --filter @waypoint/web build      # once (or E2E_DEV=1 to test `next dev` instead)
- *   pnpm test:e2e
+ *   pnpm --filter @waypoint/web exec playwright install      # once: the three browsers
+ *   pnpm test:e2e                          # all five, or add --project=firefox for one
  *
  * The server starts with a fresh embedded database in the system temp folder (never your own
- * `.data/`), no AI provider or texting provider, and email caught by a local mail catcher, so
- * every run starts from the same place and nothing leaves the machine. Set E2E_BASE_URL to test a server that is already
- * running (for example a staging copy) instead.
+ * `.data/`), no AI provider, judge or texting provider, and email caught by a local mail
+ * catcher, so every run starts from the same place and nothing leaves the machine. Set
+ * E2E_BASE_URL to test a server that is already running (for example a staging copy) instead.
  */
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { defineConfig, devices } from '@playwright/test';
+import { STAFF } from './e2e/staff';
 
 const PORT = Number(process.env.E2E_PORT ?? 3100);
 const external = process.env.E2E_BASE_URL;
 const BASE = external ?? `http://localhost:${PORT}`;
 // A browser installed elsewhere (e.g. a system Chromium) instead of `playwright install`.
 const executablePath = process.env.PW_CHROMIUM || undefined;
+const chromium = executablePath ? { executablePath } : {};
 /** Where the test server's mail catcher writes the emails it receives (see e2e/mailbox.mjs). */
 const MAIL_FILE = join(tmpdir(), `waypoint-e2e-mail-${PORT}.jsonl`);
 // The test workers read the same file (see linkFromEmail in e2e/fixtures.ts).
@@ -40,17 +45,36 @@ export default defineConfig({
     timezoneId: 'Africa/Nairobi',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    launchOptions: executablePath ? { executablePath } : {},
   },
   projects: [
     {
       name: 'desktop',
-      use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 800 } },
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1280, height: 800 },
+        launchOptions: chromium,
+      },
     },
     {
-      // Long journeys run once, on the desktop; the phone checks the pages people reach first.
+      // Long journeys run once per engine, on a desktop; the phones check the pages people
+      // reach first.
       name: 'phone',
-      use: { ...devices['Pixel 7'] },
+      use: { ...devices['Pixel 7'], launchOptions: chromium },
+      grepInvert: /@desktop/,
+    },
+    // The same journeys in the other two browser engines: Firefox (Gecko) and Safari (WebKit,
+    // which is also every browser on an iPhone).
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'], viewport: { width: 1280, height: 800 } },
+    },
+    {
+      name: 'safari',
+      use: { ...devices['Desktop Safari'], viewport: { width: 1280, height: 800 } },
+    },
+    {
+      name: 'iphone',
+      use: { ...devices['iPhone 14'] },
       grepInvert: /@desktop/,
     },
   ],
@@ -70,12 +94,17 @@ export default defineConfig({
           // Test-only secrets (a production build refuses to start without them).
           BETTER_AUTH_SECRET: 'e2e-only-secret-never-use-in-production-0000000',
           WAYPOINT_KEK: 'MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=',
-          // Empty values win over anything in .env.local: no real database, AI, email or texts.
+          // Empty values win over anything in .env.local or the shell: no real database, AI
+          // (the judge included), email or texts. A new outside service needs its key here.
           DATABASE_URL: '',
           ANTHROPIC_API_KEY: '',
           OPENAI_API_KEY: '',
           GOOGLE_GENERATIVE_AI_API_KEY: '',
           OLLAMA_BASE_URL: '',
+          TYPESAFE_API_KEY: '',
+          // Empty is each one's default: a local value cannot change the run or stop it starting.
+          AI_JUDGE_MODEL: '',
+          AI_JUDGE_LOCALES: '',
           RESEND_API_KEY: '',
           // Email goes to the local mail catcher, never out of the machine.
           SMTP_URL: `smtp://127.0.0.1:${MAIL_PORT}`,
@@ -85,7 +114,10 @@ export default defineConfig({
           TWILIO_ACCOUNT_SID: '',
           WHATSAPP_ACCESS_TOKEN: '',
           AFRICASTALKING_API_KEY: '',
-          WAYPOINT_ADMIN_EMAIL: '',
+          // A staff account for the admin console tests, created in the throwaway database.
+          WAYPOINT_ADMIN_EMAIL: STAFF.email,
+          WAYPOINT_ADMIN_PASSWORD: STAFF.password,
+          WAYPOINT_SECURITY_CONTACT: 'security@waypoint.test',
           WEB_ORIGINS: '',
           LOG_LEVEL: 'warn',
         },

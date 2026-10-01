@@ -33,7 +33,8 @@ import {
 import { toLocale } from '../email/render';
 import { errorFields, log } from '../lib/log';
 import { ApiError } from '../lib/problem';
-import { keyedHash, rateLimit } from '../lib/request';
+import { keyedHash, rateLimit, withinLimit } from '../lib/request';
+import { recordUse } from '../lib/usage';
 import type { Provider, TextChannel } from './providers';
 
 type ChannelName = TextChannel | 'ussd';
@@ -217,31 +218,152 @@ export interface TextResult {
   identityId?: string;
 }
 
+/** Numbers Waypoint answers: from a country it has help lines for, or the operator's own list. */
+export function servedNumber(e164: string): boolean {
+  const country = countryOfNumber(e164);
+  if (!country) return false;
+  const only = getEnv().WAYPOINT_TEXT_COUNTRIES;
+  if (!only) return true;
+  return only
+    .split(',')
+    .map((c) => c.trim().toUpperCase())
+    .includes(country);
+}
+
+/**
+ * The ceiling on answered texts for the whole service, so a flood from made-up senders cannot
+ * run up the bill. Someone in danger draws on a separate allowance of the same size, which a
+ * flood of ordinary messages cannot use up.
+ */
+async function serviceHasRoom(db: Database, crisis: boolean): Promise<boolean> {
+  const env = getEnv();
+  const name = crisis ? 'ch-out-crisis' : 'ch-out';
+  const hour = await withinLimit(db, `${name}-hour`, {
+    max: env.WAYPOINT_TEXT_REPLIES_PER_HOUR,
+    windowSeconds: 3600,
+  });
+  const day = await withinLimit(db, `${name}-day`, {
+    max: env.WAYPOINT_TEXT_REPLIES_PER_DAY,
+    windowSeconds: 86_400,
+  });
+  if (!(hour && day) && (await withinLimit(db, `${name}-warned`, { max: 1, windowSeconds: 3600 })))
+    log.warn('text replies paused: the ceiling for the whole service was reached', {
+      crisis,
+      perHour: env.WAYPOINT_TEXT_REPLIES_PER_HOUR,
+      perDay: env.WAYPOINT_TEXT_REPLIES_PER_DAY,
+    });
+  return hour && day;
+}
+
+/** Replies to someone in danger past their number's limit: a few an hour, never unlimited. */
+const CRISIS_PER_HOUR = 5;
+
+/** Support cards an hour, and a day, for numbers from countries Waypoint does not serve. */
+const UNSERVED_CRISIS_PER_HOUR = 20;
+const UNSERVED_CRISIS_PER_DAY = 100;
+
 export async function handleText(
   db: Database,
-  input: { channel: TextChannel; provider: Provider; from: string; text: string | null },
+  input: {
+    channel: TextChannel;
+    provider: Provider;
+    from: string;
+    text: string | null;
+    /** The provider's id for this message (MessageSid, wamid…), when it sends one. */
+    messageId?: string;
+  },
 ): Promise<TextResult> {
   const e164 = toE164(input.from);
   if (!e164) return { replies: [] };
+  const seen = input.messageId
+    ? `ch-seen:${keyedHash(`${input.provider}:${input.messageId}`, 'channel-message')}`
+    : null;
+  if (seen && !(await withinLimit(db, seen, { max: 1, windowSeconds: 86_400 })))
+    return { replies: [] };
+  try {
+    return await answerText(db, input, e164);
+  } catch (err) {
+    // The message was not answered: when the provider delivers it again, that is not a
+    // repeat to ignore (the person may be in danger and has heard nothing yet).
+    if (seen)
+      await db
+        .execute(sql`delete from rate_limits where key = ${`api:${seen}`}`)
+        .catch(() => undefined);
+    throw err;
+  }
+}
+
+async function answerText(
+  db: Database,
+  input: { channel: TextChannel; provider: Provider; text: string | null },
+  e164: string,
+): Promise<TextResult> {
+  const text = input.text === null ? null : input.text.slice(0, 1600);
+
+  const served = servedNumber(e164);
+  if (!served) {
+    // A number from somewhere Waypoint does not serve is not recorded and not answered —
+    // unless the person is in danger: then they get the support card with global directories.
+    await countMessage(db, input.channel, 'in', 'unserved').catch(() => undefined);
+    if (text === null) return { replies: [] };
+    const stranger: ChannelPerson = {
+      locale: null,
+      country: null,
+      optedOut: false,
+      aiAllowed: false,
+      isNew: true,
+    };
+    const danger = channelReply(text, stranger, {
+      ...setupFor(input.channel),
+      externalAi: false,
+      localAi: false,
+    });
+    if (!danger.crisis || danger.crisis.assessment.tier < 2) return { replies: [] };
+    // A small allowance of its own: made-up senders from anywhere in the world cannot make
+    // Waypoint send without end, or use up what is kept for people in the countries it serves.
+    const room =
+      (await withinLimit(db, 'ch-out-unserved-hour', {
+        max: UNSERVED_CRISIS_PER_HOUR,
+        windowSeconds: 3600,
+      })) &&
+      (await withinLimit(db, 'ch-out-unserved-day', {
+        max: UNSERVED_CRISIS_PER_DAY,
+        windowSeconds: 86_400,
+      }));
+    if (!room) return { replies: [] };
+  }
+
   const { row, isNew } = await identityFor(db, input.channel, e164);
   const who = person(row, isNew);
+  // A number linked to an account: that person used Waypoint today, by text (nothing else).
+  if (row.userId) recordUse({ userId: row.userId, platform: 'text' });
   const copy = CHANNEL_COPY[who.locale ?? 'en'];
-  if (!(await withinLimits(db, row.id)))
-    return {
-      replies: (await slowDownNotice(db, row.id))
+  const limited = !(await withinLimits(db, row.id));
+  const slowDown = async (): Promise<TextResult> => ({
+    // Someone who asked for no more messages gets none, not even "please slow down".
+    replies:
+      !who.optedOut && (await slowDownNotice(db, row.id)) && (await serviceHasRoom(db, false))
         ? [fitForChannel(copy.slowDown, input.channel)]
         : [],
+    e164,
+    identityId: row.id,
+  });
+  if (text === null) {
+    if (limited) return slowDown();
+    // A voice note, photo or sticker: say what can be read.
+    await countMessage(db, input.channel, 'in', 'unreadable').catch(() => undefined);
+    return {
+      replies: (await serviceHasRoom(db, false)) ? [fitForChannel(copy.menu, input.channel)] : [],
       e164,
       identityId: row.id,
     };
-  if (input.text === null) {
-    // A voice note, photo or sticker: say what can be read.
-    await countMessage(db, input.channel, 'in', 'unreadable').catch(() => undefined);
-    return { replies: [fitForChannel(copy.menu, input.channel)], e164, identityId: row.id };
   }
 
-  const reply = channelReply(input.text.slice(0, 1600), who, setupFor(input.channel));
-  await remember(db, row.id, reply.update);
+  // Safety is decided before any limit: a number over its limit (or one somebody else flooded)
+  // still gets the support card, from a small allowance of its own.
+  const reply = channelReply(text, who, setupFor(input.channel));
+  // That someone was in danger is recorded (tier and rule ids, never the words) whether or
+  // not a reply can still be sent.
   if (reply.crisis) {
     const { assessment, plan } = reply.crisis;
     await db.insert(crisisEvents).values({
@@ -257,9 +379,30 @@ export async function handleText(
       actionKinds: plan.actions.map((a) => a.kind),
     });
   }
+  if (limited) {
+    // STOP and START are always taken, however many messages came before them.
+    if (reply.intent === 'stop' || reply.intent === 'start') {
+      await remember(db, row.id, reply.update);
+      return { replies: [], e164, identityId: row.id };
+    }
+    const mayAnswer =
+      reply.crisis &&
+      (await withinLimit(db, `ch-crisis:${row.id}`, { max: CRISIS_PER_HOUR, windowSeconds: 3600 }));
+    if (!mayAnswer) return slowDown();
+    reply.ask = undefined;
+  }
+  // The allowance for unserved numbers was drawn on above; everyone else draws on the
+  // ceiling for the whole service (people in danger on their own part of it).
+  if (served && reply.messages.length > 0 && !(await serviceHasRoom(db, Boolean(reply.crisis)))) {
+    await countMessage(db, input.channel, 'in', 'capped').catch(() => undefined);
+    // STOP and the person's other choices are still remembered; nothing is sent.
+    await remember(db, row.id, reply.update);
+    return { replies: [], e164, identityId: row.id };
+  }
+  await remember(db, row.id, reply.update);
   await countMessage(db, input.channel, 'in', reply.intent).catch(() => undefined);
 
-  const ask = reply.ask;
+  const ask = served ? reply.ask : undefined;
   const country = reply.update?.country ?? who.country;
   return {
     replies: reply.messages,
@@ -317,6 +460,10 @@ async function aiAnswer(
   } catch {
     return guided;
   }
+  // Nothing comes back when no model can reply, and also when the judge (if one is set up, the
+  // person texted AI YES and their language is switched on for it) finds the answer gives a
+  // diagnosis or a dose, says what a court will decide, picks a financial product, promises
+  // an outcome or describes a method of self-harm. Either way the guided text is sent.
   const answer = await channelAnswer(
     { db, isGuest: true, allowExternal: q.external },
     {

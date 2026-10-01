@@ -3,9 +3,10 @@
 import { Button, Checkbox, Dialog, Icon, Notice, TextField, toast } from '@waypoint/ui';
 import type { Route } from 'next';
 import { useRouter } from 'next/navigation';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { type FormEvent, useId, useMemo, useState } from 'react';
 import { ApiProblem, api, problemKey } from '@/lib/api';
+import { useLanguage } from '@/lib/language';
 import styles from './org.module.css';
 
 export interface RoleOption {
@@ -34,7 +35,7 @@ function RolesPicker({
   onChange: (ids: string[]) => void;
 }) {
   const t = useTranslations('org');
-  const locale = useLocale();
+  const locale = useLanguage();
   const [query, setQuery] = useState('');
   const byId = useMemo(() => new Map(roles.map((r) => [r.id, r])), [roles]);
   const groups = useMemo(() => {

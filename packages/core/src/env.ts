@@ -10,6 +10,7 @@ import { randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { z } from 'zod';
+import { CONSOLE_SETTINGS } from './console/integrations';
 
 let rootCache: string | undefined;
 
@@ -66,6 +67,20 @@ const optionalString = z
   .optional()
   .transform((v) => (v && v.trim().length > 0 ? v.trim() : undefined));
 
+/** A whole number of at least 1; left empty (as in .env.example) it takes its default. */
+const numberOr = (fallback: number) =>
+  z.preprocess(
+    (v) => (typeof v === 'string' && v.trim() === '' ? undefined : v),
+    z.coerce.number().int().min(1).default(fallback),
+  );
+
+/** Text that takes its default when left empty (as in .env.example), trimmed otherwise. */
+const textOr = (fallback: string) =>
+  z
+    .string()
+    .optional()
+    .transform((v) => (v && v.trim().length > 0 ? v.trim() : fallback));
+
 const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   WAYPOINT_URL: z.string().url().default('http://localhost:3000'),
@@ -91,6 +106,11 @@ const EnvSchema = z.object({
   WAYPOINT_OPERATOR: optionalString,
   /** Where people write about their information or the terms. */
   WAYPOINT_CONTACT_EMAIL: optionalString.pipe(z.string().email().optional()),
+  /**
+   * Where security problems with this installation are reported: an email address or an
+   * https address. Shown in /.well-known/security.txt; defaults to WAYPOINT_CONTACT_EMAIL.
+   */
+  WAYPOINT_SECURITY_CONTACT: optionalString,
   /** Where the servers and database are, e.g. "Frankfurt, Germany (Hetzner Online)". */
   WAYPOINT_DATA_LOCATION: optionalString,
   /** How many days backups are kept, if you keep them: the notice tells people. */
@@ -133,6 +153,39 @@ const EnvSchema = z.object({
   AI_EMBEDDING_PROVIDER: z.enum(['none', 'openai', 'google', 'ollama']).default('none'),
   AI_MONTHLY_BUDGET_USD: z.coerce.number().min(0).default(25),
   AI_TOOL_APPROVAL_SECRET: optionalString,
+  /**
+   * The judge: TypeSafe's Jev, an outside service (hosted in the United States) that answers
+   * typed questions (yes/no, one of N, a level) with probabilities. It writes nothing and is
+   * never needed for safety. Without a key nothing is ever sent to it.
+   */
+  TYPESAFE_API_KEY: optionalString,
+  /**
+   * The exact version asked, never an alias such as jev-latest: an alias moves when TypeSafe
+   * ships a release, and the thresholds in the code were set against one version. So a name
+   * must end in a full version number (jev-1.13.0); an alias or "jev-1.13" stops the start.
+   */
+  AI_JUDGE_MODEL: textOr('jev-1.13.0').pipe(
+    z
+      .string()
+      .regex(
+        /^[A-Za-z][A-Za-z0-9-]{0,40}-\d{1,4}\.\d{1,4}\.\d{1,6}$/,
+        'an exact version such as jev-1.13.0, never an alias such as jev-latest',
+      ),
+  ),
+  /**
+   * Languages the judge may be asked in ("en,es"). English only by default: TypeSafe says Jev
+   * is weaker in other languages, so each one is switched on only after it has been measured.
+   */
+  AI_JUDGE_LOCALES: textOr('en')
+    .transform((v) => [
+      ...new Set(
+        v
+          .split(',')
+          .map((code) => code.trim().toLowerCase())
+          .filter(Boolean),
+      ),
+    ])
+    .pipe(z.array(z.string().regex(/^[a-z]{2,3}$/)).min(1)),
   // Channels: SMS, WhatsApp and USSD (any one provider is enough)
   TWILIO_ACCOUNT_SID: optionalString,
   TWILIO_AUTH_TOKEN: optionalString,
@@ -155,6 +208,18 @@ const EnvSchema = z.object({
    * its callbacks, so this is all that stands in for a signature. At least 32 characters.
    */
   AFRICASTALKING_WEBHOOK_KEY: optionalString.pipe(z.string().min(32).optional()),
+  /**
+   * The most texts Waypoint answers in an hour and in a day, across every number. Replies cost
+   * money, so this bounds what a flood of made-up senders can spend. People in danger have a
+   * separate allowance of the same size.
+   */
+  WAYPOINT_TEXT_REPLIES_PER_HOUR: numberOr(2000),
+  WAYPOINT_TEXT_REPLIES_PER_DAY: numberOr(20_000),
+  /**
+   * Countries whose numbers get replies, as ISO codes ("KE,TZ,UG"). Default: every country
+   * Waypoint has help lines for. Set your providers' own geographic permissions to match.
+   */
+  WAYPOINT_TEXT_COUNTRIES: optionalString,
   /** Shown on the website so people know where to text. */
   WAYPOINT_SMS_NUMBER: optionalString,
   WAYPOINT_WHATSAPP_NUMBER: optionalString,
@@ -179,12 +244,117 @@ export type ServerEnv = z.infer<typeof EnvSchema> & {
   isProd: boolean;
 };
 
+const isThisMachine = (hostname: string) =>
+  ['localhost', '127.0.0.1', '[::1]', '::1'].includes(hostname.toLowerCase()) ||
+  hostname.toLowerCase().endsWith('.localhost');
+
+// ───────────────────────── Settings managed in the console ─────────────────────────
+//
+// An admin can set the outside services' keys and options in the platform console
+// (@waypoint/core/console lists which). They are kept encrypted in the database and handed
+// here by the API (services/integrations.ts); a value in the server's environment always
+// wins. Kept on globalThis: Next.js can load this module more than once in one process, and
+// every copy must see the same settings.
+
+interface ConsoleSettingsState {
+  values: Record<string, string>;
+  version: number;
+  listeners: Set<() => void>;
+}
+
+const SETTINGS_KEY = Symbol.for('waypoint.consoleSettings');
+
+function consoleState(): ConsoleSettingsState {
+  const g = globalThis as { [SETTINGS_KEY]?: ConsoleSettingsState };
+  g[SETTINGS_KEY] ??= { values: {}, version: 0, listeners: new Set() };
+  return g[SETTINGS_KEY];
+}
+
+const fromServer = (key: string) => Boolean(process.env[key]?.trim());
+
+/** The environment as configuration sees it: the server's, with the console's filling gaps. */
+function withConsoleSettings(values: Record<string, string>): NodeJS.ProcessEnv {
+  const merged: NodeJS.ProcessEnv = { ...process.env };
+  for (const [key, value] of Object.entries(values))
+    if (CONSOLE_SETTINGS.has(key) && !fromServer(key)) merged[key] = value;
+  return merged;
+}
+
+/** Where a setting's value comes from: the server's environment, the console, or neither. */
+export function settingSource(key: string): 'server' | 'console' | 'default' {
+  loadRootEnv();
+  if (fromServer(key)) return 'server';
+  return consoleState().values[key]?.trim() ? 'console' : 'default';
+}
+
+/** The value the console holds for a setting (whether or not the server's wins). */
+export function consoleSetting(key: string): string | undefined {
+  return consoleState().values[key];
+}
+
+/**
+ * What would be wrong with the configuration if these console values were used, by setting.
+ * Only settings the console manages are checked against; the server's own problems are its
+ * operator's to fix, and stop it starting anyway.
+ */
+export function checkConsoleSettings(values: Record<string, string>): Record<string, string> {
+  loadRootEnv();
+  const parsed = EnvSchema.safeParse(withConsoleSettings(values));
+  const problems: Record<string, string> = {};
+  if (!parsed.success)
+    for (const issue of parsed.error.issues) {
+      const key = String(issue.path[0] ?? '');
+      if (CONSOLE_SETTINGS.has(key) && key in values) problems[key] ??= issue.message;
+    }
+  return problems;
+}
+
+/**
+ * Use these console values from now on. One that would make the configuration invalid is
+ * left out (and said so), so a bad value saved by mistake can never stop the server.
+ */
+export function setConsoleSettings(values: Record<string, string>): string[] {
+  const state = consoleState();
+  const kept: Record<string, string> = {};
+  for (const [key, value] of Object.entries(values))
+    if (CONSOLE_SETTINGS.has(key) && value.trim()) kept[key] = value.trim();
+  const dropped: string[] = [];
+  for (let i = 0; i < 64; i++) {
+    const problems = Object.keys(checkConsoleSettings(kept));
+    if (!problems.length) break;
+    for (const key of problems) {
+      delete kept[key];
+      dropped.push(key);
+    }
+  }
+  const before = JSON.stringify(state.values);
+  state.values = kept;
+  if (JSON.stringify(kept) !== before) {
+    state.version += 1;
+    for (const listener of state.listeners)
+      try {
+        listener();
+      } catch {
+        // A listener's failure must not keep the new settings from the others.
+      }
+  }
+  return dropped;
+}
+
+/** Called whenever the console's settings change (to drop anything built from the old ones). */
+export function onConsoleSettingsChange(listener: () => void): () => void {
+  consoleState().listeners.add(listener);
+  return () => consoleState().listeners.delete(listener);
+}
+
 let envCache: ServerEnv | undefined;
+let envVersion = -1;
 
 export function getEnv(): ServerEnv {
-  if (envCache) return envCache;
+  const settings = consoleState();
+  if (envCache && envVersion === settings.version) return envCache;
   loadRootEnv();
-  const parsed = EnvSchema.safeParse(process.env);
+  const parsed = EnvSchema.safeParse(withConsoleSettings(settings.values));
   if (!parsed.success) {
     const issues = parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
     throw new Error(`Invalid Waypoint configuration — ${issues}`);
@@ -202,7 +372,20 @@ export function getEnv(): ServerEnv {
         `Missing required production secrets: ${missing.join(', ')}. Run \`pnpm setup\` or set them in the environment.`,
       );
     }
+    // Sessions, sign-in links and approvals are all signed with this one secret.
+    if ((env.BETTER_AUTH_SECRET ?? '').length < 32)
+      throw new Error(
+        "BETTER_AUTH_SECRET must be at least 32 characters in production. Generate one: node -e \"console.log(require('crypto').randomBytes(32).toString('base64'))\"",
+      );
+    // Without https the session cookie is not marked Secure and travels in the clear. A
+    // production build tried out on this machine (localhost) is the one exception.
+    const site = new URL(env.WAYPOINT_URL);
+    if (site.protocol !== 'https:' && !isThisMachine(site.hostname))
+      throw new Error(
+        `WAYPOINT_URL must start with https:// in production (it is ${site.origin}).`,
+      );
   }
+  envVersion = settings.version;
   envCache = {
     ...env,
     clientIpHeader: env.WAYPOINT_CLIENT_IP_HEADER ?? 'x-forwarded-for',
@@ -222,13 +405,13 @@ export function devSecret(name: string, bytes = 32): string {
   const env = getEnv();
   if (env.isProd) throw new Error(`${name} must be configured in production.`);
   const file = join(env.dataDir, 'dev-secrets.json');
+  // Read, not "check, then read": the file could change between the two. Missing or damaged
+  // is the same as empty.
   let secrets: Record<string, string> = {};
-  if (existsSync(file)) {
-    try {
-      secrets = JSON.parse(readFileSync(file, 'utf8')) as Record<string, string>;
-    } catch {
-      secrets = {};
-    }
+  try {
+    secrets = JSON.parse(readFileSync(file, 'utf8')) as Record<string, string>;
+  } catch {
+    secrets = {};
   }
   const existing = secrets[name];
   if (existing) return existing;
@@ -251,6 +434,10 @@ export function resetEnvForTests(): void {
  */
 export function configWarnings(env: ServerEnv = getEnv()): string[] {
   const out: string[] = [];
+  if (env.isProd && isThisMachine(new URL(env.WAYPOINT_URL).hostname))
+    out.push(
+      `WAYPOINT_URL is ${env.WAYPOINT_URL}: fine for trying a production build on this machine, but on a real server set it to the public https:// address. Until then sign-in links point here and session cookies are not marked Secure.`,
+    );
   if (env.isProd && !env.WAYPOINT_CLIENT_IP_HEADER && !env.TRUSTED_PROXIES)
     out.push(
       'Rate limits read the visitor address from X-Forwarded-For with no trusted proxies set. If Waypoint is reachable without a proxy that overwrites that header, visitors can dodge limits: set WAYPOINT_CLIENT_IP_HEADER (e.g. cf-connecting-ip) or TRUSTED_PROXIES.',

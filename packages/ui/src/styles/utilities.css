@@ -76,6 +76,75 @@
   transform: none;
 }
 
+/*
+ * Page transitions (see PageTransition). The browser takes a picture of the old page and of
+ * the new one and moves between them: the old page fades out while the new one rises into
+ * place, 240ms in all. A browser without the View Transitions API shows the next page at
+ * once; lite mode and a request for less motion are handled in base.css.
+ */
+::view-transition-old(.wp-page-out) {
+  animation: wp-page-out var(--wp-duration-fast) var(--wp-ease-in) both;
+}
+
+::view-transition-new(.wp-page-in) {
+  animation: wp-page-in var(--wp-duration-base) var(--wp-ease-out) calc(var(--wp-duration-fast) / 2)
+    both;
+}
+
+/* While it runs, presses go to the page underneath instead of being swallowed. */
+::view-transition {
+  pointer-events: none;
+}
+
+/*
+ * The frame stays where it is. Each part gets a name, so the browser draws it on its own,
+ * above the moving page, and these rules keep it still. One element per name on a page.
+ */
+.wp-vt-rail {
+  view-transition-name: wp-rail;
+}
+
+.wp-vt-bottom-bar {
+  view-transition-name: wp-bottom-bar;
+}
+
+.wp-vt-header {
+  view-transition-name: wp-header;
+}
+
+::view-transition-group(wp-rail),
+::view-transition-group(wp-bottom-bar),
+::view-transition-group(wp-header) {
+  animation: none;
+  z-index: 1;
+}
+
+/* The picture of the old frame is dropped, or both would show for a moment. */
+::view-transition-old(wp-rail),
+::view-transition-old(wp-bottom-bar),
+::view-transition-old(wp-header) {
+  display: none;
+}
+
+::view-transition-new(wp-rail),
+::view-transition-new(wp-bottom-bar),
+::view-transition-new(wp-header) {
+  animation: none;
+}
+
+@keyframes wp-page-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes wp-page-in {
+  from {
+    opacity: 0;
+    translate: 0 0.5rem;
+  }
+}
+
 /* Directional icons (arrows, chevrons) point the other way in right-to-left languages. */
 [dir="rtl"] .wp-icon-directional {
   transform: scaleX(-1);

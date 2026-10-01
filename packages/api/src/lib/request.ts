@@ -4,7 +4,7 @@ import { BlockList, isIP } from 'node:net';
 import { devSecret, getEnv } from '@waypoint/core/env';
 import { newId } from '@waypoint/core/ids';
 import { type Database, sql } from '@waypoint/db';
-import { tooMany } from './problem';
+import { ApiError, tooMany } from './problem';
 
 /** One address from a forwarding header: brackets, ports and IPv4-in-IPv6 are unwrapped. */
 function cleanAddress(raw: string): string | null {
@@ -150,6 +150,37 @@ export async function rateLimit(
     const resetAt = Number(row.last_request) + opts.windowSeconds * 1000;
     throw tooMany(Math.max(1, Math.ceil((resetAt - now) / 1000)));
   }
+}
+
+/** Like rateLimit, but answers false instead of throwing when the limit is reached. */
+export async function withinLimit(
+  db: Database,
+  key: string,
+  opts: { windowSeconds: number; max: number },
+): Promise<boolean> {
+  try {
+    await rateLimit(db, key, opts);
+    return true;
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 429) return false;
+    throw err;
+  }
+}
+
+/**
+ * AI answers a day for all the guests at one visitor address together. A guest session costs
+ * nothing to create, so a per-person limit alone would let one machine spend the AI budget
+ * through any number of them. People with accounts have their own allowance instead.
+ */
+export const GUEST_AI_PER_ADDRESS_DAY = 40;
+
+/** Draws one answer from the visitor address's allowance; false when it is used up. */
+export function guestAiGate(db: Database, headers: Headers): () => Promise<boolean> {
+  return () =>
+    withinLimit(db, `ai-visitor:${ipHash(headers)}`, {
+      max: GUEST_AI_PER_ADDRESS_DAY,
+      windowSeconds: 86_400,
+    });
 }
 
 /**

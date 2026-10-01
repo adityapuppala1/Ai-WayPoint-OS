@@ -13,11 +13,15 @@ import {
   TextField,
   toast,
 } from '@waypoint/ui';
-import { useLocale, useTranslations } from 'next-intl';
-import { type FormEvent, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
+import { type FormEvent, type ReactNode, useEffect, useRef, useState } from 'react';
 import { ApiProblem, api } from '@/lib/api';
 import { ltr } from '@/lib/bidi';
+import { useLanguage } from '@/lib/language';
 import styles from './shield.module.css';
+
+/** The most the box takes (the same limit the field itself has). */
+const MAX = 4000;
 
 const CATEGORIES = [
   'job',
@@ -83,17 +87,20 @@ export function ShieldChecker({
   aiAvailable,
   aiConsented,
   channels,
+  afterHigh,
 }: {
   country: string | null;
   aiAvailable: boolean;
   aiConsented: boolean;
   channels: Channel[];
+  /** Shown under a high or very high verdict: where else on Waypoint to go from here. */
+  afterHigh?: ReactNode;
 }) {
   const t = useTranslations('shield');
   const levels = useTranslations('riskLevels');
   const common = useTranslations('common');
   const errors = useTranslations('errors');
-  const locale = useLocale();
+  const locale = useLanguage();
   const [text, setText] = useState('');
   const [aiConsent, setAiConsent] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -101,6 +108,36 @@ export function ShieldChecker({
   const [check, setCheck] = useState<ShieldCheck | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
   const resultRef = useRef<HTMLHeadingElement>(null);
+
+  // "Paste": a scam message arrives in another app, and a long press to paste is the hard
+  // part on a phone. Whether the browser lets a page read the clipboard is only known in the
+  // browser, so the button appears once the page is there, and never where it cannot work.
+  const [canPaste, setCanPaste] = useState(false);
+  useEffect(() => {
+    if (typeof navigator.clipboard?.readText !== 'function') return;
+    setCanPaste(true);
+    // Already refused for this site: do not offer it. (Not every browser answers this
+    // question; the ones that do not are asked when the button is pressed.)
+    navigator.permissions
+      ?.query({ name: 'clipboard-read' as PermissionName })
+      .then((status) => {
+        if (status.state === 'denied') setCanPaste(false);
+      })
+      .catch(() => undefined);
+  }, []);
+
+  const paste = async () => {
+    try {
+      const pasted = (await navigator.clipboard.readText()).slice(0, MAX);
+      if (!pasted.trim()) return;
+      setText(pasted);
+      setCheck(null);
+    } catch {
+      // Refused, by the person or by the browser: take the button away and say nothing.
+      // Pasting by hand still works.
+      setCanPaste(false);
+    }
+  };
 
   const run = async (e: FormEvent) => {
     e.preventDefault();
@@ -129,11 +166,15 @@ export function ShieldChecker({
       }[check.result.level]
     : '';
 
+  // "Found more" only when the second opinion raised the level. One that saw less than the
+  // rules changed nothing, and there is nothing to say about it.
   const aiLine = check
     ? check.ai.used
-      ? check.result.engine.ai?.agreed
-        ? t('aiAgreed')
-        : t('aiRaised')
+      ? check.ai.raised
+        ? t('aiRaised')
+        : check.result.engine.ai?.agreed
+          ? t('aiAgreed')
+          : null
       : check.ai.reason === 'skipped-certain'
         ? t('aiSkipped')
         : null
@@ -153,7 +194,7 @@ export function ShieldChecker({
               setText(v);
               if (check) setCheck(null);
             }}
-            maxLength={4000}
+            maxLength={MAX}
           />
           {aiAvailable && !aiConsented ? (
             <Checkbox
@@ -175,6 +216,11 @@ export function ShieldChecker({
             >
               {busy ? t('checking') : t('check')}
             </Button>
+            {canPaste ? (
+              <Button variant="secondary" size="lg" onPress={paste} isDisabled={busy}>
+                {t('paste')}
+              </Button>
+            ) : null}
             {check ? (
               <Button
                 variant="quiet"
@@ -263,6 +309,7 @@ export function ShieldChecker({
             {aiLine ? `${aiLine} ` : ''}
             {t('engine', { version: check.result.engine.rules })}
           </p>
+          {check.result.level === 'high' || check.result.level === 'very-high' ? afterHigh : null}
         </section>
       ) : null}
 

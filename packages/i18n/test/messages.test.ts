@@ -2,7 +2,33 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { IntlMessageFormat } from 'intl-messageformat';
 import { describe, expect, it } from 'vitest';
-import { loadMessages, locales, resolveLocale, textDirection } from '../src';
+import {
+  formattingLocale,
+  languageOf,
+  loadMessages,
+  locales,
+  resolveLocale,
+  textDirection,
+} from '../src';
+
+describe('the locale given to Intl', () => {
+  it('names Arabic digits, so every engine writes the same numbers and dates', () => {
+    expect(formattingLocale('ar')).toBe('ar-u-nu-latn');
+    expect(new Intl.NumberFormat(formattingLocale('ar')).format(1234)).toBe('1,234');
+    expect(new Intl.DateTimeFormat(formattingLocale('ar')).resolvedOptions().numberingSystem).toBe(
+      'latn',
+    );
+    expect(textDirection(languageOf(formattingLocale('ar')))).toBe('rtl');
+  });
+
+  it('leaves every other language as it is, and reads each back', () => {
+    for (const l of locales) {
+      if (l !== 'ar') expect(formattingLocale(l)).toBe(l);
+      expect(languageOf(formattingLocale(l))).toBe(l);
+    }
+    expect(languageOf('xx-u-nu-latn')).toBe('en');
+  });
+});
 
 type Json = { [k: string]: Json | string };
 const dir = join(__dirname, '..', 'messages');
@@ -57,6 +83,19 @@ describe('messages', () => {
         expect(args(translated), `${l}: placeholders differ in ${k}`).toEqual(args(source));
       }
     });
+
+    it(`${l}: translates every message (only names and number formats may fall back)`, () => {
+      // The same in every language, so English is the translation.
+      const sameEverywhere = new Set([
+        'meta.title',
+        'common.appName',
+        'common.aiLabel',
+        'common.percent',
+      ]);
+      const m = new Set(keys(read(l)));
+      const missing = [...enKeys].filter((k) => !m.has(k) && !sameEverywhere.has(k));
+      expect(missing, `${l}: untranslated`).toEqual([]);
+    });
   }
 
   it('every message is valid ICU and renders with sample values in its own language', () => {
@@ -73,6 +112,8 @@ describe('messages', () => {
       max: 4000,
       link: (chunks) => chunks.join(''),
     };
+    // Thousands of messages: problems are collected and checked once, which keeps this quick.
+    const problems: string[] = [];
     for (const l of locales) {
       const m = read(l);
       for (const k of keys(m)) {
@@ -82,14 +123,16 @@ describe('messages', () => {
             tag ? [tag, (chunks: string[]) => chunks.join('')] : [a, sample[a ?? ''] ?? 'x'],
           ),
         );
-        let out = '';
-        expect(() => {
-          out = String(new IntlMessageFormat(text, l).format(args));
-        }, `${l}: ${k} is not valid ICU`).not.toThrow();
-        expect(out, `${l}: ${k} rendered empty`).not.toBe('');
+        try {
+          const out = String(new IntlMessageFormat(text, l).format(args));
+          if (!out) problems.push(`${l}: ${k} rendered empty`);
+        } catch (err) {
+          problems.push(`${l}: ${k} is not valid ICU (${(err as Error).message})`);
+        }
       }
     }
-  });
+    expect(problems).toEqual([]);
+  }, 30_000);
 
   it('falls back to English key by key', async () => {
     const hi = await loadMessages('hi');

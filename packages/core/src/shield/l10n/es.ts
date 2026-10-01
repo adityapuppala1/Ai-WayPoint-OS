@@ -262,6 +262,11 @@ export const es: ShieldText = {
       explanation:
         'Los mensajes de empleo y premios desde números internacionales inesperados son un patrón común de estafa.',
     },
+    'hidden-instructions': {
+      title: 'Contiene instrucciones dirigidas a una herramienta de revisión, no a ti',
+      explanation:
+        'Un mensaje real está escrito para quien lo lee. Un texto que le dice a una computadora cómo calificar el mensaje intenta esquivar las revisiones.',
+    },
   },
   advice: {
     'check-anyway':

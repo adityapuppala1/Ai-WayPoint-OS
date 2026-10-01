@@ -54,6 +54,9 @@ app.openapi(
   (c) => c.json(publicChannels(), 200, { 'Cache-Control': 'public, max-age=300' }),
 );
 
+/** The most messages handled from one WhatsApp webhook call. */
+const MAX_BATCH = 100;
+
 const notConfigured = (c: Context<AppEnv>) => c.text('Not configured', 404);
 const forbidden = (c: Context<AppEnv>) => c.text('Forbidden', 403);
 
@@ -72,6 +75,7 @@ for (const channel of ['sms', 'whatsapp'] as const) {
       provider: 'twilio',
       from: fields.From ?? '',
       text: fields.Body || (Number(fields.NumMedia ?? 0) > 0 ? null : ''),
+      messageId: fields.MessageSid || fields.SmsSid,
     });
     // These replies go back in the answer itself, not through the outbox.
     await countMessage(db, channel, 'out', 'reply', result.replies.length).catch(() => undefined);
@@ -105,12 +109,18 @@ app.post('/channels/whatsapp', async (c) => {
     return c.text('Bad request', 400);
   }
   const db = c.get('db');
-  for (const message of parseMetaWebhook(body).slice(0, 10)) {
+  const messages = parseMetaWebhook(body);
+  // Meta batches what arrived together. Each number has its own limits, so a large batch is
+  // worked through rather than cut short; only an absurd one is capped, and that is logged.
+  if (messages.length > MAX_BATCH)
+    log.warn('whatsapp batch cut short', { received: messages.length, handled: MAX_BATCH });
+  for (const message of messages.slice(0, MAX_BATCH)) {
     const result = await handleText(db, {
       channel: 'whatsapp',
       provider: 'meta',
       from: message.from,
       text: message.text,
+      messageId: message.id,
     });
     if (result.e164 && result.identityId)
       for (const reply of result.replies)
@@ -141,6 +151,7 @@ app.post('/channels/africastalking/sms', async (c) => {
     provider: 'africastalking',
     from: fields.from ?? '',
     text: fields.text ?? '',
+    messageId: fields.id,
   });
   if (result.e164 && result.identityId)
     for (const reply of result.replies)

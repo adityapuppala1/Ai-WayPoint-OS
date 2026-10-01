@@ -27,13 +27,19 @@ import {
   trustedContacts,
   users,
 } from '@waypoint/db';
+import { oneAtATime } from '../lib/locks';
 import { ApiError, notFound, unauthorized } from '../lib/problem';
 import type { ApiUser, Consents } from '../types';
 
 /** The privacy notice version each consent records (kept with the notice's dates in core). */
 export { PRIVACY_POLICY_VERSION };
 
-const isTimeZone = (tz: string) => {
+/**
+ * A time zone by its name ("Africa/Nairobi"), never an offset: JavaScript accepts "+05:00", but
+ * the database reads such offsets the other way round, and an offset knows nothing of summer time.
+ */
+export const isTimeZone = (tz: string) => {
+  if (!/^[A-Za-z][A-Za-z0-9_+-]*(?:\/[A-Za-z0-9_+-]+){0,2}$/.test(tz)) return false;
   try {
     new Intl.DateTimeFormat('en', { timeZone: tz });
     return true;
@@ -397,6 +403,15 @@ export async function addTrustedContact(
   userId: string,
   input: z.infer<typeof TrustedContactInputSchema>,
 ): Promise<TrustedContact> {
+  // Counted and saved one at a time per person, so the limit holds when requests arrive together.
+  return oneAtATime(db, `contacts:${userId}`, (tx) => addTrustedContactUnlocked(tx, userId, input));
+}
+
+async function addTrustedContactUnlocked(
+  db: Database,
+  userId: string,
+  input: z.infer<typeof TrustedContactInputSchema>,
+): Promise<TrustedContact> {
   const existing = await db
     .select({ id: trustedContacts.id })
     .from(trustedContacts)
@@ -422,6 +437,26 @@ export async function addTrustedContact(
     email: input.email ?? null,
     relation: input.relation ?? null,
   };
+}
+
+/**
+ * Whether the support card should offer the person's own contacts: they switched that choice
+ * on and saved at least one. The card never contacts anyone; its buttons open the phone's own
+ * apps, and the details are fetched by the owner's own browser (see /me/trusted-contacts).
+ */
+export async function offersTrustedContact(db: Database, userId: string): Promise<boolean> {
+  const [choice] = await db
+    .select({ granted: consents.granted })
+    .from(consents)
+    .where(and(eq(consents.userId, userId), eq(consents.purpose, 'trusted_contact')))
+    .limit(1);
+  if (!choice?.granted) return false;
+  const [contact] = await db
+    .select({ id: trustedContacts.id })
+    .from(trustedContacts)
+    .where(eq(trustedContacts.userId, userId))
+    .limit(1);
+  return Boolean(contact);
 }
 
 export async function removeTrustedContact(

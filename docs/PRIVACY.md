@@ -9,24 +9,59 @@ Purpose-specific and revocable (`consents` table, full history in `consent_event
 `personalization`, `foresight_matching`, `memory`, `ai_external`, `circle_matching`,
 `trusted_contact`, `org_aggregates`, `research_aggregates`. All start **off**.
 
+- **Only choices that change something are offered.** `research_aggregates` ("include me in
+  anonymised public trend reports") is a purpose the code knows, but no such report exists and
+  nothing reads the answer, so Privacy settings, the phone app and the public notice do not
+  show it. Answers given before it was hidden stay stored and appear in the export. Offer it
+  again only together with the report, under a new notice version, and ask afresh: an old
+  "yes" was given for a report nobody could describe. A test
+  (`packages/api/test/consents-offered.test.ts`) fails if the website or the phone app offers
+  a choice the server never reads.
+- **Switching `memory` off deletes nothing.** It stops Waypoint using what it remembers and
+  saving anything new, from then on. What was already remembered stays, listed in Settings →
+  Privacy → "What Waypoint remembers" with a plain note that it is kept but unused, until the
+  person deletes one entry or presses "Forget everything". A switch is easy to flip by
+  mistake; deleting is a separate, confirmed step.
+- **`trusted_contact`** decides whether the support card shows the person's own contacts.
+  Saving a contact without switching it on shows nothing on the card, and Settings says so.
+
 ## Encryption
 
 - Envelope encryption (`packages/core/src/privacy`): each person has a random 256-bit data
   key (DEK), wrapped by the server key-encryption key `WAYPOINT_KEK` (AES-256-GCM, key id
   prefixed so keys can rotate with `WAYPOINT_KEK_PREVIOUS`).
 - Encrypted fields: journal entries, mood and health notes, health reminder titles, goal titles
-  and reasons, weekly reviews, trusted contacts, money snapshot, sensitive memories, messaging
-  addresses. Associated data binds each ciphertext to its table, owner and row, so it cannot
+  and reasons, weekly reviews, trusted contacts, money snapshot, what the assistant was asked to
+  remember, messaging addresses. Associated data binds each ciphertext to its table, owner and row, so it cannot
   be moved elsewhere.
 - What stays readable, and why: mood scores (1–5) and tags for the two-week trend, goal area,
   dates and progress for Today, the money currency, health numbers (hours of sleep, minutes of
   movement, glasses of water) for the weekly view, and when a reminder is next due. A due
   reminder's note on Today is generic; the words are decrypted only when the owner views it.
   Today shows the money pressure level and runway only — never amounts.
-- Journal entries, check-in notes and health notes are screened for signs of danger as they are saved (the
-  same deterministic rules as Ask). If something is flagged, the support card appears straight
-  away and a safety record is kept — tier and rule ids only, never the words.
-- Deleting an account deletes the wrapped key first (crypto-shredding), then every row.
+- **Ask conversations are stored readable on the server**, so they can be opened on any device
+  and deleted by the retention setting. They are protected by access control, not by a
+  per-person key: choose a short retention (Settings → Privacy) for sensitive conversations, and
+  encrypt the database disk. Plan steps take a status only — no free-text note.
+- Everything a person writes privately is screened for signs of danger as it is saved (the
+  same deterministic rules as Ask, no AI): journal entries, check-in notes, health notes, a
+  goal and why it matters, and the answers of the weekly review. The words are saved either
+  way. If something is flagged, the support card appears straight away and a safety record is
+  kept — tier and rule ids only, never the words. Not screened, because they are labels
+  rather than writing: a reminder's title, a trusted contact's details, money figures.
+- **Feedback** ("Tell us what worked, or what didn't", in Settings) stores the part of
+  Waypoint it is about, an optional 1 to 5, and the message with phone numbers, email
+  addresses and card or ID numbers removed before it is written. Staff read it in the admin
+  console, where nothing says who wrote it: an address is shown only for someone with an
+  account who ticked "I'd like a reply", and a guest cannot be identified at all. A guest
+  is never offered a reply. Feedback is part of the export and goes when the account does.
+- Deleting an account deletes the wrapped key first (crypto-shredding), then every row that
+  belongs to the person, including feedback they wrote, scam reports nobody has published and
+  messages still waiting to be sent to them. What stays, with nothing linking it to them:
+  the cost of AI calls already made (no words, needed for the monthly budget), scam reports
+  that were published as warnings (the kind of scam and the websites named — the description
+  and amount are removed), reports they made about other people's circle posts, and the
+  activity log of shared things without who did them.
 
 ## Circles
 
@@ -34,6 +69,8 @@ Purpose-specific and revocable (`consents` table, full history in `consent_event
   for it (never the account name or email). Posts are stored in the clear so members can read
   them, which is why personal details are masked before a post is saved.
 - Suggestions based on your situation need `circle_matching` consent; browsing works without it.
+- "Member 1234" numbers come from a keyed hash: different in every circle, and impossible to
+  work out from an account id, so nobody can be followed from one circle to the next.
 - Leaving a circle can delete everything you posted there. Deleting your account deletes all
   your circle posts (and replies to them) and frees your seats.
 
@@ -42,11 +79,51 @@ Purpose-specific and revocable (`consents` table, full history in `consent_event
 - Only with `ai_external` consent (or a one-off tick in Shield): text sent to an AI provider
   is **redacted first**: email addresses, phone numbers, card numbers (Luhn-checked), IBANs,
   Aadhaar, PAN, SSN, BVN and passport numbers, UPI handles and IP addresses. Names are not
-  removed automatically, so the app reminds people not to share them.
+  removed automatically, so the app reminds people not to share them. The same redaction is
+  applied to what Waypoint tells the model about the person — their goals, what they asked it
+  to remember and their current plan — not only to their messages.
 - A self-hosted model (`OLLAMA_BASE_URL`) keeps everything on your servers.
+- **The judge** (`TYPESAFE_API_KEY`, optional) is an outside service too: TypeSafe, hosted in
+  the United States. It is asked only under the same consent as any outside AI — `ai_external`,
+  the one-off tick in Shield, or `AI YES` by text; a private model never stands in for it —
+  and only in the languages switched on for it. The same redaction is applied to everything
+  it is sent, in one place (`packages/ai/src/judge-questions.ts`). What it is sent, and
+  nothing else:
+  - in Scam Shield, the pasted message (up to 4,000 characters), redacted — and only when the
+    rules rated it low or unclear, since the judge could not change a higher verdict;
+  - for an answer by SMS or WhatsApp, the AI's reply, redacted — not the person's question,
+    though the reply can repeat what was asked;
+  - for a plan, the reworded title, summary and week headings next to the template's, and
+    each reworded step next to the template step it came from, redacted. The person's goal
+    itself is not sent, but the rewording is written for it and can repeat what it says,
+    including health or other personal circumstances ("during chemotherapy"): only the
+    numbers and addresses above are removed;
+  - in guided mode, the person's question (up to 1,500 characters), redacted, when no
+    keyword matched it.
+
+  Nothing about the account goes with it (no id, email address or history), and no journal
+  entry, mood note, health note, Circles post or money figure is ever sent. Names inside the
+  text are not removed, as with any AI provider. Nothing is sent about someone in immediate
+  danger (crisis tier 3). Waypoint keeps, per call, only what it keeps for any AI call: whose
+  call it was, the feature, the model version, token counts, cost and time — never the text or
+  the answers. A Scam Shield check also records which model gave the second opinion and the
+  level it gave, next to the rules' own, as it always has.
+
+  TypeSafe says requests are not used to train its model. It states **no retention period**,
+  and keeping nothing is offered to its enterprise customers only, so assume what is sent is
+  kept. Its terms, as far as we could read them, say nothing about health information, about
+  crisis or self-harm content, or about children. **Before setting the key, the operator must
+  read TypeSafe's terms, privacy policy and data-processing agreement and decide whether
+  redacted text from people who may be in crisis, or from anyone under 18, may be sent to it
+  at all** — and sign the data-processing agreement where the law requires one. Where the
+  answer is no, leave the key unset: nothing else in Waypoint depends on it.
 - Surroundings fetches weather and air quality from the browser directly (Open-Meteo), with
   coordinates rounded to about 1 km. The chosen place and the last forecast are kept in the
   browser's local storage only, so Waypoint's servers never see a location.
+
+Forecasts ("What’s next?") are the same for everyone. Signed in, the ones about your country
+come first — and, only with the `foresight_matching` consent, the ones about your region and
+sector. Nothing is recorded about which forecasts a person saw.
 
 ## What is never stored
 
@@ -54,6 +131,26 @@ Purpose-specific and revocable (`consents` table, full history in `consent_event
   links in it, such as `example.top`, to spot scams going round).
 - The words that triggered a crisis response.
 - Raw IP addresses (only keyed hashes for rate limiting and audit).
+
+## The console's analytics
+
+The platform's staff see how Waypoint is used, in totals (`packages/api/src/lib/usage.ts`,
+`services/analytics.ts`, the console's Analytics page). Two things are counted:
+
+- **That someone used Waypoint on a day** (`activity_days`): the account, the date, and a bit
+  for each platform used that day (web, phone app, texts). Never what they did, which parts
+  they opened, or when in the day. The rows go with the account, move with a guest's data
+  into a new account, and are deleted after 400 days.
+- **Pages and screens opened** (`usage_views`): a count per day, hour (UTC), part of Waypoint,
+  platform, kind of visitor (guest, account, signed out), country and language — with nobody
+  attached. The page's address is reduced to the part of Waypoint it belongs to; nothing else
+  about the visit is kept. Deleted after 400 days.
+
+Nothing is counted for staff, for the console's own pages, or when the browser sends Global
+Privacy Control or Do Not Track. The counts are read in totals only: no figure describes
+fewer than five people (`MIN_GROUP`) — smaller groups are folded together or hidden, and
+filters that narrow the page further show nothing at all. Weekly groups of people who joined
+are shown only with five or more. The privacy notice says all this in plain words.
 
 ## Organisations
 
@@ -70,14 +167,19 @@ reskilling cohort, a school leavers' year) that people join with a code, link or
   programme never counts anyone in another. When a guest's data moves into an account, the
   account's own choice wins: if it does not allow counting, no programme choice carried over
   from the guest counts either.
-- **Who is counted:** people who chose it for the programme at least **7 days** earlier (switching
-  it on later starts the week then) and still allow organisations to count them. Accounts made
-  to single someone out (join, look, compare) make no difference for a week — and neither does
-  anyone else.
-- **Weekly totals.** A programme's raw totals are taken once a week (the first time anyone looks
-  that week) and served unchanged until the next Monday. Comparing two views can never show one
-  person joining, leaving or changing their mind. Leaving, or switching counting off, takes
-  effect in the next weekly totals. Old weekly totals are deleted after 26 weeks.
+- **Who is counted:** people with an account and a **confirmed email address** who chose it for
+  the programme at least **7 days before the week began** (switching it on later starts the wait
+  then) and still allow organisations to count them. A guest can join and make the choice; it
+  starts to count once they have an account. Guest sessions cost nothing to create, so counting
+  them would let an organisation fill a group with made-up people and watch for the one real
+  person who joins. Accounts made to single someone out (join, look, compare) make no
+  difference for a week — and neither does anyone else.
+- **Weekly totals.** A programme's raw totals are taken once a week, as the week begins (by the
+  worker; if it has not run yet, the first time anyone looks), always as of the start of that
+  week, and served unchanged until the next Monday. Staff cannot choose the moment, so comparing
+  two views can never show one person joining, leaving or changing their mind. Leaving, or
+  switching counting off, takes effect in the next weekly totals. Old weekly totals are deleted
+  after 26 weeks.
 - **What an organisation sees:** for each programme, and only when at least **k** people are
   counted (`WAYPOINT_K_ANON_MIN`, default 50, never below 20):
   - how many people are counted, **rounded down to a multiple of 5**;
@@ -107,7 +209,9 @@ reskilling cohort, a school leavers' year) that people join with a code, link or
   totals. Below k, nothing but "fewer than k" is shown.
 - **The team:** organisation staff (owner, admin, member) see each other's names and emails.
   Invitations are only sent from, and only answered by, **confirmed email addresses** (the link
-  alone is not enough: it may have been passed on). Each address receives at most 3 invitation
+  alone is not enough: it may have been passed on). Only an owner can invite an admin; when
+  someone leaves the team or loses the right to manage it, the invitations they sent are
+  withdrawn, and an invitation is checked against its sender's role again when it is accepted. Each address receives at most 3 invitation
   emails a day, and each organisation sends at most 50. Staff actions — programmes created, codes
   replaced, invitations, role changes — are written to the audit log. What people do for
   themselves (joining, exporting their data) is never audited.
@@ -127,7 +231,24 @@ reskilling cohort, a school leavers' year) that people join with a code, link or
   confirming sends a fresh link (only whoever knows the password can ask for one), and a
   password reset counts as confirmation because the link went to that address. An account that
   is never confirmed is deleted after 7 days (`UNCONFIRMED_ACCOUNT_DAYS`); nobody can have
-  signed in to it.
+  signed in to it. One inbox receives at most one confirmation link every two minutes and six
+  a day (`name+tag@…` counts as `name@…`), and three reset links an hour, so Waypoint cannot be
+  used to flood someone's mail. A reset link only ever leads back to the website.
+- **One-time links and codes** are stored under a keyed hash: the table never holds a usable
+  token or the phone number a code was sent to, and expired ones are deleted daily.
+- **A device that has signed in** keeps a small cookie (a random value and its signature — it
+  names nobody). It lets that device keep signing in while someone else is guessing the
+  account's password, instead of being locked out with them.
+- **What else the browser keeps**, all set by the server (a cookie a page writes itself lasts
+  seven days in Safari and on an iPhone): the language, theme and lite mode (`NEXT_LOCALE`,
+  `wp-theme`, `wp-lite`, put back from the profile at sign-in), the device's time zone
+  (`wp-tz`), the steps set aside with "Not now" today (`wp-not-now`, HttpOnly: the date and a
+  keyed hash of the person and each step, so nobody can look a step up from it and it means
+  nothing for anyone else signed in on the device), and a guest's "Not now" on the note about
+  an account (`wp-guest-note`). **Signing out or deleting the account expires all of them but
+  the time zone** (it is the device's), in the server's answer, whichever app or button did
+  it, so the next person on a shared device doesn't meet the last one's language or choices;
+  the offline copy of the help numbers goes too.
 - **Nobody can find out who uses Waypoint by trying addresses.** Creating an account answers
   exactly the same — status, body, no cookie — whether the address is new or already has an
   account. The owner of an existing account gets a "you already have an account" email instead,
@@ -139,16 +260,20 @@ reskilling cohort, a school leavers' year) that people join with a code, link or
   into this account"; otherwise it is deleted (its data key first, then its circle posts with
   their replies), because on a shared device the guest may have been someone else.
 - **Sessions keep no IP address.** Where an address matters (rate limits, the audit log) only a
-  keyed hash is used; IPv6 addresses count as their /64 network.
+  keyed hash is used — including the sign-in library's own limits when they are kept in
+  Postgres; IPv6 addresses count as their /64 network.
 - **Messages waiting to be sent** (emails, SMS, WhatsApp) keep the recipient encrypted, and what
   must not sit readable — a sign-in link or code, the words of a reply — sealed too. Once a
-  message is sent, dropped or given up on, only its kind is kept ("verify-email", "text"), and the
-  row is deleted after 7 days (30 if it could not be sent). Delivery errors are stored and shown
+  message is sent, dropped or given up on, only its kind is kept ("verify-email", "text") — the
+  sealed recipient is blanked as well — and the row is deleted after 7 days (30 if it could not
+  be sent). Delivery errors are stored and shown
   without addresses or numbers. Codes and links are dropped rather than sent late.
 - **Texting Waypoint** (SMS, WhatsApp, USSD): nothing anyone writes is stored, nor the replies.
   The phone number is kept sealed and found by a keyed hash, with the language, country and
   choices (STOP, AI answers) — and forgotten after 180 days without a message unless it is linked
-  to an account. Staff see daily counts only. Messages go to an external AI only after the person
+  to an account, together with any record that a crisis reply was sent (tier and rule ids only).
+  Numbers from countries Waypoint does not serve are neither recorded nor answered, unless the
+  person is in danger. Staff see daily counts only. Messages go to an external AI only after the person
   texts `AI YES`, redacted first. Details: [CHANNELS.md](CHANNELS.md).
 - **Logs** never carry what a failed database statement contained, one-time links, email
   addresses or phone numbers.
@@ -177,7 +302,8 @@ document: change them together.
   shown when set. The outside services named — AI providers, texting and email services — are
   read from the configuration (`packages/api/src/services/legal.ts`), so the notice never names
   a service that isn't used or leaves out one that is; only host names are shown, never keys or
-  passwords.
+  passwords. TypeSafe is named with the AI providers when, and only when, `TYPESAFE_API_KEY` is
+  set — also when it is the only one.
 - **Versions.** `packages/core/src/legal.ts` holds the "last updated" dates and
   `PRIVACY_POLICY_VERSION`, which every consent records. Change the version when the notice
   changes what Waypoint does with information.
@@ -190,6 +316,11 @@ document: change them together.
 ## Your rights, built in
 
 - **Export**: Settings → Privacy → Download my data (complete JSON, decrypted for you).
+- **What Waypoint remembers**: Settings → Privacy lists everything the assistant was asked to
+  remember (each saved only after the person approved it), with the day it was saved, a delete
+  button for each and "Forget everything". The routes (`GET /me/memories`,
+  `DELETE /me/memories/{id}`, `DELETE /me/memories`) only ever touch the caller's own rows:
+  someone else's id answers "not found", exactly like an id that never existed.
 - **Delete**: Settings → Privacy → Delete my account (immediate and permanent).
 - **Retention**: choose how long conversations are kept (7 days to forever); idle guest
   accounts are removed after 180 days, and accounts whose address is never confirmed after 7.

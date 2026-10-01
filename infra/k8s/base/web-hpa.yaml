@@ -1,0 +1,37 @@
+# More web pods when they are busy, fewer when they are not. Needs the metrics server.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: waypoint-web
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: waypoint-web
+  # Two at least, so one can be replaced (or fail) without an outage.
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+  # CPU only. Memory does not fall when pods are added, so a memory target near a pod's
+  # resting use would pin this at its maximum.
+  behavior:
+    scaleUp:
+      # Add pods quickly when traffic arrives…
+      stabilizationWindowSeconds: 30
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 30
+    scaleDown:
+      # …and remove them slowly, one at a time, once it has really gone.
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60

@@ -6,6 +6,7 @@ import { Icon, ModuleMark } from '@waypoint/ui';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getLocale, getTranslations } from 'next-intl/server';
+import { Facts } from '@/components/Facts';
 import { PosterToolbar } from '@/components/join/PosterToolbar';
 import styles from '@/components/join/poster.module.css';
 import { QrCode } from '@/components/org/QrCode';
@@ -46,7 +47,10 @@ export default async function PosterPage({ params, searchParams }: Props) {
       <article className={styles.poster} lang={locale} dir={textDirection(locale)}>
         <p className={styles.brand}>
           <ModuleMark module="org" size="md" tone="solid" />
-          <span>Waypoint · {organisation}</span>
+          <Facts>
+            <span>Waypoint</span>
+            <span dir="auto">{organisation}</span>
+          </Facts>
         </p>
         <div className="wp-stack">
           <p className={styles.eyebrow}>{t('eyebrow')}</p>

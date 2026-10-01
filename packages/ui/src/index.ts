@@ -5,6 +5,13 @@
 
 export { cn } from './cn';
 export {
+  commandMatches,
+  commandShortcutHint,
+  isCommandShortcut,
+  type ShortcutEvent,
+} from './command';
+export { AnimatedNumber, type AnimatedNumberProps } from './components/AnimatedNumber';
+export {
   Button,
   type ButtonProps,
   type ButtonSize,
@@ -12,8 +19,70 @@ export {
   LinkButton,
   type LinkButtonProps,
 } from './components/Button';
+export {
+  ProgressRing,
+  type ProgressRingProps,
+  type SeriesIndex,
+  Sparkline,
+  type SparklineProps,
+} from './components/Chart';
+export {
+  type CommandItem,
+  CommandPalette,
+  type CommandPaletteProps,
+  type CommandSection,
+  useCommandShortcut,
+} from './components/CommandPalette';
+export {
+  BarList,
+  type BarListItem,
+  type BarListLabels,
+  type BarListProps,
+} from './components/charts/BarList';
+export {
+  type ChartCommonProps,
+  ChartFrame,
+  type ChartFrameProps,
+  type ChartTable,
+  type ChartViewLabels,
+  type LegendEntry,
+} from './components/charts/ChartFrame';
+export {
+  Funnel,
+  type FunnelLabels,
+  type FunnelProps,
+  type FunnelStep,
+} from './components/charts/Funnel';
+export { Heatmap, type HeatmapLabels, type HeatmapProps } from './components/charts/Heatmap';
+export {
+  type BarSeries,
+  StackedBarChart,
+  type StackedBarChartProps,
+  type StackedBarLabels,
+} from './components/charts/StackedBarChart';
+export { type StatDelta, StatTile, type StatTileProps } from './components/charts/StatTile';
+export {
+  foldIntoOther,
+  MAX_SERIES,
+  SERIES_ORDER,
+  type SeriesSlot,
+} from './components/charts/scale';
+export {
+  type TimeSeries,
+  TimeSeriesChart,
+  type TimeSeriesChartProps,
+  type TimeSeriesLabels,
+} from './components/charts/TimeSeriesChart';
 export { Disclosure } from './components/Disclosure';
-export { Avatar, EmptyState, Skeleton, Spinner, Stat } from './components/Feedback';
+export {
+  Avatar,
+  EmptyState,
+  PageSkeleton,
+  Skeleton,
+  Spinner,
+  Stat,
+  StatStrip,
+} from './components/Feedback';
 export {
   Checkbox,
   type CheckboxProps,
@@ -33,7 +102,13 @@ export { Icon, type IconProps } from './components/Icon';
 export { IconButton, type IconButtonProps } from './components/IconButton';
 export { List, ListItem, type ListItemProps } from './components/List';
 export { Menu, MenuItem, MenuSeparator } from './components/Menu';
-export { type ModuleKey, ModuleMark, type ModuleMarkProps } from './components/ModuleMark';
+export {
+  type ModuleKey,
+  ModuleMark,
+  type ModuleMarkProps,
+  moduleColours,
+} from './components/ModuleMark';
+export { type NextStop, NextStops, type NextStopsProps } from './components/NextStops';
 export { Notice, type NoticeProps, type NoticeTone } from './components/Notice';
 export {
   ConfirmDialog,
@@ -41,6 +116,8 @@ export {
   Dialog,
   type DialogProps,
 } from './components/Overlay';
+export { PageHeader, type PageHeaderProps } from './components/PageHeader';
+export { PageTransition, viewTransition } from './components/PageTransition';
 export { Panel, type PanelProps } from './components/Panel';
 export { Probability, type ProbabilityProps } from './components/Probability';
 export { Prose } from './components/Prose';
@@ -49,6 +126,13 @@ export { Route, type RouteProps, type Station, type StationState } from './compo
 export { Sign, type SignDetail, type SignProps } from './components/Sign';
 export { Stepper, type StepperProps } from './components/Stepper';
 export { Segmented, type SegmentedOption, Tab, TabList, TabPanel, Tabs } from './components/Tabs';
-export { Toaster, toast, toastQueue } from './components/Toast';
+export {
+  type ToastAction,
+  type ToastContentValue,
+  Toaster,
+  toast,
+  toastQueue,
+} from './components/Toast';
 export { Tooltip } from './components/Tooltip';
 export { ICONS, type IconName } from './icons';
+export { countAt, durationToken, stillnessPreferred } from './motion';

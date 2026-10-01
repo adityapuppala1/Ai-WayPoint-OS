@@ -1,0 +1,56 @@
+@layer components {
+  /*
+   * One flat band in the module's tint. On a phone the mark sits above the heading, so a
+   * long heading in any language has the full width; from 48rem the mark, the text and the
+   * actions share a row.
+   */
+  .header {
+    display: grid;
+    gap: var(--wp-space-4);
+    padding: var(--wp-space-5) var(--wp-space-4);
+    /* Keeps the band's shape where colours are forced (Windows high contrast). */
+    border: 1px solid transparent;
+    border-radius: var(--wp-radius-lg);
+    background: var(--tint);
+  }
+
+  .text {
+    display: grid;
+    gap: var(--wp-space-2);
+    min-inline-size: 0;
+  }
+
+  /* A long word (a compound, a name) breaks rather than pushing the band off the screen. */
+  .title {
+    overflow-wrap: anywhere;
+  }
+
+  .lead {
+    max-inline-size: var(--wp-reading-max);
+    font-size: var(--wp-text-lead);
+    line-height: 1.5;
+    color: var(--wp-text-secondary);
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--wp-space-3);
+  }
+
+  @media (min-width: 48rem) {
+    .header {
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: start;
+      column-gap: var(--wp-space-5);
+      padding: var(--wp-space-8);
+    }
+
+    /* Beside the text, never wider than a third of the band: long labels wrap in place. */
+    .actions {
+      justify-content: flex-end;
+      max-inline-size: 20rem;
+    }
+  }
+}

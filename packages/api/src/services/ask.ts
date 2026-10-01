@@ -24,10 +24,11 @@ import {
   isNull,
   memories,
   messages,
+  sql,
   trustedContacts,
 } from '@waypoint/db';
 import { validateUIMessages } from 'ai';
-import { badRequest, notFound } from '../lib/problem';
+import { badRequest, conflict, notFound } from '../lib/problem';
 import type { Consents } from '../types';
 import { helpCountry, type Profile, userDek } from './me';
 import { activePlanWithNextStep } from './path';
@@ -119,19 +120,21 @@ function applyApprovals(stored: AskUIMessage, incoming: AskUIMessage): AskUIMess
     }
   }
   if (!decisions.size) throw badRequest('Nothing to update in that message.');
-  return {
-    ...stored,
-    parts: stored.parts.map((part) => {
-      const p = part as ToolPart;
-      const d = p.toolCallId ? decisions.get(p.toolCallId) : undefined;
-      if (!d || p.state !== 'approval-requested' || !p.approval) return part;
-      return {
-        ...part,
-        state: 'approval-responded',
-        approval: { ...p.approval, approved: d.approved, reason: d.reason },
-      } as typeof part;
-    }),
-  };
+  let answered = 0;
+  const parts = stored.parts.map((part) => {
+    const p = part as ToolPart;
+    const d = p.toolCallId ? decisions.get(p.toolCallId) : undefined;
+    if (!d || p.state !== 'approval-requested' || !p.approval) return part;
+    answered += 1;
+    return {
+      ...part,
+      state: 'approval-responded',
+      approval: { ...p.approval, approved: d.approved, reason: d.reason },
+    } as typeof part;
+  });
+  // Nothing was waiting for an answer: it was given already.
+  if (!answered) throw conflict('That was already answered.');
+  return { ...stored, parts };
 }
 
 async function contextFor(db: Database, userId: string, consents: Consents) {
@@ -145,22 +148,30 @@ async function contextFor(db: Database, userId: string, consents: Consents) {
     activePlanWithNextStep(db, userId),
     consents.memory
       ? db
-          .select({ content: memories.content })
+          .select({ id: memories.id, content: memories.content, contentCt: memories.contentCt })
           .from(memories)
           .where(and(eq(memories.userId, userId), eq(memories.sensitive, false)))
           .orderBy(desc(memories.createdAt))
           .limit(20)
-      : Promise.resolve([] as Array<{ content: string | null }>),
+      : Promise.resolve(
+          [] as Array<{ id: string; content: string | null; contentCt: string | null }>,
+        ),
     db.select({ n: count() }).from(trustedContacts).where(eq(trustedContacts.userId, userId)),
     db.select({ n: count() }).from(circleMembers).where(eq(circleMembers.userId, userId)),
   ]);
-  const dek = goalRows.length ? await userDek(db, userId) : null;
+  const dek =
+    goalRows.length || memoryRows.some((m) => m.contentCt) ? await userDek(db, userId) : null;
   return {
     goals: dek ? goalRows.map((g) => openFor(dek, g.titleCt, SEALED.goal, userId, g.id)) : [],
     currentPlan: active
       ? `${active.plan.title}${active.next ? ` — next step: ${active.next.title}` : ''} (${active.plan.progress.done}/${active.plan.progress.total} steps done)`
       : null,
-    memories: memoryRows.map((m) => m.content).filter((c): c is string => Boolean(c)),
+    // Memories are sealed like goals; ones saved before that are still read as they are.
+    memories: memoryRows
+      .map((m) =>
+        m.contentCt && dek ? openFor(dek, m.contentCt, SEALED.memory, userId, m.id) : m.content,
+      )
+      .filter((c): c is string => Boolean(c)),
     hasTrustedContact: Number(contacts?.n ?? 0) > 0 && consents.trusted_contact,
     inCircle: Number(circles?.n ?? 0) > 0,
   };
@@ -203,7 +214,12 @@ export async function handleAsk(
   profile: Profile,
   consents: Consents,
   body: z.infer<typeof AskRequestSchema>,
-  opts: { abortSignal?: AbortSignal; channel?: Channel } = {},
+  opts: {
+    abortSignal?: AbortSignal;
+    channel?: Channel;
+    /** See AskInput.aiGate: a visitor's daily allowance of AI answers. */
+    aiGate?: () => Promise<boolean>;
+  } = {},
 ): Promise<Response> {
   const [incoming] = await validateUIMessages<AskUIMessage>({ messages: [body.message] }).catch(
     () => {
@@ -224,8 +240,23 @@ export async function handleAsk(
       throw badRequest('Only the latest reply can be updated.');
     }
     const updated = applyApprovals(stored, incoming);
+    // The yes or no is recorded once: only if the stored message is still exactly as it was
+    // read. A second copy of the same answer (two taps, a retry after a dropped connection)
+    // finds it already recorded and stops here, so what was approved is never done twice.
+    const recorded = await db
+      .update(messages)
+      .set({ parts: updated.parts })
+      .where(
+        and(
+          eq(messages.id, stored.id),
+          eq(messages.conversationId, convo?.id ?? body.id),
+          sql`${messages.parts} = ${JSON.stringify(stored.parts)}::jsonb`,
+        ),
+      )
+      .returning({ id: messages.id });
+    if (!recorded.length) throw conflict('That was already answered.');
     next = [...history.slice(0, -1), updated];
-    toSave = [updated];
+    toSave = [];
   } else {
     if (incoming.role !== 'user') throw badRequest('Only your own messages can be sent.');
     const text = textOf(incoming);
@@ -275,6 +306,7 @@ export async function handleAsk(
       : { hasTrustedContact: context.hasTrustedContact, inCircle: context.inCircle },
     messages: next,
     abortSignal: opts.abortSignal,
+    aiGate: opts.aiGate,
     onCrisis: async (assessment, plan) => {
       await recordCrisis(db, {
         userId: who.userId,

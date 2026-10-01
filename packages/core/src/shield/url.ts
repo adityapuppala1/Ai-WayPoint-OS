@@ -321,11 +321,23 @@ const DOWNLOAD_EXT = /\.(?:apk|xapk|exe|scr|msi|bat|cmd|jar|vbs|ps1|dmg|pkg)(?:$
 const URL_RE =
   /\b(?:(?:https?:\/\/|www\.)[^\s<>"'()]+|(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+(?:[a-z]{2,24}|xn--[a-z0-9-]{2,59})(?::\d{2,5})?(?:\/[^\s<>"'()]*)?)/gi;
 
+const TRAILING = new Set(['.', ',', ';', ':', '!', '?', ')', ']']);
+
+/**
+ * A link without the sentence's punctuation after it ("…/login!!!"). Counted back from the
+ * end: a pattern anchored there started again at every "!" of a long run in the middle.
+ */
+function withoutTrailingPunctuation(link: string): string {
+  let end = link.length;
+  while (end > 0 && TRAILING.has(link[end - 1] ?? '')) end--;
+  return link.slice(0, end);
+}
+
 /** Finds links in free text, including bare domains ("paytm-kyc.in/verify"). */
 export function extractUrls(text: string): string[] {
   const found = new Set<string>();
   for (const m of text.matchAll(URL_RE)) {
-    const raw = m[0].replace(/[.,;:!?)\]]+$/, '');
+    const raw = withoutTrailingPunctuation(m[0]);
     if (/^[\d.]+$/.test(raw)) continue; // plain numbers like 1.5
     if (!/[a-z]/i.test(raw.split('/')[0] ?? '')) {
       // bare IPv4 hosts are only links when they have a scheme

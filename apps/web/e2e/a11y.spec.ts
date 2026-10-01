@@ -12,6 +12,8 @@ const PAGES = [
   '/welcome',
   '/support?country=IN',
   '/shield',
+  '/signals/forecasts',
+  '/signals/forecasts/record',
   '/sign-in',
   '/sign-up',
   '/start',
@@ -58,7 +60,9 @@ test('dark mode and Arabic keep their contrast and structure', async ({
 test('every module a signed-in person uses has no serious accessibility problems @desktop', async ({
   page,
 }) => {
-  test.setTimeout(180_000);
+  // Eighteen pages. In WebKit on a busy Windows machine each takes about nine seconds, which
+  // used up 2.8 of the 3 minutes this test had: the limit leaves room for that.
+  test.setTimeout(300_000);
   await startAsGuest(page);
   const problems: string[] = [];
   for (const path of [

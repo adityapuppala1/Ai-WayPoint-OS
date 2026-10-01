@@ -2,10 +2,11 @@ import { aiAvailable } from '@waypoint/ai';
 import { admin } from '@waypoint/api';
 import { getReportChannels, getScamPatterns } from '@waypoint/content';
 import { dbReady, getDb } from '@waypoint/db';
-import { Disclosure, Panel } from '@waypoint/ui';
+import { Disclosure, PageHeader, Panel } from '@waypoint/ui';
 import type { Metadata } from 'next';
 import { getFormatter, getLocale, getTranslations } from 'next-intl/server';
 import { contentLang, EnglishContentNote } from '@/components/EnglishContentNote';
+import { NextStops } from '@/components/NextStops';
 import { ShieldChecker } from '@/components/shield/ShieldChecker';
 import { getViewer, guessCountry } from '@/lib/server';
 import styles from './shield.module.css';
@@ -32,16 +33,15 @@ export default async function ShieldPage() {
     : null;
   return (
     <div className="wp-page">
-      <header className="wp-page-head">
-        <h1>{t('title')}</h1>
-        <p className="wp-lead">{t('lead')}</p>
-      </header>
+      <PageHeader module="shield" title={t('title')} lead={t('lead')} />
 
       <ShieldChecker
         country={country}
         aiAvailable={aiAvailable()}
         aiConsented={viewer?.consents.ai_external ?? false}
         channels={channels}
+        // After a high verdict: a person to talk to, and somewhere to think it through.
+        afterHigh={<NextStops stops={['support', 'ask']} />}
       />
 
       {reported.categories.length ? (
@@ -57,8 +57,9 @@ export default async function ShieldPage() {
             {reported.categories.map((c) => (
               <li key={c.category}>
                 <p className="wp-strong">{t(`categories.${c.category}`)}</p>
+                {/* How many, then how recently: two facts, one line each. */}
+                <p className="wp-meta">{t('reportedCount', { count: c.reports })}</p>
                 <p className="wp-meta">
-                  {t('reportedCount', { count: c.reports })} ·{' '}
                   {t('reportedLatest', {
                     date: format.dateTime(new Date(`${c.latest}T12:00:00Z`), {
                       day: 'numeric',

@@ -135,9 +135,9 @@ export function Reminders({
                 <span className={styles.reminderTitle} dir="auto">
                   {r.title}
                 </span>
+                {/* How often, then when: two facts, one line each. */}
+                <span className={styles.reminderMeta}>{t(`repeats.${r.repeat}`)}</span>
                 <span className={styles.reminderMeta}>
-                  {t(`repeats.${r.repeat}`)}
-                  {' · '}
                   {r.enabled && r.nextAt ? t('nextAt', { when: when(r.nextAt) }) : t('reminderOff')}
                 </span>
               </div>

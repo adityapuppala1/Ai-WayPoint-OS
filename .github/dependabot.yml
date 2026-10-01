@@ -14,16 +14,42 @@ updates:
     groups:
       minor-and-patch:
         update-types: [minor, patch]
+    # Major versions that move together with something pinned are upgraded on purpose, not one
+    # package at a time: the Expo SDK (its packages only work at the SDK's own versions), Node's
+    # types (Node itself is pinned in .nvmrc) and TypeScript (every package checks with it).
+    ignore:
+      - dependency-name: 'expo'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'expo-*'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'react-native'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'react-native-*'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@react-native-async-storage/*'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'typescript'
+        update-types: ['version-update:semver-major']
     labels: [dependencies]
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    # One pull request (and one CI run) for all of them.
+    groups:
+      actions:
+        patterns: ['*']
     labels: [dependencies]
 
   - package-ecosystem: docker
     directory: /infra/docker
     schedule:
       interval: weekly
+    # The image runs the Node in .nvmrc (an LTS line); moving to the next one is done on purpose.
+    ignore:
+      - dependency-name: 'node'
+        update-types: ['version-update:semver-major']
     labels: [dependencies]

@@ -30,7 +30,7 @@ export default function AccountScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ title: string; help?: string } | null>(null);
   const passwordRef = useRef<TextInput>(null);
   const signUp = mode === 'sign-up';
 
@@ -45,12 +45,18 @@ export default function AccountScreen() {
       toast(signUp ? m('created') : m('signedIn'));
       router.back();
     } catch (err) {
+      // A wrong password, an unknown address and an address not confirmed yet get the same
+      // answer from the API, so the message covers all three (the last also emails a link).
       setError(
         err instanceof ApiError && err.offline
-          ? errors('network')
+          ? { title: errors('network') }
           : signUp
-            ? t('signUpFailed')
-            : t('failed'),
+            ? { title: t('signUpFailed') }
+            : err instanceof ApiError && err.status === 429
+              ? { title: errors('tooMany') }
+              : err instanceof ApiError && err.status === 401
+                ? { title: t('failed'), help: t('failedHelp', { email: email.trim() }) }
+                : { title: errors('generic') },
       );
     } finally {
       setBusy(false);
@@ -111,7 +117,11 @@ export default function AccountScreen() {
         returnKeyType="go"
         onSubmitEditing={() => void submit()}
       />
-      {error ? <Notice tone="danger" title={error} live /> : null}
+      {error ? (
+        <Notice tone={error.help ? 'caution' : 'danger'} title={error.title} live>
+          {error.help}
+        </Notice>
+      ) : null}
       <Button
         variant="primary"
         size="lg"

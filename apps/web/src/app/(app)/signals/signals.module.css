@@ -1,33 +1,69 @@
+/* The search: the design system's field and button, side by side. */
 .search {
   display: flex;
+  align-items: flex-start;
   gap: var(--wp-space-2);
 }
 
-.input {
+.field {
   flex: 1;
   /* Inputs have an intrinsic width; let the field shrink on narrow phones. */
   min-inline-size: 0;
-  min-block-size: var(--wp-touch-min);
-  padding-inline: var(--wp-space-3);
-  border: 1px solid var(--wp-border-strong);
-  border-radius: var(--wp-radius-sm);
-  background: var(--wp-raised);
-  color: var(--wp-text);
-  font: inherit;
 }
 
-.button {
+/* "All" and "Saved": filters a person switches between, so they are chips. */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.filters a {
+  display: inline-flex;
+  align-items: center;
   min-block-size: var(--wp-touch-min);
   padding-inline: var(--wp-space-4);
   border: 1px solid var(--wp-border-strong);
-  border-radius: var(--wp-radius-sm);
-  background: var(--wp-raised);
-  color: var(--wp-text);
-  font: inherit;
+  border-radius: var(--wp-radius-round);
+  color: var(--wp-text-secondary);
   font-weight: var(--wp-weight-medium);
-  cursor: pointer;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--wp-duration-fast) var(--wp-ease-out),
+    color var(--wp-duration-fast) var(--wp-ease-out),
+    scale var(--wp-duration-fast) var(--wp-ease-out);
 }
 
-.button:hover {
-  background: var(--wp-sunken);
+@media (hover: hover) {
+  .filters a:hover {
+    background: var(--wp-fill-hover);
+    color: var(--wp-text);
+  }
+}
+
+.filters a:active {
+  background: var(--wp-fill-pressed);
+  scale: var(--wp-press-scale);
+}
+
+.filters a[aria-current="page"] {
+  border-color: var(--wp-text);
+  background: var(--wp-text);
+  color: var(--wp-canvas);
+}
+
+/* A chip, not a link in a sentence: the ring, without the signal highlight behind it. */
+.filters a:focus-visible {
+  background: transparent;
+  color: var(--wp-text);
+  box-shadow: var(--wp-focus-shadow);
+}
+
+.filters a[aria-current="page"]:focus-visible {
+  background: var(--wp-text);
+  color: var(--wp-canvas);
 }

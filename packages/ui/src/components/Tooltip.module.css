@@ -7,7 +7,7 @@
     color: var(--wp-sign-text);
     font-size: var(--wp-text-small);
     line-height: var(--wp-leading-meta);
-    box-shadow: var(--wp-shadow-overlay);
+    box-shadow: var(--wp-shadow-2);
   }
 
   .tooltip[data-entering] {

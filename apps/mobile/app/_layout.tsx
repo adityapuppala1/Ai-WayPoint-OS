@@ -4,7 +4,7 @@ import { Overpass_500Medium } from '@expo-google-fonts/overpass/500Medium';
 import { Overpass_600SemiBold } from '@expo-google-fonts/overpass/600SemiBold';
 import { textDirection } from '@waypoint/i18n';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
@@ -12,6 +12,7 @@ import { type ReactNode, useEffect } from 'react';
 import { I18nManager, Platform, useColorScheme, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useTranslations } from 'use-intl';
+import { countScreen } from '../src/api';
 import { I18nProvider, useAppLocale } from '../src/i18n';
 import { SettingsProvider, useSettings } from '../src/settings';
 import { font, ThemeProvider, useTheme } from '../src/theme';
@@ -42,6 +43,12 @@ function Navigation() {
   const theme = useTheme();
   const common = useTranslations('common');
   const { locale } = useAppLocale();
+  const pathname = usePathname();
+
+  // Each screen opened is counted for the analytics, with nobody attached to the count.
+  useEffect(() => {
+    if (pathname) void countScreen(pathname);
+  }, [pathname]);
 
   useEffect(() => {
     // The window behind the app (seen when the keyboard opens or a sheet slides) matches it.

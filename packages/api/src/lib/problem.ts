@@ -82,7 +82,7 @@ export function problemResponse(
   extra?: Record<string, unknown>,
 ): Response {
   const headers = new Headers({ 'Content-Type': 'application/problem+json' });
-  if (status === 429 && typeof extra?.retryAfter === 'number')
+  if ((status === 429 || status === 503) && typeof extra?.retryAfter === 'number')
     headers.set('Retry-After', String(extra.retryAfter));
   return new Response(JSON.stringify(problemBody(status, code, detail, extra)), {
     status,

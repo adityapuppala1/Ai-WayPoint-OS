@@ -1,10 +1,11 @@
 'use client';
 
-import { Icon } from '@waypoint/ui';
+import { cn, Icon, viewTransition } from '@waypoint/ui';
 import type { Route } from 'next';
 import Link from 'next/link';
-import { LogoMark } from '@/components/Logo';
+import { LogoMark, Wordmark } from '@/components/brand/Logo';
 import { AccountMenu, type AccountSummary } from './AccountMenu';
+import { LinkPending } from './pending';
 import { QuickExit } from './QuickExit';
 import styles from './shell.module.css';
 
@@ -16,17 +17,16 @@ export function MobileHeader({
   helpLabel: string;
 }) {
   return (
-    <header className={styles.mobileHeader}>
+    <header className={cn(styles.mobileHeader, viewTransition.header)}>
       <Link href="/" className={styles.brand} aria-label="Waypoint">
-        <span className={styles.brandMark} aria-hidden>
-          <LogoMark size={28} />
-        </span>
-        <span className={styles.brandText}>Waypoint</span>
+        <LogoMark size={28} className={styles.brandMark} />
+        <Wordmark className={styles.brandText} />
       </Link>
       <div className={styles.mobileActions}>
         <Link href={'/support' as Route} className={styles.helpChip}>
           <Icon name="support" size={18} weight="fill" />
           <span>{helpLabel}</span>
+          <LinkPending />
         </Link>
         <QuickExit compact />
         <div className={styles.mobileAccount}>

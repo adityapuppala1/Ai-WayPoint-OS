@@ -1,9 +1,11 @@
 'use client';
 
+import type { CrisisResponsePlan } from '@waypoint/core';
 import { Button, SelectField, TextField, toast } from '@waypoint/ui';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { type FormEvent, useState } from 'react';
+import { CrisisCard } from '@/components/support/CrisisCard';
 import { ApiProblem, api } from '@/lib/api';
 import styles from './goals.module.css';
 
@@ -29,13 +31,15 @@ export function GoalComposer({ defaultArea = 'goals' }: { defaultArea?: (typeof 
   const [area, setArea] = useState<string>(defaultArea);
   const [when, setWhen] = useState<When>('1m');
   const [busy, setBusy] = useState(false);
+  // What was written is checked for signs of danger as it is saved, like a journal entry.
+  const [crisis, setCrisis] = useState<CrisisResponsePlan | null>(null);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (title.trim().length < 2) return;
     setBusy(true);
     try {
-      await api('/api/goals', {
+      const saved = await api<{ screening: { plan: CrisisResponsePlan | null } }>('/api/goals', {
         json: {
           title: title.trim(),
           why: why.trim() || undefined,
@@ -43,7 +47,8 @@ export function GoalComposer({ defaultArea = 'goals' }: { defaultArea?: (typeof 
           targetDate: when === 'none' ? undefined : inDays(WHEN[when]),
         },
       });
-      toast({ title: t('saved'), tone: 'safe' }, 2500);
+      if (saved.screening.plan) setCrisis(saved.screening.plan);
+      else toast({ title: t('saved'), tone: 'safe' }, 2500);
       setTitle('');
       setWhy('');
       router.refresh();
@@ -59,6 +64,7 @@ export function GoalComposer({ defaultArea = 'goals' }: { defaultArea?: (typeof 
 
   return (
     <form className={styles.form} onSubmit={submit}>
+      {crisis ? <CrisisCard plan={crisis} onStay={() => setCrisis(null)} /> : null}
       <TextField
         label={t('goalTitle')}
         placeholder={t('goalTitlePlaceholder')}

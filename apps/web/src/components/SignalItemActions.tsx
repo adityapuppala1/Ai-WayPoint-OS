@@ -1,0 +1,149 @@
+'use client';
+
+import { Button, toast } from '@waypoint/ui';
+import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
+import { api, problemKey } from '@/lib/api';
+import styles from './SignalItem.module.css';
+
+/**
+ * One signal with the two things a person can do about it: keep it ("Save") or say it is not
+ * for them ("Not relevant"). Both can be taken back on the spot: Save says so in a toast with
+ * "Undo" (and is a switch too), and a hidden signal leaves a line with "Undo" where it was
+ * until the page is left.
+ *
+ * The words come in as props: the `signals` messages stay on the server.
+ */
+export function SignalItemActions({
+  id,
+  title,
+  saved: wasSaved,
+  canDismiss = true,
+  labels,
+  children,
+}: {
+  id: string;
+  /** Names the signal in each button's accessible name, so the buttons can be told apart. */
+  title: string;
+  saved: boolean;
+  /** Off on the Saved list: what someone chose to keep is not offered for hiding there. */
+  canDismiss?: boolean;
+  labels: { save: string; saved: string; dismiss: string; hidden: string; undo: string };
+  children: ReactNode;
+}) {
+  const errors = useTranslations('errors');
+  const router = useRouter();
+  const [saved, setSaved] = useState(wasSaved);
+  // What the server says, when it says something new (after a refresh), wins over this copy.
+  const [server, setServer] = useState(wasSaved);
+  if (server !== wasSaved) {
+    setServer(wasSaved);
+    setSaved(wasSaved);
+  }
+  const [hidden, setHidden] = useState(false);
+  /** Changes go to the server one after another, in the order they were pressed. */
+  const queue = useRef<Promise<void>>(Promise.resolve());
+  const hiddenId = useId();
+  const row = useRef<HTMLDivElement>(null);
+  /** Set when hiding or un-hiding was asked for with a button, so focus follows it. */
+  const follow = useRef(false);
+
+  // The button that was pressed has gone: move focus to the one that takes its place
+  // ("Undo", or "Not relevant" again), so a keyboard is never left nowhere.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs when the row changes
+  useEffect(() => {
+    if (!follow.current) return;
+    follow.current = false;
+    const buttons = row.current?.querySelectorAll('button');
+    buttons?.[buttons.length - 1]?.focus();
+  }, [hidden]);
+
+  const send = (json: Record<string, unknown>, undo: () => void) => {
+    queue.current = queue.current.then(async () => {
+      try {
+        await api(`/api/signals/${id}/state`, { json });
+      } catch (err) {
+        undo();
+        toast({ title: errors(problemKey(err)), tone: 'danger' });
+      }
+    });
+  };
+
+  const setSavedTo = (next: boolean) => {
+    setSaved(next);
+    send({ saved: next }, () => setSaved(!next));
+  };
+  const toggleSaved = () => {
+    const next = !saved;
+    setSavedTo(next);
+    // Keeping something is said once, with a way to take it back. Unsaving is the switch itself.
+    if (next)
+      toast({
+        title: labels.saved,
+        description: title,
+        tone: 'safe',
+        action: {
+          label: labels.undo,
+          // The toast outlives the page: pressed elsewhere, the page then open is redrawn once
+          // the server has it, so nothing there still says "Saved".
+          onAction: () => {
+            setSavedTo(false);
+            void queue.current.then(() => router.refresh());
+          },
+        },
+      });
+  };
+  // Hiding has its Undo in the row it leaves behind (with the keyboard on it), so it needs no
+  // toast: two Undo buttons for one thing would only make the person choose between them.
+  const hide = (next: boolean) => {
+    follow.current = true;
+    setHidden(next);
+    send(next ? { dismissed: true, feedback: 'not-relevant' } : { dismissed: false }, () =>
+      setHidden(!next),
+    );
+  };
+
+  if (hidden)
+    return (
+      <div className={styles.item} data-hidden="true">
+        <div className={styles.hidden} ref={row}>
+          <p id={hiddenId}>
+            {labels.hidden} <span className="wp-visually-hidden">{title}</span>
+          </p>
+          <Button variant="quiet" aria-describedby={hiddenId} onPress={() => hide(false)}>
+            {labels.undo}
+          </Button>
+        </div>
+      </div>
+    );
+
+  return (
+    <article className={styles.item}>
+      {children}
+      <div className={styles.actions} ref={row}>
+        <Button
+          variant="quiet"
+          className={styles.action}
+          icon={saved ? 'check' : undefined}
+          aria-pressed={saved}
+          aria-label={`${saved ? labels.saved : labels.save}: ${title}`}
+          onPress={toggleSaved}
+        >
+          {saved ? labels.saved : labels.save}
+        </Button>
+        {canDismiss ? (
+          <Button
+            variant="quiet"
+            className={styles.action}
+            icon="hide"
+            aria-label={`${labels.dismiss}: ${title}`}
+            onPress={() => hide(true)}
+          >
+            {labels.dismiss}
+          </Button>
+        ) : null}
+      </div>
+    </article>
+  );
+}

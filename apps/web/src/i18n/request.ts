@@ -1,16 +1,11 @@
-import { isLocale, LOCALE_COOKIE, loadMessages, resolveLocale } from '@waypoint/i18n';
-import { cookies, headers } from 'next/headers';
+import { isLocale, loadMessages } from '@waypoint/i18n';
 import { getRequestConfig } from 'next-intl/server';
+import { savedPreferences } from '@/lib/saved-preferences';
 
 export default getRequestConfig(async ({ locale: override }) => {
-  const locale = isLocale(override)
-    ? override
-    : resolveLocale(
-        (await cookies()).get(LOCALE_COOKIE)?.value,
-        (await headers()).get('accept-language'),
-      );
-  const tzCookie = (await cookies()).get('wp-tz')?.value;
-  const timeZone =
-    tzCookie && /^[A-Za-z_]+(?:\/[A-Za-z0-9_+-]+){0,2}$/.test(tzCookie) ? tzCookie : 'UTC';
-  return { locale, messages: await loadMessages(locale), timeZone };
+  // The language and time zone cookies, then the saved profile, then the browser's language
+  // and UTC (src/lib/saved-preferences.ts).
+  const saved = await savedPreferences();
+  const locale = isLocale(override) ? override : saved.locale;
+  return { locale, messages: await loadMessages(locale), timeZone: saved.timeZone };
 });

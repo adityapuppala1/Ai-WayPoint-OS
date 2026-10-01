@@ -1,0 +1,129 @@
+# The web app and the API. Stateless: every pod can answer every request, so it scales out
+# (see web-hpa.yaml) and a pod can be replaced at any time.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: waypoint-web
+  labels:
+    app.kubernetes.io/name: waypoint-web
+    app.kubernetes.io/component: web
+spec:
+  # No `replicas` here on purpose: the autoscaler (web-hpa.yaml) owns the number of pods. A
+  # number in this file would set it back on every `kubectl apply`, in the middle of a busy hour.
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: waypoint-web
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      # Never fewer pods than now while a new version rolls out.
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: waypoint-web
+        app.kubernetes.io/component: web
+    spec:
+      # Waypoint never talks to the Kubernetes API.
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 40
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      # Spread the pods over nodes (and zones, where there are any), so one failure is not all.
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: waypoint-web
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: waypoint-web
+      containers:
+        - name: web
+          image: waypoint-web
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: waypoint-config
+            - secretRef:
+                name: waypoint-secrets
+          env:
+            - name: PORT
+              value: "3000"
+            - name: HOSTNAME
+              value: 0.0.0.0
+          # Starting can take a while on a cold node: give it up to a minute before the other
+          # probes begin.
+          startupProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            periodSeconds: 2
+            failureThreshold: 30
+          # Liveness: the process answers. It does not touch the database, so a database
+          # outage never makes Kubernetes restart healthy pods — and a pod that starts during
+          # one stays up and connects by itself when the database is back.
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          # Readiness: the database answers and has the schema this version needs. A pod
+          # that cannot reach it gets no traffic, and during a release the new pods wait here
+          # until the migration job has finished while the old ones keep answering.
+          readinessProbe:
+            httpGet:
+              path: /api/ready
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              # Keep answering for a few seconds while the pod is taken out of the Service,
+              # so no request is sent to a pod that has already stopped.
+              exec:
+                command: ["sleep", "8"]
+          resources:
+            requests:
+              # One pod uses at most one core (see infra/load/README.md for what that carries).
+              # The autoscaler adds pods when the average passes 70% of this.
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              # No CPU limit: throttling hurts response times more than it protects anything.
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: next-cache
+              mountPath: /app/apps/web/.next/cache
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 256Mi
+        - name: next-cache
+          emptyDir:
+            sizeLimit: 512Mi

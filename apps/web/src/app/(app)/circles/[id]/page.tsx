@@ -1,5 +1,4 @@
 import { ApiError, circles as circlesService } from '@waypoint/api';
-import { memberNumber } from '@waypoint/core';
 import { Icon, LinkButton, Notice, Panel } from '@waypoint/ui';
 import type { Metadata, Route } from 'next';
 import Link from 'next/link';
@@ -51,7 +50,7 @@ export default async function CirclePage({ params }: Props) {
   const c = view.circle;
   const me = view.membership;
   const memberLabel = t('member', {
-    number: String(me?.number ?? memberNumber(viewer.user.id, c.id)),
+    number: String(me?.number ?? view.yourNumber),
   });
   const left = Math.max(0, c.maxMembers - c.memberCount);
   const moderator = me?.role === 'host' || me?.role === 'moderator';

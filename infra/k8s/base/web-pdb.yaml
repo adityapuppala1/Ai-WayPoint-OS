@@ -1,0 +1,10 @@
+# Node maintenance (drains, upgrades) may take web pods away one at a time, never all at once.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: waypoint-web
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: waypoint-web

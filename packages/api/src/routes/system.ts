@@ -1,12 +1,29 @@
 import { createRoute, z } from '@hono/zod-openapi';
-import { aiAvailable } from '@waypoint/ai';
 import { MODULE_IDS } from '@waypoint/core';
+import { isStaffRole } from '@waypoint/core/console';
 import { redactPII } from '@waypoint/core/privacy';
-import { dbKind, feedback, sql } from '@waypoint/db';
+import { dbReady, eq, feedback, profiles, schemaCurrent, sql } from '@waypoint/db';
 import { errors, jsonBody, jsonContent, router } from '../lib/openapi';
+import { moduleOfPath, recordUse } from '../lib/usage';
 import { limit } from '../middleware';
 
+import { PlatformNoticeSchema, platformNotice } from '../services/maintenance';
+
 const app = router();
+
+app.openapi(
+  createRoute({
+    method: 'get',
+    path: '/platform',
+    tags: ['System'],
+    summary: 'Whether Waypoint is in maintenance, and any announcement for everyone',
+    responses: { 200: jsonContent(PlatformNoticeSchema) },
+  }),
+  (c) => {
+    c.header('Cache-Control', 'public, max-age=30');
+    return c.json(platformNotice(), 200);
+  },
+);
 
 const started = Date.now();
 
@@ -33,23 +50,25 @@ app.openapi(
     method: 'get',
     path: '/ready',
     tags: ['System'],
-    summary: 'Readiness: the database answers',
+    summary: 'Readiness: the database answers and its schema is the one this code needs',
     responses: {
-      200: jsonContent(
-        z.object({ status: z.literal('ready'), database: z.string(), ai: z.boolean() }),
-      ),
-      503: jsonContent(z.object({ status: z.literal('unavailable') }), 'Not ready'),
+      200: jsonContent(z.object({ status: z.literal('ready') })),
+      503: jsonContent(z.object({ status: z.enum(['unavailable', 'migrating']) }), 'Not ready'),
     },
   }),
   async (c) => {
+    const no = { 'Cache-Control': 'no-store' };
     try {
+      await dbReady();
       await c.get('db').execute(sql`select 1`);
-      return c.json({ status: 'ready' as const, database: dbKind(), ai: aiAvailable() }, 200, {
-        'Cache-Control': 'no-store',
-      });
     } catch {
-      return c.json({ status: 'unavailable' as const }, 503, { 'Cache-Control': 'no-store' });
+      return c.json({ status: 'unavailable' as const }, 503, no);
     }
+    // Newer code than schema (a release in progress): wait for the migrations to finish.
+    if (!(await schemaCurrent(c.get('db'))))
+      return c.json({ status: 'migrating' as const }, 503, no);
+    // Anyone can call this: it says whether the server is ready, not what it runs on.
+    return c.json({ status: 'ready' as const }, 200, no);
   },
 );
 
@@ -86,6 +105,71 @@ app.openapi(
         wantsReply: Boolean(body.wantsReply && user && !user.isGuest),
       });
     return c.json({ ok: true as const }, 201);
+  },
+);
+
+const ActivitySchema = z.object({ path: z.string().max(300) });
+
+/** Browsers that ask not to be tracked (Global Privacy Control, Do Not Track). */
+const asksNotToBeCounted = (headers: Headers) =>
+  headers.get('sec-gpc') === '1' || headers.get('dnt') === '1';
+
+app.openapi(
+  createRoute({
+    method: 'post',
+    path: '/activity',
+    tags: ['System'],
+    summary: 'A page or screen was opened: counted for the analytics, with nobody attached',
+    description:
+      'Records that the signed-in person used Waypoint today (not what they did), and adds one to an anonymous count for the part of Waypoint, hour, platform, kind of visitor, country and language. Nothing is counted for staff, or when the browser sends Global Privacy Control or Do Not Track.',
+    middleware: [limit('activity', 900, 3600)] as const,
+    // A browser sends it as a beacon (plain text that holds JSON), which survives the page
+    // being left; the phone app sends JSON. Both are read here, the same way.
+    request: {
+      body: {
+        content: {
+          'application/json': { schema: ActivitySchema },
+          'text/plain': { schema: ActivitySchema },
+        },
+      },
+    },
+    responses: {
+      204: { description: 'Counted, or deliberately not' },
+      400: errors[400],
+      429: errors[429],
+    },
+  }),
+  async (c) => {
+    const user = c.get('user');
+    let body: unknown = null;
+    try {
+      body = JSON.parse((await c.req.text()).slice(0, 2000));
+    } catch {
+      // Not JSON: nothing to count.
+    }
+    const parsed = ActivitySchema.safeParse(body);
+    if (!parsed.success) return c.body(null, 400);
+    const module = moduleOfPath(parsed.data.path);
+    if (!module || asksNotToBeCounted(c.req.raw.headers) || isStaffRole(user?.role))
+      return c.body(null, 204);
+    const [profile] = user
+      ? await c
+          .get('db')
+          .select({ country: profiles.country, locale: profiles.locale })
+          .from(profiles)
+          .where(eq(profiles.userId, user.id))
+      : [];
+    recordUse({
+      userId: user?.id ?? null,
+      platform: c.req.header('x-waypoint-client') === 'phone' ? 'phone' : 'web',
+      view: {
+        module,
+        audience: user ? (user.isGuest ? 'guest' : 'account') : 'visitor',
+        country: profile?.country ?? null,
+        locale: profile?.locale ?? c.get('locale'),
+      },
+    });
+    return c.body(null, 204);
   },
 );
 

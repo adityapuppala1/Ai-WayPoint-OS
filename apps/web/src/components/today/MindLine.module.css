@@ -1,0 +1,117 @@
+/*
+ * Today's Mind line: a row like the others in the list (the same height, padding, hairlines
+ * and pressed, hover and focus states), with "Check in" at its end and the moods under it.
+ */
+.line + :global(li),
+:global(li) + .line {
+  border-block-start: 1px solid var(--wp-border-subtle);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+  padding-inline-end: var(--wp-space-3);
+}
+
+.link {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-3);
+  min-inline-size: 0;
+  min-block-size: 3.5rem;
+  padding-block: var(--wp-space-3);
+  padding-inline: var(--wp-space-4) var(--wp-space-2);
+  color: inherit;
+  text-decoration: none;
+  outline: 2px solid transparent;
+  transition: background-color var(--wp-duration-fast) var(--wp-ease-out);
+}
+
+@media (hover: hover) {
+  .link:hover {
+    background: var(--wp-fill-hover);
+  }
+}
+
+.link:active {
+  background: var(--wp-fill-pressed);
+}
+
+.link:focus-visible {
+  background: var(--wp-signal-tint);
+  color: inherit;
+  box-shadow: var(--wp-focus-shadow-inset);
+}
+
+.text {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.title {
+  display: block;
+  font-weight: var(--wp-weight-medium);
+  line-height: var(--wp-leading-snug);
+}
+
+.description {
+  display: block;
+  margin-block-start: 0.125rem;
+  font-size: var(--wp-text-small);
+  color: var(--wp-text-secondary);
+}
+
+.open {
+  flex: none;
+}
+
+.chevron {
+  transition: transform var(--wp-duration-base) var(--wp-ease-out);
+}
+
+.open[aria-expanded="true"] .chevron {
+  transform: rotate(180deg);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-3);
+  padding-block-end: var(--wp-space-4);
+  padding-inline: var(--wp-space-4);
+}
+
+.panel[hidden] {
+  display: none;
+}
+
+.fieldset {
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.question {
+  margin-block-end: var(--wp-space-3);
+  padding: 0;
+  font-weight: var(--wp-weight-medium);
+}
+
+.moods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-2);
+}
+
+@media (min-width: 48rem) {
+  .link {
+    padding-inline-start: var(--wp-space-6);
+  }
+
+  .panel {
+    padding-inline: var(--wp-space-6);
+  }
+}

@@ -11,7 +11,14 @@ import {
   reportProviderSuccess,
   type Tier,
 } from './providers';
-import { type AiFeature, checkBudget, recordUsage } from './usage';
+import {
+  type AiFeature,
+  checkBudget,
+  failUsage,
+  recordUsage,
+  reserveUsage,
+  settleUsage,
+} from './usage';
 
 export interface RunOptions {
   db: Database;
@@ -23,6 +30,10 @@ export interface RunOptions {
   localOnly?: boolean;
   /** Skip the budget check (e.g. internal evals). */
   skipBudget?: boolean;
+  /** Asked once before a model is used; false means "not now" (the caller falls back). */
+  gate?: () => Promise<boolean>;
+  /** What one call is expected to use at most, to reserve its cost before it is made. */
+  estimate?: { inputTokens: number; outputTokens: number };
 }
 
 export type RunOutcome<T> =
@@ -47,38 +58,56 @@ export async function runModel<T>(
     const budget = await checkBudget(opts.db, { userId: opts.userId, isGuest: opts.isGuest });
     if (!budget.ok) return { ok: false, reason: budget.reason ?? 'monthly-budget' };
   }
+  if (opts.gate && !(await opts.gate())) return { ok: false, reason: 'daily-limit' };
+  const estimate = opts.estimate ?? { inputTokens: 1500, outputTokens: 500 };
   let lastError: unknown;
   for (const choice of candidates) {
     const started = Date.now();
-    try {
-      const { value, usage } = await call(choice);
-      reportProviderSuccess(choice.provider);
-      await recordUsage(opts.db, {
+    // Counted before the call, at what it could cost (see reserveUsage); settled afterwards.
+    let reservation: string | null = null;
+    if (!opts.skipBudget) {
+      const reserved = await reserveUsage(opts.db, {
         userId: opts.userId,
+        isGuest: opts.isGuest,
         feature: opts.feature,
         provider: choice.provider,
         model: choice.modelId,
-        inputTokens: usage?.inputTokens ?? 0,
-        outputTokens: usage?.outputTokens ?? 0,
+        ...estimate,
+      });
+      if (!reserved.ok) return { ok: false, reason: reserved.reason };
+      reservation = reserved.id;
+    }
+    const record = (status: 'ok' | 'error', tokens: { input?: number; output?: number } = {}) => {
+      const actual = {
+        provider: choice.provider,
+        model: choice.modelId,
+        inputTokens: tokens.input ?? 0,
+        outputTokens: tokens.output ?? 0,
         latencyMs: Date.now() - started,
-        status: 'ok',
-      }).catch(() => undefined);
+        status,
+      };
+      return (
+        reservation
+          ? status === 'error'
+            ? failUsage(opts.db, reservation, actual)
+            : settleUsage(opts.db, reservation, actual)
+          : recordUsage(opts.db, { userId: opts.userId, feature: opts.feature, ...actual })
+      ).catch(() => undefined);
+    };
+    try {
+      const { value, usage } = await call(choice);
+      reportProviderSuccess(choice.provider);
+      await record('ok', { input: usage?.inputTokens, output: usage?.outputTokens });
       return { ok: true, value, choice };
     } catch (err) {
       lastError = err;
+      // Cut off part-way: the reservation stands as the estimate of what was used.
       if (isAbort(err)) break;
       const providerProblem =
         APICallError.isInstance(err) ||
         (err instanceof Error && /fetch|network|ECONN|ETIMEDOUT/i.test(err.message));
       if (providerProblem) reportProviderFailure(choice.provider);
-      await recordUsage(opts.db, {
-        userId: opts.userId,
-        feature: opts.feature,
-        provider: choice.provider,
-        model: choice.modelId,
-        latencyMs: Date.now() - started,
-        status: 'error',
-      }).catch(() => undefined);
+      await record('error');
     }
   }
   return { ok: false, reason: 'all-failed', error: lastError };

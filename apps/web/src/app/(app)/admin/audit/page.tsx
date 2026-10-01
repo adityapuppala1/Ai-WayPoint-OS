@@ -3,7 +3,8 @@ import { EmptyState, LinkButton, Panel } from '@waypoint/ui';
 import type { Metadata, Route } from 'next';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import styles from '@/components/admin/admin.module.css';
-import { requireAdmin } from '@/lib/server';
+import { Facts } from '@/components/Facts';
+import { requireConsole } from '@/lib/server';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('admin');
@@ -15,7 +16,7 @@ export default async function AuditPage({
 }: {
   searchParams: Promise<{ before?: string }>;
 }) {
-  const viewer = await requireAdmin('/admin/audit');
+  const viewer = await requireConsole('audit', '/admin/audit');
   const { before } = await searchParams;
   const [t, format] = await Promise.all([getTranslations('admin'), getFormatter()]);
   const trail = await admin.auditTrail(viewer.db, { before: before ?? null, limit: 50 });
@@ -40,10 +41,11 @@ export default async function AuditPage({
                     minute: '2-digit',
                   })}
                 </time>
-                <span className={styles.entryWho}>
-                  {e.actor ? `${e.actor.name} · ${e.actor.email}` : t('system')}
-                  {e.organisation ? ` · ${e.organisation}` : ''}
-                </span>
+                <Facts className={styles.entryWho}>
+                  {e.actor ? e.actor.name : t('system')}
+                  {e.actor ? e.actor.email : null}
+                  {e.organisation}
+                </Facts>
               </li>
             ))}
           </ol>

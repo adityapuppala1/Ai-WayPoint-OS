@@ -69,6 +69,12 @@
   outline: none;
 }
 
+/* A page that runs edge to edge and sets its own gutters (the welcome page). */
+.mainBleed {
+  flex: 1;
+  outline: none;
+}
+
 /* Footer: the privacy notice and terms, reachable from every public page. */
 .footer {
   padding-block: var(--wp-space-5) calc(var(--wp-space-5) + env(safe-area-inset-bottom));
@@ -89,6 +95,38 @@
   align-items: center;
   min-block-size: 2.25rem;
   color: var(--wp-text-secondary);
+}
+
+/* Labels that have a shorter form for small screens ("Get help now" / "Help"). */
+.short {
+  display: none;
+}
+
+/*
+ * Phones: two rows in every language instead of three or four. The name and the language
+ * picker on the first; help, quick exit and sign-in on the second, with their short labels.
+ */
+@media (max-width: 30rem) {
+  .actions {
+    display: contents;
+  }
+
+  .brand {
+    margin-inline-end: auto;
+  }
+
+  .signIn {
+    margin-inline-start: auto;
+    padding-inline-end: 0;
+  }
+
+  .full {
+    display: none;
+  }
+
+  .short {
+    display: inline;
+  }
 }
 
 @media (min-width: 60rem) {

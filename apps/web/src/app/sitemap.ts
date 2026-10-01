@@ -5,11 +5,19 @@ export const dynamic = 'force-dynamic';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = process.env.WAYPOINT_URL ?? 'http://localhost:3000';
-  return ['/welcome', '/support', '/shield', '/sign-in', '/sign-up', '/privacy', '/terms'].map(
-    (path) => ({
-      url: `${base}${path}`,
-      changeFrequency: 'weekly',
-      priority: path === '/welcome' ? 1 : 0.7,
-    }),
-  );
+  return [
+    '/welcome',
+    '/support',
+    '/shield',
+    '/signals/forecasts',
+    '/signals/forecasts/record',
+    '/sign-in',
+    '/sign-up',
+    '/privacy',
+    '/terms',
+  ].map((path) => ({
+    url: `${base}${path}`,
+    changeFrequency: 'weekly',
+    priority: path === '/welcome' ? 1 : 0.7,
+  }));
 }

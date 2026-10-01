@@ -12,6 +12,11 @@
     border-block-end: 1px solid var(--wp-border-subtle);
   }
 
+  /* Safari before 18.2 and older Chrome do not know scrollbar-width. */
+  .list::-webkit-scrollbar {
+    display: none;
+  }
+
   .tab {
     position: relative;
     display: inline-flex;
@@ -23,43 +28,62 @@
     font-weight: var(--wp-weight-medium);
     white-space: nowrap;
     cursor: pointer;
-    outline: none;
+    outline: 2px solid transparent; /* shows in Windows forced-colours mode */
+    outline-offset: -2px;
     border-radius: var(--wp-radius-sm) var(--wp-radius-sm) 0 0;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      color var(--wp-duration-fast) var(--wp-ease-out),
+      background-color var(--wp-duration-fast) var(--wp-ease-out);
   }
 
-  .tab[data-hovered] {
+  @media (hover: hover) {
+    .tab[data-hovered] {
+      color: var(--wp-text);
+    }
+  }
+
+  .tab[data-pressed] {
     color: var(--wp-text);
+    background: var(--wp-fill-hover);
   }
 
   .tab[data-selected] {
     color: var(--wp-text);
   }
 
-  .tab[data-selected]::after {
-    content: "";
+  /*
+   * The marker under the chosen tab. React Aria moves one marker from the old tab to the new
+   * one by animating the two properties named here, in this order (the width first, so the
+   * slide is measured from the right edge in right-to-left languages too). One colour,
+   * --wp-marker, at 3:1 or more on every surface.
+   */
+  .indicator {
     position: absolute;
-    inset-inline: var(--wp-space-2);
-    inset-block-end: -1px;
+    inset-block-end: 0;
+    inset-inline-start: var(--wp-space-2);
+    inline-size: calc(100% - 2 * var(--wp-space-2));
     block-size: 3px;
     border-radius: 3px 3px 0 0;
-    background: var(--wp-text);
+    background: var(--wp-marker);
+    pointer-events: none;
+    transition-property: width, translate;
+    transition-duration: var(--wp-duration-base);
+    transition-timing-function: var(--wp-ease-out);
   }
 
   .tab[data-focus-visible] {
-    box-shadow:
-      inset 0 0 0 2px var(--wp-focus-ring),
-      inset 0 0 0 5px var(--wp-signal);
+    box-shadow: var(--wp-focus-shadow-inset);
   }
 
   .panel {
-    outline: none;
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    border-radius: var(--wp-radius-sm);
   }
 
   .panel[data-focus-visible] {
-    box-shadow:
-      0 0 0 2px var(--wp-canvas),
-      0 0 0 4px var(--wp-focus-ring);
-    border-radius: var(--wp-radius-sm);
+    box-shadow: var(--wp-focus-shadow);
   }
 
   /* Segmented control */
@@ -73,6 +97,9 @@
   }
 
   .segment {
+    position: relative;
+    /* Its own layer, so the thumb can sit behind the label and still above the track. */
+    isolation: isolate;
     display: inline-flex;
     align-items: center;
     gap: var(--wp-space-2);
@@ -82,19 +109,62 @@
     color: var(--wp-text-secondary);
     font-weight: var(--wp-weight-medium);
     cursor: pointer;
+    outline: 2px solid transparent;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      color var(--wp-duration-fast) var(--wp-ease-out),
+      scale var(--wp-duration-fast) var(--wp-ease-out);
+  }
+
+  @media (hover: hover) {
+    .segment[data-hovered] {
+      color: var(--wp-text);
+    }
+  }
+
+  .segment[data-pressed] {
+    color: var(--wp-text);
+    scale: var(--wp-press-scale);
   }
 
   .segment[data-selected] {
-    background: var(--wp-raised);
     color: var(--wp-text);
+  }
+
+  /* The raised thumb behind the chosen segment: it slides to the next choice, like the marker. */
+  .thumb {
+    position: absolute;
+    z-index: -1;
+    inset-block: 0;
+    inset-inline-start: 0;
+    inline-size: 100%;
+    border-radius: inherit;
+    background: var(--wp-raised);
     box-shadow:
       0 0 0 1px var(--wp-border-subtle),
-      var(--wp-shadow-raised);
+      var(--wp-shadow-1);
+    pointer-events: none;
+    transition-property: width, translate;
+    transition-duration: var(--wp-duration-base);
+    transition-timing-function: var(--wp-ease-out);
   }
 
   .segment[data-focus-visible] {
-    box-shadow:
-      0 0 0 2px var(--wp-focus-ring),
-      0 0 0 5px var(--wp-signal);
+    z-index: 1;
+    box-shadow: var(--wp-focus-shadow);
+  }
+
+  /* Forced colours drop backgrounds, and with them the marker and the thumb. */
+  @media (forced-colors: active) {
+    .indicator {
+      forced-color-adjust: none;
+      background: Highlight;
+    }
+
+    .thumb {
+      forced-color-adjust: none;
+      background: Canvas;
+      box-shadow: 0 0 0 2px Highlight;
+    }
   }
 }

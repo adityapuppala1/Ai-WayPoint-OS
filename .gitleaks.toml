@@ -11,6 +11,12 @@ regexes = [
   '''ci-only-secret-not-for-production-use-0+''',
   '''e2e-only-secret-never-use-in-production-0+''',
   '''MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=''',
+  '''ci-only-database-password''',
+  # The made-up TypeSafe key in the judge's unit tests; nothing is ever sent with it.
+  '''ts_test_key_0123456789abcdef''',
+  # Made-up Twilio tokens the console's tests save and replace; never sent anywhere.
+  '''tok_secret_1234''',
+  '''tok_new_5678''',
 ]
 paths = [
   '''\.env\.example$''',

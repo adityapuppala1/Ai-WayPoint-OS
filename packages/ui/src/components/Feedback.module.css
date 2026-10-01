@@ -3,7 +3,7 @@
     display: grid;
     justify-items: start;
     gap: var(--wp-space-3);
-    padding: var(--wp-space-8) var(--wp-space-4);
+    padding: var(--wp-space-8) var(--wp-panel-gutter, var(--wp-space-4));
   }
 
   .emptyCentered {
@@ -21,17 +21,87 @@
     max-inline-size: 32rem;
   }
 
+  /* A block standing in for content on its way: plain and still, unless motion is welcome. */
   .skeleton {
+    --skeleton: var(--wp-sunken);
+    --skeleton-shine: var(--wp-raised);
+
     display: block;
     border-radius: var(--wp-radius-xs);
-    background: linear-gradient(
-      90deg,
-      var(--wp-sunken) 0%,
-      color-mix(in oklch, var(--wp-sunken) 60%, var(--wp-raised)) 50%,
-      var(--wp-sunken) 100%
-    );
-    background-size: 200% 100%;
-    animation: shimmer 1.4s ease-in-out infinite;
+    background: var(--skeleton);
+  }
+
+  /* On the page itself (not in a panel) the block needs to be a step darker to show. */
+  .skeletonOnCanvas {
+    --skeleton: var(--wp-border-subtle);
+    --skeleton-shine: var(--wp-fill-hover);
+  }
+
+  /* The shimmer. Lite mode and a request for less motion keep the still block above. */
+  @media (prefers-reduced-motion: no-preference) {
+    :root:not([data-lite="true"]) .skeleton {
+      background: linear-gradient(
+        90deg,
+        var(--skeleton) 0%,
+        var(--skeleton-shine) 50%,
+        var(--skeleton) 100%
+      );
+      background-size: 200% 100%;
+      animation: shimmer 1.4s ease-in-out infinite;
+    }
+  }
+
+  /*
+   * PageSkeleton: the shape of a page while it loads (its heading, the Sign, two panels),
+   * in the same column as a page, so nothing jumps when the content arrives. It waits a
+   * moment before showing, so a page that arrives quickly never flashes grey blocks.
+   */
+  .pageSkeleton {
+    display: flex;
+    flex-direction: column;
+    gap: var(--wp-space-8);
+    inline-size: 100%;
+    max-inline-size: var(--wp-content-max);
+    margin-inline: auto;
+    animation: appear var(--wp-duration-fast) var(--wp-ease-out) 200ms backwards;
+  }
+
+  .pageSkeletonHead {
+    display: grid;
+    gap: var(--wp-space-3);
+  }
+
+  .pageSkeletonSign {
+    display: grid;
+    align-content: start;
+    gap: var(--wp-space-4);
+    min-block-size: 12rem;
+    padding: var(--wp-space-5);
+    border-radius: var(--wp-radius-lg);
+    /* The Sign's leading edge, in outline. */
+    border-inline-start: var(--wp-sign-edge) solid var(--wp-border-strong);
+    background: var(--wp-border-subtle);
+  }
+
+  .pageSkeletonPanel {
+    display: grid;
+    gap: var(--wp-space-3);
+    padding: var(--wp-space-4);
+    border: 1px solid var(--wp-border-subtle);
+    border-radius: var(--wp-radius-md);
+    background: var(--wp-raised);
+    box-shadow: var(--wp-shadow-1);
+  }
+
+  @media (min-width: 48rem) {
+    .pageSkeletonSign {
+      min-block-size: 15rem;
+      padding: var(--wp-space-8);
+    }
+
+    .pageSkeletonPanel {
+      padding: var(--wp-space-6);
+    }
   }
 
   .spinner {
@@ -80,6 +150,31 @@
   .statNote {
     font-size: var(--wp-text-meta);
     color: var(--wp-text-muted);
+  }
+
+  /*
+   * A row of figures. As many as fit share a line, the rest wrap, and every figure has a
+   * rule at its leading edge (the first one too), so a strip looks the same however it
+   * wraps and in either reading direction.
+   */
+  .statStrip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+    gap: var(--wp-space-5) var(--wp-space-6);
+    padding: 0;
+    list-style: none;
+  }
+
+  .statStripItem {
+    min-inline-size: 0;
+    padding-inline-start: var(--wp-space-4);
+    border-inline-start: 2px solid var(--wp-border-strong);
+  }
+
+  @keyframes appear {
+    from {
+      opacity: 0;
+    }
   }
 
   @keyframes shimmer {

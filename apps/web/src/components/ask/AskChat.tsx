@@ -1,10 +1,24 @@
 'use client';
 
+// First: nothing in this module may try to compile code (see the file for why).
+import '@/lib/no-eval';
 import { useChat } from '@ai-sdk/react';
 import type { AskUIMessage } from '@waypoint/ai';
 import type { CrisisResponsePlan } from '@waypoint/core';
-import { isInternalPath } from '@waypoint/core';
-import { Button, ConfirmDialog, IconButton, Notice, Spinner, TextField } from '@waypoint/ui';
+import { isInternalPath, safeExternalHref } from '@waypoint/core';
+import { moduleForHref } from '@waypoint/core/next-step';
+import {
+  Button,
+  ConfirmDialog,
+  Dialog,
+  IconButton,
+  List,
+  ModuleMark,
+  Notice,
+  PageHeader,
+  Spinner,
+  TextField,
+} from '@waypoint/ui';
 import { DefaultChatTransport, lastAssistantMessageIsCompleteWithApprovalResponses } from 'ai';
 import type { Route } from 'next';
 import Link from 'next/link';
@@ -12,6 +26,8 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { type FormEvent, type KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { EmptyNote } from '@/components/EmptyNote';
+import { LinkRow } from '@/components/LinkRow';
 import { CrisisCard } from '@/components/support/CrisisCard';
 import { uuid } from '@/lib/api';
 import styles from './ask.module.css';
@@ -114,11 +130,15 @@ export function AskChat({
 }) {
   const t = useTranslations('ask');
   const common = useTranslations('common');
+  const nav = useTranslations('nav');
   const router = useRouter();
   const [input, setInput] = useState(prompt ?? '');
   const [dismissedCrisis, setDismissedCrisis] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // On phones and tablets the conversations open in a sheet (see the history markup below).
+  const [historyOpen, setHistoryOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const composerRef = useRef<HTMLFormElement>(null);
 
   const transport = useMemo(
     () =>
@@ -168,6 +188,20 @@ export function AskChat({
     setInput('');
   };
 
+  // "New conversation" from an empty list: this page already is one, so go to its message box.
+  // An open sheet keeps the keyboard inside itself until it has closed, so wait for that.
+  const startHere = () => {
+    setHistoryOpen(false);
+    const box = composerRef.current?.querySelector('textarea');
+    if (!box) return;
+    const since = performance.now();
+    const focus = () => {
+      if (!document.querySelector('[role="dialog"]')) box.focus();
+      else if (performance.now() - since < 1000) requestAnimationFrame(focus);
+    };
+    focus();
+  };
+
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
     send(input);
@@ -176,7 +210,9 @@ export function AskChat({
   const onKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault();
-      send(input);
+      // A key held down repeats. Only a press sends: an Enter still held from choosing
+      // "Talk it through" in the go-to palette must not send the words it filled in.
+      if (!e.repeat) send(input);
     }
   };
 
@@ -258,7 +294,9 @@ export function AskChat({
     }
     if (part.state === 'output-available') {
       const out = part.output ?? {};
-      const href = typeof out.href === 'string' ? out.href : null;
+      // What a tool returns is data: only a path on this site is ever made into a link.
+      const href = typeof out.href === 'string' && isInternalPath(out.href) ? out.href : null;
+      const module = moduleForHref(href);
       const savedLabel =
         name === 'create_goal'
           ? t('savedGoal')
@@ -267,6 +305,18 @@ export function AskChat({
             : name === 'save_memory'
               ? t('savedMemory')
               : label;
+      // Something was saved somewhere: a row that opens it, with that module's own mark.
+      if (href && module)
+        return (
+          <List key={part.toolCallId} className={styles.toolRow}>
+            <LinkRow
+              href={href}
+              leading={<ModuleMark module={module} size="sm" />}
+              title={savedLabel}
+              description={nav(module)}
+            />
+          </List>
+        );
       return (
         <p key={part.toolCallId} className={styles.toolLine}>
           <span>{savedLabel}</span>
@@ -281,23 +331,80 @@ export function AskChat({
     );
   };
 
+  // The list of conversations: beside the chat on a wide screen, in a sheet on a narrow one.
+  const history = (
+    <>
+      {conversations.length ? (
+        <ul className={styles.historyList}>
+          {conversations.map((c) => (
+            <li key={c.id}>
+              <Link
+                href={`/ask?c=${c.id}` as Route}
+                className={styles.historyLink}
+                aria-current={c.id === chatId ? 'page' : undefined}
+                onClick={() => setHistoryOpen(false)}
+              >
+                <span>{c.title ?? t('title')}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <EmptyNote
+          action={
+            <Button variant="secondary" size="sm" icon="add" onPress={startHere}>
+              {t('newChat')}
+            </Button>
+          }
+        >
+          {t('historyEmpty')}
+        </EmptyNote>
+      )}
+      {conversations.some((c) => c.id === chatId) ? (
+        <IconButton
+          icon="delete"
+          label={t('deleteChat')}
+          tone="outlined"
+          onPress={() => {
+            setHistoryOpen(false);
+            setConfirmDelete(true);
+          }}
+        />
+      ) : null}
+    </>
+  );
+
   return (
     <div className={styles.layout}>
       <section className={styles.chat} aria-label={t('title')}>
-        <div className={styles.header}>
-          <div>
-            <h1 className={styles.title}>{t('title')}</h1>
-            <p className={styles.disclosure}>{t('disclosure')}</p>
-          </div>
-          <Button
-            variant="secondary"
-            size="sm"
-            icon="add"
-            onPress={() => router.push('/ask' as Route)}
-          >
-            {t('newChat')}
-          </Button>
-        </div>
+        <PageHeader
+          module="ask"
+          title={t('title')}
+          lead={t('lead')}
+          actions={
+            <>
+              <Button
+                variant="secondary"
+                size="sm"
+                icon="add"
+                onPress={() => router.push('/ask' as Route)}
+              >
+                {t('newChat')}
+              </Button>
+              {/* Narrow screens only: there the list would sit under the message box, unseen. */}
+              <Button
+                variant="secondary"
+                size="sm"
+                icon="menu"
+                className={styles.historyOpen}
+                onPress={() => setHistoryOpen(true)}
+              >
+                {t('history')}
+              </Button>
+            </>
+          }
+        />
+        <p className={styles.disclosure}>{t('disclosure')}</p>
 
         <ol className={styles.messages} aria-live="polite" aria-busy={busy}>
           {messages.length === 0 ? (
@@ -353,11 +460,17 @@ export function AskChat({
                   ) : null;
                 }
                 if (part.type === 'source-url') {
+                  // A source a model cited is data: only a secure web page becomes a link.
+                  const href = safeExternalHref(part.url);
                   return (
                     <p key={key} className={styles.source}>
-                      <a href={part.url} target="_blank" rel="noopener noreferrer">
-                        {part.title ?? part.url}
-                      </a>
+                      {href ? (
+                        <a href={href} target="_blank" rel="noopener noreferrer">
+                          {part.title ?? part.url}
+                        </a>
+                      ) : (
+                        (part.title ?? part.url)
+                      )}
                     </p>
                   );
                 }
@@ -389,7 +502,7 @@ export function AskChat({
         ) : null}
         <div ref={bottomRef} />
 
-        <form className={styles.composer} onSubmit={onSubmit}>
+        <form ref={composerRef} className={styles.composer} onSubmit={onSubmit}>
           <div className={styles.inputWrap}>
             <TextField
               label={t('inputLabel')}
@@ -424,49 +537,34 @@ export function AskChat({
         <h2 id="history-title" className={styles.historyTitle}>
           {t('history')}
         </h2>
-        {conversations.length ? (
-          <ul className={styles.historyList}>
-            {conversations.map((c) => (
-              <li key={c.id}>
-                <Link
-                  href={`/ask?c=${c.id}` as Route}
-                  className={styles.historyLink}
-                  aria-current={c.id === chatId ? 'page' : undefined}
-                >
-                  {c.title ?? t('title')}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="wp-secondary">{t('historyEmpty')}</p>
-        )}
-        {conversations.some((c) => c.id === chatId) ? (
-          <>
-            <IconButton
-              icon="delete"
-              label={t('deleteChat')}
-              tone="outlined"
-              onPress={() => setConfirmDelete(true)}
-            />
-            <ConfirmDialog
-              isOpen={confirmDelete}
-              onOpenChange={setConfirmDelete}
-              title={t('deleteChat')}
-              confirmLabel={common('delete')}
-              cancelLabel={common('cancel')}
-              tone="danger"
-              onConfirm={async () => {
-                await fetch(`/api/ask/conversations/${chatId}`, { method: 'DELETE' });
-                router.push('/ask' as Route);
-                router.refresh();
-              }}
-            >
-              <p>{t('deleteConfirm')}</p>
-            </ConfirmDialog>
-          </>
-        ) : null}
+        {history}
       </aside>
+
+      <Dialog
+        isOpen={historyOpen}
+        onOpenChange={setHistoryOpen}
+        title={t('history')}
+        variant="sheet"
+        closeLabel={common('close')}
+      >
+        <div className={styles.historySheet}>{history}</div>
+      </Dialog>
+
+      <ConfirmDialog
+        isOpen={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title={t('deleteChat')}
+        confirmLabel={common('delete')}
+        cancelLabel={common('cancel')}
+        tone="danger"
+        onConfirm={async () => {
+          await fetch(`/api/ask/conversations/${chatId}`, { method: 'DELETE' });
+          router.push('/ask' as Route);
+          router.refresh();
+        }}
+      >
+        <p>{t('deleteConfirm')}</p>
+      </ConfirmDialog>
     </div>
   );
 }

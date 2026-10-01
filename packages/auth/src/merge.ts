@@ -33,6 +33,7 @@ const MERGE: Array<{ table: s.AnyUserTable; key: string[] }> = [
   { table: s.circleReactions, key: ['post_id', 'kind'] },
   { table: s.orgEnrolments, key: ['programme_id'] },
   { table: s.userChecklists, key: ['event', 'country'] },
+  { table: s.activityDays, key: ['day'] },
 ];
 
 async function moveAll(tx: Tx, table: s.AnyUserTable, from: string, to: string) {

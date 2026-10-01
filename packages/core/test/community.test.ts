@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { memberNumber, moderatePost } from '../src/community';
+import { moderatePost } from '../src/community';
 
 describe('circles moderation', () => {
   it('publishes ordinary posts untouched', () => {
@@ -34,13 +34,5 @@ describe('circles moderation', () => {
     expect(m.text).not.toContain('98765');
     expect(m.text).not.toContain('ravi.k@example.com');
     expect(m.masked).toEqual(expect.arrayContaining(['phone', 'email']));
-  });
-
-  it('gives each person a different number in each circle', () => {
-    const a = memberNumber('user-1', 'circle-a');
-    expect(a).toBe(memberNumber('user-1', 'circle-a'));
-    expect(a).not.toBe(memberNumber('user-1', 'circle-b'));
-    expect(a).toBeGreaterThanOrEqual(1000);
-    expect(a).toBeLessThan(10000);
   });
 });

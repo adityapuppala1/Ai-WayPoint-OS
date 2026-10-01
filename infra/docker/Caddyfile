@@ -1,0 +1,50 @@
+# The only door into Waypoint. Caddy gets and renews the HTTPS certificate for
+# WAYPOINT_DOMAIN by itself (the name must point at this server, and ports 80 and 443 must be
+# reachable). For "localhost" it uses its own local certificate.
+{
+	# The admin endpoint stays inside the container (the health check uses it).
+	admin 127.0.0.1:2019
+}
+
+{$WAYPOINT_DOMAIN} {
+	encode zstd gzip
+
+	# Nothing Waypoint accepts is larger than this; the API's own limit is 256 KB.
+	request_body {
+		max_size 1MB
+	}
+
+	header {
+		# Browsers must only ever use HTTPS for this site from now on.
+		Strict-Transport-Security "max-age=63072000; includeSubDomains"
+		-Server
+	}
+
+	reverse_proxy web:3000 {
+		# The visitor's address, from the connection Caddy itself accepted. Whatever a visitor
+		# puts in this header is replaced, so rate limits cannot be dodged.
+		header_up X-Real-IP {remote_host}
+		header_up -X-Waypoint-Client-Ip
+		header_up -X-Waypoint-Guest
+
+		# Answers stream (Ask): pass them on as they arrive.
+		flush_interval -1
+
+		health_uri /api/health
+		health_interval 15s
+	}
+
+	# No access log by default: request lines would include the secret in the Africa's Talking
+	# callback address. If you turn logging on, leave the query string out:
+	#
+	# log {
+	# 	format filter {
+	# 		wrap json
+	# 		fields {
+	# 			request>uri query {
+	# 				delete key
+	# 			}
+	# 		}
+	# 	}
+	# }
+}

@@ -1,4 +1,5 @@
 export {
+  backupEmbedded,
   closeDb,
   type Database,
   dbKind,
@@ -7,6 +8,7 @@ export {
   migrationsFolder,
   runMigrations,
   type Schema,
+  schemaCurrent,
 } from './client';
 export * from './schema';
 /** Any Drizzle Postgres table (used by generic helpers such as guest-account merging). */
@@ -18,6 +20,7 @@ export {
   arrayOverlaps,
   asc,
   count,
+  countDistinct,
   desc,
   eq,
   getTableColumns,

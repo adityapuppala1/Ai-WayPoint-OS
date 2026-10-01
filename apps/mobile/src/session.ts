@@ -68,8 +68,9 @@ export function ensureSession(where: Whereabouts): Promise<void> {
 /**
  * Signs in. What a guest did on this phone moves into the account created from that guest
  * session; into any other account only when the person asks (`keepGuest`), because on a
- * shared phone the guest may have been someone else. Fails with status 403 until the
- * account's email address is confirmed (signing in sends a new link).
+ * shared phone the guest may have been someone else. Until the account's email address is
+ * confirmed it fails with status 401, exactly like a wrong password (so signing in never shows
+ * whether an address already had an account); with the right password it also emails a new link.
  */
 export async function signInWithEmail(
   email: string,

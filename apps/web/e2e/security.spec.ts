@@ -131,3 +131,31 @@ test.describe('what the server hands out @desktop', () => {
       expect(all, secret).not.toContain(secret);
   });
 });
+
+test.describe('reporting a security problem @desktop', () => {
+  test('/.well-known/security.txt says where, and is never out of date', async ({
+    request,
+    baseURL,
+  }) => {
+    const res = await request.get('/.well-known/security.txt');
+    expect(res.status()).toBe(200);
+    expect(res.headers()['content-type']).toContain('text/plain');
+    const text = await res.text();
+    const field = (name: string) =>
+      text
+        .split('\n')
+        .filter((line) => line.startsWith(`${name}: `))
+        .map((line) => line.slice(name.length + 2));
+    // The operator of this installation first, then the project's private report page.
+    expect(field('Contact')).toEqual([
+      'mailto:security@waypoint.test',
+      'https://github.com/adityapuppala1/Ai-WayPoint-OS/security/advisories/new',
+    ]);
+    expect(field('Canonical')).toEqual([`${baseURL}/.well-known/security.txt`]);
+    expect(field('Policy')[0]).toContain('SECURITY.md');
+    expect(field('Expires')).toHaveLength(1);
+    const expires = new Date(field('Expires')[0] as string).getTime();
+    expect(expires).toBeGreaterThan(Date.now());
+    expect(expires).toBeLessThan(Date.now() + 365 * 86_400_000);
+  });
+});

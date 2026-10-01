@@ -18,7 +18,15 @@ import {
   updateProfile,
 } from '../services/me';
 import { SkillsInputSchema, setUserSkills } from '../services/path';
-import { deleteAccount, exportData } from '../services/privacy';
+import {
+  deleteAccount,
+  exportData,
+  forgetAllMemories,
+  forgetMemory,
+  listMemories,
+  MemorySchema,
+} from '../services/privacy';
+import { forgetPersonalCookies } from './preferences';
 
 const app = router();
 app.use('/me', requireUser, noStore);
@@ -131,6 +139,49 @@ app.openapi(
 app.openapi(
   createRoute({
     method: 'get',
+    path: '/me/memories',
+    tags: ['You'],
+    summary: 'What the assistant was asked to remember (decrypted for you only)',
+    responses: { 200: jsonContent(z.array(MemorySchema)), 401: errors[401] },
+  }),
+  async (c) => c.json(await listMemories(c.get('db'), c.get('user')!.id), 200),
+);
+
+app.openapi(
+  createRoute({
+    method: 'delete',
+    path: '/me/memories/{id}',
+    tags: ['You'],
+    summary: 'Delete one thing Waypoint remembers',
+    request: { params: IdParam },
+    responses: { 200: jsonContent(OkSchema), 401: errors[401], 404: errors[404] },
+  }),
+  async (c) => {
+    await forgetMemory(c.get('db'), c.get('user')!.id, c.req.valid('param').id);
+    return c.json({ ok: true as const }, 200);
+  },
+);
+
+app.openapi(
+  createRoute({
+    method: 'delete',
+    path: '/me/memories',
+    tags: ['You'],
+    summary: 'Forget everything: delete all that Waypoint remembers about you',
+    responses: {
+      200: jsonContent(z.object({ ok: z.literal(true), deleted: z.number().int() })),
+      401: errors[401],
+    },
+  }),
+  async (c) => {
+    const deleted = await forgetAllMemories(c.get('db'), c.get('user')!.id);
+    return c.json({ ok: true as const, deleted }, 200);
+  },
+);
+
+app.openapi(
+  createRoute({
+    method: 'get',
     path: '/me/export',
     tags: ['You'],
     summary: 'Download everything Waypoint stores about you (JSON)',
@@ -166,8 +217,10 @@ app.openapi(
   async (c) => {
     if (c.req.valid('json').confirm !== 'DELETE') throw badRequest('Type DELETE to confirm.');
     await deleteAccount(c.get('db'), c.get('user')!.id);
-    // Expire the session cookies (the session rows are already gone).
+    // Expire the session cookies (the session rows are already gone), and the person's own
+    // choices on this device.
     const res = c.json({ ok: true as const }, 200);
+    forgetPersonalCookies(res.headers);
     for (const name of [
       'waypoint.session_token',
       '__Secure-waypoint.session_token',

@@ -45,4 +45,15 @@ describe('messages sent to the browser', () => {
     for (const namespace of SERVER_ONLY_NAMESPACES)
       expect(Object.keys(englishMessages)).toContain(namespace);
   });
+
+  it('no client component reads next-intl’s locale itself, which can name its digits', () => {
+    // There it is the formatting locale ("ar-u-nu-latn", see app/layout.tsx): comparing it with
+    // "ar", or sending it to the server, would quietly go wrong. useLanguage() gives "ar".
+    const direct = client.filter((file) =>
+      /import\s*\{[^}]*\buseLocale\b[^}]*\}\s*from\s*['"]next-intl['"]/.test(
+        readFileSync(file, 'utf8'),
+      ),
+    );
+    expect(direct.map((file) => file.slice(WEB.length))).toEqual([]);
+  });
 });

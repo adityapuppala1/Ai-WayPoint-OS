@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import styles from '@/components/admin/admin.module.css';
 import { ModerationActions } from '@/components/admin/ModerationActions';
-import { requireAdmin } from '@/lib/server';
+import { requireConsole } from '@/lib/server';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('admin');
@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ModerationPage() {
-  const viewer = await requireAdmin('/admin/moderation');
+  const viewer = await requireConsole('moderation', '/admin/moderation');
   const [t, circles, format] = await Promise.all([
     getTranslations('admin'),
     getTranslations('circles'),

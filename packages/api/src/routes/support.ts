@@ -40,6 +40,10 @@ app.openapi(
     const user = c.get('user');
     let country = q.country ?? null;
     let language = q.language;
+    // When no country is asked for, the answer comes from the person's own profile: that
+    // copy must not be kept by the browser or a proxy and shown to whoever uses the device
+    // next. Asked for by country, the answer is the same for everyone and may be shared.
+    const personal = !country && Boolean(user);
     if (!country && user) {
       const p = await getProfile(c.get('db'), user.id);
       country = p.country;
@@ -47,7 +51,8 @@ app.openapi(
     }
     const body = supportDirectory(country, { kinds: q.kinds, language });
     return c.json(body, 200, {
-      'Cache-Control': user ? 'private, max-age=300' : 'public, max-age=3600',
+      'Cache-Control': personal ? 'private, no-store' : 'public, max-age=3600',
+      Vary: 'Cookie',
     });
   },
 );

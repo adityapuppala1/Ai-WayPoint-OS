@@ -135,3 +135,108 @@ export function relevance(
 export function formatPercent(p: number): string {
   return `${Math.round(clamp01(p) * 100)}%`;
 }
+
+// ─────────────────────────── Published forecasts ───────────────────────────
+
+/**
+ * The smallest and largest chance a published forecast may show. Nobody knows the future, so
+ * nothing is ever shown as 0 % or 100 %.
+ */
+export const FORECAST_BOUNDS = { min: 0.01, max: 0.99 } as const;
+
+export function clampForecast(p: number): number {
+  return Math.min(FORECAST_BOUNDS.max, Math.max(FORECAST_BOUNDS.min, p));
+}
+
+/** One chance a forecast showed, and when it started showing it. */
+export interface PublishedChance {
+  p: number;
+  at: Date;
+}
+
+/**
+ * How one forecast is scored once it has been judged. Each chance it showed is weighed by how
+ * long it was shown between opening and closing, so changing the number at the last minute —
+ * when the answer is already obvious — counts for almost nothing. With a single chance that
+ * never changed this is simply (p − outcome)².
+ *
+ * `brier` is the time-weighted squared error (0 is perfect, 0.25 is what 50 % always scores);
+ * `meanP` is the time-weighted chance, used for calibration.
+ */
+export function forecastScore(
+  chances: PublishedChance[],
+  opensAt: Date,
+  closesAt: Date,
+  outcome: 0 | 1,
+): { brier: number | null; meanP: number | null } {
+  const open = opensAt.getTime();
+  const close = Math.max(open, closesAt.getTime());
+  const shown = [...chances]
+    .filter((c) => c.at.getTime() <= close)
+    .sort((a, b) => a.at.getTime() - b.at.getTime());
+  if (!shown.length) return { brier: null, meanP: null };
+  const span = close - open;
+  // Opened and closed at the same instant: the last chance shown is the one judged.
+  if (span <= 0) {
+    const p = clamp01((shown.at(-1) as PublishedChance).p);
+    return { brier: brierScore(p, outcome), meanP: p };
+  }
+  let brier = 0;
+  let meanP = 0;
+  shown.forEach((c, i) => {
+    const from = i === 0 ? open : Math.max(open, c.at.getTime());
+    const next = shown[i + 1];
+    const to = next ? Math.max(open, next.at.getTime()) : close;
+    const weight = Math.max(0, to - from) / span;
+    const p = clamp01(c.p);
+    brier += weight * brierScore(p, outcome);
+    meanP += weight * p;
+  });
+  return { brier, meanP };
+}
+
+/** What has to be true before the scoreboard says anything about accuracy. */
+export const SCOREBOARD = {
+  /** Judged forecasts needed before a score is shown: fewer is luck, not a record. */
+  minForScore: 10,
+  /** …and before a calibration table is shown. */
+  minForCalibration: 30,
+  /** A band of the calibration table is shown only with at least this many forecasts in it. */
+  minPerBand: 5,
+  bands: 5,
+} as const;
+
+export interface JudgedForecast {
+  brier: number;
+  meanP: number;
+  outcome: 0 | 1;
+}
+
+export interface Scoreboard {
+  /** Forecasts judged yes or no (annulled ones are left out). */
+  judged: number;
+  /** Mean score, or null until enough have been judged. */
+  brier: number | null;
+  /** What always saying "as often as things turned out" would have scored: the bar to beat. */
+  reference: number | null;
+  /** In each band of chance, how often things really happened; null until enough are judged. */
+  calibration: CalibrationBucket[] | null;
+}
+
+/** The public record: honest about how little a small number of forecasts can show. */
+export function scoreboard(items: JudgedForecast[]): Scoreboard {
+  const judged = items.length;
+  if (judged < SCOREBOARD.minForScore)
+    return { judged, brier: null, reference: null, calibration: null };
+  const brier = items.reduce((s, f) => s + f.brier, 0) / judged;
+  const rate = items.reduce((s, f) => s + f.outcome, 0) / judged;
+  const reference = items.reduce((s, f) => s + brierScore(rate, f.outcome), 0) / judged;
+  const calibration =
+    judged >= SCOREBOARD.minForCalibration
+      ? calibrationBuckets(
+          items.map((f) => ({ p: f.meanP, outcome: f.outcome })),
+          SCOREBOARD.bands,
+        ).filter((b) => b.n >= SCOREBOARD.minPerBand)
+      : null;
+  return { judged, brier, reference, calibration };
+}

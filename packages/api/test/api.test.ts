@@ -100,7 +100,32 @@ describe('public endpoints', () => {
     expect((await req('/api/health')).status).toBe(200);
     const ready = await req('/api/ready');
     expect(ready.status).toBe(200);
-    expect(await ready.json()).toMatchObject({ status: 'ready', database: 'embedded', ai: false });
+    expect(await ready.json()).toEqual({ status: 'ready' });
+  });
+
+  it('is not ready while the database is behind the code (a release in progress)', async () => {
+    // The state a new server finds before the migration job has run: the newest migration
+    // is not recorded as applied yet.
+    const d = db.getDb();
+    const newest = await d.execute<{ id: number; hash: string; created_at: string }>(
+      db.sql`select id, hash, created_at from drizzle.__drizzle_migrations
+             order by created_at desc limit 1`,
+    );
+    const row = newest.rows[0]!;
+    await d.execute(db.sql`delete from drizzle.__drizzle_migrations where id = ${row.id}`);
+    try {
+      const behind = await req('/api/ready');
+      expect(behind.status).toBe(503);
+      expect(await behind.json()).toEqual({ status: 'migrating' });
+      // Liveness is unaffected: the process is fine, it is only waiting.
+      expect((await req('/api/health')).status).toBe(200);
+    } finally {
+      await d.execute(
+        db.sql`insert into drizzle.__drizzle_migrations (id, hash, created_at)
+               values (${row.id}, ${row.hash}, ${row.created_at})`,
+      );
+    }
+    expect((await req('/api/ready')).status).toBe(200);
   });
 
   it('gives verified help for a country without an account', async () => {
@@ -223,12 +248,29 @@ describe('a guest’s first session', () => {
     expect(body.consents.ai_external).toBe(false);
   });
 
-  it('suggests making a plan on Today, then builds one', async () => {
-    const t1 = (await (await req('/api/today', { cookie })).json()) as {
-      nextStep: { kind: string };
+  it('starts Today with the job-loss checklist, then builds a plan', async () => {
+    type Today = {
+      day: string;
+      nextStep: { kind: string; href: string; key: string; stepId: string | null };
       emergencyNumber: string;
     };
-    expect(t1.nextStep.kind).toBe('make-plan');
+    /** Today with the urgent checklist steps set aside ("not now"), to see what is behind them. */
+    const afterChecklist = async (): Promise<Today> => {
+      const keys: string[] = [];
+      for (;;) {
+        const view = (await (
+          await req('/api/today', {
+            cookie: keys.length ? `${cookie}; wp-not-now=${t1.day}:${keys.join('.')}` : cookie,
+          })
+        ).json()) as Today;
+        if (view.nextStep.kind !== 'checklist') return view;
+        keys.push(view.nextStep.key);
+      }
+    };
+    const t1 = (await (await req('/api/today', { cookie })).json()) as Today;
+    // What has a deadline comes before choosing a direction.
+    expect(t1.nextStep).toMatchObject({ kind: 'checklist', href: '/civic/job-loss' });
+    expect((await afterChecklist()).nextStep.kind).toBe('make-plan');
     expect(t1.emergencyNumber).toBe('112');
 
     const overview = (await (await req('/api/path', { cookie })).json()) as {
@@ -261,9 +303,7 @@ describe('a guest’s first session', () => {
     });
     expect(((await updated.json()) as { progress: { done: number } }).progress.done).toBe(1);
 
-    const t2 = (await (await req('/api/today', { cookie })).json()) as {
-      nextStep: { kind: string; stepId: string };
-    };
+    const t2 = await afterChecklist();
     expect(t2.nextStep.kind).toBe('plan-step');
     expect(t2.nextStep.stepId).not.toBe(first.id);
   });
@@ -1080,7 +1120,7 @@ async function participants(
     counted?: boolean;
     /** When they joined. */
     joinedDaysAgo?: number;
-    /** When they chose to be counted (defaults to when they joined): they count a week later. */
+    /** When they chose to be counted (defaults to when they joined): they count from the first week that begins 7 days or more later. */
     choseDaysAgo?: number;
     plan?: (i: number) => { role: string; skills: string[] } | null;
   },
@@ -1102,9 +1142,9 @@ async function participants(
       counted: opts.counted ?? opts.consent,
       countedSince:
         (opts.counted ?? opts.consent)
-          ? new Date(Date.now() - (opts.choseDaysAgo ?? opts.joinedDaysAgo ?? 8) * 86_400_000)
+          ? new Date(Date.now() - (opts.choseDaysAgo ?? opts.joinedDaysAgo ?? 15) * 86_400_000)
           : null,
-      enrolledAt: new Date(Date.now() - (opts.joinedDaysAgo ?? 8) * 86_400_000),
+      enrolledAt: new Date(Date.now() - (opts.joinedDaysAgo ?? 15) * 86_400_000),
     });
     if (opts.consent)
       await d
@@ -1481,7 +1521,8 @@ describe('organisations', () => {
     );
     for (const id of [...counted, ...notCounted, ...recent]) expect(everything).not.toContain(id);
     expect(everything).not.toContain('Person ');
-  });
+    // Enough people to pass the threshold for showing a total: slow by design on a busy runner.
+  }, 30_000);
 
   it('keeps team roles in check and records who did what', async () => {
     const owner = await member('Grace');
@@ -1850,9 +1891,9 @@ describe('organisations', () => {
 });
 
 describe('administration', () => {
-  async function admin() {
+  async function admin(role: 'admin' | 'staff' = 'admin') {
     const a = await member('Ada');
-    await db.getDb().update(db.users).set({ role: 'admin' }).where(db.eq(db.users.id, a.id));
+    await db.getDb().update(db.users).set({ role }).where(db.eq(db.users.id, a.id));
     // Drop the cached session data so the new role is read from the database.
     return {
       ...a,
@@ -1868,6 +1909,22 @@ describe('administration', () => {
     expect((await req('/api/admin/overview', { cookie: await guest() })).status).toBe(403);
     const someone = await member('Bea');
     expect((await req('/api/admin/moderation', { cookie: someone.cookie })).status).toBe(403);
+  });
+
+  it('lets staff look after content and safety, and keeps the platform for admins', async () => {
+    const staff = await admin('staff');
+    for (const path of [
+      '/api/admin/overview',
+      '/api/admin/moderation',
+      '/api/admin/scam-reports',
+      '/api/admin/feedback',
+      '/api/admin/forecasts',
+      '/api/admin/signals',
+    ])
+      expect((await req(path, { cookie: staff.cookie })).status, path).toBe(200);
+    expect((await req('/api/admin/audit', { cookie: staff.cookie })).status).toBe(403);
+    const boss = await admin();
+    expect((await req('/api/admin/audit', { cookie: boss.cookie })).status).toBe(200);
   });
 
   it('reviews held and reported posts, tells the writer, and never shows safety holds', async () => {

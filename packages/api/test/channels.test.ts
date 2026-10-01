@@ -97,14 +97,20 @@ function twilioSign(url: string, params: Record<string, string>): string {
     .digest('base64');
 }
 
-async function twilio(channel: 'sms' | 'whatsapp', from: string, body: string, sign = true) {
+async function twilio(
+  channel: 'sms' | 'whatsapp',
+  from: string,
+  body: string,
+  sign = true,
+  sid = `SM${crypto.randomUUID().replace(/-/g, '')}`,
+) {
   const path = `/api/channels/twilio/${channel}`;
   const params = {
     From: channel === 'whatsapp' ? `whatsapp:${from}` : from,
     To: '+15550001111',
     Body: body,
     NumMedia: '0',
-    MessageSid: `SM${crypto.randomUUID().replace(/-/g, '')}`,
+    MessageSid: sid,
   };
   const res = await app.request(`${SITE}${path}`, {
     method: 'POST',
@@ -251,6 +257,153 @@ describe('SMS through Twilio', () => {
     expect(slowDowns).toBe(1);
     expect(silent).toBe(2);
   });
+
+  it('still answers someone in danger whose number is over its limit', async () => {
+    const number = '+15557770014';
+    for (let i = 0; i < 31; i++) await twilio('sms', number, 'MENU');
+    const before = await rows<{ n: number }>(
+      db.sql`select count(*)::int as n from crisis_events where channel = 'sms'`,
+    );
+    const { xml } = await twilio('sms', number, 'I want to end my life tonight');
+    const text = replies(xml).join(' ');
+    expect(text).toMatch(/988|911/);
+    expect(text).not.toMatch(/a lot of messages/i);
+    const after = await rows<{ n: number }>(
+      db.sql`select count(*)::int as n from crisis_events where channel = 'sms'`,
+    );
+    expect(after[0]?.n).toBe((before[0]?.n ?? 0) + 1);
+    // The extra allowance is small, so it cannot be used to make Waypoint send without end.
+    let answered = 0;
+    for (let i = 0; i < 8; i++)
+      if (replies((await twilio('sms', number, 'I want to end my life tonight')).xml).length)
+        answered++;
+    expect(answered).toBe(4);
+  });
+
+  it('answers a message the provider delivers twice only once', async () => {
+    const sid = 'SM0123456789abcdef0123456789abcdef';
+    const first = await twilio('sms', '+15557770015', 'HELP', true, sid);
+    expect(replies(first.xml).length).toBeGreaterThan(0);
+    const replay = await twilio('sms', '+15557770015', 'HELP', true, sid);
+    expect(replay.res.status).toBe(200);
+    expect(replies(replay.xml)).toHaveLength(0);
+  });
+
+  it('does not reply to numbers outside the countries it serves, except to someone in danger', async () => {
+    const elsewhere = '+8881234567'; // no country Waypoint has help lines for
+    const menu = await twilio('sms', elsewhere, 'HELLO');
+    expect(menu.res.status).toBe(200);
+    expect(replies(menu.xml)).toHaveLength(0);
+    const known = await rows<{ n: number }>(
+      db.sql`select count(*)::int as n from channel_identities where address_hash = ${service.addressHash(elsewhere)}`,
+    );
+    expect(known[0]?.n).toBe(0);
+    const danger = await twilio('sms', elsewhere, 'I want to kill myself tonight');
+    expect(replies(danger.xml).join(' ').length).toBeGreaterThan(20);
+  });
+
+  it('stops replying when the hourly ceiling for the whole service is reached, except to someone in danger', async () => {
+    const { resetEnvForTests } = await import('@waypoint/core/env');
+    await db.getDb().execute(db.sql`delete from rate_limits where key like 'api:ch-out%'`);
+    process.env.WAYPOINT_TEXT_REPLIES_PER_HOUR = '3';
+    resetEnvForTests();
+    try {
+      let answered = 0;
+      for (let i = 0; i < 6; i++)
+        if (replies((await twilio('sms', `+1555777002${i}`, 'HELP')).xml).length) answered++;
+      expect(answered).toBe(3);
+      const danger = await twilio('sms', '+15557770029', 'I want to end my life tonight');
+      expect(replies(danger.xml).join(' ')).toMatch(/988|911/);
+    } finally {
+      delete process.env.WAYPOINT_TEXT_REPLIES_PER_HOUR;
+      resetEnvForTests();
+      await db.getDb().execute(db.sql`delete from rate_limits where key like 'api:ch-out%'`);
+    }
+  });
+
+  it('keeps the record that someone was in danger even when nothing more can be sent', async () => {
+    const { resetEnvForTests } = await import('@waypoint/core/env');
+    await db.getDb().execute(db.sql`delete from rate_limits where key like 'api:ch-out%'`);
+    process.env.WAYPOINT_TEXT_REPLIES_PER_HOUR = '1';
+    resetEnvForTests();
+    try {
+      const before = await rows<{ n: number }>(
+        db.sql`select count(*)::int as n from crisis_events where channel = 'sms'`,
+      );
+      let answered = 0;
+      for (let i = 0; i < 3; i++)
+        if (
+          replies((await twilio('sms', `+1555777005${i}`, 'I want to end my life tonight')).xml)
+            .length
+        )
+          answered++;
+      expect(answered).toBe(1);
+      const after = await rows<{ n: number }>(
+        db.sql`select count(*)::int as n from crisis_events where channel = 'sms'`,
+      );
+      expect(after[0]?.n).toBe((before[0]?.n ?? 0) + 3);
+    } finally {
+      delete process.env.WAYPOINT_TEXT_REPLIES_PER_HOUR;
+      resetEnvForTests();
+      await db.getDb().execute(db.sql`delete from rate_limits where key like 'api:ch-out%'`);
+    }
+  });
+
+  it('answers a message again when the first try failed part-way', async () => {
+    const sid = 'SMfailedonce0123456789abcdef012345';
+    // The database fails while the message is being handled…
+    await db.getDb().execute(db.sql`alter table channel_identities rename to channel_identities_x`);
+    const failed = await twilio('sms', '+15557770060', 'HELP', true, sid).catch(() => null);
+    await db.getDb().execute(db.sql`alter table channel_identities_x rename to channel_identities`);
+    expect(failed?.res.status ?? 500).toBe(500);
+    // …so the provider delivers it again: that is not a repeat to be ignored.
+    const retry = await twilio('sms', '+15557770060', 'HELP', true, sid);
+    expect(retry.res.status).toBe(200);
+    expect(replies(retry.xml).length).toBeGreaterThan(0);
+  });
+
+  it('answers people in danger from unserved countries from a small allowance of its own', async () => {
+    await db.getDb().execute(db.sql`delete from rate_limits where key like 'api:ch-out%'`);
+    const crisisBefore = await rows<{ count: number }>(
+      db.sql`select count from rate_limits where key = 'api:ch-out-crisis-hour'`,
+    );
+    let answered = 0;
+    for (let i = 0; i < 25; i++)
+      if (
+        replies(
+          (
+            await twilio(
+              'sms',
+              `+88812340${String(i).padStart(2, '0')}`,
+              'I want to kill myself tonight',
+            )
+          ).xml,
+        ).length
+      )
+        answered++;
+    // Made-up senders in countries Waypoint does not serve cannot make it send without end…
+    expect(answered).toBe(20);
+    // …or use up the allowance kept for people in danger in the countries it does serve.
+    const crisisAfter = await rows<{ count: number }>(
+      db.sql`select count from rate_limits where key = 'api:ch-out-crisis-hour'`,
+    );
+    expect(Number(crisisAfter[0]?.count ?? 0)).toBe(Number(crisisBefore[0]?.count ?? 0));
+  });
+
+  it('takes STOP from a number that is over its limit, and then stays silent', async () => {
+    const number = '+15557770061';
+    for (let i = 0; i < 31; i++) await twilio('sms', number, 'MENU');
+    const stop = await twilio('sms', number, 'STOP');
+    expect(replies(stop.xml)).toHaveLength(0);
+    const [identity] = await rows<{ opted_out_at: string | null }>(
+      db.sql`select opted_out_at from channel_identities where address_hash = ${service.addressHash(number)}`,
+    );
+    expect(identity?.opted_out_at).not.toBeNull();
+    // No "please slow down" for someone who asked for no more messages.
+    await db.getDb().execute(db.sql`delete from rate_limits where key like 'api:ch-slow:%'`);
+    const more = await twilio('sms', number, 'hello again');
+    expect(replies(more.xml)).toHaveLength(0);
+  });
 });
 
 // ─────────────────────────────── WhatsApp Cloud API ───────────────────────────────
@@ -268,7 +421,13 @@ describe('WhatsApp through the Cloud API', () => {
               value: {
                 messaging_product: 'whatsapp',
                 messages: [
-                  { from, id: 'wamid.1', timestamp: '1', type: 'text', text: { body: text } },
+                  {
+                    from,
+                    id: `wamid.${crypto.randomUUID()}`,
+                    timestamp: '1',
+                    type: 'text',
+                    text: { body: text },
+                  },
                 ],
               },
             },
@@ -278,6 +437,42 @@ describe('WhatsApp through the Cloud API', () => {
     });
   const sign = (raw: string, secret = env.WHATSAPP_APP_SECRET as string) =>
     `sha256=${createHmac('sha256', secret).update(raw).digest('hex')}`;
+
+  it('reads messages, and ignores reactions, system notices and delivery reports', () => {
+    const value = (messages: unknown[]) => ({ entry: [{ changes: [{ value: { messages } }] }] });
+    expect(
+      providers.parseMetaWebhook(
+        value([
+          { from: '15557770030', id: 'wamid.a', type: 'reaction', reaction: { emoji: '👍' } },
+          { from: '15557770030', id: 'wamid.b', type: 'system', system: { body: 'changed' } },
+          { from: '15557770030', id: 'wamid.c', type: 'unsupported' },
+          { from: '15557770030', id: 'wamid.d', type: 'audio', audio: { id: 'x' } },
+          { from: '15557770030', id: 'wamid.e', type: 'text', text: { body: 'HELP' } },
+        ]),
+      ),
+    ).toEqual([
+      { from: '15557770030', id: 'wamid.d', text: null },
+      { from: '15557770030', id: 'wamid.e', text: 'HELP' },
+    ]);
+    expect(
+      providers.parseMetaWebhook({ entry: [{ changes: [{ value: { statuses: [{}] } }] }] }),
+    ).toEqual([]);
+  });
+
+  it('answers a redelivered WhatsApp message once', async () => {
+    const raw = metaBody('15557770031', 'HELP');
+    for (let i = 0; i < 2; i++) {
+      const res = await app.request(`${SITE}/api/channels/whatsapp`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-hub-signature-256': sign(raw) },
+        body: raw,
+      });
+      expect(res.status).toBe(200);
+      await service.dispatchSettled();
+    }
+    const toNumber = sent.filter((s) => s.body.includes('15557770031'));
+    expect(toNumber).toHaveLength(1);
+  });
 
   it('answers Meta’s verification only with the right token', async () => {
     const ok = await app.request(
@@ -440,6 +635,42 @@ describe('sending queued messages', () => {
     expect(JSON.stringify(row?.payload)).not.toContain('later');
   });
 
+  it('sends everything that is waiting in one run, sign-in codes first', async () => {
+    await api.jobs.dispatchOutbox(db.getDb());
+    sent.length = 0;
+    for (let i = 0; i < 45; i++)
+      await service.queueText(db.getDb(), {
+        channel: 'sms',
+        provider: 'twilio',
+        e164: '+15557770040',
+        body: `Reply ${i}`,
+        identityId: 'x',
+      });
+    // Queued last, behind a pile of replies: a code is only good for five minutes.
+    const { sealWithKek } = await import('@waypoint/core/privacy');
+    await db.enqueueMessage(db.getDb(), {
+      channel: 'sms',
+      recipientRef: sealWithKek('+15557770041', 'outbox'),
+      payload: { template: 'otp', locale: 'en' },
+      secret: { code: '123456' },
+    });
+    const handled = await api.jobs.dispatchOutbox(db.getDb());
+    expect(handled).toBe(46);
+    const to = sent.map((s) => new URLSearchParams(s.body).get('To'));
+    expect(to).toHaveLength(46);
+    expect(to[0]).toBe('+15557770041');
+    // Nothing is left waiting, and a finished message keeps neither words nor recipient.
+    const left = await rows<{ status: string; recipient_ref: string; payload: unknown }>(
+      db.sql`select status, recipient_ref, payload from outbox where status <> 'queued'`,
+    );
+    expect(left.length).toBeGreaterThanOrEqual(46);
+    for (const row of left) expect(row.recipient_ref).toBe('');
+    const waiting = await rows<{ n: number }>(
+      db.sql`select count(*)::int as n from outbox where status = 'queued'`,
+    );
+    expect(waiting[0]?.n).toBe(0);
+  });
+
   it('keeps the words of a waiting message sealed', async () => {
     await service.queueText(db.getDb(), {
       channel: 'sms',
@@ -455,7 +686,7 @@ describe('sending queued messages', () => {
     expect(raw).not.toContain('Private words');
     expect(raw).not.toContain('5557770007');
     await api.jobs.dispatchOutbox(db.getDb());
-    const twilioCall = sent.find((s) => s.url.includes('api.twilio.com'));
+    const twilioCall = sent.find((s) => new URL(s.url).hostname === 'api.twilio.com');
     expect(twilioCall?.url).toBe('https://api.twilio.com/2010-04-01/Accounts/ACtest/Messages.json');
     const params = new URLSearchParams(twilioCall?.body);
     expect(params.get('To')).toBe('+15557770007');
@@ -488,7 +719,7 @@ describe('sending queued messages', () => {
     await api.jobs.dispatchOutbox(db.getDb());
     expect(sent).toHaveLength(0);
     const [stale] = await rows<{ status: string; last_error: string }>(
-      db.sql`select status, last_error from outbox where recipient_ref = 'x'`,
+      db.sql`select status, last_error from outbox where status = 'cancelled' order by created_at limit 1`,
     );
     expect(stale).toMatchObject({ status: 'cancelled', last_error: 'Too old to be useful' });
   });

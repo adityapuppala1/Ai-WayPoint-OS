@@ -2,14 +2,22 @@
  * Goals and the weekly review. Goals are few and personal, so their words are encrypted with the
  * person's data key; the area, dates and progress stay in the clear so Today can use them.
  * No streaks and no guilt: progress is a simple percentage the person sets themselves.
+ *
+ * What someone writes here — a goal, why it matters, the answers of the weekly review — is
+ * screened for signs of danger as it is saved, exactly like the journal (the same rules, no
+ * AI). The words are saved either way; if something is flagged the answer carries the support
+ * card, and a safety record is kept without the words.
  */
 import { z } from '@hono/zod-openapi';
 import { weekStartOf } from '@waypoint/core';
 import { newId } from '@waypoint/core/ids';
 import { openFor, SEALED, sealFor } from '@waypoint/core/privacy';
 import { and, asc, type Database, desc, eq, goals, weeklyReviews } from '@waypoint/db';
+import { oneAtATime } from '../lib/locks';
 import { ApiError, notFound } from '../lib/problem';
-import { userDek } from './me';
+import { helpCountry, type Profile, userDek } from './me';
+import { ScreeningSchema } from './mind';
+import { type Screening, screenWriting } from './safety';
 
 export const GOAL_AREAS = ['path', 'money', 'mind', 'health', 'civic', 'circles', 'goals'] as const;
 export const GOAL_STATUSES = ['active', 'paused', 'done', 'dropped'] as const;
@@ -80,6 +88,14 @@ export const GoalsViewSchema = z
     recentReviews: z.array(ReviewSchema),
   })
   .openapi('Goals');
+
+/** What saving answers with: the goal or review itself, plus the result of the safety check. */
+export const GoalSavedSchema = GoalSchema.extend({ screening: ScreeningSchema }).openapi(
+  'GoalSaved',
+);
+export const ReviewSavedSchema = ReviewSchema.extend({ screening: ScreeningSchema }).openapi(
+  'WeeklyReviewSaved',
+);
 
 export type Goal = z.infer<typeof GoalSchema>;
 export type WeeklyReview = z.infer<typeof ReviewSchema>;
@@ -162,7 +178,34 @@ export async function goalsOverview(
   };
 }
 
+/** The safety check for words that were just saved (several answers are read as one text). */
+function screen(
+  db: Database,
+  userId: string,
+  profile: Profile,
+  words: Array<string | null | undefined>,
+): Promise<Screening> {
+  return screenWriting(db, words.filter(Boolean).join('\n'), {
+    userId,
+    country: helpCountry(profile),
+    locale: profile.locale,
+  });
+}
+
 export async function createGoal(
+  db: Database,
+  userId: string,
+  profile: Profile,
+  input: z.infer<typeof GoalInputSchema>,
+): Promise<Goal & { screening: Screening }> {
+  // Counted and saved one at a time per person, so the limit holds when requests arrive together.
+  const goal = await oneAtATime(db, `goals:${userId}`, (tx) =>
+    createGoalUnlocked(tx, userId, input),
+  );
+  return { ...goal, screening: await screen(db, userId, profile, [input.title, input.why]) };
+}
+
+async function createGoalUnlocked(
   db: Database,
   userId: string,
   input: z.infer<typeof GoalInputSchema>,
@@ -198,9 +241,10 @@ export async function createGoal(
 export async function updateGoal(
   db: Database,
   userId: string,
+  profile: Profile,
   goalId: string,
   patch: z.infer<typeof GoalPatchSchema>,
-): Promise<Goal> {
+): Promise<Goal & { screening: Screening }> {
   const dek = await userDek(db, userId);
   const set: Partial<typeof goals.$inferInsert> = { updatedAt: new Date() };
   if (patch.title !== undefined)
@@ -220,7 +264,11 @@ export async function updateGoal(
     .where(and(eq(goals.id, goalId), eq(goals.userId, userId)))
     .returning();
   if (!row) throw notFound('Goal');
-  return goalView(dek, userId, row);
+  // Only words that changed are read again: moving the progress marker screens nothing.
+  return {
+    ...goalView(dek, userId, row),
+    screening: await screen(db, userId, profile, [patch.title, patch.why]),
+  };
 }
 
 export async function deleteGoal(db: Database, userId: string, goalId: string): Promise<void> {
@@ -235,11 +283,11 @@ export async function deleteGoal(db: Database, userId: string, goalId: string): 
 export async function saveReview(
   db: Database,
   userId: string,
-  timeZone: string,
+  profile: Profile,
   input: z.infer<typeof ReviewInputSchema>,
-): Promise<WeeklyReview> {
+): Promise<WeeklyReview & { screening: Screening }> {
   const dek = await userDek(db, userId);
-  const weekStart = weekStartOf(new Date(), timeZone);
+  const weekStart = weekStartOf(new Date(), profile.timezone);
   const [existing] = await db
     .select({ id: weeklyReviews.id })
     .from(weeklyReviews)
@@ -268,5 +316,12 @@ export async function saveReview(
         .values({ id, userId, weekStart, bodyCt, mood: input.mood ?? null })
         .returning();
   if (!row) throw new Error('Could not save the review');
-  return reviewView(dek, userId, row);
+  return {
+    ...reviewView(dek, userId, row),
+    screening: await screen(db, userId, profile, [
+      input.wentWell,
+      input.gotInTheWay,
+      input.nextChange,
+    ]),
+  };
 }

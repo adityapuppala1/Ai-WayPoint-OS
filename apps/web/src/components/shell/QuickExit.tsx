@@ -3,6 +3,7 @@
 import { Button } from '@waypoint/ui';
 import { useTranslations } from 'next-intl';
 import { useEffect } from 'react';
+import styles from './public.module.css';
 
 const EXIT_URL = 'https://www.bbc.com/weather';
 
@@ -17,7 +18,8 @@ export function quickExit() {
   window.location.replace(EXIT_URL);
 }
 
-export function QuickExit({ compact }: { compact?: boolean }) {
+/** `compact`: the short label; `"narrow"`: the short label on small screens only. */
+export function QuickExit({ compact }: { compact?: boolean | 'narrow' }) {
   const t = useTranslations('a11y');
   useEffect(() => {
     let presses: number[] = [];
@@ -27,8 +29,10 @@ export function QuickExit({ compact }: { compact?: boolean }) {
       presses = [...presses.filter((p) => now - p < 1200), now];
       if (presses.length >= 3) quickExit();
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    // Heard on the way in (capture), before anything else: a dialog or a search field uses
+    // Escape itself (to clear, then to close) and stops it there, and those presses count too.
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
   }, []);
   return (
     <Button
@@ -38,7 +42,16 @@ export function QuickExit({ compact }: { compact?: boolean }) {
       onPress={quickExit}
       aria-label={`${t('quickExit')}. ${t('quickExitHint')}`}
     >
-      {compact ? t('quickExitShort') : t('quickExit')}
+      {compact === 'narrow' ? (
+        <>
+          <span className={styles.full}>{t('quickExit')}</span>
+          <span className={styles.short}>{t('quickExitShort')}</span>
+        </>
+      ) : compact ? (
+        t('quickExitShort')
+      ) : (
+        t('quickExit')
+      )}
     </Button>
   );
 }

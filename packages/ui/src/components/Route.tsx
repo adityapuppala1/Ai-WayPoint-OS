@@ -3,6 +3,7 @@ import { cn } from '../cn';
 import { Icon } from './Icon';
 import type { ModuleKey } from './ModuleMark';
 import styles from './Route.module.css';
+import { RouteLink } from './RouteLink';
 
 export type StationState = 'done' | 'current' | 'upcoming';
 
@@ -12,6 +13,8 @@ export interface Station {
   detail?: ReactNode;
   meta?: ReactNode;
   state: StationState;
+  /** Where this station leads (its step, its page). Makes the label a link. */
+  href?: string;
 }
 
 export interface RouteProps {
@@ -35,6 +38,10 @@ const STATE_TEXT: Record<StationState, string> = {
 /**
  * A sequence drawn as a transit line. Completed track is solid; track ahead is dashed.
  * Use only for real sequences (plans, onboarding, progress) — never as decoration.
+ *
+ * Keep each station's `id` the same between renders: when a station's state changes, the
+ * track fills to the next station and the dot settles there (instantly in lite mode or when
+ * the person asked for less motion).
  */
 export function Route({
   stations,
@@ -68,7 +75,13 @@ export function Route({
           </span>
           <span className={styles.content}>
             <span className="wp-visually-hidden">{stateLabels[s.state]}: </span>
-            <span className={styles.label}>{s.label}</span>
+            {s.href ? (
+              <RouteLink href={s.href} className={cn(styles.label, styles.link)}>
+                {s.label}
+              </RouteLink>
+            ) : (
+              <span className={styles.label}>{s.label}</span>
+            )}
             {s.detail ? <span className={styles.detail}>{s.detail}</span> : null}
             {s.meta ? <span className={styles.meta}>{s.meta}</span> : null}
           </span>

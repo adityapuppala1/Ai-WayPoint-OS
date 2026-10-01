@@ -53,13 +53,22 @@ People still control their data: text only goes to an external AI provider if th
 **"Use AI providers"** in Privacy settings, and it is redacted first (emails, phone numbers,
 card, bank and ID numbers removed).
 
+A second, separate key is optional too: `TYPESAFE_API_KEY` switches on a "judge" (TypeSafe's
+Jev), which answers yes-or-no questions with probabilities and writes nothing. Waypoint uses it
+only where a second opinion can add caution: it can raise a Scam Shield warning but never
+lower one, hold back an AI answer by text, and refuse an AI rewrite of a plan. It is an
+outside service in the United States, under the same consent and redaction, off unless you
+set the key, English only until you have measured another language
+(`pnpm --filter @waypoint/ai eval:judge`), and its thresholds are untuned starting values:
+read [docs/AI.md](docs/AI.md#typed-decisions-jev) before switching it on.
+
 ---
 
 ## What works in this version
 
 | Area | Status |
 | --- | --- |
-| **Today** — one next step (the Sign), this week's route, what changed for you | ✅ |
+| **Today** — one next step from every module (the Sign), with why it comes first and "Not now" for the day; this week's route, what changed for you | ✅ |
 | **Onboarding** — guest-first, two minutes, everything optional, privacy choices off by default | ✅ |
 | **Path** — skills, role suggestions with honest AI-exposure notes, week-by-week plans, step tracking | ✅ |
 | **Scam Shield** — rules engine + optional AI second opinion, report channels per country, scam library | ✅ |
@@ -67,8 +76,9 @@ card, bank and ID numbers removed).
 | **Get help now** — verified emergency numbers for 48 countries, checked help lines for 47, and global directories | ✅ |
 | **Crisis protocol** — multilingual detection before any AI call, calm support card, gentle follow-up | ✅ |
 | **Services** — life-event checklists (job loss, moving country, new baby…) with official links | ✅ |
-| **Signals** — sourced changes ranked for you, with "Why am I seeing this?" | ✅ |
-| **Settings & Privacy** — consents, trusted contacts (encrypted), export all data, delete account | ✅ |
+| **Signals** — sourced changes ranked for you, with "Why am I seeing this?"; save one, or say it is not relevant (with Undo), and find what you saved again. Signals are typed in by staff with their source, never generated, so a country nobody covers yet sees none | ✅ |
+| **What’s next?** — forecasts that staff publish and judge: each shows its chance as a number and in words (never 0% or 100%), its sources, what you can do either way and the day it will be judged. A public record shows how they turned out, with a score only once enough have been judged, and marks any outcome a second member of staff has not confirmed yet. Nothing is generated: with none published, the page says so | ✅ |
+| **Settings & Privacy** — consents, trusted contacts (encrypted; one tap from the support card, sent by your own phone), see and delete what the assistant was asked to remember, tell us what worked or what didn't, export all data, delete account | ✅ |
 | **Accounts** — guest sessions, email sign-up (guest data moves across), passkeys ready | ✅ |
 | **Money** — runway on a cautious income, pressure level, the five most useful next steps, money-safety tips; numbers encrypted | ✅ |
 | **Goals** — a few private goals with progress, and a weekly review (encrypted) | ✅ |
@@ -77,7 +87,7 @@ card, bank and ID numbers removed).
 | **Health** — a quick daily log (sleep, movement, water, private note) with a calm weekly view, private reminders (encrypted) that appear on Today, and where to get care: emergency signs (stroke, heart attack, severe allergy, heatstroke) and checked non-emergency lines. Never diagnoses | ✅ |
 | **Surroundings** — weather, air quality and UV where you are, turned into plain advice (heat, cold, storms, wind, sun, air); fetched by your device, so your location never reaches Waypoint; works offline from the last forecast | ✅ |
 | **Organisations** — employers, schools, NGOs and public services run programmes with a join code, link, QR code and printable poster; people join in a minute (guests too) and choose, per programme, whether to be counted; the console shows only weekly, rounded, slightly noisy totals for groups of 50+ who chose it — never a person, never Mind, Health, Money, Circles, Ask or Shield. Teams with owner, admin and member roles (invitations need a confirmed email); every action audited | ✅ |
-| **Admin console** — moderation queue for Circles (safety holds are only counted, never shown; writers are told what happened), scam-report review that warns people in Shield, AI spend against the budget, message delivery, and when each crisis line and emergency number was last checked | ✅ |
+| **Admin console** — moderation queue for Circles (safety holds are only counted, never shown; writers are told what happened), scam-report review that warns people in Shield, forecasts (publish, edit, judge, second check), sourced signals (add, withdraw), feedback worked through and answered, AI spend against the budget, message delivery, when each crisis line and emergency number was last checked — plus accounts and staff invitations, outside services' keys set from the console, system health, maintenance and backups, and privacy-first analytics | ✅ |
 | **Texting** — SMS, WhatsApp and USSD for basic phones: help lines, scam checks in every language, short answers (AI only with consent), STOP respected; numbers sealed, nothing anyone writes kept ([setup](docs/CHANNELS.md)) | ✅ |
 | **Email** — confirmation links, password resets and invitations in the reader's language, through Resend or any SMTP server | ✅ |
 | **Phone app** (iOS and Android, Expo) — Today, Scam Shield that checks on the phone in every language, Ask with the support card, help lines that work offline, and settings; guest first, session in the phone's secure keystore ([details](docs/MOBILE.md)) | ✅ |
@@ -97,10 +107,40 @@ card, bank and ID numbers removed).
 | `pnpm build` then `pnpm start` | Production build and server |
 | `pnpm db:seed --demo` | Add clearly-labelled example data (stop `pnpm dev` first) |
 | `pnpm worker` | Background worker for Postgres deployments |
-| `pnpm eval` | Run the safety evaluation sets against the classifiers |
+| `pnpm eval` | Run the safety evaluation sets against the classifiers, and the assistant guardrail cases (no AI key needed) |
+| `pnpm check` | Lint, types and every unit test in one go (what CI runs) |
+| `pnpm --filter @waypoint/web build` then `pnpm test:e2e` | Browser tests against the built app in Chrome, Firefox and Safari's engine (WebKit), at phone and desktop widths (first time: `pnpm --filter @waypoint/web exec playwright install`; one browser only: add `--project=desktop`, `phone`, `firefox`, `safari` or `iphone`) |
+| `node infra/load/run.mjs` | The load test, against a server you name ([infra/load/README.md](infra/load/README.md) has the recorded baseline) |
 | `pnpm --filter @waypoint/mobile dev` | Start the phone app (open it in Expo Go; see [docs/MOBILE.md](docs/MOBILE.md)) |
 
 API documentation: http://localhost:3000/api/openapi.json (auth endpoints: `/api/auth/reference`).
+
+---
+
+## Browsers
+
+Waypoint is built for Chrome and Edge 111, Firefox 111 and Safari 16.4 or newer: browsers
+from spring 2023 on, including every browser on an iPhone or iPad with iOS 16.4. That list is
+the `browserslist` in the root `package.json`: the one Next.js 16 builds for by itself, with
+iOS Safari named too, so the build keeps the few prefixed rules only an iPhone reads.
+(Firefox 111 and 112 miss a few borders and hover fills, because they do not know
+`color-mix()`; nothing stops working.) An older browser shows the page as plain text with a
+notice that says so, in the reader's language, and a link to Get help now, which stays
+readable without the stylesheet.
+
+**Tested** on every change, in five Playwright projects against the built app: Chrome at a
+desktop and a phone size (`desktop`, `phone`), Firefox (`firefox`), and WebKit, the engine
+of Safari and of every browser on an iPhone, at a desktop and an iPhone size (`safari`,
+`iphone`).
+
+**Not tested**, so check by hand before a release:
+
+- **Real iPhones and Macs.** Playwright's WebKit is Safari's engine, not Safari: no on-screen
+  keyboard or toolbars, no real safe-area insets, no native date and time pickers, no
+  installed (home-screen) app, and not Safari's rule that a cookie written by a page's script
+  is forgotten after seven days. Language, theme and time zone are cookies the server sets
+  for that reason (`POST /api/preferences`).
+- **Samsung Internet**, which Playwright cannot drive.
 
 ---
 
@@ -134,7 +174,8 @@ More: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/SAFETY.md](docs/SAFE
 [docs/PRIVACY.md](docs/PRIVACY.md) · [docs/AI.md](docs/AI.md) ·
 [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) · [docs/LOCALIZATION.md](docs/LOCALIZATION.md) ·
 [docs/CHANNELS.md](docs/CHANNELS.md) · [docs/MOBILE.md](docs/MOBILE.md) ·
-[docs/ROADMAP.md](docs/ROADMAP.md)
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) · [SECURITY.md](SECURITY.md) ·
+[docs/COVERAGE.md](docs/COVERAGE.md) · [docs/ROADMAP.md](docs/ROADMAP.md)
 
 ---
 
@@ -146,8 +187,50 @@ More: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/SAFETY.md](docs/SAFE
 - **Admin** — put `WAYPOINT_ADMIN_EMAIL` and `WAYPOINT_ADMIN_PASSWORD` (10+ characters) in
   `.env.local` before starting; that account is created on start (an existing account with that
   address is only promoted once its email is confirmed). Sign in with it and open **Admin** from
-  the account menu (`/admin`) for moderation, scam reports, AI spend, message delivery and the
-  activity log. Everyone else gets a plain "not found" there.
+  the account menu (`/admin`). The console is grouped by what each part is for — People
+  (accounts, staff), Safety (moderation, scam reports), Content (forecasts, signals, feedback),
+  Insights (analytics) and Platform (integrations, system health, maintenance, activity log).
+  Admins see all of it; staff see the overview, safety, content and analytics. Everyone else
+  gets a plain "not found" there.
+- **Integrations** — `/admin/integrations` lists every outside service (AI models, the second
+  opinion, texting, email) with its state, and takes its keys and options right there: saved
+  sealed in the database, used at once, kept until an admin changes them, and shown again only
+  as their last four characters. A value in the server's environment always wins. Each service
+  can be checked with one harmless call. Database, URL and auth secrets stay in the environment.
+- **System health** — `/admin/system`: what needs a look first, the API's requests, errors and
+  speed hour by hour, every route, recent server errors, the database and its largest tables,
+  background work and messages (failed ones can be tried again or cancelled) and the server.
+- **Maintenance** — `/admin/maintenance`: close Waypoint for a while (now or at a set time, with
+  words for people; help, sign-in, texts and staff stay open), an announcement for everyone,
+  a backup of the built-in database, and housekeeping.
+- **Accounts and staff** — `/admin/users` finds any account by name, address or number, and
+  holds one back (with a reason and an optional end), lets it back in, signs it out everywhere,
+  changes its role or deletes it — each asked about first and recorded. `/admin/staff` invites
+  people to the staff by email; they accept signed in with that address.
+- **Analytics** — `/admin/analytics`: active people, new people, a funnel from joining to coming
+  back, weekly cohorts, what people open and when, platforms, countries, languages and
+  situations, filtered by period, platform, who, country and language. Counted with care: only
+  that someone used Waypoint on a day, pages opened with nobody attached, no group under five
+  people ever shown ([what is counted](docs/PRIVACY.md#the-consoles-analytics)).
+- **Forecasts** — staff publish them at `/admin/forecasts`: a yes-or-no question, the chance
+  (1 to 99%), why, at least one source, what people can do, and the day it will be judged.
+  The question, how it is judged and the date cannot change afterwards; the chance can, and
+  every chance it showed is scored. While a forecast is open, **Edit details** changes its
+  explanation, advice, sources, countries and usual rate and adds translations (a saved
+  translation's question is fixed too). On the day, staff record what happened with a link
+  anyone can check. The outcome counts straight away and is marked "not yet double-checked"
+  until a different member of staff confirms it under **Second check**; with one staff
+  account the mark simply stays. People read forecasts at `/signals/forecasts`; the record is
+  at `/signals/forecasts/record` ([how it is scored](docs/SAFETY.md#forecasts)).
+- **Signals** — staff add them at `/admin/signals`: what changed, a summary in their own
+  words, the source's name and `https://` address, the day the source published it, and the
+  countries it is about (none means everywhere). A signal cannot be published without a
+  source, and nothing writes one for staff. It is shown straight away to the people it is
+  about; **Withdraw** takes it down for everyone. Nothing fetches signals automatically yet.
+- **Feedback** — people send it from Settings → "Tell us what worked, or what didn't"; staff
+  work through it at `/admin/feedback`: new, planned, done or won't do, with a note for the
+  team, and a reply by email to anyone who asked for one. Personal details are removed before
+  it is stored, and nobody is named unless they asked for a reply.
 - **Confirming email addresses** — needed to invite colleagues and to answer an invitation.
   Set `EMAIL_FROM` and either `RESEND_API_KEY` or `SMTP_URL` to send real email. Without them,
   development prints the confirmation link (like password-reset links) in the terminal running
@@ -159,6 +242,11 @@ More: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/SAFETY.md](docs/SAFE
   (`cf-connecting-ip` behind Cloudflare, `x-real-ip` behind nginx), or keep X-Forwarded-For and
   list your proxies in `TRUSTED_PROXIES`, so rate limits apply to each visitor rather than to
   everyone at once — and cannot be dodged by sending a made-up header.
+  [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) is the full guide: Docker Compose behind a reverse
+  proxy, Kubernetes manifests (`infra/k8s/base`), migrations, backups, scaling and what the
+  operator must do before opening to the public.
+- **Security** — how to report a problem is in [SECURITY.md](SECURITY.md) and at
+  `/.well-known/security.txt` (set `WAYPOINT_SECURITY_CONTACT`).
 - **Privacy notice and terms** — `/privacy` and `/terms` are written in plain words in all seven
   languages and describe this installation: set `WAYPOINT_OPERATOR` (who runs it) and
   `WAYPOINT_CONTACT_EMAIL` so they name you, and `WAYPOINT_DATA_LOCATION` and

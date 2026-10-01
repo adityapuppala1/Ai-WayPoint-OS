@@ -33,6 +33,16 @@ const PX = { sm: 28, md: 36, lg: 48 } as const;
 const ICON_PX = { sm: 16, md: 20, lg: 26 } as const;
 
 /**
+ * A module's two colours as CSS values: its line and the pale tint of it. The help pages
+ * have no line of their own; they use the calm harbour blue.
+ */
+export function moduleColours(module: ModuleKey): { line: string; tint: string } {
+  return module === 'support'
+    ? { line: 'var(--wp-support)', tint: 'var(--wp-support-tint)' }
+    : { line: `var(--wp-line-${module})`, tint: `var(--wp-tint-${module})` };
+}
+
+/**
  * A module's pictogram in its line colour — the way transit maps mark a line.
  * Always sits next to a text label; never carries meaning alone.
  */
@@ -43,11 +53,11 @@ export function ModuleMark({
   label,
   className,
 }: ModuleMarkProps) {
-  const lineKey = module === 'support' ? 'signals' : module;
+  const { line, tint } = moduleColours(module);
   const style = {
     '--size': `${PX[size] / 16}rem`,
-    '--line': module === 'support' ? 'var(--wp-support)' : `var(--wp-line-${lineKey})`,
-    '--tint': module === 'support' ? 'var(--wp-support-tint)' : `var(--wp-tint-${lineKey})`,
+    '--line': line,
+    '--tint': tint,
   } as CSSProperties;
   return (
     <span

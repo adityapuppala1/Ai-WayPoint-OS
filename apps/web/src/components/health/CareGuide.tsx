@@ -89,14 +89,11 @@ export async function CareGuide({ care }: { care: HealthView['care'] }) {
                   {l.audience}
                   {l.notes ? ` ${l.notes}` : ''}
                 </p>
-                <p className="wp-meta">
-                  {[
-                    l.hours ? t('hoursAvailable', { hours: l.hours }) : null,
-                    l.free ? t('free') : null,
-                  ]
-                    .filter(Boolean)
-                    .join(' · ')}
-                </p>
+                {/* Two facts, one line each. */}
+                {l.hours ? (
+                  <p className="wp-meta">{t('hoursAvailable', { hours: l.hours })}</p>
+                ) : null}
+                {l.free ? <p className="wp-meta">{t('free')}</p> : null}
                 <div className="wp-row">
                   {l.phone ? (
                     <LinkButton href={tel(l.phone)} variant="secondary" icon="phone" size="sm">

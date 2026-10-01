@@ -1,0 +1,33 @@
+# The way in, with HTTPS. Written for ingress-nginx with cert-manager; adapt the class and
+# annotations to your own ingress controller. The host must match WAYPOINT_URL in the
+# ConfigMap.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: waypoint
+  annotations:
+    # A certificate from Let's Encrypt, renewed automatically (needs cert-manager and a
+    # ClusterIssuer of this name).
+    cert-manager.io/cluster-issuer: letsencrypt
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # Nothing Waypoint accepts is larger than this.
+    nginx.ingress.kubernetes.io/proxy-body-size: 1m
+    # Ask streams its answers: pass them on as they arrive.
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: ["waypoint.example.org"]
+      secretName: waypoint-tls
+  rules:
+    - host: waypoint.example.org
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: waypoint-web
+                port:
+                  name: http

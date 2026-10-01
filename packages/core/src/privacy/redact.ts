@@ -114,7 +114,9 @@ const DETECTORS: Detector[] = [
   // International and local phone numbers: 7–15 digits, allowing spaces, dashes, dots and brackets.
   {
     kind: 'phone',
-    re: /(?:(?<=\s)|^)(?:\+|00)?\d{1,4}?[\s.-]?\(?\d{2,5}\)?(?:[\s.-]?\d{2,5}){1,4}(?=$|[\s,.;!?)])/g,
+    // Not only after a space: `(0712345678)`, `tel:+254…`, `"to":"+254…"` and `to=+254…` are
+    // how numbers appear in provider errors and logs. A number never starts or ends inside a word.
+    re: /(?<![\w+])(?:\+|00)?\d{1,4}?[\s.-]?\(?\d{2,5}\)?(?:[\s.-]?\d{2,5}){1,4}(?!\w)/g,
     validate: (m) => {
       const d = m.replace(/\D/g, '');
       if (d.length < 7 || d.length > 15) return false;
@@ -123,6 +125,8 @@ const DETECTORS: Detector[] = [
       if (/^\d{1,2}[./-]\d{1,2}[./-]\d{2,4}$/.test(s) || /^\d{4}[./-]\d{1,2}[./-]\d{1,2}$/.test(s))
         return false;
       if (/^\d+\.\d{1,2}$/.test(s)) return false;
+      // A timestamp ("2024-05-12 10:30") starts with a date and carries on.
+      if (/^\d{4}-\d{2}-\d{2}(?:\D|$)/.test(s)) return false;
       return true;
     },
   },

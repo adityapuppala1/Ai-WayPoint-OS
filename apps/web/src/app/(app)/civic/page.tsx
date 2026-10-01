@@ -1,7 +1,7 @@
 import { civic } from '@waypoint/api';
 import { COUNTRIES, normalizeCountry } from '@waypoint/content';
 import { dbReady, getDb } from '@waypoint/db';
-import { List, ModuleMark, Panel } from '@waypoint/ui';
+import { List, PageHeader, Panel } from '@waypoint/ui';
 import type { Metadata } from 'next';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { contentLang, EnglishContentNote } from '@/components/EnglishContentNote';
@@ -34,13 +34,7 @@ export default async function CivicPage({
   const lang = await contentLang();
   return (
     <div className="wp-page">
-      <header className="wp-page-head">
-        <div className="wp-row">
-          <ModuleMark module="civic" size="lg" />
-          <h1>{t('title')}</h1>
-        </div>
-        <p className="wp-lead">{t('lead')}</p>
-      </header>
+      <PageHeader module="civic" title={t('title')} lead={t('lead')} />
       <div style={{ maxInlineSize: '20rem' }}>
         <CountryPicker label={t('country')} countries={countries} value={view.country} />
       </div>

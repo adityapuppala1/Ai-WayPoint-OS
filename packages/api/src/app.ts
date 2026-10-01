@@ -2,6 +2,7 @@
  * The Waypoint HTTP API. One Hono app serves every client (web, mobile, messaging channels)
  * and runs inside Next.js during development or as its own service in production.
  */
+import { timingSafeEqual } from 'node:crypto';
 import { OpenAPIHono } from '@hono/zod-openapi';
 import {
   AUTH_CLIENT_IP_HEADER,
@@ -13,8 +14,10 @@ import {
   KEEP_GUEST_HEADER,
 } from '@waypoint/auth';
 import { countryOfNumber, toE164 } from '@waypoint/core/channels';
+import { apiOpenDuringMaintenance, isStaffRole } from '@waypoint/core/console';
 import { getEnv } from '@waypoint/core/env';
-import { dbReady, getDb } from '@waypoint/db';
+import { isInternalPath } from '@waypoint/core/paths';
+import { dbReady, getDb, sql } from '@waypoint/db';
 import { isLocale, LOCALE_COOKIE, resolveLocale } from '@waypoint/i18n';
 import { bodyLimit } from 'hono/body-limit';
 import { getCookie } from 'hono/cookie';
@@ -22,14 +25,16 @@ import { cors } from 'hono/cors';
 import { csrf } from 'hono/csrf';
 import { HTTPException } from 'hono/http-exception';
 import { errorFields, log } from './lib/log';
+import { recordError, recordRequest } from './lib/metrics';
 import { ApiError, problemResponse } from './lib/problem';
-import { clientAddress, keyedHash, rateLimit } from './lib/request';
+import { clientAddress, clientIp, ipHash, keyedHash, rateLimit, withinLimit } from './lib/request';
 import { withSession } from './middleware';
 import admin from './routes/admin';
 import ask from './routes/ask';
 import channels from './routes/channels';
 import circles from './routes/circles';
 import civic from './routes/civic';
+import forecasts from './routes/forecasts';
 import goals from './routes/goals';
 import health from './routes/health';
 import me from './routes/me';
@@ -37,17 +42,68 @@ import mind from './routes/mind';
 import money from './routes/money';
 import org from './routes/org';
 import path from './routes/path';
+import people from './routes/people';
+import preferences, { forgetPersonalCookies } from './routes/preferences';
 import shield from './routes/shield';
 import signals from './routes/signals';
 import support from './routes/support';
 import system from './routes/system';
 import today from './routes/today';
+import { platformNotice } from './services/maintenance';
 import type { AppEnv } from './types';
 
 export const API_VERSION = '0.1.0';
 
 /** How long creating an account or asking for a reset link takes at least, in production. */
 const AUTH_ANSWER_FLOOR_MS = 900;
+
+/** How long a failed sign-in takes at least, in production. */
+const SIGN_IN_FAILURE_FLOOR_MS = 400;
+
+/** Marks a device that has signed in to an account before (a random value and its signature). */
+const DEVICE_COOKIE = 'waypoint.device';
+
+/** The account a sign-in request is for, as a keyed hash of the address (null when unreadable). */
+async function signInAccount(request: Request): Promise<string | null> {
+  const body = (await request
+    .clone()
+    .json()
+    .catch(() => null)) as { email?: unknown } | null;
+  const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
+  return email ? keyedHash(email, 'sign-in') : null;
+}
+
+/** The device's random value when its cookie was issued for this account; otherwise null. */
+function knownDevice(cookie: string | undefined, account: string): string | null {
+  const [nonce = '', signature = ''] = (cookie ?? '').split('.');
+  if (!/^[a-f0-9]{32}$/.test(nonce) || !signature) return null;
+  return sameText(signature, keyedHash(`${account}:${nonce}`, 'device')) ? nonce : null;
+}
+
+function deviceCookie(account: string): string {
+  const nonce = crypto.randomUUID().replace(/-/g, '');
+  const secure = getEnv().WAYPOINT_URL.startsWith('https://') ? '; Secure' : '';
+  return `${DEVICE_COOKIE}=${nonce}.${keyedHash(`${account}:${nonce}`, 'device')}; Path=/api/auth; Max-Age=31536000; HttpOnly; SameSite=Lax${secure}`;
+}
+
+/** Compared without stopping at the first difference, so timing says nothing. */
+function sameText(a: string, b: string): boolean {
+  const x = Buffer.from(a);
+  const y = Buffer.from(b);
+  return x.length === y.length && timingSafeEqual(x, y);
+}
+
+/** A path on this site ("/reset-password"), or a full address on one of its own origins. */
+function onThisSite(target: string, origins: string[]): boolean {
+  // Written plainly: no tabs, line breaks or backslashes that a browser would read as "//".
+  if (target.startsWith('/')) return isInternalPath(target);
+  try {
+    const url = new URL(target);
+    return (url.protocol === 'https:' || url.protocol === 'http:') && origins.includes(url.origin);
+  } catch {
+    return false;
+  }
+}
 
 function allowedOrigins(): string[] {
   const env = getEnv();
@@ -69,6 +125,21 @@ export function createApp() {
     await next();
     c.res.headers.set('X-Request-Id', id);
     const ms = Math.round(performance.now() - start);
+    // The route as written in the code: the last matched handler that is not middleware
+    // (a request no route matched is counted as one, never by its path).
+    const route =
+      [...c.req.matchedRoutes].reverse().find((r) => r.method !== 'ALL')?.path ?? '(no route)';
+    // Closed for maintenance on purpose: neither traffic to measure nor a failure.
+    if (c.get('closed')) return;
+    recordRequest({ method: c.req.method, route, status: c.res.status, ms });
+    if (c.res.status >= 500 && !c.get('errorKept'))
+      recordError({
+        method: c.req.method,
+        route,
+        status: c.res.status,
+        message: `Answered ${c.res.status}`,
+        requestId: id,
+      });
     if (c.res.status >= 500)
       log.error('request failed', {
         requestId: id,
@@ -99,7 +170,9 @@ export function createApp() {
   });
 
   app.use('*', async (c, next) => {
-    await dbReady();
+    // Liveness and readiness must answer when the database does not: liveness says the
+    // process is up, readiness checks the database itself and answers 503.
+    if (!/\/(health|ready)$/.test(c.req.path)) await dbReady();
     c.set('db', getDb());
     await next();
   });
@@ -159,29 +232,84 @@ export function createApp() {
     const db = c.get('db');
     const number = keyedHash(e164, 'otp');
     if (sending) {
+      // One visitor address can ask for codes for 60 different numbers a day. Without this, a
+      // single address working through a list of numbers could use up the ceiling everyone
+      // shares (and with it, phone sign-in for everyone) within the hour. Numbers are counted,
+      // not codes: a phone network or an office puts many people behind one address, and each
+      // of them asking again for their own number costs their neighbours nothing.
+      const visitor = clientIp(c.req.raw.headers);
+      if (visitor !== 'unknown') {
+        const who = keyedHash(visitor, 'ip');
+        const first = `otp-number:${who}:${number}`;
+        if (await withinLimit(db, first, { windowSeconds: 86_400, max: 1 }))
+          await rateLimit(db, `otp-numbers:${who}`, { windowSeconds: 86_400, max: 60 }).catch(
+            async (err) => {
+              // Refused: this number was not counted, so it is not remembered as counted.
+              await db.execute(sql`delete from rate_limits where key = ${`api:${first}`}`);
+              throw err;
+            },
+          );
+      }
       await rateLimit(db, `otp-send:${number}`, { windowSeconds: 3600, max: 3 });
       await rateLimit(db, `otp-send-day:${number}`, { windowSeconds: 86_400, max: 6 });
-      await rateLimit(db, 'otp-send:all', { windowSeconds: 3600, max: 300 });
+      try {
+        await rateLimit(db, 'otp-send:all', { windowSeconds: 3600, max: 300 });
+      } catch (err) {
+        log.warn('sign-in codes paused: the hourly ceiling for everyone was reached');
+        throw err;
+      }
     } else {
       await rateLimit(db, `otp-verify:${number}`, { windowSeconds: 3600, max: 10 });
     }
     return next();
   });
+  // Guest sessions are free to create, and each has allowances of its own (AI answers, scam
+  // checks…): an address can start a few hundred a day — a school sharing one address has
+  // room — but not an endless supply.
+  app.use('/auth/sign-in/anonymous', async (c, next) => {
+    if (c.req.method === 'POST')
+      await rateLimit(c.get('db'), `guest-day:${ipHash(c.req.raw.headers)}`, {
+        windowSeconds: 86_400,
+        max: 300,
+      });
+    return next();
+  });
+  // Waypoint's own apps send JSON. The auth library would also read a form, which the checks
+  // below (they read the address from the JSON body) would not see: anything else is refused.
+  app.use('/auth/*', async (c, next) => {
+    const type = c.req.header('content-type');
+    if (c.req.method === 'POST' && type && !/^application\/json\b/i.test(type.trim()))
+      return problemResponse(415, 'unsupported-media-type', 'Send JSON.');
+    return next();
+  });
   // Password guesses are limited per account as well as per visitor, so spreading guesses
   // over many addresses doesn't help. Unknown addresses count the same way, so the limit
-  // itself says nothing about who has an account.
+  // itself says nothing about who has an account. A device that has signed in to the account
+  // before counts on its own, so someone guessing a password cannot lock its owner out.
   app.use('/auth/sign-in/email', async (c, next) => {
+    if (c.req.method !== 'POST') return next();
+    const account = await signInAccount(c.req.raw);
+    if (account) {
+      const device = knownDevice(getCookie(c, DEVICE_COOKIE), account);
+      await rateLimit(c.get('db'), device ? `sign-in-device:${device}` : `sign-in:${account}`, {
+        windowSeconds: 900,
+        max: 20,
+      });
+    }
+    return next();
+  });
+  // A reset link leads back to the website and nowhere else. The phone app's own scheme is a
+  // trusted origin for signing in, but on Android another app can claim that scheme and would
+  // be handed the reset token.
+  app.use('/auth/request-password-reset', async (c, next) => {
     if (c.req.method !== 'POST') return next();
     const body = (await c.req.raw
       .clone()
       .json()
-      .catch(() => null)) as { email?: unknown } | null;
-    const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
-    if (email)
-      await rateLimit(c.get('db'), `sign-in:${keyedHash(email, 'sign-in')}`, {
-        windowSeconds: 900,
-        max: 20,
-      });
+      .catch(() => null)) as { redirectTo?: unknown } | null;
+    const to = body?.redirectTo;
+    if (to !== undefined && !(typeof to === 'string' && onThisSite(to, origins)))
+      return problemResponse(400, 'invalid-redirect', 'The link must lead back to this site.');
     return next();
   });
   // Better Auth owns the rest of /api/auth/* (sign-in, guest sessions, passkeys…). It learns
@@ -204,14 +332,43 @@ export function createApp() {
       const current = await getSession(raw.headers).catch(() => null);
       if (current?.user.isAnonymous) headers.set(AUTH_GUEST_HEADER, current.user.id);
     }
+    // Read before the body is handed on: a request can only be read once.
+    const account = signIn ? await signInAccount(raw) : null;
     const request = new Request(raw, { headers, duplex: 'half' } as RequestInit);
     const response = await getAuth().handler(request);
 
     // The answers that must not tell anyone whether an address has an account also take the
-    // same time: a new address costs more work than a known one.
-    if ((signUp || resetRequest) && getEnv().isProd) {
-      const wait = AUTH_ANSWER_FLOOR_MS - (performance.now() - started);
+    // same time: a new address costs more work than a known one. A failed sign-in is one of
+    // them (an unconfirmed address takes a different path from a wrong password).
+    if ((signUp || resetRequest || (signIn && response.status !== 200)) && getEnv().isProd) {
+      const floor = signIn ? SIGN_IN_FAILURE_FLOOR_MS : AUTH_ANSWER_FLOOR_MS;
+      const wait = floor - (performance.now() - started);
       if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
+    }
+
+    // Signing out leaves nothing of the person's on the device: their language, display
+    // choices and the steps they set aside go with the session, whatever answer Better Auth
+    // gave (a session that had already ended is still a person leaving).
+    if (post && endpoint === '/sign-out') {
+      const left = new Response(response.body, {
+        status: response.status,
+        headers: new Headers(response.headers),
+      });
+      forgetPersonalCookies(left.headers);
+      return left;
+    }
+
+    // A device that signs in gets a cookie saying it has been trusted with this account
+    // before (see the sign-in limit above). It names nobody: a random value and its signature.
+    if (signIn && response.status === 200) {
+      if (account && !knownDevice(getCookie(c, DEVICE_COOKIE), account)) {
+        const trusted = new Response(response.body, {
+          status: response.status,
+          headers: new Headers(response.headers),
+        });
+        trusted.headers.append('set-cookie', deviceCookie(account));
+        return trusted;
+      }
     }
 
     // Creating an account answers exactly the same whether the address was new or already
@@ -253,8 +410,34 @@ export function createApp() {
     return withSession(c, next);
   });
 
+  // Maintenance: the platform's admin closed it for a while. Staff still get in; help in a
+  // crisis, texts to Waypoint's numbers, signing in and the health checks are never closed.
+  app.use('*', async (c, next) => {
+    const notice = platformNotice();
+    if (
+      notice.maintenance.active &&
+      !apiOpenDuringMaintenance(c.req.path) &&
+      !isStaffRole(c.get('user')?.role)
+    ) {
+      const until = notice.maintenance.until ? new Date(notice.maintenance.until).getTime() : 0;
+      const retryAfter = Math.max(
+        60,
+        Math.min(3600, Math.round((until - Date.now()) / 1000) || 300),
+      );
+      c.set('closed', true);
+      return problemResponse(503, 'maintenance', notice.maintenance.message, {
+        until: notice.maintenance.until,
+        retryAfter,
+        requestId: c.get('requestId'),
+      });
+    }
+    return next();
+  });
+
   app.route('/', system);
   app.route('/', me);
+  app.route('/', preferences);
+  app.route('/', people);
   app.route('/', today);
   app.route('/', support);
   app.route('/', shield);
@@ -268,6 +451,7 @@ export function createApp() {
   app.route('/', circles);
   app.route('/', health);
   app.route('/', org);
+  app.route('/', forecasts);
   app.route('/', admin);
   app.route('/', channels);
 
@@ -278,18 +462,33 @@ export function createApp() {
     description: 'Session cookie set by /api/auth (guest sessions included).',
   });
 
-  app.doc31('/openapi.json', (c) => ({
-    openapi: '3.1.0',
-    info: {
-      title: 'Waypoint API',
-      version: API_VERSION,
-      description:
-        'See what’s coming. Know your next step. Never take it alone. Authentication endpoints are documented at /api/auth/reference.',
-      license: { name: 'Proprietary' },
-    },
-    servers: [{ url: new URL(c.req.url).origin }],
-    security: [{ session: [] }],
-  }));
+  // The public API document: built once (not on every request from anyone), and without the
+  // staff console's routes, which are nobody else's business.
+  let apiDocument: string | undefined;
+  app.get('/openapi.json', (c) => {
+    if (!apiDocument) {
+      const doc = app.getOpenAPI31Document({
+        openapi: '3.1.0',
+        info: {
+          title: 'Waypoint API',
+          version: API_VERSION,
+          description:
+            'See what’s coming. Know your next step. Never take it alone. Authentication endpoints are documented at /api/auth/reference.',
+          license: { name: 'Proprietary' },
+        },
+        servers: [{ url: new URL(getEnv().WAYPOINT_URL).origin }],
+        security: [{ session: [] }],
+      });
+      const paths = Object.fromEntries(
+        Object.entries(doc.paths ?? {}).filter(([path]) => !/\/admin(\/|$)/.test(path)),
+      );
+      apiDocument = JSON.stringify({ ...doc, paths });
+    }
+    return c.body(apiDocument, 200, {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'public, max-age=300',
+    });
+  });
 
   app.notFound((c) =>
     problemResponse(404, 'not-found', `No API route for ${c.req.method} ${c.req.path}.`, {
@@ -299,8 +498,22 @@ export function createApp() {
 
   app.onError((err, c) => {
     const requestId = c.get('requestId');
-    if (err instanceof ApiError)
+    const route =
+      [...c.req.matchedRoutes].reverse().find((r) => r.method !== 'ALL')?.path ?? '(no route)';
+    if (err instanceof ApiError) {
+      if (err.status >= 500) {
+        recordError({
+          method: c.req.method,
+          route,
+          status: err.status,
+          code: err.code,
+          message: err.message,
+          requestId,
+        });
+        c.set('errorKept', true);
+      }
       return problemResponse(err.status, err.code, err.message, { ...err.extra, requestId });
+    }
     if (err instanceof HTTPException) {
       const status = err.status;
       return problemResponse(
@@ -311,6 +524,15 @@ export function createApp() {
       );
     }
     log.error('unhandled error', { requestId, route: c.req.routePath, ...errorFields(err) });
+    recordError({
+      method: c.req.method,
+      route,
+      status: 500,
+      code: (err as { code?: string }).code ?? err.name,
+      message: err.message,
+      requestId,
+    });
+    c.set('errorKept', true);
     return problemResponse(
       500,
       'server-error',

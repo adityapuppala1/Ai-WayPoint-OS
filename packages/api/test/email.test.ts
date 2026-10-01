@@ -9,7 +9,11 @@ describe('emails', () => {
   it('exist for every template in every language, with the link written out too', () => {
     for (const locale of LOCALES)
       for (const template of EMAIL_TEMPLATES) {
-        const mail = renderEmail(template, { url, name: 'Ana', organization: 'Acme' }, locale);
+        const mail = renderEmail(
+          template,
+          { url, name: 'Ana', organization: 'Acme', reply: 'Thanks, fixed now.' },
+          locale,
+        );
         expect(mail, `${locale} ${template}`).not.toBeNull();
         expect(mail?.subject.trim().length).toBeGreaterThan(5);
         expect(mail?.text).toContain(url);
@@ -18,6 +22,18 @@ describe('emails', () => {
         // Nothing left unfilled.
         expect(`${mail?.subject}${mail?.text}`).not.toMatch(/\{\w+\}/);
       }
+  });
+
+  it('quotes the team’s reply to feedback as plain text, and needs one', () => {
+    const mail = renderEmail(
+      'feedback-reply',
+      { url, reply: 'We fixed it {name} <b>today</b>.\nThank you.' },
+      'en',
+    );
+    expect(mail?.text).toContain('> We fixed it {name} <b>today</b>.\n> Thank you.');
+    expect(mail?.html).toContain('We fixed it {name} &lt;b&gt;today&lt;/b&gt;.');
+    expect(mail?.html).not.toContain('<b>today');
+    expect(renderEmail('feedback-reply', { url, reply: '  ' }, 'en')).toBeNull();
   });
 
   it('never carries a link that is not a web address', () => {
@@ -56,4 +72,37 @@ describe('emails', () => {
     const mail = renderEmail('verify-email', { url, name: 'Ana' }, 'ar');
     expect(mail?.html).toContain('dir="rtl"');
   });
+});
+
+describe('sending through an SMTP server', () => {
+  it('insists on encryption and never waits for ever', async () => {
+    const { smtpOptions } = await import('../src/email/send');
+    const submission = smtpOptions('smtp://user:pass@mail.example:587');
+    // Port 587 starts in the clear: without requireTLS a server (or someone in between) that
+    // does not offer STARTTLS would be sent the password and the message unencrypted.
+    expect(submission.requireTLS).toBe(true);
+    for (const timeout of ['connectionTimeout', 'greetingTimeout', 'socketTimeout'] as const) {
+      expect(submission[timeout]).toBeGreaterThan(0);
+      expect(submission[timeout]).toBeLessThanOrEqual(30_000);
+    }
+    // Already encrypted from the first byte.
+    expect(smtpOptions('smtps://user:pass@mail.example:465').requireTLS).toBe(false);
+    // A mail catcher on the same machine during development has no certificate.
+    for (const local of ['smtp://localhost:1025', 'smtp://127.0.0.1:1025', 'smtp://[::1]:1025'])
+      expect(smtpOptions(local).requireTLS, local).toBe(false);
+  });
+});
+
+describe('the worker’s settings', () => {
+  // The first import of the whole worker: over five seconds while the other test files start
+  // their own databases alongside (`pnpm check`).
+  it('falls back to a sensible pause when WORKER_INTERVAL_MS is not a number', async () => {
+    const { workerIntervalMs } = await import('../src/jobs');
+    expect(workerIntervalMs(undefined)).toBe(30_000);
+    expect(workerIntervalMs('abc')).toBe(30_000);
+    expect(workerIntervalMs('')).toBe(30_000);
+    expect(workerIntervalMs('-5')).toBe(30_000);
+    expect(workerIntervalMs('5')).toBe(1_000);
+    expect(workerIntervalMs('60000')).toBe(60_000);
+  }, 60_000);
 });

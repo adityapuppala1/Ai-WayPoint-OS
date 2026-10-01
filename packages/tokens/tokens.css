@@ -44,9 +44,17 @@
     --wp-duration-base: 180ms;
     --wp-duration-slow: 240ms;
     --wp-duration-flip: 320ms;
+    --wp-duration-route: 480ms;
     --wp-ease-out: cubic-bezier(0.2, 0, 0, 1);
     --wp-ease-in: cubic-bezier(0.4, 0, 1, 1);
     --wp-ease-standard: cubic-bezier(0.2, 0, 0.2, 1);
+    --wp-ease-route: cubic-bezier(0.45, 0, 0.15, 1);
+    --wp-press-scale: 0.97;
+    --wp-shadow-raised: var(--wp-shadow-1);
+    --wp-shadow-overlay: var(--wp-shadow-3);
+    --wp-focus-shadow: 0 0 0 2px var(--wp-focus-ring), 0 0 0 5px var(--wp-signal);
+    --wp-focus-shadow-inset: inset 0 0 0 2px var(--wp-focus-ring), inset 0 0 0 5px var(--wp-signal);
+    --wp-focus-shadow-on-sign: 0 0 0 2px var(--wp-sign-text), 0 0 0 5px var(--wp-signal);
     --wp-z-nav: 20;
     --wp-z-header: 30;
     --wp-z-overlay: 40;
@@ -69,13 +77,19 @@
     --wp-text-secondary: oklch(41% 0.026 250);
     --wp-text-muted: oklch(49% 0.02 250);
     --wp-text-inverse: oklch(98.5% 0.003 250);
+    --wp-fill-hover: oklch(24% 0.03 250 / 0.06);
+    --wp-fill-pressed: oklch(24% 0.03 250 / 0.12);
     --wp-sign: oklch(27.5% 0.038 250);
     --wp-sign-text: oklch(98.5% 0.003 250);
     --wp-sign-muted: oklch(84% 0.014 250);
+    --wp-sign-border: oklch(98.5% 0.003 250 / 0.4);
+    --wp-sign-fill-hover: oklch(98.5% 0.003 250 / 0.1);
+    --wp-sign-fill-pressed: oklch(98.5% 0.003 250 / 0.18);
     --wp-signal: oklch(85.5% 0.165 88);
     --wp-signal-hover: oklch(80% 0.165 83);
     --wp-signal-ink: oklch(24% 0.03 250);
     --wp-signal-tint: oklch(96.5% 0.055 95);
+    --wp-marker: oklch(24% 0.03 250);
     --wp-focus-ring: oklch(24% 0.03 250);
     --wp-danger: oklch(50.5% 0.19 27);
     --wp-danger-tint: oklch(96.2% 0.024 25);
@@ -120,32 +134,40 @@
     --wp-series-4: oklch(56% 0.13 330);
     --wp-series-5: oklch(56% 0.13 120);
     --wp-series-6: oklch(56% 0.13 290);
-    --wp-shadow-raised: 0 1px 2px rgb(16 24 40 / 0.05);
-    --wp-shadow-overlay: 0 12px 32px rgb(16 24 40 / 0.07), 0 2px 6px rgb(16 24 40 / 0.05);
+    --wp-shadow-1: 0 1px 2px rgb(16 24 40 / 0.06), 0 2px 6px rgb(16 24 40 / 0.04);
+    --wp-shadow-2: 0 2px 4px rgb(16 24 40 / 0.06), 0 8px 20px rgb(16 24 40 / 0.09);
+    --wp-shadow-3: 0 4px 10px rgb(16 24 40 / 0.08), 0 18px 44px rgb(16 24 40 / 0.14);
+    --wp-sign-edge: 0.375rem;
   }
 
   :root[data-theme="dark"] {
     color-scheme: dark;
     --wp-canvas: oklch(19% 0.018 250);
-    --wp-raised: oklch(22.5% 0.02 250);
-    --wp-sunken: oklch(16.5% 0.016 250);
-    --wp-overlay: oklch(25.5% 0.022 250);
-    --wp-border-subtle: oklch(98.5% 0.003 250 / 0.1);
-    --wp-border-strong: oklch(98.5% 0.003 250 / 0.22);
+    --wp-raised: oklch(25.5% 0.022 250);
+    --wp-sunken: oklch(15.5% 0.016 250);
+    --wp-overlay: oklch(32% 0.026 250);
+    --wp-border-subtle: oklch(98.5% 0.003 250 / 0.12);
+    --wp-border-strong: oklch(98.5% 0.003 250 / 0.26);
     --wp-text: oklch(95% 0.006 250);
     --wp-text-secondary: oklch(82% 0.012 250);
     --wp-text-muted: oklch(72% 0.014 250);
     --wp-text-inverse: oklch(20% 0.02 250);
-    --wp-sign: oklch(30% 0.036 250);
+    --wp-fill-hover: oklch(95% 0.006 250 / 0.08);
+    --wp-fill-pressed: oklch(95% 0.006 250 / 0.15);
+    --wp-sign: oklch(50% 0.06 250);
     --wp-sign-text: oklch(98.5% 0.003 250);
-    --wp-sign-muted: oklch(82% 0.014 250);
+    --wp-sign-muted: oklch(93% 0.012 250);
+    --wp-sign-border: oklch(98.5% 0.003 250 / 0.5);
+    --wp-sign-fill-hover: oklch(98.5% 0.003 250 / 0.07);
+    --wp-sign-fill-pressed: oklch(98.5% 0.003 250 / 0.1);
     --wp-signal: oklch(85.5% 0.165 88);
     --wp-signal-hover: oklch(90% 0.15 92);
     --wp-signal-ink: oklch(22% 0.03 250);
-    --wp-signal-tint: oklch(85.5% 0.165 88 / 0.16);
+    --wp-signal-tint: oklch(85.5% 0.165 88 / 0.12);
+    --wp-marker: oklch(95% 0.006 250);
     --wp-focus-ring: oklch(95% 0.006 250);
-    --wp-danger: oklch(72% 0.16 25);
-    --wp-danger-tint: oklch(72% 0.16 25 / 0.14);
+    --wp-danger: oklch(78.5% 0.12 25);
+    --wp-danger-tint: oklch(78.5% 0.12 25 / 0.14);
     --wp-caution: oklch(80% 0.13 75);
     --wp-caution-tint: oklch(80% 0.13 75 / 0.14);
     --wp-safe: oklch(77% 0.12 155);
@@ -187,33 +209,43 @@
     --wp-series-4: oklch(74% 0.12 330);
     --wp-series-5: oklch(74% 0.12 120);
     --wp-series-6: oklch(74% 0.12 290);
-    --wp-shadow-raised: inset 0 1px 0 rgb(255 255 255 / 0.06);
-    --wp-shadow-overlay: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 16px 40px rgb(0 0 0 / 0.35);
+    --wp-shadow-1: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 1px 2px rgb(0 0 0 / 0.3);
+    --wp-shadow-2: inset 0 1px 0 rgb(255 255 255 / 0.07), 0 6px 16px rgb(0 0 0 / 0.4);
+    --wp-shadow-3:
+      inset 0 1px 0 rgb(255 255 255 / 0.08), 0 0 0 1px rgb(255 255 255 / 0.06),
+      0 18px 44px rgb(0 0 0 / 0.5);
+    --wp-sign-edge: 0.5rem;
   }
 
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       color-scheme: dark;
       --wp-canvas: oklch(19% 0.018 250);
-      --wp-raised: oklch(22.5% 0.02 250);
-      --wp-sunken: oklch(16.5% 0.016 250);
-      --wp-overlay: oklch(25.5% 0.022 250);
-      --wp-border-subtle: oklch(98.5% 0.003 250 / 0.1);
-      --wp-border-strong: oklch(98.5% 0.003 250 / 0.22);
+      --wp-raised: oklch(25.5% 0.022 250);
+      --wp-sunken: oklch(15.5% 0.016 250);
+      --wp-overlay: oklch(32% 0.026 250);
+      --wp-border-subtle: oklch(98.5% 0.003 250 / 0.12);
+      --wp-border-strong: oklch(98.5% 0.003 250 / 0.26);
       --wp-text: oklch(95% 0.006 250);
       --wp-text-secondary: oklch(82% 0.012 250);
       --wp-text-muted: oklch(72% 0.014 250);
       --wp-text-inverse: oklch(20% 0.02 250);
-      --wp-sign: oklch(30% 0.036 250);
+      --wp-fill-hover: oklch(95% 0.006 250 / 0.08);
+      --wp-fill-pressed: oklch(95% 0.006 250 / 0.15);
+      --wp-sign: oklch(50% 0.06 250);
       --wp-sign-text: oklch(98.5% 0.003 250);
-      --wp-sign-muted: oklch(82% 0.014 250);
+      --wp-sign-muted: oklch(93% 0.012 250);
+      --wp-sign-border: oklch(98.5% 0.003 250 / 0.5);
+      --wp-sign-fill-hover: oklch(98.5% 0.003 250 / 0.07);
+      --wp-sign-fill-pressed: oklch(98.5% 0.003 250 / 0.1);
       --wp-signal: oklch(85.5% 0.165 88);
       --wp-signal-hover: oklch(90% 0.15 92);
       --wp-signal-ink: oklch(22% 0.03 250);
-      --wp-signal-tint: oklch(85.5% 0.165 88 / 0.16);
+      --wp-signal-tint: oklch(85.5% 0.165 88 / 0.12);
+      --wp-marker: oklch(95% 0.006 250);
       --wp-focus-ring: oklch(95% 0.006 250);
-      --wp-danger: oklch(72% 0.16 25);
-      --wp-danger-tint: oklch(72% 0.16 25 / 0.14);
+      --wp-danger: oklch(78.5% 0.12 25);
+      --wp-danger-tint: oklch(78.5% 0.12 25 / 0.14);
       --wp-caution: oklch(80% 0.13 75);
       --wp-caution-tint: oklch(80% 0.13 75 / 0.14);
       --wp-safe: oklch(77% 0.12 155);
@@ -255,8 +287,12 @@
       --wp-series-4: oklch(74% 0.12 330);
       --wp-series-5: oklch(74% 0.12 120);
       --wp-series-6: oklch(74% 0.12 290);
-      --wp-shadow-raised: inset 0 1px 0 rgb(255 255 255 / 0.06);
-      --wp-shadow-overlay: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 16px 40px rgb(0 0 0 / 0.35);
+      --wp-shadow-1: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 1px 2px rgb(0 0 0 / 0.3);
+      --wp-shadow-2: inset 0 1px 0 rgb(255 255 255 / 0.07), 0 6px 16px rgb(0 0 0 / 0.4);
+      --wp-shadow-3:
+        inset 0 1px 0 rgb(255 255 255 / 0.08), 0 0 0 1px rgb(255 255 255 / 0.06),
+        0 18px 44px rgb(0 0 0 / 0.5);
+      --wp-sign-edge: 0.5rem;
     }
   }
 }

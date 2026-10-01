@@ -10,12 +10,13 @@
  * Only ONE process may open the embedded database at a time — a second process can corrupt it.
  * A lock file enforces this, so stop `pnpm dev` before running `pnpm db:seed` (or use Postgres).
  */
-import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
 import { pg_trgm } from '@electric-sql/pglite/contrib/pg_trgm';
 import { vector } from '@electric-sql/pglite-pgvector';
 import { getEnv } from '@waypoint/core/env';
+import { sql } from 'drizzle-orm';
 import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres';
 import { migrate as migratePg } from 'drizzle-orm/node-postgres/migrator';
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
@@ -43,12 +44,20 @@ export type Database = PgDatabase<RowsQueryResultHKT, Schema>;
 interface DbState {
   kind: 'embedded' | 'postgres';
   db: Database;
-  /** Resolves once the database is reachable and (when enabled) migrated. */
-  ready: Promise<void>;
+  /**
+   * Resolves once the database is reachable and (when enabled) migrated. With a Postgres
+   * server this is the latest attempt: after a failure the next caller tries again, so a
+   * process that started while the database was down recovers by itself.
+   */
+  readonly ready: Promise<void>;
   close: () => Promise<void>;
+  /** The embedded database's whole data folder, compressed (a backup); none for Postgres. */
+  dump?: () => Promise<Blob>;
 }
 
 const GLOBAL_KEY = Symbol.for('waypoint.db');
+/** How long a failed connection to Postgres is remembered before the next caller tries again. */
+const RETRY_AFTER_MS = 1000;
 type GlobalWithDb = typeof globalThis & { [GLOBAL_KEY]?: DbState };
 
 export function migrationsFolder(): string {
@@ -69,8 +78,17 @@ function isAlive(pid: number): boolean {
 function acquireLock(dataDir: string): () => void {
   mkdirSync(dataDir, { recursive: true });
   const lockPath = join(dataDir, 'pglite.lock');
-  if (existsSync(lockPath)) {
-    const pid = Number(readFileSync(lockPath, 'utf8').trim());
+  // Claimed by creating it, which fails if it is there: no gap between looking and taking.
+  try {
+    writeFileSync(lockPath, String(process.pid), { flag: 'wx' });
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== 'EEXIST') throw err;
+    let pid = 0;
+    try {
+      pid = Number(readFileSync(lockPath, 'utf8').trim());
+    } catch {
+      // let go of in the meantime
+    }
     if (pid && pid !== process.pid && isAlive(pid)) {
       throw new Error(
         `The embedded database in ${dataDir} is already open in another process (pid ${pid}). ` +
@@ -78,8 +96,9 @@ function acquireLock(dataDir: string): () => void {
           'or set DATABASE_URL to use a Postgres server.',
       );
     }
+    // Left behind by a process that has ended (or by this one): taken over.
+    writeFileSync(lockPath, String(process.pid));
   }
-  writeFileSync(lockPath, String(process.pid));
   let released = false;
   const release = () => {
     if (released) return;
@@ -119,6 +138,7 @@ function createEmbedded(): DbState {
     kind: 'embedded',
     db,
     ready,
+    dump: () => client.dumpDataDir('gzip'),
     close: async () => {
       await client.close();
       release();
@@ -135,16 +155,36 @@ function createPostgres(url: string): DbState {
     application_name: 'waypoint',
   });
   const db = drizzlePg({ client: pool, schema, casing: 'snake_case' }) as unknown as Database;
-  const ready = (async () => {
-    const c = await pool.connect();
-    c.release();
-    if (env.WAYPOINT_AUTO_MIGRATE) {
-      await migratePg(db as never, { migrationsFolder: migrationsFolder() });
-      await autoSeed(db, env.WAYPOINT_AUTO_SEED ?? false);
-    }
-  })();
-  ready.catch(() => undefined);
-  return { kind: 'postgres', db, ready, close: () => pool.end() };
+  let failed = false;
+  let lastAttempt = 0;
+  const attempt = (): Promise<void> => {
+    failed = false;
+    lastAttempt = Date.now();
+    const p = (async () => {
+      const c = await pool.connect();
+      c.release();
+      if (env.WAYPOINT_AUTO_MIGRATE) {
+        await migratePg(db as never, { migrationsFolder: migrationsFolder() });
+        await autoSeed(db, env.WAYPOINT_AUTO_SEED ?? false);
+      }
+    })();
+    // Avoid unhandled rejections; callers see the error when they await `ready`.
+    p.catch(() => {
+      failed = true;
+    });
+    return p;
+  };
+  let current = attempt();
+  return {
+    kind: 'postgres',
+    db,
+    get ready() {
+      // A failed start is not remembered for ever: try again, at most once a second.
+      if (failed && Date.now() - lastAttempt >= RETRY_AFTER_MS) current = attempt();
+      return current;
+    },
+    close: () => pool.end(),
+  };
 }
 
 function state(): DbState {
@@ -166,8 +206,39 @@ export function dbReady(): Promise<void> {
   return state().ready;
 }
 
+/**
+ * A backup of the embedded database: its whole data folder as a .tar.gz, taken while it runs.
+ * Null with Postgres, whose backups are made by its own tools (pg_dump, the provider's).
+ */
+export async function backupEmbedded(): Promise<Blob | null> {
+  const s = state();
+  await s.ready;
+  return s.dump ? s.dump() : null;
+}
+
 export function dbKind(): 'embedded' | 'postgres' {
   return state().kind;
+}
+
+/**
+ * True when every migration this code was built with has been applied to the database. A
+ * server whose code is newer than the schema is not ready to serve: during a release the new
+ * pods wait here until the migration job has finished, and the old ones keep answering.
+ */
+export async function schemaCurrent(db: Database = getDb()): Promise<boolean> {
+  const journal = JSON.parse(
+    readFileSync(join(migrationsFolder(), 'meta', '_journal.json'), 'utf8'),
+  ) as { entries: Array<{ when: number }> };
+  const newest = Math.max(0, ...journal.entries.map((e) => e.when));
+  try {
+    const res = await db.execute<{ applied: string | number | null }>(
+      sql`select max(created_at) as applied from drizzle.__drizzle_migrations`,
+    );
+    return Number(res.rows[0]?.applied ?? 0) >= newest;
+  } catch {
+    // No migrations table yet: nothing has been applied.
+    return false;
+  }
 }
 
 /** Run migrations now (used by the CLI and deploy jobs). */

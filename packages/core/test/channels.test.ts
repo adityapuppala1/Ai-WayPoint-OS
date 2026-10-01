@@ -146,6 +146,80 @@ describe('replies by text message', () => {
     expect(stopped.intent).toBe('crisis');
   });
 
+  it('puts safety first whatever the first word is', () => {
+    // A greeting followed by a few words used to be read as "menu".
+    const greeting = channelReply('hi im suicidal', person({ isNew: true }), sms);
+    expect(greeting.intent).toBe('crisis');
+    expect(greeting.crisis?.assessment.tier).toBeGreaterThanOrEqual(2);
+    expect(greeting.messages[0]).toMatch(/\d{3}/);
+    const hola = channelReply('hola quiero suicidarme', person({ locale: null }), sms);
+    expect(hola.intent).toBe('crisis');
+    expect(hola.locale).toBe('es');
+    // Command words in front of a cry for help must not hide it.
+    for (const text of [
+      'menu i want to die',
+      'lang i want to kill myself',
+      'country i want to end my life',
+      'ai i am going to kill myself tonight',
+      'end my life',
+      'quit i want to die',
+    ]) {
+      const r = channelReply(text, person(), sms);
+      expect(r.intent, text).toBe('crisis');
+      expect(r.crisis, text).toBeDefined();
+      expect(r.update?.optedOut, text).toBeUndefined();
+    }
+  });
+
+  it('answers CHECK with the support card first when the words are the person’s own', () => {
+    const r = channelReply('Check on me, I want to end my life', person(), sms);
+    expect(r.intent).toBe('crisis');
+    expect(r.crisis?.assessment.tier).toBeGreaterThanOrEqual(2);
+    expect(r.messages).toHaveLength(1);
+    expect(r.messages[0]).toMatch(/\d{3}/);
+    // A threat inside a scam: the support card comes first, the warning still follows.
+    const both = channelReply(
+      'CHECK Pay the fee now at http://bit.ly/pay-now or I will kill myself tonight',
+      person(),
+      sms,
+    );
+    expect(both.intent).toBe('crisis');
+    expect(both.messages).toHaveLength(2);
+    expect(both.messages[0]).toMatch(/\d{3}/);
+    expect(both.messages[1]).toMatch(/warning signs|risk/i);
+    // Distress words inside a message someone else sent are not the person's own crisis.
+    const scam = channelReply(
+      'CHECK I am so stressed and worried, send money now or your account is blocked http://bit.ly/x',
+      person(),
+      sms,
+    );
+    expect(scam.intent).toBe('check');
+    expect(scam.crisis).toBeUndefined();
+  });
+
+  it('stops for the usual ways of asking, but never instead of a cry for help', () => {
+    for (const text of ['STOP ALL', 'stop please', 'Stop.', 'UNSUBSCRIBE', 'cancel', 'END', 'quit'])
+      expect(channelReply(text, person(), sms), text).toMatchObject({
+        intent: 'stop',
+        update: { optedOut: true },
+      });
+  });
+
+  it('never takes words that may be a cry for help for an opt-out', () => {
+    // "end", "quit" and "cancel" are opt-out words on their own; with anything after them they
+    // are a sentence, and some of those sentences are the ones that matter most.
+    for (const text of ['END IT', 'end it now', 'QUIT NOW', 'cancel it', 'end it all']) {
+      const r = channelReply(text, person(), sms);
+      expect(r.intent, text).not.toBe('stop');
+      expect(r.update?.optedOut, text).toBeUndefined();
+    }
+    const clear = channelReply('end it all, I want to die', person(), sms);
+    expect(clear.intent).toBe('crisis');
+    // A plain STOP with the usual extra word still opts out.
+    expect(channelReply('stop now', person(), sms).intent).toBe('stop');
+    expect(channelReply('STOP I want to die', person(), sms).intent).toBe('crisis');
+  });
+
   it('checks messages for scams, asked or forwarded', () => {
     const asked = channelReply(
       'CHECK Your parcel is held at customs. Pay the fee now: http://bit.ly/pay-now',

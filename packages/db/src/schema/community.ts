@@ -181,5 +181,9 @@ export const circleReports = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [index('circle_reports_open_idx').on(t.resolvedAt)],
+  (t) => [
+    index('circle_reports_open_idx').on(t.resolvedAt),
+    // One report per person per post: three reports must be three people.
+    uniqueIndex('circle_reports_once_idx').on(t.postId, t.reporterId),
+  ],
 );

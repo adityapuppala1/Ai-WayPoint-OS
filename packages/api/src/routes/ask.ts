@@ -1,6 +1,7 @@
 import { createRoute, z } from '@hono/zod-openapi';
 import { errors, IdParam, jsonContent, OkSchema, router } from '../lib/openapi';
 import { badRequest } from '../lib/problem';
+import { guestAiGate } from '../lib/request';
 import { limit, noStore, requireUser } from '../middleware';
 import {
   AskRequestSchema,
@@ -51,6 +52,7 @@ app.post('/ask', limit('ask-minute', 12, 60), limit('ask-day', 300, 86_400), asy
   ]);
   return handleAsk(db, { userId: user.id, isGuest: user.isGuest }, profile, consents, parsed.data, {
     abortSignal: c.req.raw.signal,
+    aiGate: user.isGuest ? guestAiGate(db, c.req.raw.headers) : undefined,
   });
 });
 

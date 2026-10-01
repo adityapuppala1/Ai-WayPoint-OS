@@ -1,16 +1,16 @@
 'use client';
 
-import { cn, Dialog, Icon, type ModuleKey, ModuleMark } from '@waypoint/ui';
+import { cn, Dialog, Icon, ModuleMark, viewTransition } from '@waypoint/ui';
 import type { Route } from 'next';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { LogoMark } from '@/components/Logo';
-import { NAV } from './nav-items';
+import { LogoMark, Wordmark } from '@/components/brand/Logo';
+import { GoToButton } from './GoTo';
+import { type DirectoryRow, NAV, PRIMARY_TABS } from './nav-items';
+import { LinkPending } from './pending';
 import styles from './shell.module.css';
-
-const PRIMARY: ModuleKey[] = ['today', 'path', 'shield', 'ask'];
 
 function isActive(pathname: string, href: string) {
   if (href === '/') return pathname === '/';
@@ -37,13 +37,14 @@ export function NavRail({ accountSlot }: { accountSlot: React.ReactNode }) {
   const a11y = useTranslations('a11y');
   const pathname = usePathname();
   return (
-    <nav className={styles.rail} aria-label={a11y('mainNav')}>
+    <nav className={cn(styles.rail, viewTransition.rail)} aria-label={a11y('mainNav')}>
       <Link href="/" className={styles.brand} aria-label={shell('home')}>
-        <span className={styles.brandMark} aria-hidden>
-          <LogoMark size={28} />
-        </span>
-        <span className={styles.brandText}>Waypoint</span>
+        <LogoMark size={28} className={styles.brandMark} />
+        <Wordmark className={styles.brandText} />
       </Link>
+      <div className={styles.railSearch}>
+        <GoToButton withShortcut />
+      </div>
       <ul className={styles.railList}>
         {NAV.filter((n) => n.ready).map((item) => {
           const active = isActive(pathname, item.href);
@@ -57,6 +58,7 @@ export function NavRail({ accountSlot }: { accountSlot: React.ReactNode }) {
               >
                 <ModuleMark module={item.key} size="sm" tone={active ? 'solid' : 'tint'} />
                 <span>{t(item.key as NavKey)}</span>
+                <LinkPending className={styles.pendingMark} sign={item.key === 'today'} />
               </Link>
             </li>
           );
@@ -71,6 +73,7 @@ export function NavRail({ accountSlot }: { accountSlot: React.ReactNode }) {
               <Icon name="more" size={18} weight="bold" />
             </span>
             <span>{t('explore')}</span>
+            <LinkPending className={styles.pendingMark} />
           </Link>
         </li>
       </ul>
@@ -81,6 +84,7 @@ export function NavRail({ accountSlot }: { accountSlot: React.ReactNode }) {
         >
           <Icon name="support" size={20} weight="fill" />
           <span>{t('support')}</span>
+          <LinkPending />
         </Link>
         {accountSlot}
       </div>
@@ -88,17 +92,30 @@ export function NavRail({ accountSlot }: { accountSlot: React.ReactNode }) {
   );
 }
 
-export function BottomBar() {
+/**
+ * The phone's bottom bar, and the More sheet behind it: a directory of everywhere that is not
+ * a tab, each with a line saying what it is. The rows are worded on the server (their text is
+ * not among the messages sent to the browser) and arrive as `directory`.
+ */
+export function BottomBar({ directory }: { directory: DirectoryRow[] }) {
   const t = useTranslations('nav');
   const a11y = useTranslations('a11y');
   const shell = useTranslations('shell');
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
-  const primary = NAV.filter((n) => PRIMARY.includes(n.key));
+  // The sheet belongs to the page it was opened on: any way of leaving that page (a row here,
+  // the go-to palette, the browser's Back) closes it.
+  const [openOn, setOpenOn] = useState<string | null>(null);
+  const open = openOn === pathname;
+  const setOpen = (next: boolean) => setOpenOn(next ? pathname : null);
+  const primary = NAV.filter((n) => PRIMARY_TABS.includes(n.key));
   const moreActive = !primary.some((n) => isActive(pathname, n.href));
+  // "What's next?" lives under Signals: only the closest match is the current page.
+  const current = directory
+    .filter((row) => isActive(pathname, row.href))
+    .sort((a, b) => b.href.length - a.href.length)[0];
   return (
     <>
-      <nav className={styles.bottomBar} aria-label={a11y('mainNav')}>
+      <nav className={cn(styles.bottomBar, viewTransition.bottomBar)} aria-label={a11y('mainNav')}>
         <ul>
           {primary.map((item) => {
             const active = isActive(pathname, item.href);
@@ -111,6 +128,7 @@ export function BottomBar() {
                 >
                   <ModuleMark module={item.key} size="sm" tone={active ? 'solid' : 'tint'} />
                   <span>{t(item.key as NavKey)}</span>
+                  <LinkPending className={styles.pendingMark} sign={item.key === 'today'} />
                 </Link>
               </li>
             );
@@ -137,42 +155,35 @@ export function BottomBar() {
         variant="sheet"
         closeLabel={a11y('closeMenu')}
       >
+        <div className={styles.sheetSearch}>
+          <GoToButton onBeforeOpen={() => setOpen(false)} />
+        </div>
         <ul className={styles.sheetList}>
-          {NAV.map((item) => (
-            <li key={item.key}>
+          {directory.map((row) => (
+            <li key={row.key}>
               <Link
-                href={item.ready ? item.href : ('/explore' as Route)}
+                href={row.href as Route}
                 className={styles.sheetLink}
                 onClick={() => setOpen(false)}
-                aria-current={isActive(pathname, item.href) ? 'page' : undefined}
+                aria-current={row === current ? 'page' : undefined}
               >
-                <ModuleMark module={item.key} size="sm" />
-                <span>{t(item.key as NavKey)}</span>
+                {row.module ? (
+                  <ModuleMark module={row.module} size="sm" />
+                ) : (
+                  <span className={styles.moreMark} aria-hidden>
+                    <Icon name="settings" size={18} />
+                  </span>
+                )}
+                <span className={styles.sheetText}>
+                  <span className={styles.sheetName}>{row.name}</span>
+                  {row.description ? (
+                    <span className={styles.sheetHint}>{row.description}</span>
+                  ) : null}
+                </span>
+                <LinkPending />
               </Link>
             </li>
           ))}
-          <li>
-            <Link
-              href={'/support' as Route}
-              className={styles.sheetLink}
-              onClick={() => setOpen(false)}
-            >
-              <ModuleMark module="support" size="sm" />
-              <span>{t('support')}</span>
-            </Link>
-          </li>
-          <li>
-            <Link
-              href={'/settings' as Route}
-              className={styles.sheetLink}
-              onClick={() => setOpen(false)}
-            >
-              <span className={styles.moreMark} aria-hidden>
-                <Icon name="settings" size={18} />
-              </span>
-              <span>{t('settings')}</span>
-            </Link>
-          </li>
         </ul>
       </Dialog>
     </>

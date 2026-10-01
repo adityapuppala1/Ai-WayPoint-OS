@@ -1,11 +1,13 @@
 import { health as healthService } from '@waypoint/api';
-import { ModuleMark, Panel } from '@waypoint/ui';
+import { PageHeader, Panel } from '@waypoint/ui';
 import type { Metadata } from 'next';
 import { getFormatter, getTranslations } from 'next-intl/server';
+import { EmptyNote } from '@/components/EmptyNote';
 import { CareGuide } from '@/components/health/CareGuide';
 import { DayCheckin } from '@/components/health/DayCheckin';
 import { Reminders } from '@/components/health/Reminders';
 import { WeekBars } from '@/components/health/WeekBars';
+import { JumpLink } from '@/components/JumpLink';
 import { ltr } from '@/lib/bidi';
 import { requireViewer } from '@/lib/server';
 
@@ -22,12 +24,8 @@ export default async function HealthPage() {
 
   return (
     <div className="wp-page">
-      <header className="wp-page-head">
-        <div className="wp-row">
-          <ModuleMark module="health" size="lg" />
-          <h1>{t('title')}</h1>
-        </div>
-        <p className="wp-lead">{t('lead')}</p>
+      <div className="wp-section">
+        <PageHeader module="health" title={t('title')} lead={t('lead')} />
         <p className="wp-secondary">
           {t('notMedical')}{' '}
           {emergency ? (
@@ -36,7 +34,7 @@ export default async function HealthPage() {
             t('emergencyNoNumber')
           )}
         </p>
-      </header>
+      </div>
 
       <Panel
         title={t('todayTitle')}
@@ -49,6 +47,7 @@ export default async function HealthPage() {
           }),
         })}`}
         as="section"
+        id="today"
       >
         <DayCheckin day={view.today} />
       </Panel>
@@ -57,7 +56,9 @@ export default async function HealthPage() {
         {view.week.loggedDays ? (
           <WeekBars week={view.week} />
         ) : (
-          <p className="wp-secondary">{t('weekEmpty')}</p>
+          <EmptyNote action={<JumpLink to="today">{t('logToday')}</JumpLink>}>
+            {t('weekEmpty')}
+          </EmptyNote>
         )}
       </Panel>
 

@@ -17,7 +17,28 @@ without AI, run before any AI call, and are covered by tests and release-gated e
 - **Colour and tone**: a calm "harbour blue" support card — never alarm red.
 - **Records**: a crisis event stores the tier, categories and rule ids — never the words.
   A gentle follow-up check-in is scheduled (12–24 h) and delivered in-app.
-- **Trusted contacts** are only ever contacted when the person presses the button.
+- **Trusted contacts** are only ever contacted when the person presses the button, and then
+  by the person's own phone, never by Waypoint. When someone has switched that choice on and
+  saved a contact, the support card (in Ask, Mind, Health, Goals and Circles) shows each
+  contact with "Text", "Call" or "Email" buttons. These are ordinary `sms:`, `tel:` and
+  `mailto:` links: the phone's own app opens with a short, calm message the person can change
+  or not send ("I’m having a hard time right now and would like to talk…", in their
+  language). The contact's details are decrypted for their owner only and fetched by the
+  owner's browser; no server sends anything and no AI is involved. The message wording makes
+  no clinical claim and still needs clinical and native-speaker review before launch.
+- **Everything written privately is screened**, not only Ask: journal entries, check-in and
+  health notes, a goal and why it matters, and the weekly review all get the same rules and
+  the same card.
+- **By text message too, whatever the first word.** On SMS and WhatsApp the crisis check runs
+  on every message before anything else: "hi im suicidal" is not answered with the menu, and a
+  command word in front of a cry for help does not hide it. A message sent with CHECK is mostly
+  someone else's words, so there only clear danger (tier 2+) puts the support card first, with
+  the scam warning after it. A number over its hourly limit — or one somebody else flooded —
+  still gets the support card, from a small allowance of its own, and so does a number from a
+  country Waypoint does not otherwise serve. STOP never takes the place of help: "end my life"
+  is a sentence, not an opt-out.
+- **The check-in afterwards is safety-critical**: the daily limit on messages never holds it
+  back (someone who asked for no other messages still gets it). It waits for quiet hours to end.
 - **No connection, same help.** The phone app has the classifier, the response plans and the
   help-line data built in: if a message can't reach the server, the support card with local
   numbers still appears, and Get help now works fully offline.
@@ -43,6 +64,19 @@ Rules first (pressure, payment, credential requests, lookalike links, shorteners
 switching, impersonation, country-specific patterns such as "digital arrest" and loan apps),
 then an optional AI second opinion on a redacted copy that can **only raise** the level.
 Nothing pasted is stored — only a hash, the verdict and the rule ids.
+
+The second opinion comes from the judge (TypeSafe's Jev) where one is set up and the language
+is switched on for it, and from the language model whenever one may answer, whatever the
+judge says: the highest level of the rules, the judge and the model stands. The judge is
+asked about one warning sign at a time and cannot write, so each reason it adds is the title
+of a sign the rules already have words for, in the reader's language. It never says "very
+high", so it is asked only about messages the rules rated low or unclear, and its "nothing
+found" counts for nothing: it is not reported as a second opinion, and a message that tells
+the checker it is safe is rated by the rules and the language model as if the judge were not
+there. When the judge is fairly sure a message contains text addressed to the checker (about
+0.75 or more on that question alone), that is shown as a warning sign. No rule looks for such
+text, so when the judge misses it, is fooled by it or is not set up, no such sign is shown.
+Which model answered is stored with the check ([AI.md](AI.md#typed-decisions-jev)).
 
 - **Every language, not just English.** Each rule carries cues in English, Hindi (Devanagari
   and romanised), Spanish, French, Portuguese, Arabic and Swahili, and the golden set has at
@@ -77,6 +111,75 @@ Nothing pasted is stored — only a hash, the verdict and the rule ids.
   categories, WHO UV advice, and gale-force gusts (62 km/h+). Advice is general and phrased as
   what to do, never as a forecast guarantee.
 
+## Forecasts
+
+"What’s next?" tells people what may happen so they can prepare. A forecast that sounds
+certain, or that nobody checks afterwards, does harm. So:
+
+- **Published by staff, never generated.** No model writes, publishes or changes a forecast.
+  With none published the page says so and shows nothing else. A chance is shown between 1%
+  and 99% even if a row reached the database some other way. Example rows (`pnpm db:seed
+  --demo`) are labelled, never scored, and not shown in production.
+- **Never certain.** A chance is between 1% and 99% — the API refuses anything else — and is
+  always shown as a number and in words ("Likely"), with how often that kind of thing usually
+  happens when staff know it.
+- **Always sourced, always useful.** A forecast cannot be published without a source
+  (`https://` only), a reason for the chance, what someone can do whichever way it goes, and
+  exactly what will count as "yes" on which day.
+- **The question cannot move.** The question, how it is judged and the date are fixed once
+  published. A wrong question is withdrawn — listed with the reason, not scored — and
+  published again.
+- **The question cannot move in any language.** A translation's question and how it is
+  judged are fixed once saved, like the original's, and nothing about a forecast changes
+  after its date.
+- **Judged in public.** Staff record yes or no with a link anyone can open, **as soon as the
+  outcome is known** and at the latest on the day. It is recorded once. Every publication,
+  change of chance and judgement is in the audit log.
+- **Checked by a second person, and honest when it has not been.** A verdict (yes, no, or
+  withdrawn) stands from the moment one member of staff records it: it is public and it is
+  scored, so an installation with a single member of staff can still keep a record. Until a
+  *different* member of staff confirms it in the console, it is marked "not yet
+  double-checked" on its card, and the record page says how many verdicts are in that state.
+  The person who recorded a verdict cannot confirm it (the API refuses). Confirming changes
+  nothing about the verdict. Who recorded and who confirmed is read from the audit log, which
+  already records every staff action on a forecast. **What this does not do:** the second person cannot overturn a
+  verdict. If they disagree they leave it unconfirmed, the mark stays for everyone to see,
+  and what happens next is for the editorial policy. If the account that recorded a verdict
+  is deleted, the log no longer says who that was, and any member of staff can confirm it.
+- **Scored honestly.** Each forecast gets a Brier score weighted by how long each chance was
+  shown, so moving the number on the last day counts for little. The record shows no score
+  until 10 forecasts have been judged and no calibration table until 30 (5 per band): before
+  that the numbers say more about luck than about skill (`packages/core/src/foresight`).
+- **What the score cannot stop, and what does.** Time-weighting rewards a chance that was
+  right for a long time. So a dishonest editor could raise the chance once the outcome is
+  known and delay the verdict, and the score would look better than the forecast was. No
+  formula prevents that. What does: every chance a forecast ever showed is listed on its card
+  with its date, the forecast's own score is shown next to it, judged forecasts are never
+  removed from the record, each change names who made it in the audit log, and a verdict
+  nobody else has confirmed says so in public.
+- **Words are staff's own.** Forecasts are not machine-translated. Where staff have not
+  written a translation, people see the original with its language named.
+
+## Signals
+
+- **Written by staff, never generated.** A signal is something a member of staff read and
+  summarised in their own words. No model writes, tags or publishes one, and nothing is
+  fetched automatically: with none added for a country, people there see none.
+- **Always sourced.** A signal cannot be published without the source's name and a full
+  `https://` address, which is shown with it. It cannot be dated in the future, or so long
+  ago that the Signals page would never show it.
+- **Withdrawn for everyone.** A signal that turns out to be wrong is withdrawn: it disappears
+  for everyone, including people who saved it, and the audit log keeps its title and source.
+  It stays withdrawn: the seed, which runs on every start and deploy, does not add it back,
+  and staff who type it in again are told it was withdrawn. Adding and withdrawing are both in
+  the audit log.
+- **A person's own choices.** "Not relevant" hides a signal for that person only and can be
+  undone on the spot. Saving keeps it on their Saved list however old it gets.
+
+Before launch, decide who may publish, what the second person does when they disagree with a
+verdict, which sources are acceptable for signals, and which topics are out of bounds (nothing about an individual's health, a court
+case, an election result or a price someone could trade on).
+
 ## Circles (peer groups)
 
 Peers are not crisis responders, and a group of people who just lost work is a favourite target
@@ -93,7 +196,8 @@ for fake job offers. Every post and reply is checked on the server before anyone
 - **Identity**: people appear by a name they choose for that circle, or "Member 1234" (a number
   that differs in every circle, so people can't be followed between circles). Names with contact
   details are refused. Account names and emails are never shown.
-- **Reports** are anonymous. Three distinct reports hide a post until it is reviewed.
+- **Reports** are anonymous. Three reports from three different people hide a post until it is
+  reviewed (one person reporting three times counts once, however the reports arrive).
   "I'm worried about this person" sends the author a gentle, anonymous note pointing to support
   (at most one a day; it never says who asked or which post).
 - **Small by design**: 12 people per circle, up to five circles each; joining a full circle
@@ -110,7 +214,9 @@ Circles at **/admin/moderation**:
 - Posts **held because the writer may be in danger are never shown** to moderators — only
   counted. The writer already had the support card and a follow-up; a moderator reading their
   words would add exposure, not safety.
-- **Keep** makes the post visible and closes its reports; **Remove** deletes it with its replies.
+- **Keep** makes the post visible and closes its reports; **Remove** deletes it with its replies —
+  except a reply held because its writer may be in danger, which stays, visible to its writer
+  only.
   Either way the writer gets a short note in their language (removal says it broke the
   guidelines). "Worried about this person" reports are about the writer, not the post, and the
   queue says so.
@@ -147,15 +253,69 @@ choice, and nothing from Mind, Health, Money, Circles, Ask or Shield is ever use
 
 - System prompts forbid inventing phone numbers: the companion must use `find_support`.
 - Tools that save anything (goals, memories, plans) require the person's approval, and
-  approvals are HMAC-signed so a client cannot forge them.
+  approvals are HMAC-signed so a client cannot forge them. A yes is recorded once: the same
+  answer arriving twice (two taps, a retry) saves nothing twice.
 - The client sends only its newest message; the server owns conversation history, so earlier
   assistant turns cannot be rewritten.
+- **The judge** (TypeSafe's Jev, optional: [AI.md](AI.md#typed-decisions-jev)) gives typed
+  second opinions and writes nothing. Safety never depends on it: the crisis check and the
+  Shield rules run first and without it, and with no key, no consent, a language that is not
+  switched on, a spent budget or any failure the result is exactly what it was without a
+  judge. An answer may only add caution. By TypeSafe's own account, text written to steer Jev
+  can move its answer, so nothing it says may lower a crisis tier or a Shield level, and what
+  a person wrote is never part of a question. It is used in four places:
+  - **Scam Shield**: a second opinion that can only raise the level (see above).
+  - **Answers by SMS and WhatsApp**: before an AI answer is sent, the judge is asked whether it
+    gives a diagnosis or a dose, says what a court or official will decide, recommends a
+    particular investment, loan or product, promises an outcome or describes a method of
+    self-harm. If so the answer is not sent and the guided text goes out instead. The prompt
+    forbids all five; this checks what came back. Without a judge the answer goes out as
+    before, with links and phone numbers stripped.
+  - **Plan rewrites**: the reworded title, summary and week headings, and each reworded step,
+    are checked against the template's own wording for a promise the template did not make and
+    for a course, site, organisation or number it did not name. One flag keeps the template
+    wording for the whole plan.
+  - **Guided mode**: when no keyword says what a question is about, the judge may pick which
+    part of Waypoint to point to. It writes none of the words. However a question is routed to
+    scams, guided mode gives a rules verdict on the person's own words only when the rules
+    warn; otherwise it shows the way to Shield and never says "no common scam signs found"
+    about someone describing a call or an offer.
+- **Where the judge is never used**: to decide or lower a crisis tier; at crisis tier 3, where
+  nothing goes to it as nothing goes to a model; on the journal, mood notes or health notes;
+  on Circles posts; on forecasts; on numbers or dates. Nobody has tested Jev on crisis
+  language that we could find, and TypeSafe's claims about it ("zero hallucinations",
+  "calibrated") are not facts we rely on: independent tests found its probabilities
+  over-confident and its accuracy lower outside English. Its thresholds here are starting
+  values, not tuned, and a language is switched on for it only after
+  `pnpm --filter @waypoint/ai eval:judge` passes for that language.
 
 ## Evaluations
 
 `pnpm eval` runs `evals/datasets/*.jsonl`. Release gates: crisis tier ≥ 2 recall ≥ 95 %,
 zero hard negatives over their allowed tier, ≥ 90 % of scams rated high, ≤ 10 % of legitimate
-messages rated high. Add a case for every miss found in review.
+messages rated high, and **every assistant guardrail case passes**. Add a case for every miss
+found in review.
+
+The guardrail cases (`guardrails.jsonl`) need no AI key. A scripted stand-in model plays a
+model that misbehaves, and the cases check what Waypoint guarantees anyway: the support card
+before any model in every language, nothing saved without a yes (and no way to forge, move or
+replay one), nothing saved because a pasted message or a tool result said so, no personal
+details sent to an outside model, and the rules on medical, legal and money advice and on
+never claiming to know the future present in every prompt. The run blanks every outside AI
+key, the judge's included, so an evaluation can never send anything anywhere.
+
+The judge has cases of its own, with a scripted stand-in for the service: it is not called at
+crisis tier 3, without consent, for a reader or a message in a language that is not switched
+on, or when Shield's rules already say high or very high; it is sent only redacted text, and
+only in the state; a judge that says "nothing wrong" never lowers a rules verdict; a judge
+that fails or times out gives the rules-only result; a flagged answer by text is replaced by
+the guided text and a flagged plan rewrite is refused. Each was broken on purpose once to see its case
+fail.
+
+Whether the real judge is any good is a separate question with its own command:
+`pnpm --filter @waypoint/ai eval:judge` runs the scam golden set through the rules plus the
+real judge, per language, and fails when a language it is switched on in misses either
+Scam Shield gate. It needs a TypeSafe key, so it is not part of `pnpm eval` or CI.
 
 ## Before launch in a new language or country
 

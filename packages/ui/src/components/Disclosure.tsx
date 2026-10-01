@@ -32,7 +32,9 @@ export function Disclosure({
           </span>
         </Button>
       </Heading>
-      <DisclosurePanel className={styles.panel}>{children}</DisclosurePanel>
+      <DisclosurePanel className={styles.panel}>
+        <div className={styles.panelBody}>{children}</div>
+      </DisclosurePanel>
     </AriaDisclosure>
   );
 }

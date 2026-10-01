@@ -2,7 +2,7 @@
  * The privacy notice names the outside services this installation really uses, from its
  * configuration, and never repeats a secret from it.
  */
-import { resetProvidersForTests } from '@waypoint/ai';
+import { overrideJudgeForTests, resetProvidersForTests } from '@waypoint/ai';
 import { resetEnvForTests } from '@waypoint/core/env';
 import { afterEach, describe, expect, it } from 'vitest';
 import { legalFacts, smtpHost } from '../src/services/legal';
@@ -13,6 +13,7 @@ const KEYS = [
   'GOOGLE_GENERATIVE_AI_API_KEY',
   'OLLAMA_BASE_URL',
   'AI_PROVIDER_ORDER',
+  'TYPESAFE_API_KEY',
   'TWILIO_ACCOUNT_SID',
   'TWILIO_AUTH_TOKEN',
   'TWILIO_SMS_FROM',
@@ -102,6 +103,24 @@ describe('legal facts', () => {
     expect(
       configure({ OPENAI_API_KEY: 'sk-test', AI_PROVIDER_ORDER: 'anthropic' }).aiProviders,
     ).toEqual([]);
+  });
+
+  it('names TypeSafe as an outside AI service when, and only when, its key is set', () => {
+    expect(configure({ ANTHROPIC_API_KEY: 'sk-ant-test' }).aiProviders).toEqual(['Anthropic']);
+    const both = configure({ ANTHROPIC_API_KEY: 'sk-ant-test', TYPESAFE_API_KEY: 'ts-secret-key' });
+    expect(both.aiProviders).toEqual(['Anthropic', 'TypeSafe']);
+    expect(JSON.stringify(both)).not.toContain('ts-secret-key');
+    // On its own it is still named: it is an outside service, and never a private model.
+    const alone = configure({ TYPESAFE_API_KEY: 'ts-secret-key' });
+    expect(alone.aiProviders).toEqual(['TypeSafe']);
+    expect(alone.privateModel).toBe(false);
+    // A stand-in used by tests is not a service this Waypoint uses.
+    overrideJudgeForTests(() => ({}));
+    try {
+      expect(configure({}).aiProviders).toEqual([]);
+    } finally {
+      overrideJudgeForTests(null);
+    }
   });
 
   it('counts a texting service only when it can actually send', () => {

@@ -2,9 +2,11 @@
  * Server-side helpers for pages: who is viewing, with their profile and consents.
  * Pages call services directly (no HTTP hop); client components use /api.
  */
+
 import { ApiError, type ApiUser, type Consents, limitVisitor, me } from '@waypoint/api';
 import { getSession } from '@waypoint/auth';
 import { countryFromTimeZone } from '@waypoint/content';
+import { type ConsoleArea, canUse, isStaffRole } from '@waypoint/core/console';
 import { type Database, dbReady, getDb } from '@waypoint/db';
 import type { Route } from 'next';
 import { cookies, headers } from 'next/headers';
@@ -55,12 +57,20 @@ export async function requireViewer(returnTo: string): Promise<Viewer> {
 }
 
 /**
- * For platform staff pages. Checked in every page, not only the layout: a layout is not
+ * For pages of the platform console, each its own area (@waypoint/core/console). Checked in every page, not only the layout: a layout is not
  * re-rendered on navigation, so it cannot guard the pages below it on its own.
  */
-export async function requireAdmin(returnTo: string): Promise<Viewer> {
+/** Anyone on the staff (the console's layout); each page then checks its own area. */
+export async function requireStaffViewer(returnTo: string): Promise<Viewer> {
   const viewer = await requireViewer(returnTo);
-  if (viewer.user.role !== 'admin') notFound();
+  if (!isStaffRole(viewer.user.role)) notFound();
+  return viewer;
+}
+
+export async function requireConsole(area: ConsoleArea, returnTo: string): Promise<Viewer> {
+  const viewer = await requireViewer(returnTo);
+  // Everyone else gets a plain "not found": the console stays unlisted.
+  if (!canUse(viewer.user.role, area)) notFound();
   return viewer;
 }
 

@@ -32,12 +32,22 @@ else
 if (existsSync(join(root, 'node_modules', '.pnpm'))) ok('Dependencies installed');
 else warn('Dependencies are not installed yet. Run: pnpm install');
 
-// 3. .env.local with secrets
+// 3. .env.local with secrets. Read, not "check, then read": the file could appear in between.
+// A new one is only ever created, never written over one that appeared meanwhile.
 const envPath = join(root, '.env.local');
 const examplePath = join(root, '.env.example');
-let text = existsSync(envPath) ? readFileSync(envPath, 'utf8') : readFileSync(examplePath, 'utf8');
+const readIfThere = (path) => {
+  try {
+    return readFileSync(path, 'utf8');
+  } catch (err) {
+    if (err.code === 'ENOENT') return null;
+    throw err;
+  }
+};
+const existing = readIfThere(envPath);
+let text = existing ?? readFileSync(examplePath, 'utf8');
 const secret = () => randomBytes(32).toString('base64');
-let changed = !existsSync(envPath);
+let changed = existing === null;
 for (const key of ['BETTER_AUTH_SECRET', 'WAYPOINT_KEK']) {
   const re = new RegExp(`^${key}=(.*)$`, 'm');
   const m = text.match(re);
@@ -50,8 +60,13 @@ for (const key of ['BETTER_AUTH_SECRET', 'WAYPOINT_KEK']) {
   }
 }
 if (changed) {
-  writeFileSync(envPath, text, { mode: 0o600 });
-  ok('Wrote .env.local with new secrets (keep this file private and back up WAYPOINT_KEK)');
+  try {
+    writeFileSync(envPath, text, { mode: 0o600, flag: existing === null ? 'wx' : 'w' });
+    ok('Wrote .env.local with new secrets (keep this file private and back up WAYPOINT_KEK)');
+  } catch (err) {
+    if (err.code !== 'EEXIST') throw err;
+    fail('.env.local appeared while this ran, and was left as it is. Run pnpm setup again.');
+  }
 } else {
   ok('.env.local already has its secrets');
 }

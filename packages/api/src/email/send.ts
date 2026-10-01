@@ -16,6 +16,34 @@ export function emailReady(): boolean {
 
 let smtp: { url: string; transport: Transporter } | undefined;
 
+const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
+
+/**
+ * How to connect to the SMTP server. `smtp://` starts in the clear and upgrades with STARTTLS
+ * only if the server offers it — so without `requireTLS`, a server (or someone in between)
+ * that leaves the offer out would be sent the password and the message unencrypted. It is
+ * required everywhere except `smtps://` (encrypted from the first byte) and a mail catcher on
+ * this machine. Timeouts keep a server that stops answering from holding the queue for ever.
+ */
+export function smtpOptions(url: string) {
+  let secure = false;
+  let local = false;
+  try {
+    const parsed = new URL(url);
+    secure = parsed.protocol === 'smtps:';
+    local = LOCAL_HOSTS.has(parsed.hostname.toLowerCase());
+  } catch {
+    // An address nodemailer may still understand: keep the safe defaults.
+  }
+  return {
+    url,
+    requireTLS: !secure && !local,
+    connectionTimeout: 15_000,
+    greetingTimeout: 15_000,
+    socketTimeout: 15_000,
+  };
+}
+
 export async function sendEmail(
   to: string,
   mail: RenderedEmail,
@@ -46,7 +74,10 @@ export async function sendEmail(
   }
   if (env.SMTP_URL) {
     if (smtp?.url !== env.SMTP_URL)
-      smtp = { url: env.SMTP_URL, transport: nodemailer.createTransport(env.SMTP_URL) };
+      smtp = {
+        url: env.SMTP_URL,
+        transport: nodemailer.createTransport(smtpOptions(env.SMTP_URL)),
+      };
     await smtp.transport.sendMail({
       from,
       to,

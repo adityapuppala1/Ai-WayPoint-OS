@@ -3,16 +3,75 @@
  * per day) is a single-series column chart in the Ask line colour.
  */
 
-/* ───────────── Section navigation ───────────── */
+/* ───────────── Console layout and section navigation ─────────────
+ * A row of grouped sections that scrolls sideways on a phone; a side list beside the page
+ * from 64rem, where thirteen sections no longer fit in a row. */
+.consoleLayout {
+  display: grid;
+  gap: var(--wp-space-5);
+}
+
+.consoleNav {
+  display: flex;
+  gap: var(--wp-space-4);
+  padding-block-end: var(--wp-space-1);
+  border-block-end: 1px solid var(--wp-border-subtle);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+/* Safari before 18.2 and older Chrome do not know scrollbar-width. */
+.consoleNav::-webkit-scrollbar {
+  display: none;
+}
+
+.navGroup {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--wp-space-1);
+}
+
+.navGroupLabel {
+  margin: 0;
+  padding-inline: var(--wp-space-2);
+  color: var(--wp-text-muted);
+  font-size: var(--wp-text-meta);
+  font-weight: var(--wp-weight-semibold);
+  white-space: nowrap;
+}
+
 .nav {
   display: flex;
   gap: var(--wp-space-1);
   margin: 0;
-  padding: 0 0 var(--wp-space-1);
-  border-block-end: 1px solid var(--wp-border-subtle);
+  padding: 0;
   list-style: none;
-  overflow-x: auto;
-  scrollbar-width: none;
+}
+
+@media (min-width: 64rem) {
+  .consoleLayout {
+    grid-template-columns: 13.5rem minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .consoleNav {
+    position: sticky;
+    inset-block-start: var(--wp-space-4);
+    flex-direction: column;
+    padding: 0;
+    border: 0;
+    overflow: visible;
+  }
+
+  .navGroup {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .nav {
+    flex-direction: column;
+  }
 }
 
 .nav a {
@@ -27,23 +86,64 @@
   font-weight: var(--wp-weight-medium);
   text-decoration: none;
   white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--wp-duration-fast) var(--wp-ease-out),
+    color var(--wp-duration-fast) var(--wp-ease-out);
 }
 
-.nav a:hover {
-  background: var(--wp-sunken);
+@media (hover: hover) {
+  .nav a:hover {
+    background: var(--wp-fill-hover);
+    color: var(--wp-text);
+  }
+}
+
+.nav a:active {
+  background: var(--wp-fill-pressed);
   color: var(--wp-text);
 }
 
+/* The marker under the chosen section (beside it in the side list): --wp-marker, 3:1 on
+   every surface. */
 .nav a[aria-current="page"] {
   color: var(--wp-text);
-  box-shadow: inset 0 -2px 0 var(--wp-text);
+  box-shadow: inset 0 -3px 0 var(--wp-marker);
   border-end-start-radius: 0;
   border-end-end-radius: 0;
 }
 
+@media (min-width: 64rem) {
+  .nav a {
+    display: flex;
+    justify-content: space-between;
+    border-inline-start: 3px solid transparent;
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+  }
+
+  .nav a[aria-current="page"] {
+    border-inline-start-color: var(--wp-marker);
+    background: var(--wp-fill-hover);
+    box-shadow: none;
+  }
+
+  .nav a[aria-current="page"]:focus-visible {
+    box-shadow: var(--wp-focus-shadow-inset);
+  }
+}
+
+/* Flush in the row of sections: the ring is drawn inside, the marker stays under it. */
 .nav a:focus-visible {
-  outline: 2px solid var(--wp-focus-ring);
-  outline-offset: -2px;
+  background: var(--wp-signal-tint);
+  color: var(--wp-text);
+  box-shadow: var(--wp-focus-shadow-inset);
+}
+
+.nav a[aria-current="page"]:focus-visible {
+  box-shadow:
+    var(--wp-focus-shadow-inset),
+    inset 0 -3px 0 var(--wp-marker);
 }
 
 .badge {
@@ -88,6 +188,9 @@
 }
 
 .tileValue {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-2);
   font-size: var(--wp-text-h3);
   font-weight: var(--wp-weight-semibold);
   line-height: var(--wp-leading-tight);
@@ -233,8 +336,11 @@
   transform: none;
 }
 
-.column:hover .tip {
-  display: block;
+/* Touch screens read the same numbers in the table below the chart. */
+@media (hover: hover) {
+  .column:hover .tip {
+    display: block;
+  }
 }
 
 .axis {
@@ -393,10 +499,37 @@
   color: var(--wp-text-secondary);
   font-size: var(--wp-text-small);
   text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--wp-duration-fast) var(--wp-ease-out),
+    color var(--wp-duration-fast) var(--wp-ease-out);
+}
+
+@media (hover: hover) {
+  .filters a:hover {
+    background: var(--wp-fill-hover);
+    color: var(--wp-text);
+  }
+}
+
+.filters a:active {
+  background: var(--wp-fill-pressed);
 }
 
 .filters a[aria-current="page"] {
   border-color: var(--wp-text);
+  background: var(--wp-text);
+  color: var(--wp-canvas);
+}
+
+/* A chip, not a link in a sentence: the ring, without the signal highlight behind it. */
+.filters a:focus-visible {
+  background: transparent;
+  color: var(--wp-text);
+  box-shadow: var(--wp-focus-shadow);
+}
+
+.filters a[aria-current="page"]:focus-visible {
   background: var(--wp-text);
   color: var(--wp-canvas);
 }
@@ -466,4 +599,703 @@
 
 .table tbody th {
   font-weight: var(--wp-weight-regular);
+}
+
+/* ───────────── Forecasts: publish, change the chance, judge ───────────── */
+.itemTitle {
+  font-size: var(--wp-text-body);
+  font-weight: var(--wp-weight-semibold);
+  line-height: var(--wp-leading-snug);
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-5);
+  max-inline-size: 44rem;
+}
+
+.pair {
+  display: grid;
+  gap: var(--wp-space-4);
+}
+
+@media (min-width: 36rem) {
+  .pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
+.dateField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+}
+
+.dateField label {
+  font-weight: var(--wp-weight-medium);
+}
+
+.dateField input {
+  max-inline-size: 16rem;
+  min-block-size: var(--wp-touch-min);
+  padding-inline: var(--wp-space-3);
+  border: 1px solid var(--wp-border-strong);
+  border-radius: var(--wp-radius-sm);
+  background: var(--wp-raised);
+  color: var(--wp-text);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.dateField input:focus-visible {
+  outline: 2px solid transparent;
+  box-shadow: var(--wp-focus-shadow);
+}
+
+.translations {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+}
+
+/* What is fixed once published (a question, how it is judged): shown, never in a field. */
+.fixed {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-4);
+  margin: 0;
+}
+
+.fixed dt {
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+  font-weight: var(--wp-weight-medium);
+}
+
+.fixed dd {
+  margin: var(--wp-space-1) 0 0;
+  padding: var(--wp-space-3) var(--wp-space-4);
+  border-radius: var(--wp-radius-sm);
+  background: var(--wp-sunken);
+  overflow-wrap: anywhere;
+}
+
+/* A verdict's second check: one line saying where it stands, in words as well as colour. */
+.check {
+  font-size: var(--wp-text-small);
+  font-weight: var(--wp-weight-medium);
+}
+
+.check[data-state="waiting"] {
+  color: var(--wp-caution);
+}
+
+.check[data-state="done"] {
+  color: var(--wp-safe);
+}
+
+.consoleMain {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-5);
+  min-inline-size: 0;
+}
+
+/* ───────────── Integrations ───────────── */
+.sectionHead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+}
+
+.sectionHead h2 {
+  margin: 0;
+}
+
+.groupTitle {
+  margin: 0;
+  font-size: var(--wp-text-h4);
+}
+
+.intGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+  gap: var(--wp-space-4);
+  align-items: start;
+}
+
+.intCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-3);
+  padding: var(--wp-space-5);
+  border: 1px solid var(--wp-border-subtle);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-raised);
+  min-inline-size: 0;
+}
+
+.intCard[data-status="failing"] {
+  border-color: var(--wp-danger);
+}
+
+.intHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wp-space-2);
+}
+
+.intHead h3 {
+  margin: 0;
+  font-size: var(--wp-text-body);
+}
+
+/* Status in words with an icon: never colour alone. */
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wp-space-1);
+  padding: var(--wp-space-1) var(--wp-space-2);
+  border-radius: var(--wp-radius-round);
+  background: var(--wp-sunken);
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-meta);
+  font-weight: var(--wp-weight-medium);
+  white-space: nowrap;
+}
+
+.statusPill[data-status="ok"] {
+  background: var(--wp-safe-tint);
+  color: var(--wp-safe);
+}
+
+.statusPill[data-status="failing"] {
+  background: var(--wp-danger-tint);
+  color: var(--wp-danger);
+}
+
+.statusPill[data-status="untested"] {
+  background: var(--wp-caution-tint);
+  color: var(--wp-caution);
+}
+
+.intUsage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-3);
+}
+
+.intStats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 7.5rem), 1fr));
+  gap: var(--wp-space-3);
+  margin: 0;
+}
+
+.intStats div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.intStats dt {
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-meta);
+}
+
+.intStats dd {
+  margin: 0;
+}
+
+.intStats dd:first-of-type {
+  font-weight: var(--wp-weight-semibold);
+}
+
+.intCheck {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--wp-space-2);
+  margin: 0;
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+  overflow-wrap: anywhere;
+}
+
+.intCheck[data-ok="true"] svg {
+  color: var(--wp-safe);
+}
+
+.intCheck[data-ok="false"] svg {
+  color: var(--wp-danger);
+}
+
+.intDocs {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wp-space-1);
+  font-size: var(--wp-text-small);
+}
+
+.intForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-4);
+}
+
+.readonlyField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+}
+
+.readonlyLabel {
+  font-weight: var(--wp-weight-medium);
+}
+
+.readonlyValue {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wp-space-1);
+  color: var(--wp-text-secondary);
+  font-family: var(--wp-font-mono, ui-monospace, monospace);
+  font-size: var(--wp-text-small);
+  overflow-wrap: anywhere;
+}
+
+.orderField,
+.checkField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.orderField legend,
+.checkField legend {
+  padding: 0;
+  font-weight: var(--wp-weight-medium);
+}
+
+.orderList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.orderList li {
+  display: grid;
+  grid-template-columns: 1.5rem 1fr auto auto;
+  align-items: center;
+  gap: var(--wp-space-2);
+  padding-inline-start: var(--wp-space-2);
+  border-radius: var(--wp-radius-sm);
+  background: var(--wp-sunken);
+}
+
+/* The same chevron, turned to point up. */
+.flipUp svg {
+  rotate: 180deg;
+}
+
+.checkRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-2) var(--wp-space-4);
+}
+
+.fieldError {
+  margin: 0;
+  color: var(--wp-danger);
+  font-size: var(--wp-text-small);
+}
+
+/* ───────────── Maintenance ───────────── */
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+}
+
+.downloadLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+  min-block-size: var(--wp-touch-min);
+  padding-inline: var(--wp-space-4);
+  border: 1px solid var(--wp-border-strong);
+  border-radius: var(--wp-radius-sm);
+  color: var(--wp-text);
+  font-weight: var(--wp-weight-medium);
+  text-decoration: none;
+}
+
+@media (hover: hover) {
+  .downloadLink:hover {
+    background: var(--wp-fill-hover);
+  }
+}
+
+.downloadLink:focus-visible {
+  outline: 2px solid transparent;
+  box-shadow: var(--wp-focus-shadow);
+}
+
+.tasks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tasks li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wp-space-3);
+}
+
+.tasks li > div {
+  display: flex;
+  flex: 1 1 18rem;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+}
+
+.tasks p {
+  margin: 0;
+}
+
+/* ───────────── People ───────────── */
+.searchRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-2);
+}
+
+.searchInput {
+  flex: 1 1 16rem;
+  min-block-size: var(--wp-touch-min);
+  padding-inline: var(--wp-space-3);
+  border: 1px solid var(--wp-border-strong);
+  border-radius: var(--wp-radius-sm);
+  background: var(--wp-raised);
+  color: var(--wp-text);
+  font: inherit;
+}
+
+.searchInput:focus-visible,
+.searchButton:focus-visible {
+  outline: 2px solid transparent;
+  box-shadow: var(--wp-focus-shadow);
+}
+
+.searchButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+  min-block-size: var(--wp-touch-min);
+  padding-inline: var(--wp-space-4);
+  border: 1px solid var(--wp-signal-hover);
+  border-radius: var(--wp-radius-sm);
+  background: var(--wp-signal);
+  color: var(--wp-signal-ink);
+  font: inherit;
+  font-weight: var(--wp-weight-semibold);
+  cursor: pointer;
+}
+
+.filterGroups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-3) var(--wp-space-6);
+}
+
+/* Wide tables scroll inside their own box on a phone, never the page. */
+.tableScroll {
+  max-inline-size: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--wp-border-subtle);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-raised);
+}
+
+.dataTable {
+  inline-size: 100%;
+  min-inline-size: 40rem;
+  border-collapse: collapse;
+  font-size: var(--wp-text-small);
+}
+
+.dataTable th,
+.dataTable td {
+  padding: var(--wp-space-3);
+  border-block-end: 1px solid var(--wp-border-subtle);
+  text-align: start;
+  vertical-align: top;
+}
+
+.dataTable thead th {
+  color: var(--wp-text-secondary);
+  font-weight: var(--wp-weight-medium);
+  white-space: nowrap;
+}
+
+.dataTable thead a {
+  color: inherit;
+}
+
+.dataTable thead th[aria-sort="ascending"] a::after {
+  content: " ↑";
+}
+
+.dataTable thead th[aria-sort="descending"] a::after {
+  content: " ↓";
+}
+
+.dataTable tbody th {
+  font-weight: var(--wp-weight-regular);
+}
+
+.dataTable tbody tr:last-child > * {
+  border-block-end: 0;
+}
+
+.dataTable tr[data-held] {
+  background: var(--wp-danger-tint);
+}
+
+.rowLink {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-inline-size: 0;
+  color: inherit;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.rowName {
+  color: var(--wp-text);
+  font-weight: var(--wp-weight-medium);
+}
+
+@media (hover: hover) {
+  a.rowLink:hover .rowName {
+    text-decoration: underline;
+  }
+}
+
+.tagRow {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--wp-space-2);
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wp-space-3);
+}
+
+.pager a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--wp-touch-min);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
+  gap: var(--wp-space-4);
+  margin: 0;
+}
+
+.facts div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-inline-size: 0;
+}
+
+.facts dt {
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-meta);
+}
+
+.facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.roleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--wp-space-3);
+}
+
+/* ───────────── System health ───────────── */
+.refreshRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wp-space-2) var(--wp-space-4);
+}
+
+.plainList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+  margin: 0;
+  padding-inline-start: var(--wp-space-5);
+}
+
+.code {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.875em;
+  overflow-wrap: anywhere;
+}
+
+/* A sortable column's heading: the whole label is the control. */
+.sortButton {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--wp-touch-min);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--wp-border-strong);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.sortButton:focus-visible {
+  outline: 2px solid transparent;
+  box-shadow: var(--wp-focus-shadow);
+}
+
+.dataTable thead th[aria-sort="descending"] .sortButton::after {
+  content: " ↓";
+}
+
+.dataTable td:global(.wp-num),
+.dataTable th:global(.wp-num) {
+  text-align: end;
+  white-space: nowrap;
+}
+
+li.errorRow {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--wp-space-1);
+}
+
+.errorMessage {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: var(--wp-text-meta);
+  color: var(--wp-text);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.twoUp {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  gap: var(--wp-space-4);
+  align-items: start;
+}
+
+.countChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+  min-block-size: 2.25rem;
+  padding-inline: var(--wp-space-3);
+  border: 1px solid var(--wp-border-subtle);
+  border-radius: var(--wp-radius-round);
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+}
+
+/* ───────────── Feedback ───────────── */
+.feedbackActions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-3);
+  padding-block-start: var(--wp-space-3);
+  border-block-start: 1px solid var(--wp-border-subtle);
+}
+
+/* State beside the note on a wide screen; one above the other on a phone. */
+.triageForm {
+  display: grid;
+  grid-template-columns: minmax(10rem, 14rem) minmax(0, 1fr);
+  gap: var(--wp-space-3) var(--wp-space-4);
+  align-items: start;
+}
+
+.triageForm > :last-child {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 40rem) {
+  .triageForm {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.filters a[aria-current="page"] :global(.wp-meta) {
+  color: inherit;
+  opacity: 0.8;
+}
+
+/* ───────────── Analytics ───────────── */
+.inlineField {
+  display: flex;
+  flex: 1 1 12rem;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+}
+
+.searchRow:has(.inlineField) {
+  align-items: flex-end;
+}
+
+.inlineField .searchInput {
+  flex: none;
+  inline-size: 100%;
+}
+
+/* A chart with nothing to show yet: its title the size a chart's own would be. */
+.emptyChart h3 {
+  font-size: var(--wp-text-body);
+  font-weight: var(--wp-weight-semibold);
 }

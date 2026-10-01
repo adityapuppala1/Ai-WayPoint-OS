@@ -47,6 +47,7 @@ export type {
   PlanView,
   RoleSuggestionView,
 } from './services/path';
+export type { Memory } from './services/privacy';
 export type { ShieldCheck } from './services/shield';
 export type { SignalView } from './services/signals';
 export type { SupportDirectory, SupportResourceView } from './services/support';

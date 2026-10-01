@@ -9,10 +9,12 @@ test('welcome explains Waypoint and links to help, scam checks and the legal pag
 }, testInfo) => {
   await page.goto('/welcome');
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Get started' }).first()).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Start, no sign-up needed' }).first()).toBeVisible();
   await expect(page.getByRole('link', { name: /Get help now/ }).first()).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Privacy notice' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Terms of use' })).toBeVisible();
+  // In the footer, as on every public page (the page itself links the notice too).
+  const footer = page.getByRole('contentinfo');
+  await expect(footer.getByRole('link', { name: 'Privacy notice' })).toBeVisible();
+  await expect(footer.getByRole('link', { name: 'Terms of use' })).toBeVisible();
   await snap(page, testInfo, 'welcome');
 });
 
@@ -45,6 +47,15 @@ test('the privacy notice and terms are complete and linked to each other', async
     await expect(page.getByRole('heading', { level: 2, name: section })).toBeVisible();
   // Nothing outside Waypoint is set up in the test server, and the notice says so.
   await expect(page.getByText('This Waypoint has no outside AI provider set up')).toBeVisible();
+  // Feedback is collected, and staff read it — with the address only when a reply was asked for.
+  const notice = page.getByRole('article');
+  await expect(notice.getByText(/^Feedback you send from Settings/)).toBeVisible();
+  await expect(
+    notice.getByText(/scam reports, the feedback you send .*your email address only if you asked/),
+  ).toBeVisible();
+  // Every cookie is named, and what signing out removes from the device.
+  await expect(notice.getByText(/“Not now” to the note about creating an account/)).toBeVisible();
+  await expect(notice.getByText(/Signing out or deleting your account removes/)).toBeVisible();
   await snap(page, testInfo, 'privacy');
 
   await page.getByRole('main').getByRole('link', { name: 'Terms of use' }).click();

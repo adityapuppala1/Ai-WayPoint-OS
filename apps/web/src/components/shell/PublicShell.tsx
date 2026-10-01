@@ -3,20 +3,26 @@ import type { Route } from 'next';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
+import { Logo } from '@/components/brand/Logo';
 import { LanguagePicker } from '@/components/LanguagePicker';
-import { LogoMark } from '@/components/Logo';
 import { LegalLinks } from '@/components/legal/LegalLinks';
 import { getViewer } from '@/lib/server';
 import styles from './public.module.css';
 import { QuickExit } from './QuickExit';
 
-/** Frame for pages people see before they have a session: welcome, sign-in, onboarding, legal. */
+/**
+ * Frame for pages people see before they have a session: welcome, sign-in, onboarding, legal.
+ * `bleed` drops the page gutters, for a page whose sections run edge to edge and set their
+ * own (the welcome page).
+ */
 export async function PublicShell({
   children,
   hideSignIn,
+  bleed,
 }: {
   children: ReactNode;
   hideSignIn?: boolean;
+  bleed?: boolean;
 }) {
   const t = await getTranslations('shell');
   const viewer = await getViewer();
@@ -24,8 +30,7 @@ export async function PublicShell({
     <div className={styles.frame}>
       <header className={styles.header}>
         <Link href="/" className={styles.brand} aria-label={t('home')}>
-          <LogoMark size={30} />
-          <span>Waypoint</span>
+          <Logo markSize={30} />
         </Link>
         <div className={styles.actions}>
           <div className={styles.language}>
@@ -33,9 +38,10 @@ export async function PublicShell({
           </div>
           <Link href={'/support' as Route} className={styles.help}>
             <Icon name="support" size={18} weight="fill" />
-            <span>{t('help')}</span>
+            <span className={styles.full}>{t('help')}</span>
+            <span className={styles.short}>{t('helpShort')}</span>
           </Link>
-          <QuickExit />
+          <QuickExit compact="narrow" />
           {!hideSignIn && !viewer ? (
             <Link href={'/sign-in' as Route} className={styles.signIn}>
               {t('signIn')}
@@ -43,7 +49,7 @@ export async function PublicShell({
           ) : null}
         </div>
       </header>
-      <main id="main" className={styles.main} tabIndex={-1}>
+      <main id="main" className={bleed ? styles.mainBleed : styles.main} tabIndex={-1}>
         {children}
       </main>
       <footer className={styles.footer}>

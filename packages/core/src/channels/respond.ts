@@ -214,24 +214,31 @@ export function channelReply(text: string, who: ChannelPerson, setup: ChannelSet
   if (cmd.kind === 'stop') return out('stop', [copy.stopped], { update: { optedOut: true } });
   if (cmd.kind === 'start') return out('start', [copy.started], { update: { optedOut: false } });
 
-  // Safety first, for anything the person wrote themselves (a message to CHECK is someone
-  // else's words). Someone in danger is answered even after STOP: they wrote to us.
-  if (cmd.kind === 'text' || cmd.kind === 'help') {
-    const assessment = assessCrisis(text);
-    if (assessment.tier > 0) {
-      const plan = planCrisisResponse(assessment, { country: who.country, locale });
-      return out(
-        'crisis',
-        [crisisText(plan, plan.locale)],
-        {
-          crisis: { assessment, plan },
-          ...(!plan.suppressAiReply && canAsk && !who.optedOut && cmd.kind === 'text'
-            ? { ask: { text, safe: true, external } }
-            : {}),
-        },
-        true,
-      );
-    }
+  // Safety first, whatever the first word was: "hi im suicidal" is not a request for the
+  // menu, and a command word in front of a cry for help must not hide it. Someone in danger
+  // is answered even after STOP: they wrote to us. A message sent with CHECK is mostly
+  // someone else's words, so only clear danger (tier 2+) puts the support card first there —
+  // and a warning about the message still follows.
+  const assessment = assessCrisis(text);
+  if (cmd.kind === 'check' ? assessment.tier >= 2 : assessment.tier > 0) {
+    const plan = planCrisisResponse(assessment, { country: who.country, locale });
+    // A "nothing suspicious" verdict would read oddly under the support card: leave it out.
+    const checked =
+      cmd.kind === 'check' && cmd.text.trim()
+        ? checkMessage({ text: cmd.text, country: who.country ?? undefined, locale })
+        : null;
+    const verdict = checked && checked.level !== 'low' ? [shieldText(checked, locale)] : [];
+    return out(
+      'crisis',
+      [crisisText(plan, plan.locale), ...verdict],
+      {
+        crisis: { assessment, plan },
+        ...(!plan.suppressAiReply && canAsk && !who.optedOut && cmd.kind === 'text'
+          ? { ask: { text, safe: true, external } }
+          : {}),
+      },
+      true,
+    );
   }
   if (cmd.kind === 'help') return out('help', [helpText(who.country, locale)], {}, true);
   if (who.optedOut) return out('ignored', []);

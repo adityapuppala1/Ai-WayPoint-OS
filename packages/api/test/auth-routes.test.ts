@@ -116,3 +116,48 @@ describe('the visitor address the sign-in limits use', () => {
     expect((await attempt('192.0.2.20')).status).toBe(401);
   });
 });
+
+describe('signing in before the address is confirmed', () => {
+  it('answers exactly like a wrong password or an unknown address, and emails a fresh link', async () => {
+    const email = 'zawadi@example.org';
+    const password = 'a long enough password';
+    const signUp = await post(
+      '/sign-up/email',
+      { email, password, name: 'Zawadi' },
+      { 'x-real-ip': '198.51.100.40' },
+    );
+    expect(signUp.status).toBe(200);
+    const links = async () =>
+      (await db.getDb().select().from(db.outbox)).filter(
+        (m) => (m.payload as { template?: string }).template === 'verify-email',
+      ).length;
+    const before = await links();
+
+    const attempt = (body: { email: string; password: string }, ip: string) =>
+      post('/sign-in/email', body, { 'x-real-ip': ip });
+    // Straight after signing up the first link is still on its way: another is not sent
+    // (one every two minutes per inbox, so signing in repeatedly cannot flood it).
+    expect((await attempt({ email, password }, '198.51.100.44')).status).toBe(401);
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    expect(await links()).toBe(before);
+    // Two minutes on:
+    await db
+      .getDb()
+      .execute(
+        db.sql`update rate_limits set last_request = last_request - 121000 where key like 'mail:confirm:%'`,
+      );
+    const right = await attempt({ email, password }, '198.51.100.41');
+    const wrong = await attempt({ email, password: 'not the password at all' }, '198.51.100.42');
+    const unknown = await attempt({ email: 'nobody-here@example.org', password }, '198.51.100.43');
+    const answers = [];
+    for (const res of [right, wrong, unknown]) {
+      expect(res.status).toBe(401);
+      expect(res.headers.getSetCookie()).toEqual([]);
+      answers.push(await res.json());
+    }
+    expect(answers[0]).toEqual(answers[1]);
+    expect(answers[1]).toEqual(answers[2]);
+    // Only whoever knows the password gets a new link sent to the address.
+    await expect.poll(links).toBe(before + 1);
+  });
+});

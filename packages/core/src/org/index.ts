@@ -71,8 +71,14 @@ function defaultRandom(bytes: Uint8Array<ArrayBuffer>): Uint8Array {
 export function normalizeJoinCode(input: string | null | undefined): string | null {
   if (!input) return null;
   let raw = input.trim();
-  const fromLink = /\/join\/([A-Za-z0-9 -]+)\/?(?:[?#].*)?$/.exec(raw);
-  if (fromLink?.[1]) raw = fromLink[1];
+  // From a link, what follows its last /join/, without a query, a fragment or a final slash.
+  // (Found by position: a pattern searched through what was pasted could take seconds.)
+  const at = raw.lastIndexOf('/join/');
+  if (at !== -1) {
+    const rest = raw.slice(at + '/join/'.length).split(/[?#]/)[0] ?? '';
+    const fromLink = rest.endsWith('/') ? rest.slice(0, -1) : rest;
+    if (/^[A-Za-z0-9 -]+$/.test(fromLink)) raw = fromLink;
+  }
   const code = raw.replace(/[\s-]/g, '').toUpperCase();
   return /^[A-Z0-9]{6,12}$/.test(code) ? code : null;
 }

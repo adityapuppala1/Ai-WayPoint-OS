@@ -6,11 +6,6 @@
   gap: var(--wp-space-12);
 }
 
-.header {
-  display: grid;
-  gap: var(--wp-space-3);
-}
-
 .kicker {
   font-weight: var(--wp-weight-medium);
   color: var(--wp-text-secondary);
@@ -89,4 +84,148 @@
 .typeScale {
   display: grid;
   gap: var(--wp-space-3);
+}
+
+.elevations {
+  display: grid;
+  gap: var(--wp-space-6);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+}
+
+.elevation {
+  display: grid;
+  gap: var(--wp-space-1);
+  align-content: start;
+  padding: var(--wp-space-5);
+  border: 1px solid var(--wp-border-subtle);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-raised);
+}
+
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid var(--wp-border-subtle);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-raised);
+  box-shadow: var(--wp-shadow-1);
+}
+
+.table {
+  inline-size: 100%;
+  font-size: var(--wp-text-small);
+}
+
+.table th,
+.table td {
+  padding: var(--wp-space-3) var(--wp-space-4);
+  text-align: start;
+  vertical-align: top;
+}
+
+.table thead th {
+  color: var(--wp-text-secondary);
+  font-weight: var(--wp-weight-medium);
+}
+
+.table tbody th {
+  font-weight: var(--wp-weight-medium);
+}
+
+.table tbody tr {
+  border-block-start: 1px solid var(--wp-border-subtle);
+}
+
+/* The focus ring, drawn on each surface it has to show on (nothing here is focusable). */
+.focusRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-6);
+  padding: var(--wp-space-2);
+}
+
+.focusDemo {
+  display: inline-grid;
+  place-items: center;
+  min-block-size: var(--wp-touch-min);
+  padding-inline: var(--wp-space-4);
+  border-radius: var(--wp-radius-sm);
+  font-weight: var(--wp-weight-medium);
+  box-shadow: var(--wp-focus-shadow);
+}
+
+.focusDemo[data-surface="raised"] {
+  background: var(--wp-raised);
+}
+
+.focusDemo[data-surface="overlay"] {
+  background: var(--wp-overlay);
+}
+
+.focusDemo[data-surface="sign"] {
+  background: var(--wp-sign);
+  color: var(--wp-sign-text);
+  box-shadow: var(--wp-focus-shadow-on-sign);
+}
+
+.focusDemo[data-surface="inset"] {
+  background: var(--wp-signal-tint);
+  border-radius: 0;
+  box-shadow: var(--wp-focus-shadow-inset);
+}
+
+.stats {
+  display: grid;
+  gap: var(--wp-space-6);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+  align-items: start;
+}
+
+/* The loading page, framed like a small screen so its shape can be seen among the rest. */
+.frame {
+  padding: var(--wp-space-5) var(--wp-space-4);
+  border: 1px dashed var(--wp-border-strong);
+  border-radius: var(--wp-radius-md);
+}
+
+/* The bar above both pages: it stays where it is while the page under it changes. */
+.bar {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: var(--wp-z-header);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--wp-space-1) var(--wp-space-5);
+  min-block-size: var(--wp-touch-min);
+  padding: var(--wp-space-2) var(--wp-space-4);
+  border-block-end: 1px solid var(--wp-border-subtle);
+  background: var(--wp-raised);
+  font-size: var(--wp-text-small);
+  font-weight: var(--wp-weight-medium);
+}
+
+.bar a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--wp-touch-min);
+}
+
+/* The example page sits in the same space the app's frame gives a page. */
+.example {
+  padding: var(--wp-space-6) var(--wp-space-4) var(--wp-space-20);
+}
+
+/* A number with its small drawing beside it; they wrap when the panel is narrow. */
+.figure {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wp-space-4) var(--wp-space-6);
+}
+
+@media (min-width: 60rem) {
+  .example {
+    padding: var(--wp-space-12) var(--wp-space-8) var(--wp-space-20);
+  }
 }

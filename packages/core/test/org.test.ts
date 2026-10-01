@@ -54,6 +54,15 @@ describe('join codes', () => {
     expect(normalizeJoinCode('')).toBeNull();
     expect(formatJoinCode('K7QM3WXA')).toBe('K7QM-3WXA');
   });
+
+  it('take the code after the last /join/ of a link, and answer at once whatever is pasted', () => {
+    expect(normalizeJoinCode('https://waypoint.app/join/K7QM 3WXA/#poster')).toBe('K7QM3WXA');
+    expect(normalizeJoinCode('https://x.example/join/old/join/K7QM3WXA')).toBe('K7QM3WXA');
+    expect(normalizeJoinCode('https://waypoint.app/join/K7QM3WXA/extra')).toBeNull();
+    const started = performance.now();
+    normalizeJoinCode(`${'/join/ #'.repeat(20_000)}\nx`);
+    expect(performance.now() - started).toBeLessThan(250);
+  });
 });
 
 describe('k-anonymity for organisations', () => {

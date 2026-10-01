@@ -1,9 +1,13 @@
 name: CI
 
+# Documentation alone changes nothing CI checks (no code reads a Markdown file), so a change
+# to it alone does not run these jobs. The security workflow still scans every change.
 on:
   push:
     branches: [main]
+    paths-ignore: ['**/*.md', 'docs/**']
   pull_request:
+    paths-ignore: ['**/*.md', 'docs/**']
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -15,11 +19,19 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+      # pnpm first (its version comes from package.json), so setup-node can cache its store.
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
-      - run: corepack enable pnpm
+          cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Next.js reuses what it compiled last time for files that did not change.
+      - uses: actions/cache@v4
+        with:
+          path: apps/web/.next/cache
+          key: next-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: next-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
@@ -34,3 +46,143 @@ jobs:
         env:
           BETTER_AUTH_SECRET: ci-only-secret-not-for-production-use-000000
           WAYPOINT_KEK: MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=
+
+  # Races between requests (two reports at once, a burst past a limit) only show with a real
+  # Postgres and its pool of connections: the embedded database answers one request at a time.
+  postgres:
+    name: Security tests against Postgres
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      db:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: waypoint
+          POSTGRES_PASSWORD: ci-only-database-password
+          POSTGRES_DB: waypoint
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U waypoint -d waypoint"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+      # pnpm first (its version comes from package.json), so setup-node can cache its store.
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @waypoint/api exec vitest run test/security.test.ts
+        env:
+          WAYPOINT_TEST_DATABASE_URL: postgres://waypoint:ci-only-database-password@localhost:5432/waypoint
+
+  # The real app in real browsers, at phone and desktop widths: the journeys people take,
+  # accessibility, the first pages in light, dark and Arabic, the staff console and the offline
+  # page. One job per browser engine, each with its own build, server and empty database: a
+  # problem in one engine never hides behind another, and no job waits for the other two.
+  # WebKit is the engine of Safari and of every browser on an iPhone. It is also the slowest of
+  # the three under test (26 minutes on CI, against 10 for Chrome and 9 for Firefox), so its
+  # tests are split between two jobs (Playwright's --shard) that run side by side: the whole
+  # run then takes about as long as Chrome's.
+  browser:
+    name: Browser tests, ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Chrome (desktop and phone)
+            engine: chromium
+            part: all
+            projects: --project=desktop --project=phone
+          - name: Firefox
+            engine: firefox
+            part: all
+            projects: --project=firefox
+          - name: Safari (desktop and iPhone), 1 of 2
+            engine: webkit
+            part: '1'
+            projects: --project=safari --project=iphone --shard=1/2
+          - name: Safari (desktop and iPhone), 2 of 2
+            engine: webkit
+            part: '2'
+            projects: --project=safari --project=iphone --shard=2/2
+    steps:
+      - uses: actions/checkout@v4
+      # pnpm first (its version comes from package.json), so setup-node can cache its store.
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Next.js reuses what it compiled last time for files that did not change.
+      - uses: actions/cache@v4
+        with:
+          path: apps/web/.next/cache
+          key: next-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: next-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+      - run: pnpm --filter @waypoint/web build
+        env:
+          BETTER_AUTH_SECRET: ci-only-secret-not-for-production-use-000000
+          WAYPOINT_KEK: MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=
+      # The browser itself is cached per Playwright version; its system libraries come from
+      # apt either way.
+      - name: Which Playwright
+        id: playwright
+        run: echo "version=$(node -p "require('./apps/web/node_modules/@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache/restore@v4
+        id: browsers
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ matrix.engine }}-${{ steps.playwright.outputs.version }}
+      - name: Install this job's browser only, with the system libraries it needs
+        if: steps.browsers.outputs.cache-hit != 'true'
+        run: pnpm --filter @waypoint/web exec playwright install --with-deps ${{ matrix.engine }}
+      # Saved straight away, so a failing test later in the job still leaves it for next time.
+      - uses: actions/cache/save@v4
+        if: steps.browsers.outputs.cache-hit != 'true'
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ steps.browsers.outputs.cache-primary-key }}
+      - name: The cached browser's system libraries
+        if: steps.browsers.outputs.cache-hit == 'true'
+        run: pnpm --filter @waypoint/web exec playwright install-deps ${{ matrix.engine }}
+      - run: pnpm --filter @waypoint/web exec playwright test ${{ matrix.projects }}
+      # The HTML report carries each failure's trace and screenshots itself: test-results
+      # would only upload the same files twice.
+      - name: Keep the report when a test fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-test-report-${{ matrix.engine }}-${{ matrix.part }}
+          path: apps/web/playwright-report
+          retention-days: 7
+
+  # The deployment files are checked on every change, so they never drift from the app.
+  infra:
+    name: Deployment files
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Kubernetes manifests build and match the API schemas
+        run: |
+          kubectl kustomize infra/k8s/base > rendered.yaml
+          docker run --rm -v "$PWD:/work" ghcr.io/yannh/kubeconform:v0.7.0 \
+            -strict -summary -kubernetes-version 1.31.0 /work/rendered.yaml /work/infra/k8s/base/secret.example.yaml
+      - name: Compose file is valid, and refuses to start without a database password
+        run: |
+          touch .env
+          if docker compose --env-file .env -f infra/docker/compose.yml config --quiet 2>/dev/null; then
+            echo "The stack must not start without POSTGRES_PASSWORD and WAYPOINT_DOMAIN" && exit 1
+          fi
+          printf 'WAYPOINT_DOMAIN=waypoint.example.org\nPOSTGRES_PASSWORD=ci-only-database-password\n' > .env
+          docker compose --env-file .env -f infra/docker/compose.yml config --quiet
+      - name: The files still do what the deployment guide promises
+        run: node infra/check.mjs
+      - name: Load test script parses
+        run: node --check infra/load/run.mjs

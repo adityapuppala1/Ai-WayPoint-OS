@@ -11,7 +11,6 @@ export {
   AUTO_HIDE_REPORTS,
   type HoldReason,
   type Moderation,
-  memberNumber,
   moderatePost,
   POST_KINDS,
   type PostKind,
@@ -30,11 +29,19 @@ export {
   brierScore,
   brierSkillScore,
   calibrationBuckets,
+  clampForecast,
+  FORECAST_BOUNDS,
+  forecastScore,
   formatPercent,
+  type JudgedForecast,
   meanBrier,
+  type PublishedChance,
   probabilityWords,
   type RelevanceReason,
   relevance,
+  SCOREBOARD,
+  type Scoreboard,
+  scoreboard,
 } from './foresight';
 export {
   DEFAULT_ATTENTION,
@@ -92,6 +99,25 @@ export {
   toMonthly,
 } from './money';
 export {
+  addNotNow,
+  chooseNextStep,
+  type ListedModule,
+  lifeEventFor,
+  moduleForHref,
+  moduleOrder,
+  NEXT_STEP_KINDS,
+  NEXT_STEP_REASONS,
+  NEXT_STEP_RUNGS,
+  type NextStepCandidate,
+  type NextStepFacts,
+  type NextStepKind,
+  type NextStepReason,
+  type NextStepRung,
+  NOT_NOW_COOKIE,
+  parseNotNow,
+  rankNextSteps,
+} from './next-step';
+export {
   COUNT_AFTER_DAYS,
   type CountMargin,
   type CountNoise,
@@ -135,7 +161,7 @@ export {
   renderPlanText,
   suggestRoles,
 } from './path';
-export { isInternalPath, safeNextPath } from './paths';
+export { isInternalPath, safeExternalHref, safeNextPath } from './paths';
 export {
   type AiOpinion,
   adviceFor,
@@ -147,6 +173,8 @@ export {
   localizeShieldResult,
   mergeAiOpinion,
   SHIELD_RULES_VERSION,
+  SHIELD_SIGNAL_IDS,
+  shieldSignalTitle,
 } from './shield';
 export {
   type Advice,

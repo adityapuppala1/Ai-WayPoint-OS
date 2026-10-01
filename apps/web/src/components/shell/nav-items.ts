@@ -27,3 +27,16 @@ export const NAV: NavItem[] = [
   { key: 'surroundings', href: '/surroundings' as Route, ready: true },
   { key: 'goals', href: '/goals' as Route, ready: true },
 ];
+
+/** The four modules on the phone's bottom bar. Everything else is one tap away, under More. */
+export const PRIMARY_TABS: ModuleKey[] = ['today', 'path', 'shield', 'ask'];
+
+/** One row of the phone's More sheet: a place to go, with a line saying what it is. */
+export interface DirectoryRow {
+  key: string;
+  href: string;
+  /** The module whose mark leads the row; Settings has none. */
+  module?: ModuleKey;
+  name: string;
+  description?: string;
+}

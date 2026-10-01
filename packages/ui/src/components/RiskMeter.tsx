@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { cn } from '../cn';
 import type { IconName } from '../icons';
 import { Icon } from './Icon';
@@ -38,7 +39,12 @@ export function RiskMeter({ level, verdict, scale, className }: RiskMeterProps) 
       </p>
       <div className={styles.segments} aria-hidden="true">
         {ORDER.map((l, i) => (
-          <span key={l} className={styles.segment} data-on={i <= idx} />
+          <span
+            key={l}
+            className={styles.segment}
+            data-on={i <= idx}
+            style={{ '--step': i } as CSSProperties}
+          />
         ))}
       </div>
       <div className={styles.scale} aria-hidden="true">

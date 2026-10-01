@@ -2,6 +2,9 @@
 # Waypoint images. Build from the repository root:
 #   docker build -f infra/docker/Dockerfile --target web -t waypoint-web .
 #   docker build -f infra/docker/Dockerfile --target worker -t waypoint-worker .
+#
+# Both run as the unprivileged `node` user and need nothing downloaded when they start.
+# What never reaches an image (secrets, local data) is listed in /.dockerignore.
 
 FROM node:22-bookworm-slim AS base
 ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH CI=true NEXT_TELEMETRY_DISABLED=1
@@ -15,10 +18,13 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm fetch
 
 FROM deps AS build
 COPY . .
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --offline --frozen-lockfile
+# Packages come from the store filled above. Not fully offline: pnpm 11 checks each package's
+# publication date against the supply-chain policy in pnpm-workspace.yaml, and needs the
+# registry's metadata for that.
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --prefer-offline --frozen-lockfile
 RUN pnpm --filter @waypoint/web build
 
-# Web app + API (Next.js standalone output).
+# ── Web app + API (Next.js standalone output) ────────────────────────────────────────────
 FROM node:22-bookworm-slim AS web
 WORKDIR /app
 ENV NODE_ENV=production PORT=3000 HOSTNAME=0.0.0.0 NEXT_TELEMETRY_DISABLED=1 \
@@ -32,8 +38,23 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s CMD node -e "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 CMD ["node", "apps/web/server.js"]
 
-# Background worker and one-off tasks (migrations, seeding) — runs TypeScript with tsx.
-FROM build AS worker
-ENV NODE_ENV=production
+# ── Background worker and one-off tasks (migrations, seeding) ────────────────────────────
+# Only the packages the worker and the database tools need: no web app, no phone app.
+FROM deps AS worker-build
+COPY . .
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm install --prefer-offline --frozen-lockfile \
+      --filter "@waypoint/worker..." --filter "@waypoint/db..." \
+    && rm -rf apps/web apps/mobile apps/api
+
+# Runs TypeScript directly (tsx); no package manager is needed once the image is built.
+#   worker:      node --import tsx src/index.ts            (the default, in /app/apps/worker)
+#   migrations:  cd /app/packages/db && node --import tsx src/cli.ts migrate
+#   seed:        cd /app/packages/db && node --import tsx src/cli.ts seed
+FROM node:22-bookworm-slim AS worker
+ENV NODE_ENV=production WAYPOINT_MIGRATIONS_DIR=/app/packages/db/drizzle
+WORKDIR /app
+COPY --from=worker-build --chown=node:node /app ./
 USER node
-CMD ["pnpm", "--filter", "@waypoint/worker", "start"]
+WORKDIR /app/apps/worker
+CMD ["node", "--import", "tsx", "src/index.ts"]

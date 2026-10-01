@@ -20,6 +20,10 @@ export interface AppEnv {
     requestId: string;
     /** The language to answer in: `?locale=`, then the language cookie, then Accept-Language. */
     locale: Locale;
+    /** Set once a server error has been kept with its own words (lib/metrics.ts). */
+    errorKept?: boolean;
+    /** Turned away on purpose while closed for maintenance: not a failure. */
+    closed?: boolean;
   };
 }
 

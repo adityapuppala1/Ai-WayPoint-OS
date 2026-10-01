@@ -14,6 +14,7 @@ export * as civic from './services/civic';
 export * as forecasts from './services/forecasts';
 export * as goals from './services/goals';
 export * as health from './services/health';
+export * as integrations from './services/integrations';
 export * as legal from './services/legal';
 export * as me from './services/me';
 export * as mind from './services/mind';

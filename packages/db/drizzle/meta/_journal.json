@@ -113,6 +113,13 @@
       "when": 1790792853079,
       "tag": "0015_signal_withdrawn",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1790828891787,
+      "tag": "0016_integrations",
+      "breakpoints": true
     }
   ]
 }

@@ -73,3 +73,5 @@ export function consoleFor(
     areas: g.areas.filter((a) => canUse(role, a)) as ConsoleArea[],
   })).filter((g) => g.areas.length > 0);
 }
+
+export * from './integrations';

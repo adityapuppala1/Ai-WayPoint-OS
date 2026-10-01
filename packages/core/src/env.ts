@@ -10,6 +10,7 @@ import { randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { z } from 'zod';
+import { CONSOLE_SETTINGS } from './console/integrations';
 
 let rootCache: string | undefined;
 
@@ -247,12 +248,113 @@ const isThisMachine = (hostname: string) =>
   ['localhost', '127.0.0.1', '[::1]', '::1'].includes(hostname.toLowerCase()) ||
   hostname.toLowerCase().endsWith('.localhost');
 
+// ───────────────────────── Settings managed in the console ─────────────────────────
+//
+// An admin can set the outside services' keys and options in the platform console
+// (@waypoint/core/console lists which). They are kept encrypted in the database and handed
+// here by the API (services/integrations.ts); a value in the server's environment always
+// wins. Kept on globalThis: Next.js can load this module more than once in one process, and
+// every copy must see the same settings.
+
+interface ConsoleSettingsState {
+  values: Record<string, string>;
+  version: number;
+  listeners: Set<() => void>;
+}
+
+const SETTINGS_KEY = Symbol.for('waypoint.consoleSettings');
+
+function consoleState(): ConsoleSettingsState {
+  const g = globalThis as { [SETTINGS_KEY]?: ConsoleSettingsState };
+  g[SETTINGS_KEY] ??= { values: {}, version: 0, listeners: new Set() };
+  return g[SETTINGS_KEY];
+}
+
+const fromServer = (key: string) => Boolean(process.env[key]?.trim());
+
+/** The environment as configuration sees it: the server's, with the console's filling gaps. */
+function withConsoleSettings(values: Record<string, string>): NodeJS.ProcessEnv {
+  const merged: NodeJS.ProcessEnv = { ...process.env };
+  for (const [key, value] of Object.entries(values))
+    if (CONSOLE_SETTINGS.has(key) && !fromServer(key)) merged[key] = value;
+  return merged;
+}
+
+/** Where a setting's value comes from: the server's environment, the console, or neither. */
+export function settingSource(key: string): 'server' | 'console' | 'default' {
+  loadRootEnv();
+  if (fromServer(key)) return 'server';
+  return consoleState().values[key]?.trim() ? 'console' : 'default';
+}
+
+/** The value the console holds for a setting (whether or not the server's wins). */
+export function consoleSetting(key: string): string | undefined {
+  return consoleState().values[key];
+}
+
+/**
+ * What would be wrong with the configuration if these console values were used, by setting.
+ * Only settings the console manages are checked against; the server's own problems are its
+ * operator's to fix, and stop it starting anyway.
+ */
+export function checkConsoleSettings(values: Record<string, string>): Record<string, string> {
+  loadRootEnv();
+  const parsed = EnvSchema.safeParse(withConsoleSettings(values));
+  const problems: Record<string, string> = {};
+  if (!parsed.success)
+    for (const issue of parsed.error.issues) {
+      const key = String(issue.path[0] ?? '');
+      if (CONSOLE_SETTINGS.has(key) && key in values) problems[key] ??= issue.message;
+    }
+  return problems;
+}
+
+/**
+ * Use these console values from now on. One that would make the configuration invalid is
+ * left out (and said so), so a bad value saved by mistake can never stop the server.
+ */
+export function setConsoleSettings(values: Record<string, string>): string[] {
+  const state = consoleState();
+  const kept: Record<string, string> = {};
+  for (const [key, value] of Object.entries(values))
+    if (CONSOLE_SETTINGS.has(key) && value.trim()) kept[key] = value.trim();
+  const dropped: string[] = [];
+  for (let i = 0; i < 64; i++) {
+    const problems = Object.keys(checkConsoleSettings(kept));
+    if (!problems.length) break;
+    for (const key of problems) {
+      delete kept[key];
+      dropped.push(key);
+    }
+  }
+  const before = JSON.stringify(state.values);
+  state.values = kept;
+  if (JSON.stringify(kept) !== before) {
+    state.version += 1;
+    for (const listener of state.listeners)
+      try {
+        listener();
+      } catch {
+        // A listener's failure must not keep the new settings from the others.
+      }
+  }
+  return dropped;
+}
+
+/** Called whenever the console's settings change (to drop anything built from the old ones). */
+export function onConsoleSettingsChange(listener: () => void): () => void {
+  consoleState().listeners.add(listener);
+  return () => consoleState().listeners.delete(listener);
+}
+
 let envCache: ServerEnv | undefined;
+let envVersion = -1;
 
 export function getEnv(): ServerEnv {
-  if (envCache) return envCache;
+  const settings = consoleState();
+  if (envCache && envVersion === settings.version) return envCache;
   loadRootEnv();
-  const parsed = EnvSchema.safeParse(process.env);
+  const parsed = EnvSchema.safeParse(withConsoleSettings(settings.values));
   if (!parsed.success) {
     const issues = parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
     throw new Error(`Invalid Waypoint configuration — ${issues}`);
@@ -283,6 +385,7 @@ export function getEnv(): ServerEnv {
         `WAYPOINT_URL must start with https:// in production (it is ${site.origin}).`,
       );
   }
+  envVersion = settings.version;
   envCache = {
     ...env,
     clientIpHeader: env.WAYPOINT_CLIENT_IP_HEADER ?? 'x-forwarded-for',

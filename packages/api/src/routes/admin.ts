@@ -20,6 +20,14 @@ import {
   ScamReviewInputSchema,
   scamReportList,
 } from '../services/admin';
+import {
+  IntegrationCheckSchema,
+  IntegrationsSchema,
+  IntegrationUpdateSchema,
+  integrationsView,
+  saveIntegration,
+  testIntegration,
+} from '../services/integrations';
 import type { AppEnv } from '../types';
 
 const app = router();
@@ -33,6 +41,7 @@ for (const [path, area] of [
   ['/admin/scam-reports', 'reports'],
   ['/admin/feedback', 'feedback'],
   ['/admin/audit', 'audit'],
+  ['/admin/integrations', 'integrations'],
 ] as const) {
   app.use(path, requireArea(area));
   app.use(`${path}/*`, requireArea(area));
@@ -162,6 +171,73 @@ app.openapi(
     responses: { 200: jsonContent(AuditTrailSchema), 401: errors[401], 403: errors[403] },
   }),
   async (c) => c.json(await auditTrail(c.get('db'), c.req.valid('query')), 200),
+);
+
+// ───────────────────────────── Outside services ─────────────────────────────
+
+const IntegrationParam = z.object({
+  id: z
+    .string()
+    .regex(/^[a-z-]{2,40}$/)
+    .openapi({ param: { name: 'id', in: 'path' }, example: 'anthropic' }),
+});
+
+app.openapi(
+  createRoute({
+    method: 'get',
+    path: '/admin/integrations',
+    tags: ['Admin'],
+    summary: 'Outside services: what is set up, where each setting comes from, checks and usage',
+    responses: { 200: jsonContent(IntegrationsSchema), 401: errors[401], 403: errors[403] },
+  }),
+  async (c) => c.json(await integrationsView(c.get('db')), 200),
+);
+
+app.openapi(
+  createRoute({
+    method: 'put',
+    path: '/admin/integrations/{id}',
+    tags: ['Admin'],
+    summary:
+      "Change a service's keys and options (a server value always wins and can't be changed here)",
+    middleware: [limit('admin-integration', 120, 3600)] as const,
+    request: { params: IntegrationParam, ...jsonBody(IntegrationUpdateSchema) },
+    responses: {
+      200: jsonContent(z.object({ ok: z.literal(true), dropped: z.array(z.string()) })),
+      400: errors[400],
+      401: errors[401],
+      403: errors[403],
+      404: errors[404],
+    },
+  }),
+  async (c) => {
+    const { dropped } = await saveIntegration(
+      c.get('db'),
+      actor(c),
+      c.req.valid('param').id,
+      c.req.valid('json').values,
+    );
+    return c.json({ ok: true as const, dropped }, 200);
+  },
+);
+
+app.openapi(
+  createRoute({
+    method: 'post',
+    path: '/admin/integrations/{id}/check',
+    tags: ['Admin'],
+    summary: 'Check a service now with the settings in use (one harmless call)',
+    middleware: [limit('admin-integration-check', 60, 3600)] as const,
+    request: { params: IntegrationParam },
+    responses: {
+      200: jsonContent(IntegrationCheckSchema),
+      400: errors[400],
+      401: errors[401],
+      403: errors[403],
+      404: errors[404],
+    },
+  }),
+  async (c) => c.json(await testIntegration(c.get('db'), actor(c), c.req.valid('param').id), 200),
 );
 
 export default app;

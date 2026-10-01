@@ -8,7 +8,7 @@
  */
 import { writeFileSync } from 'node:fs';
 import { hostname } from 'node:os';
-import { jobs } from '@waypoint/api';
+import { integrations, jobs } from '@waypoint/api';
 import { getEnv } from '@waypoint/core/env';
 import { closeDb, dbReady, getDb } from '@waypoint/db';
 
@@ -48,6 +48,8 @@ if (env.embeddedDb && !once) {
 }
 
 await dbReady();
+// Keys and options an admin set in the console (texting, email, AI), kept in step.
+await integrations.startSettingsSync(getDb());
 log('worker started', { once, intervalMs: INTERVAL_MS });
 
 let stopping = false;

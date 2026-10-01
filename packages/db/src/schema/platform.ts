@@ -309,3 +309,32 @@ export const feedback = pgTable('feedback', {
   wantsReply: boolean().notNull().default(false),
   createdAt: createdAt(),
 });
+
+// ───────────────────────────── Outside services (the console) ─────────────────────────────
+
+/**
+ * Keys and options for outside services that an admin set in the platform console
+ * (@waypoint/core/console lists which). Every value is sealed with the KEK; `hint` is what the
+ * console may show again: a secret's last four characters, or an ordinary value in full.
+ * A value in the server's environment always wins over one here.
+ */
+export const integrationSettings = pgTable('integration_settings', {
+  key: text().primaryKey(),
+  valueCt: text().notNull(),
+  hint: text().notNull(),
+  updatedBy: text().references(() => users.id, { onDelete: 'set null' }),
+  updatedAt: updatedAt(),
+});
+
+/** The last time each outside service was checked from the console, and what it answered. */
+export const integrationChecks = pgTable('integration_checks', {
+  provider: text().primaryKey(),
+  ok: boolean().notNull(),
+  /** A short account of the answer, never a key: "Account active", "401: key refused". */
+  detail: text().notNull(),
+  latencyMs: integer(),
+  /** Models the service offers, when it lists them (to choose from in the console). */
+  models: jsonb().$type<string[]>(),
+  checkedBy: text().references(() => users.id, { onDelete: 'set null' }),
+  checkedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+});

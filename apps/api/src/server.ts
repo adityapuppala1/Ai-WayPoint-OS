@@ -3,15 +3,17 @@
  * that scale the API separately (and for the mobile app in production).
  */
 import { serve } from '@hono/node-server';
-import { handleRequest } from '@waypoint/api';
+import { handleRequest, integrations } from '@waypoint/api';
 import { configWarnings, getEnv } from '@waypoint/core/env';
-import { closeDb, dbReady } from '@waypoint/db';
+import { closeDb, dbReady, getDb } from '@waypoint/db';
 
 const env = getEnv();
 const port = Number(process.env.PORT ?? 4000);
 const hostname = process.env.HOST ?? '0.0.0.0';
 
 await dbReady();
+// Keys and options an admin set in the console, kept in step every half minute.
+await integrations.startSettingsSync(getDb());
 for (const warning of configWarnings(env))
   process.stderr.write(
     `${JSON.stringify({ time: new Date().toISOString(), level: 'warn', msg: warning })}\n`,

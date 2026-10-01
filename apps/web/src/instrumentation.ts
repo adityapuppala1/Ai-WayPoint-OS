@@ -15,6 +15,9 @@ export async function register() {
     console.error('[waypoint] database failed to start:', (err as Error).message);
     return;
   }
+  // Keys and options an admin set in the console, kept in step every half minute.
+  const { integrations } = await import('@waypoint/api');
+  await integrations.startSettingsSync(getDb());
   if (env.WAYPOINT_ADMIN_EMAIL) {
     const { ensureAdmin } = await import('@waypoint/auth');
     await ensureAdmin()

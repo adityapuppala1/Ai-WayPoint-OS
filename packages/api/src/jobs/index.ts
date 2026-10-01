@@ -34,6 +34,7 @@ import {
   eq,
   gte,
   inArray,
+  integrationSettings,
   isNotNull,
   lte,
   markOutbox,
@@ -605,6 +606,26 @@ export async function rewrapKeys(
           and(eq(channelIdentities.id, row.id), eq(channelIdentities.addressCt, row.addressCt)),
         )
         .returning({ id: channelIdentities.id });
+      numbers += done.length;
+    } catch {
+      unreadable += 1;
+    }
+  }
+  // Keys for outside services an admin set in the console (few, so all at once).
+  const staleSettings = await db
+    .select({ key: integrationSettings.key, valueCt: integrationSettings.valueCt })
+    .from(integrationSettings)
+    .where(sql`${integrationSettings.valueCt} not like ${current}`);
+  for (const row of staleSettings) {
+    try {
+      const next = sealWithKek(openWithKek(row.valueCt, 'integration'), 'integration');
+      const done = await db
+        .update(integrationSettings)
+        .set({ valueCt: next })
+        .where(
+          and(eq(integrationSettings.key, row.key), eq(integrationSettings.valueCt, row.valueCt)),
+        )
+        .returning({ key: integrationSettings.key });
       numbers += done.length;
     } catch {
       unreadable += 1;

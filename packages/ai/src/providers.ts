@@ -10,7 +10,7 @@ import { createAnthropic } from '@ai-sdk/anthropic';
 import { createGoogle } from '@ai-sdk/google';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
-import { getEnv } from '@waypoint/core/env';
+import { getEnv, onConsoleSettingsChange } from '@waypoint/core/env';
 import type { EmbeddingModel, LanguageModel } from 'ai';
 import type { JUDGE_PROVIDER } from './judge-client';
 
@@ -59,6 +59,10 @@ export function providerHealthy(id: BreakerId): boolean {
 }
 
 let cache: ProviderEntry[] | undefined;
+// Keys or models changed in the platform console: build the providers again from them.
+onConsoleSettingsChange(() => {
+  cache = undefined;
+});
 
 /** Providers that have credentials configured, in the configured order. */
 export function configuredProviders(): ProviderEntry[] {

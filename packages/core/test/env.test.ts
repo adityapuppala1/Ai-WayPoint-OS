@@ -2,7 +2,16 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { configWarnings, devSecret, getEnv, resetEnvForTests } from '../src/env';
+import {
+  checkConsoleSettings,
+  configWarnings,
+  devSecret,
+  getEnv,
+  onConsoleSettingsChange,
+  resetEnvForTests,
+  setConsoleSettings,
+  settingSource,
+} from '../src/env';
 
 const KEYS = [
   'WAYPOINT_OPERATOR',
@@ -234,5 +243,61 @@ describe('a production server', () => {
     const env = production({ WAYPOINT_URL: 'http://localhost:3000' });
     expect(configWarnings(env).join(' ')).toMatch(/WAYPOINT_URL/);
     expect(configWarnings(production({})).join(' ')).not.toMatch(/WAYPOINT_URL/);
+  });
+});
+
+describe('settings an admin manages in the console', () => {
+  const keys = ['RESEND_API_KEY', 'AI_JUDGE_MODEL', 'AI_MONTHLY_BUDGET_USD', 'BETTER_AUTH_SECRET'];
+  const before = Object.fromEntries(keys.map((k) => [k, process.env[k]]));
+  afterEach(() => {
+    setConsoleSettings({});
+    for (const k of keys) {
+      if (before[k] === undefined) delete process.env[k];
+      else process.env[k] = before[k];
+    }
+    resetEnvForTests();
+  });
+
+  it('fill what the server leaves empty, and take effect at once', () => {
+    delete process.env.RESEND_API_KEY;
+    resetEnvForTests();
+    expect(getEnv().RESEND_API_KEY).toBeUndefined();
+    let changed = 0;
+    const stop = onConsoleSettingsChange(() => changed++);
+    setConsoleSettings({ RESEND_API_KEY: 're_console_key_1234' });
+    stop();
+    expect(getEnv().RESEND_API_KEY).toBe('re_console_key_1234');
+    expect(settingSource('RESEND_API_KEY')).toBe('console');
+    expect(changed).toBe(1);
+  });
+
+  it('never override the server’s own value', () => {
+    process.env.RESEND_API_KEY = 're_server_key_5678';
+    resetEnvForTests();
+    setConsoleSettings({ RESEND_API_KEY: 're_console_key_1234' });
+    expect(getEnv().RESEND_API_KEY).toBe('re_server_key_5678');
+    expect(settingSource('RESEND_API_KEY')).toBe('server');
+  });
+
+  it('refuse a value that would break the configuration, and leave it out if saved anyway', () => {
+    delete process.env.AI_JUDGE_MODEL;
+    resetEnvForTests();
+    expect(checkConsoleSettings({ AI_JUDGE_MODEL: 'jev-latest' })).toHaveProperty('AI_JUDGE_MODEL');
+    expect(checkConsoleSettings({ AI_JUDGE_MODEL: 'jev-1.14.0' })).toEqual({});
+    const dropped = setConsoleSettings({
+      AI_JUDGE_MODEL: 'jev-latest',
+      AI_MONTHLY_BUDGET_USD: '40',
+    });
+    expect(dropped).toEqual(['AI_JUDGE_MODEL']);
+    expect(getEnv().AI_JUDGE_MODEL).toBe('jev-1.13.0');
+    expect(getEnv().AI_MONTHLY_BUDGET_USD).toBe(40);
+  });
+
+  it('ignore anything that is not theirs to set', () => {
+    delete process.env.BETTER_AUTH_SECRET;
+    resetEnvForTests();
+    setConsoleSettings({ BETTER_AUTH_SECRET: 'x'.repeat(40) });
+    expect(getEnv().BETTER_AUTH_SECRET).toBeUndefined();
+    expect(settingSource('BETTER_AUTH_SECRET')).toBe('default');
   });
 });

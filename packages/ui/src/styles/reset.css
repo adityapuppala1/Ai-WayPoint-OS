@@ -75,18 +75,10 @@ input:where(
   appearance: none;
 }
 
-/* An iPhone centres the value, and gives an empty field no height of its own: one line of the
-   field's, no more (1.5em, kept for engines without `lh`, is taller than a field's line and
-   made a date field a pixel taller than the others in WebKit). */
+/* An iPhone centres the value, and gives an empty field no height of its own. */
 input::-webkit-date-and-time-value {
   min-block-size: 1.5em;
   text-align: start;
-}
-
-@supports (min-block-size: 1lh) {
-  input::-webkit-date-and-time-value {
-    min-block-size: 1lh;
-  }
 }
 
 /* Chrome and Safari pad the parts of a date inside the field's own padding, which makes a date

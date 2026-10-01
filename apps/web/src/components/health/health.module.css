@@ -244,10 +244,13 @@
   font-weight: var(--wp-weight-medium);
 }
 
+/* The height comes from the minimum alone, as for every other date and time field: WebKit on
+   Linux draws a date's text two pixels taller than its line, and with padding above and below
+   that made these fields a pixel taller than the rest. */
 .nativeField input {
   inline-size: 100%;
   min-block-size: var(--wp-touch-min);
-  padding: 0.5rem var(--wp-space-3);
+  padding-inline: var(--wp-space-3);
   border: 1px solid var(--wp-border-strong);
   border-radius: var(--wp-radius-sm);
   background: var(--wp-raised);

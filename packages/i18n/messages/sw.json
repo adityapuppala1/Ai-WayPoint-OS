@@ -2578,6 +2578,118 @@
       "handled": "Ilibadilishwa mwisho na {who}, {when}",
       "someone": "mtu wa timu",
       "allCaughtUp": "Umemaliza yote: hakuna jipya la kusoma."
+    },
+    "an": {
+      "title": "Takwimu",
+      "lead": "Jinsi Waypoint inavyotumika, kwa jumla: watu wangapi, wanavyoanza, kama wanarudi, sehemu wanazofungua na lini.",
+      "filters": {
+        "range": "Kipindi",
+        "platform": "Jukwaa",
+        "audience": "Nani",
+        "country": "Nchi",
+        "locale": "Lugha"
+      },
+      "range": {
+        "7d": "Siku 7",
+        "30d": "Siku 30",
+        "90d": "Siku 90",
+        "365d": "Mwaka"
+      },
+      "platform": {
+        "all": "Kila jukwaa",
+        "web": "Wavuti",
+        "phone": "Programu ya simu",
+        "text": "Ujumbe mfupi"
+      },
+      "audience": {
+        "all": "Wote",
+        "accounts": "Akaunti",
+        "guests": "Wageni"
+      },
+      "everywhere": "Kila nchi",
+      "everyLanguage": "Kila lugha",
+      "apply": "Onyesha",
+      "period": "Kuanzia {start} hadi {end} (UTC)",
+      "tooFew": "Watu ni wachache mno kuonyeshwa",
+      "tooFewBody": "Vichujio hivi vinapunguza hadi watu chini ya watano, ambao wangeweza kutambulika. Panua kipindi, au chagua nchi au lugha nyingine.",
+      "privacy": "Imehesabiwa kwa uangalifu: kwamba mtu alitumia Waypoint siku fulani tu, kamwe si alichofanya; kurasa zilizofunguliwa huhesabiwa bila kuunganishwa na mtu. Wafanyakazi, na vivinjari vinavyoomba kutofuatiliwa, havihesabiwi. Vikundi vya watu chini ya watano havionyeshwi kamwe, na kila kitu husahaulika baada ya siku 400.",
+      "notSaid": "Haijasemwa",
+      "modules": {
+        "start": "Karibu na kuanza",
+        "other": "Kurasa nyingine"
+      },
+      "vsBefore": "ikilinganishwa na siku {days, number} zilizotangulia",
+      "glance": "Kipindi kwa muhtasari",
+      "tiles": {
+        "active": "Watu hai",
+        "activeTrend": "Watu hai kila siku katika kipindi, watu {n} tofauti kwa jumla",
+        "daily": "Siku ya kawaida",
+        "dailyNote": "Watu hai, kwa wastani",
+        "weekly": "Siku 7 zilizopita",
+        "weeklyNote": "Watu tofauti waliokuwa hai",
+        "stickiness": "Wanarudi kila siku",
+        "stickinessNote": "Watu wa siku ya kawaida, kati ya {monthly} waliokuwa hai mwezi huu",
+        "new": "Watu wapya",
+        "newNote": "Akaunti {accounts}, wageni {guests}",
+        "views": "Kurasa zilizofunguliwa",
+        "viewsNote": "{n} kwa kila mtu hai"
+      },
+      "activeChart": "Watu hai kila siku",
+      "activeChartLead": "Akaunti na wageni waliofungua Waypoint, kutumia programu ya simu au kutuma ujumbe.",
+      "series": {
+        "accounts": "Akaunti",
+        "guests": "Wageni",
+        "total": "Wote"
+      },
+      "day": "Siku",
+      "newChart": "Watu wapya kila siku",
+      "newChartLead": "Akaunti zilizofunguliwa, na wageni walioanza bila akaunti.",
+      "funnelChart": "Kutoka kujiunga hadi kurudi",
+      "funnelChartLead": "Watu waliojiunga katika kipindi, hatua kwa hatua.",
+      "funnel": {
+        "joined": "Walijiunga",
+        "setUp": "Walimaliza kuanza",
+        "planned": "Walitengeneza mpango",
+        "returned": "Walirudi siku nyingine",
+        "recent": "Hai katika siku 7 zilizopita"
+      },
+      "funnelStep": "Hatua",
+      "funnelPeople": "Watu",
+      "fromPrevious": "Ya hatua iliyotangulia",
+      "fromFirst": "Ya wote waliojiunga",
+      "cohortChart": "Nani anarudi, wiki kwa wiki",
+      "cohortChartLead": "Watu wamepangwa kwa wiki waliyojiunga (idadi kwenye mabano), na sehemu iliyokuwa hai kila wiki baadaye. Wiki zinazoendelea zimeachwa wazi.",
+      "weekN": "Wiki {n, number}",
+      "cohortRows": "Walijiunga wiki ya",
+      "cohortScale": "Sehemu hai",
+      "notYet": "Bado",
+      "modulesChart": "Watu wanafungua nini",
+      "modulesChartLead": "Kurasa na skrini zilizofunguliwa, kwa sehemu ya Waypoint, na mabadiliko kutoka kipindi kilichotangulia.",
+      "newThisPeriod": "mpya",
+      "cols": {
+        "part": "Sehemu ya Waypoint",
+        "views": "Kurasa zilizofunguliwa",
+        "platform": "Jukwaa",
+        "language": "Lugha",
+        "country": "Nchi",
+        "situation": "Hali",
+        "rating": "Wastani wa alama"
+      },
+      "hoursChart": "Watu wanatumia Waypoint lini",
+      "hoursChartLead": "Kurasa zilizofunguliwa kwa siku ya wiki na saa (UTC).",
+      "weekday": "Siku ya wiki",
+      "platformsChart": "Watu wanafikiaje Waypoint",
+      "platformsChartLead": "Watu hai kwa kila moja; mtu anaweza kutumia zaidi ya moja.",
+      "languagesChart": "Lugha",
+      "peopleActiveLead": "Watu hai katika kipindi.",
+      "countriesChart": "Watu wako wapi",
+      "situationsChart": "Kinachoendelea kwa watu",
+      "situationsChartLead": "Kama watu walivyoiambia Waypoint walipoanza, kama walifanya hivyo.",
+      "smallGroups": "Watu hai katika kipindi. Wengine {n} wako kwenye vikundi vidogo mno kuonyeshwa.",
+      "feedbackChart": "Watu wanavyokadiria kila sehemu",
+      "feedbackChartLead": "Wastani wa alama za maoni kati ya 5 katika kipindi, pale ambapo angalau watu watano walikadiria.",
+      "ratings": "Alama {n}",
+      "nothingYet": "Bado hakuna cha kuonyesha: kila kikundi hadi sasa kina watu chini ya watano."
     }
   },
   "byText": {
@@ -2686,7 +2798,9 @@
         "security": "Kuki inayokuweka ukiwa umeingia, na matoleo yaliyochanganywa ya anwani za mtandao (IP)",
         "securityWhy": "Ili kulinda akaunti yako na kuzuia matumizi mabaya. Hatuhifadhi anwani zenyewe kamwe.",
         "feedback": "Maoni unayotuma kutoka Mipangilio: yanahusu nini, alama ukiitoa, na ujumbe wako",
-        "feedbackWhy": "Ili kuiboresha Waypoint. Namba za simu, anwani za barua pepe na namba za kadi au za kitambulisho huondolewa kwenye ujumbe wako kabla ya kuhifadhiwa. Wanaousoma hawaonyeshwi nani aliyeutuma, isipokuwa ukiomba jibu: hapo wanaona anwani yako ya barua pepe, ili waweze kukujibu."
+        "feedbackWhy": "Ili kuiboresha Waypoint. Namba za simu, anwani za barua pepe na namba za kadi au za kitambulisho huondolewa kwenye ujumbe wako kabla ya kuhifadhiwa. Wanaousoma hawaonyeshwi nani aliyeutuma, isipokuwa ukiomba jibu: hapo wanaona anwani yako ya barua pepe, ili waweze kukujibu.",
+        "usage": "Kwamba ulitumia Waypoint siku fulani, na kama ni kwa wavuti, programu ya simu au ujumbe — si ulichofanya",
+        "usageWhy": "Kujua Waypoint inasaidia watu wangapi na kama wanarudi. Sehemu za Waypoint ambazo watu hufungua huhesabiwa bila kuunganishwa na mtu, na hakuna anayeona takwimu hizi kwa kikundi cha watu chini ya watano. Kivinjari chako kikituma Global Privacy Control au Do Not Track, hakuna kinachohesabiwa."
       },
       "never": {
         "title": "Tusichohifadhi kamwe",
@@ -2751,7 +2865,9 @@
         "rest": "Kila kitu kingine",
         "restTime": "Hadi ukifute, au ufute akaunti yako.",
         "backups": "Nakala rudufu",
-        "backupsTime": "{count, plural, one {Hubadilishwa ndani ya siku #, kwa hivyo chochote kinachofutwa huondoka humo kufikia hapo.} other {Hubadilishwa ndani ya siku #, kwa hivyo chochote kinachofutwa huondoka humo kufikia hapo.}}"
+        "backupsTime": "{count, plural, one {Hubadilishwa ndani ya siku #, kwa hivyo chochote kinachofutwa huondoka humo kufikia hapo.} other {Hubadilishwa ndani ya siku #, kwa hivyo chochote kinachofutwa huondoka humo kufikia hapo.}}",
+        "usage": "Siku ulizotumia Waypoint, na idadi ya kurasa zilizofunguliwa",
+        "usageTime": "Husahaulika baada ya siku 400. Siku zako huondoka mapema ukifuta akaunti yako."
       },
       "security": {
         "title": "Jinsi tunavyozilinda",

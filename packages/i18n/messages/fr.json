@@ -2578,6 +2578,118 @@
       "handled": "Dernière modification par {who}, {when}",
       "someone": "quelqu’un de l’équipe",
       "allCaughtUp": "Tout est à jour : rien de nouveau à lire."
+    },
+    "an": {
+      "title": "Statistiques",
+      "lead": "Comment Waypoint est utilisé, en totaux : combien de personnes, comment elles commencent, si elles reviennent, quelles parties elles ouvrent et quand.",
+      "filters": {
+        "range": "Période",
+        "platform": "Plateforme",
+        "audience": "Qui",
+        "country": "Pays",
+        "locale": "Langue"
+      },
+      "range": {
+        "7d": "7 jours",
+        "30d": "30 jours",
+        "90d": "90 jours",
+        "365d": "Un an"
+      },
+      "platform": {
+        "all": "Toutes les plateformes",
+        "web": "Web",
+        "phone": "Appli mobile",
+        "text": "SMS et messages"
+      },
+      "audience": {
+        "all": "Tout le monde",
+        "accounts": "Comptes",
+        "guests": "Invités"
+      },
+      "everywhere": "Tous les pays",
+      "everyLanguage": "Toutes les langues",
+      "apply": "Afficher",
+      "period": "Du {start} au {end} (UTC)",
+      "tooFew": "Trop peu de personnes pour l’afficher",
+      "tooFewBody": "Ces filtres réduisent à moins de cinq personnes, qu’on pourrait distinguer. Élargissez la période ou choisissez un autre pays ou une autre langue.",
+      "privacy": "Compté avec soin : seulement qu’une personne a utilisé Waypoint un jour donné, jamais ce qu’elle a fait ; les pages ouvertes sont comptées sans personne derrière. L’équipe et les navigateurs qui demandent à ne pas être suivis ne sont pas comptés. Les groupes de moins de cinq personnes ne sont jamais affichés, et tout est oublié au bout de 400 jours.",
+      "notSaid": "Non indiqué",
+      "modules": {
+        "start": "Accueil et premiers pas",
+        "other": "Autres pages"
+      },
+      "vsBefore": "par rapport aux {days, number} jours d’avant",
+      "glance": "La période en bref",
+      "tiles": {
+        "active": "Personnes actives",
+        "activeTrend": "Personnes actives chaque jour de la période, {n} personnes différentes en tout",
+        "daily": "Un jour type",
+        "dailyNote": "Personnes actives, en moyenne",
+        "weekly": "7 derniers jours",
+        "weeklyNote": "Personnes différentes actives",
+        "stickiness": "Reviennent chaque jour",
+        "stickinessNote": "Les personnes d’un jour type, sur les {monthly} actives ce mois-ci",
+        "new": "Nouvelles personnes",
+        "newNote": "{accounts} comptes, {guests} invités",
+        "views": "Pages ouvertes",
+        "viewsNote": "{n} par personne active"
+      },
+      "activeChart": "Personnes actives chaque jour",
+      "activeChartLead": "Comptes et invités qui ont ouvert Waypoint, utilisé l’appli ou envoyé un message.",
+      "series": {
+        "accounts": "Comptes",
+        "guests": "Invités",
+        "total": "Tout le monde"
+      },
+      "day": "Jour",
+      "newChart": "Nouvelles personnes chaque jour",
+      "newChartLead": "Comptes créés, et invités qui ont commencé sans compte.",
+      "funnelChart": "De l’arrivée au retour",
+      "funnelChartLead": "Personnes arrivées pendant la période, étape par étape.",
+      "funnel": {
+        "joined": "Arrivés",
+        "setUp": "Ont fini les premiers pas",
+        "planned": "Ont fait un plan",
+        "returned": "Sont revenus un autre jour",
+        "recent": "Actifs ces 7 derniers jours"
+      },
+      "funnelStep": "Étape",
+      "funnelPeople": "Personnes",
+      "fromPrevious": "De l’étape précédente",
+      "fromFirst": "De tous les arrivants",
+      "cohortChart": "Qui revient, semaine après semaine",
+      "cohortChartLead": "Personnes regroupées par semaine d’arrivée (leur nombre entre parenthèses), et la part active chaque semaine suivante. Les semaines en cours restent vides.",
+      "weekN": "Semaine {n, number}",
+      "cohortRows": "Arrivés la semaine du",
+      "cohortScale": "Part active",
+      "notYet": "Pas encore",
+      "modulesChart": "Ce que les gens ouvrent",
+      "modulesChartLead": "Pages et écrans ouverts, par partie de Waypoint, avec l’évolution par rapport à la période d’avant.",
+      "newThisPeriod": "nouveau",
+      "cols": {
+        "part": "Partie de Waypoint",
+        "views": "Pages ouvertes",
+        "platform": "Plateforme",
+        "language": "Langue",
+        "country": "Pays",
+        "situation": "Situation",
+        "rating": "Note moyenne"
+      },
+      "hoursChart": "Quand Waypoint est utilisé",
+      "hoursChartLead": "Pages ouvertes par jour de la semaine et heure (UTC).",
+      "weekday": "Jour de la semaine",
+      "platformsChart": "Comment les gens accèdent à Waypoint",
+      "platformsChartLead": "Personnes actives sur chacune ; on peut en utiliser plusieurs.",
+      "languagesChart": "Langues",
+      "peopleActiveLead": "Personnes actives sur la période.",
+      "countriesChart": "Où sont les gens",
+      "situationsChart": "Ce que vivent les gens",
+      "situationsChartLead": "Selon ce que les gens ont dit en commençant, s’ils l’ont dit.",
+      "smallGroups": "Personnes actives sur la période. {n} autres sont dans des groupes trop petits pour être affichés.",
+      "feedbackChart": "Comment les gens notent chaque partie",
+      "feedbackChartLead": "Note moyenne sur 5 pendant la période, là où au moins cinq personnes ont noté.",
+      "ratings": "{n} notes",
+      "nothingYet": "Rien à afficher pour l’instant : chaque groupe compte encore moins de cinq personnes."
     }
   },
   "byText": {
@@ -2686,7 +2798,9 @@
         "security": "Un cookie qui vous garde connecté, et des versions brouillées des adresses réseau (IP)",
         "securityWhy": "Pour protéger votre compte et empêcher les abus. Nous ne gardons jamais les adresses elles-mêmes.",
         "feedback": "Les avis que vous envoyez depuis les Réglages : leur sujet, une note si vous en donnez une, et votre message",
-        "feedbackWhy": "Pour améliorer Waypoint. Les numéros de téléphone, adresses e-mail et numéros de carte ou de pièce d’identité sont retirés de votre message avant conservation. Les personnes qui le lisent ne voient pas qui l’a envoyé, sauf si vous demandez une réponse : elles voient alors votre adresse e-mail, pour pouvoir vous répondre."
+        "feedbackWhy": "Pour améliorer Waypoint. Les numéros de téléphone, adresses e-mail et numéros de carte ou de pièce d’identité sont retirés de votre message avant conservation. Les personnes qui le lisent ne voient pas qui l’a envoyé, sauf si vous demandez une réponse : elles voient alors votre adresse e-mail, pour pouvoir vous répondre.",
+        "usage": "Que vous avez utilisé Waypoint un jour donné, et si c’était sur le web, l’appli ou par message — pas ce que vous avez fait",
+        "usageWhy": "Pour savoir combien de personnes Waypoint aide et si elles reviennent. Les parties de Waypoint ouvertes sont comptées sans personne derrière, et personne ne voit ces chiffres pour un groupe de moins de cinq personnes. Si votre navigateur envoie Global Privacy Control ou Do Not Track, rien n’est compté."
       },
       "never": {
         "title": "Ce que nous ne gardons jamais",
@@ -2751,7 +2865,9 @@
         "rest": "Tout le reste",
         "restTime": "Jusqu’à ce que vous le supprimiez, ou que vous supprimiez votre compte.",
         "backups": "Sauvegardes",
-        "backupsTime": "{count, plural, one {Remplacées en # jour : ce qui est supprimé en disparaît donc dans ce délai.} other {Remplacées en # jours : ce qui est supprimé en disparaît donc dans ce délai.}}"
+        "backupsTime": "{count, plural, one {Remplacées en # jour : ce qui est supprimé en disparaît donc dans ce délai.} other {Remplacées en # jours : ce qui est supprimé en disparaît donc dans ce délai.}}",
+        "usage": "Les jours où vous avez utilisé Waypoint, et le nombre de pages ouvertes",
+        "usageTime": "Oubliés au bout de 400 jours. Vos jours partent plus tôt si vous supprimez votre compte."
       },
       "security": {
         "title": "Comment nous les protégeons",

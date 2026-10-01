@@ -2578,6 +2578,118 @@
       "handled": "Última alteração por {who}, {when}",
       "someone": "alguém da equipe",
       "allCaughtUp": "Tudo em dia: nada novo para ler."
+    },
+    "an": {
+      "title": "Análises",
+      "lead": "Como o Waypoint é usado, em totais: quantas pessoas, como começam, se voltam, que partes abrem e quando.",
+      "filters": {
+        "range": "Período",
+        "platform": "Plataforma",
+        "audience": "Quem",
+        "country": "País",
+        "locale": "Idioma"
+      },
+      "range": {
+        "7d": "7 dias",
+        "30d": "30 dias",
+        "90d": "90 dias",
+        "365d": "Um ano"
+      },
+      "platform": {
+        "all": "Todas as plataformas",
+        "web": "Web",
+        "phone": "App do celular",
+        "text": "Mensagens de texto"
+      },
+      "audience": {
+        "all": "Todos",
+        "accounts": "Contas",
+        "guests": "Visitantes"
+      },
+      "everywhere": "Todos os países",
+      "everyLanguage": "Todos os idiomas",
+      "apply": "Mostrar",
+      "period": "De {start} a {end} (UTC)",
+      "tooFew": "Pessoas de menos para mostrar",
+      "tooFewBody": "Estes filtros deixam menos de cinco pessoas, que poderiam ser identificadas. Aumente o período ou escolha outro país ou idioma.",
+      "privacy": "Contado com cuidado: só que alguém usou o Waypoint num dia, nunca o que fez; as páginas abertas são contadas sem ninguém associado. A equipe e os navegadores que pedem para não ser rastreados não são contados. Grupos com menos de cinco pessoas nunca aparecem, e tudo é esquecido após 400 dias.",
+      "notSaid": "Não informado",
+      "modules": {
+        "start": "Boas-vindas e primeiros passos",
+        "other": "Outras páginas"
+      },
+      "vsBefore": "em relação aos {days, number} dias anteriores",
+      "glance": "O período num relance",
+      "tiles": {
+        "active": "Pessoas ativas",
+        "activeTrend": "Pessoas ativas a cada dia do período, {n} diferentes no total",
+        "daily": "Um dia normal",
+        "dailyNote": "Pessoas ativas, em média",
+        "weekly": "Últimos 7 dias",
+        "weeklyNote": "Pessoas diferentes ativas",
+        "stickiness": "Voltam todo dia",
+        "stickinessNote": "As pessoas de um dia normal, das {monthly} ativas neste mês",
+        "new": "Pessoas novas",
+        "newNote": "{accounts} contas, {guests} visitantes",
+        "views": "Páginas abertas",
+        "viewsNote": "{n} por pessoa ativa"
+      },
+      "activeChart": "Pessoas ativas a cada dia",
+      "activeChartLead": "Contas e visitantes que abriram o Waypoint, usaram o app ou mandaram uma mensagem.",
+      "series": {
+        "accounts": "Contas",
+        "guests": "Visitantes",
+        "total": "Todos"
+      },
+      "day": "Dia",
+      "newChart": "Pessoas novas a cada dia",
+      "newChartLead": "Contas criadas e visitantes que começaram sem conta.",
+      "funnelChart": "Da chegada ao retorno",
+      "funnelChartLead": "Pessoas que chegaram no período, passo a passo.",
+      "funnel": {
+        "joined": "Chegaram",
+        "setUp": "Concluíram os primeiros passos",
+        "planned": "Fizeram um plano",
+        "returned": "Voltaram outro dia",
+        "recent": "Ativos nos últimos 7 dias"
+      },
+      "funnelStep": "Passo",
+      "funnelPeople": "Pessoas",
+      "fromPrevious": "Do passo anterior",
+      "fromFirst": "De todos que chegaram",
+      "cohortChart": "Quem volta, semana a semana",
+      "cohortChartLead": "Pessoas agrupadas pela semana em que chegaram (quantas entre parênteses) e a parte ativa em cada semana seguinte. Semanas em andamento ficam em branco.",
+      "weekN": "Semana {n, number}",
+      "cohortRows": "Chegaram na semana de",
+      "cohortScale": "Parte ativa",
+      "notYet": "Ainda não",
+      "modulesChart": "O que as pessoas abrem",
+      "modulesChartLead": "Páginas e telas abertas, por parte do Waypoint, com a mudança em relação ao período anterior.",
+      "newThisPeriod": "novo",
+      "cols": {
+        "part": "Parte do Waypoint",
+        "views": "Páginas abertas",
+        "platform": "Plataforma",
+        "language": "Idioma",
+        "country": "País",
+        "situation": "Situação",
+        "rating": "Nota média"
+      },
+      "hoursChart": "Quando as pessoas usam o Waypoint",
+      "hoursChartLead": "Páginas abertas por dia da semana e hora (UTC).",
+      "weekday": "Dia da semana",
+      "platformsChart": "Como as pessoas chegam ao Waypoint",
+      "platformsChartLead": "Pessoas ativas em cada uma; alguém pode usar mais de uma.",
+      "languagesChart": "Idiomas",
+      "peopleActiveLead": "Pessoas ativas no período.",
+      "countriesChart": "Onde as pessoas estão",
+      "situationsChart": "O que está acontecendo com as pessoas",
+      "situationsChartLead": "Conforme contaram ao começar, se contaram.",
+      "smallGroups": "Pessoas ativas no período. Outras {n} estão em grupos pequenos demais para mostrar.",
+      "feedbackChart": "Como as pessoas avaliam cada parte",
+      "feedbackChartLead": "Nota média de 5 no período, onde pelo menos cinco pessoas avaliaram.",
+      "ratings": "{n} avaliações",
+      "nothingYet": "Ainda não há nada para mostrar: todos os grupos têm menos de cinco pessoas por enquanto."
     }
   },
   "byText": {
@@ -2686,7 +2798,9 @@
         "security": "Um cookie que mantém você conectado e versões embaralhadas dos endereços de rede (IP)",
         "securityWhy": "Para proteger sua conta e impedir abusos. Nunca guardamos os endereços em si.",
         "feedback": "Os comentários que você envia pelas Configurações: sobre o que são, uma nota se você der, e sua mensagem",
-        "feedbackWhy": "Para melhorar o Waypoint. Números de telefone, e-mails e números de cartão ou de documento são retirados da sua mensagem antes de ser guardada. Quem a lê não vê quem enviou, a menos que você peça uma resposta: aí vê seu e-mail, para poder responder você."
+        "feedbackWhy": "Para melhorar o Waypoint. Números de telefone, e-mails e números de cartão ou de documento são retirados da sua mensagem antes de ser guardada. Quem a lê não vê quem enviou, a menos que você peça uma resposta: aí vê seu e-mail, para poder responder você.",
+        "usage": "Que você usou o Waypoint num dia, e se foi na web, no app ou por mensagem — não o que você fez",
+        "usageWhy": "Para saber quantas pessoas o Waypoint ajuda e se elas voltam. As partes do Waypoint que as pessoas abrem são contadas sem ninguém associado, e ninguém vê esses números para grupos de menos de cinco pessoas. Se o seu navegador envia Global Privacy Control ou Do Not Track, nada é contado."
       },
       "never": {
         "title": "O que nunca guardamos",
@@ -2751,7 +2865,9 @@
         "rest": "Todo o resto",
         "restTime": "Até você apagar, ou excluir sua conta.",
         "backups": "Cópias de segurança",
-        "backupsTime": "{count, plural, one {Substituídas em até # dia, então o que é apagado some delas nesse prazo.} other {Substituídas em até # dias, então o que é apagado some delas nesse prazo.}}"
+        "backupsTime": "{count, plural, one {Substituídas em até # dia, então o que é apagado some delas nesse prazo.} other {Substituídas em até # dias, então o que é apagado some delas nesse prazo.}}",
+        "usage": "Os dias em que você usou o Waypoint e as contagens de páginas abertas",
+        "usageTime": "Esquecidos após 400 dias. Os seus dias saem antes se você excluir a conta."
       },
       "security": {
         "title": "Como protegemos",

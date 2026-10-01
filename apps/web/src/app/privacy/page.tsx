@@ -51,13 +51,13 @@ export default async function PrivacyNoticePage() {
         <>
           <p>{t('collect.lead')}</p>
           <Rows
-            rows={(['account', 'profile', 'writing', 'feedback', 'phone', 'security'] as const).map(
-              (id) => ({
-                id,
-                term: t(`collect.${id}`),
-                detail: t(`collect.${id}Why`),
-              }),
-            )}
+            rows={(
+              ['account', 'profile', 'writing', 'feedback', 'phone', 'security', 'usage'] as const
+            ).map((id) => ({
+              id,
+              term: t(`collect.${id}`),
+              detail: t(`collect.${id}Why`),
+            }))}
           />
         </>
       ),
@@ -205,7 +205,7 @@ export default async function PrivacyNoticePage() {
               term: t('keep.unconfirmed'),
               detail: t('keep.unconfirmedTime', { count: UNCONFIRMED_ACCOUNT_DAYS }),
             },
-            ...(['numbers', 'outbox', 'totals', 'reports', 'rest'] as const).map((id) => ({
+            ...(['numbers', 'outbox', 'totals', 'usage', 'reports', 'rest'] as const).map((id) => ({
               id,
               term: t(`keep.${id}`),
               detail: t(`keep.${id}Time`),

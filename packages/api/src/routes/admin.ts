@@ -18,6 +18,7 @@ import {
   ScamReviewInputSchema,
   scamReportList,
 } from '../services/admin';
+import { AnalyticsQuerySchema, AnalyticsSchema, analyticsView } from '../services/analytics';
 import {
   FeedbackListSchema,
   FeedbackQuerySchema,
@@ -64,6 +65,7 @@ for (const [path, area] of [
   ['/admin/moderation', 'moderation'],
   ['/admin/scam-reports', 'reports'],
   ['/admin/feedback', 'feedback'],
+  ['/admin/analytics', 'analytics'],
   ['/admin/audit', 'audit'],
   ['/admin/integrations', 'integrations'],
   ['/admin/system', 'system'],
@@ -163,6 +165,20 @@ app.openapi(
     );
     return c.json({ ok: true as const }, 200);
   },
+);
+
+app.openapi(
+  createRoute({
+    method: 'get',
+    path: '/admin/analytics',
+    tags: ['Admin'],
+    summary: 'How many people use Waypoint, how they find their way in, and what they use',
+    description:
+      'Totals only. No group smaller than five people is shown; filters that narrow it further show nothing.',
+    request: { query: AnalyticsQuerySchema },
+    responses: { 200: jsonContent(AnalyticsSchema), 401: errors[401], 403: errors[403] },
+  }),
+  async (c) => c.json(await analyticsView(c.get('db'), c.req.valid('query')), 200),
 );
 
 app.openapi(

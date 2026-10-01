@@ -1,8 +1,10 @@
 import { createRoute, z } from '@hono/zod-openapi';
 import { MODULE_IDS } from '@waypoint/core';
+import { isStaffRole } from '@waypoint/core/console';
 import { redactPII } from '@waypoint/core/privacy';
-import { dbReady, feedback, schemaCurrent, sql } from '@waypoint/db';
+import { dbReady, eq, feedback, profiles, schemaCurrent, sql } from '@waypoint/db';
 import { errors, jsonBody, jsonContent, router } from '../lib/openapi';
+import { moduleOfPath, recordUse } from '../lib/usage';
 import { limit } from '../middleware';
 
 import { PlatformNoticeSchema, platformNotice } from '../services/maintenance';
@@ -103,6 +105,48 @@ app.openapi(
         wantsReply: Boolean(body.wantsReply && user && !user.isGuest),
       });
     return c.json({ ok: true as const }, 201);
+  },
+);
+
+/** Browsers that ask not to be tracked (Global Privacy Control, Do Not Track). */
+const asksNotToBeCounted = (headers: Headers) =>
+  headers.get('sec-gpc') === '1' || headers.get('dnt') === '1';
+
+app.openapi(
+  createRoute({
+    method: 'post',
+    path: '/activity',
+    tags: ['System'],
+    summary: 'A page or screen was opened: counted for the analytics, with nobody attached',
+    description:
+      'Records that the signed-in person used Waypoint today (not what they did), and adds one to an anonymous count for the part of Waypoint, hour, platform, kind of visitor, country and language. Nothing is counted for staff, or when the browser sends Global Privacy Control or Do Not Track.',
+    middleware: [limit('activity', 900, 3600)] as const,
+    request: jsonBody(z.object({ path: z.string().max(300) })),
+    responses: { 204: { description: 'Counted, or deliberately not' }, 429: errors[429] },
+  }),
+  async (c) => {
+    const user = c.get('user');
+    const module = moduleOfPath(c.req.valid('json').path);
+    if (!module || asksNotToBeCounted(c.req.raw.headers) || isStaffRole(user?.role))
+      return c.body(null, 204);
+    const [profile] = user
+      ? await c
+          .get('db')
+          .select({ country: profiles.country, locale: profiles.locale })
+          .from(profiles)
+          .where(eq(profiles.userId, user.id))
+      : [];
+    recordUse({
+      userId: user?.id ?? null,
+      platform: c.req.header('x-waypoint-client') === 'phone' ? 'phone' : 'web',
+      view: {
+        module,
+        audience: user ? (user.isGuest ? 'guest' : 'account') : 'visitor',
+        country: profile?.country ?? null,
+        locale: profile?.locale ?? c.get('locale'),
+      },
+    });
+    return c.body(null, 204);
   },
 );
 

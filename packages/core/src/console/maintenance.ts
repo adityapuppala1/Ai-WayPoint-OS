@@ -73,6 +73,8 @@ const OPEN_API = [
   /^\/api\/channels\//,
   /^\/api\/admin(\/|$)/,
   /^\/api\/platform$/,
+  // Counting a page opened writes nothing people wrote, and keeps the maintenance screen quiet.
+  /^\/api\/activity$/,
 ];
 
 export function pageOpenDuringMaintenance(path: string): boolean {

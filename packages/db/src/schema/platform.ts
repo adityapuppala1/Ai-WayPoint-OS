@@ -439,3 +439,46 @@ export const staffInvitations = pgTable(
   },
   (t) => [index('staff_invitations_email_idx').on(t.email, t.status)],
 );
+
+// ───────────────────────────── Usage (the console's analytics) ─────────────────────────────
+
+/**
+ * That someone used Waypoint on a day, and how (a bit per platform: 1 web, 2 phone app,
+ * 4 texts). Nothing about what they did or which parts they opened. Goes with the account,
+ * and is forgotten after 400 days. Read only in totals, never for one person.
+ */
+export const activityDays = pgTable(
+  'activity_days',
+  {
+    userId: text()
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    day: date().notNull(),
+    platforms: smallint().notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.day] }), index('activity_days_day_idx').on(t.day)],
+);
+
+/**
+ * Pages and screens opened, counted with nobody attached: per day and hour (UTC), part of
+ * Waypoint, platform, kind of visitor (guest, account, or not signed in), country and
+ * language. Forgotten after 400 days.
+ */
+export const usageViews = pgTable(
+  'usage_views',
+  {
+    day: date().notNull(),
+    hour: smallint().notNull(),
+    module: text().notNull(),
+    platform: text().notNull(),
+    audience: text().notNull(),
+    country: text().notNull().default(''),
+    locale: text().notNull().default(''),
+    n: integer().notNull().default(0),
+  },
+  (t) => [
+    primaryKey({
+      columns: [t.day, t.hour, t.module, t.platform, t.audience, t.country, t.locale],
+    }),
+  ],
+);

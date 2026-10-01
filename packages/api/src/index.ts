@@ -9,6 +9,7 @@ export { flushMetrics, startMetricsFlush } from './lib/metrics';
 export { ApiError } from './lib/problem';
 export { limitVisitor } from './lib/request';
 export * as admin from './services/admin';
+export * as analytics from './services/analytics';
 export * as ask from './services/ask';
 export * as circles from './services/circles';
 export * as civic from './services/civic';

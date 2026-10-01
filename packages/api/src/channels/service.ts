@@ -34,6 +34,7 @@ import { toLocale } from '../email/render';
 import { errorFields, log } from '../lib/log';
 import { ApiError } from '../lib/problem';
 import { keyedHash, rateLimit, withinLimit } from '../lib/request';
+import { recordUse } from '../lib/usage';
 import type { Provider, TextChannel } from './providers';
 
 type ChannelName = TextChannel | 'ussd';
@@ -334,6 +335,8 @@ async function answerText(
 
   const { row, isNew } = await identityFor(db, input.channel, e164);
   const who = person(row, isNew);
+  // A number linked to an account: that person used Waypoint today, by text (nothing else).
+  if (row.userId) recordUse({ userId: row.userId, platform: 'text' });
   const copy = CHANNEL_COPY[who.locale ?? 'en'];
   const limited = !(await withinLimits(db, row.id));
   const slowDown = async (): Promise<TextResult> => ({

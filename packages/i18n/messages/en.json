@@ -2582,6 +2582,118 @@
       "handled": "Last changed by {who}, {when}",
       "someone": "someone on the team",
       "allCaughtUp": "All caught up: nothing new to read."
+    },
+    "an": {
+      "title": "Analytics",
+      "lead": "How Waypoint is used, in totals: how many people, how they find their way in, whether they come back, which parts they open and when.",
+      "filters": {
+        "range": "Period",
+        "platform": "Platform",
+        "audience": "Who",
+        "country": "Country",
+        "locale": "Language"
+      },
+      "range": {
+        "7d": "7 days",
+        "30d": "30 days",
+        "90d": "90 days",
+        "365d": "A year"
+      },
+      "platform": {
+        "all": "Every platform",
+        "web": "Web",
+        "phone": "Phone app",
+        "text": "Texts"
+      },
+      "audience": {
+        "all": "Everyone",
+        "accounts": "Accounts",
+        "guests": "Guests"
+      },
+      "everywhere": "Every country",
+      "everyLanguage": "Every language",
+      "apply": "Show",
+      "period": "{start} to {end} (UTC)",
+      "tooFew": "Too few people to show",
+      "tooFewBody": "These filters narrow it to fewer than five people, who could be told apart. Widen the period, or choose another country or language.",
+      "privacy": "Counted with care: only that someone used Waypoint on a day, never what they did; pages opened are counted with nobody attached. Staff, and browsers that ask not to be tracked, are not counted. Groups of fewer than five people are never shown, and everything is forgotten after 400 days.",
+      "notSaid": "Not said",
+      "modules": {
+        "start": "Welcome and getting started",
+        "other": "Other pages"
+      },
+      "vsBefore": "vs the {days, number} days before",
+      "glance": "The period at a glance",
+      "tiles": {
+        "active": "Active people",
+        "activeTrend": "People active each day over the period, {n} different people in all",
+        "daily": "A typical day",
+        "dailyNote": "People active, on average",
+        "weekly": "Last 7 days",
+        "weeklyNote": "Different people active",
+        "stickiness": "Come back daily",
+        "stickinessNote": "A typical day’s people, of the {monthly} active this month",
+        "new": "New people",
+        "newNote": "{accounts} accounts, {guests} guests",
+        "views": "Pages opened",
+        "viewsNote": "{n} for each active person"
+      },
+      "activeChart": "People active each day",
+      "activeChartLead": "Accounts and guests who opened Waypoint, used the phone app or sent a text.",
+      "series": {
+        "accounts": "Accounts",
+        "guests": "Guests",
+        "total": "Everyone"
+      },
+      "day": "Day",
+      "newChart": "New people each day",
+      "newChartLead": "Accounts created, and guests who started without one.",
+      "funnelChart": "From joining to coming back",
+      "funnelChartLead": "People who joined in the period, step by step.",
+      "funnel": {
+        "joined": "Joined",
+        "setUp": "Finished getting started",
+        "planned": "Made a plan",
+        "returned": "Came back another day",
+        "recent": "Active in the last 7 days"
+      },
+      "funnelStep": "Step",
+      "funnelPeople": "People",
+      "fromPrevious": "Of the step before",
+      "fromFirst": "Of everyone who joined",
+      "cohortChart": "Who comes back, week by week",
+      "cohortChartLead": "People grouped by the week they joined (how many in brackets), and the share active in each week after. Weeks still under way are left blank.",
+      "weekN": "Week {n, number}",
+      "cohortRows": "Joined the week of",
+      "cohortScale": "Share active",
+      "notYet": "Not yet",
+      "modulesChart": "What people open",
+      "modulesChartLead": "Pages and screens opened, by part of Waypoint, with the change from the period before.",
+      "newThisPeriod": "new",
+      "cols": {
+        "part": "Part of Waypoint",
+        "views": "Pages opened",
+        "platform": "Platform",
+        "language": "Language",
+        "country": "Country",
+        "situation": "Situation",
+        "rating": "Average rating"
+      },
+      "hoursChart": "When people use Waypoint",
+      "hoursChartLead": "Pages opened by day of the week and hour (UTC).",
+      "weekday": "Day of the week",
+      "platformsChart": "How people reach Waypoint",
+      "platformsChartLead": "Active people on each; someone can use more than one.",
+      "languagesChart": "Languages",
+      "peopleActiveLead": "Active people in the period.",
+      "countriesChart": "Where people are",
+      "situationsChart": "What is going on for people",
+      "situationsChartLead": "As people told Waypoint when they started, if they did.",
+      "smallGroups": "Active people in the period. {n} more are in groups too small to show.",
+      "feedbackChart": "How people rate each part",
+      "feedbackChartLead": "Average feedback rating out of 5 in the period, where at least five people rated it.",
+      "ratings": "{n} ratings",
+      "nothingYet": "Nothing to show yet: every group so far has fewer than five people."
     }
   },
   "byText": {
@@ -2690,7 +2802,9 @@
         "security": "A cookie that keeps you signed in, and scrambled versions of network (IP) addresses",
         "securityWhy": "To keep your account safe and stop abuse. We never keep the addresses themselves.",
         "feedback": "Feedback you send from Settings: what it is about, a rating if you give one, and your message",
-        "feedbackWhy": "To make Waypoint better. Phone numbers, email addresses and card or ID numbers are removed from your message before it is kept. The people who read it aren’t shown who sent it, unless you ask for a reply: then they see your email address, so they can answer you."
+        "feedbackWhy": "To make Waypoint better. Phone numbers, email addresses and card or ID numbers are removed from your message before it is kept. The people who read it aren’t shown who sent it, unless you ask for a reply: then they see your email address, so they can answer you.",
+        "usage": "That you used Waypoint on a day, and whether on the web, the phone app or by text — not what you did",
+        "usageWhy": "To know how many people Waypoint helps and whether they come back. The parts of Waypoint people open are counted with nobody attached, and nobody sees these figures for a group of fewer than five people. If your browser sends Global Privacy Control or Do Not Track, nothing is counted."
       },
       "never": {
         "title": "What we never keep",
@@ -2755,7 +2869,9 @@
         "rest": "Everything else",
         "restTime": "Until you delete it, or your account.",
         "backups": "Backups",
-        "backupsTime": "{count, plural, one {Replaced within # day, so anything deleted is gone from them by then.} other {Replaced within # days, so anything deleted is gone from them by then.}}"
+        "backupsTime": "{count, plural, one {Replaced within # day, so anything deleted is gone from them by then.} other {Replaced within # days, so anything deleted is gone from them by then.}}",
+        "usage": "The days you used Waypoint, and counts of pages opened",
+        "usageTime": "Forgotten after 400 days. Your days go sooner if you delete your account."
       },
       "security": {
         "title": "How we protect it",

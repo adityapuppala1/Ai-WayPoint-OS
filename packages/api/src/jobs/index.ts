@@ -339,6 +339,8 @@ export async function retention(db: Database): Promise<{
   safety: number;
   /** The API's own counts (90 days) and server errors (30 days) past their time. */
   health: number;
+  /** The analytics' days of use and anonymous counts, after 400 days. */
+  usage: number;
   /** Key rotation: what was re-wrapped this run, and what is still under an older key. */
   keys: { dataKeys: number; numbers: number; unreadable: number; remaining: number };
 }> {
@@ -409,6 +411,14 @@ export async function retention(db: Database): Promise<{
     delete from crisis_events
     where user_id is null and created_at < now() - interval '180 days'
     returning id`);
+  // What the console's analytics count is kept for 13 months, to compare a year on year.
+  const usageCounts = await db.execute<{ n: number }>(sql`
+    with days as (
+      delete from activity_days where day < current_date - 400 returning 1
+    ), views as (
+      delete from usage_views where day < current_date - 400 returning 1
+    )
+    select (select count(*) from days)::int + (select count(*) from views)::int as n`);
   const healthCounts = await db.execute<{ n: number }>(sql`
     with gone as (
       delete from api_metrics where bucket < now() - interval '90 days' returning 1
@@ -439,6 +449,7 @@ export async function retention(db: Database): Promise<{
     codes: codes.rows.length,
     safety: safety.rows.length,
     health: Number(healthCounts.rows[0]?.n ?? 0),
+    usage: Number(usageCounts.rows[0]?.n ?? 0),
     keys: await rewrapKeys(db),
   };
 }

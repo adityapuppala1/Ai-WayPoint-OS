@@ -132,6 +132,26 @@ sector. Nothing is recorded about which forecasts a person saw.
 - The words that triggered a crisis response.
 - Raw IP addresses (only keyed hashes for rate limiting and audit).
 
+## The console's analytics
+
+The platform's staff see how Waypoint is used, in totals (`packages/api/src/lib/usage.ts`,
+`services/analytics.ts`, the console's Analytics page). Two things are counted:
+
+- **That someone used Waypoint on a day** (`activity_days`): the account, the date, and a bit
+  for each platform used that day (web, phone app, texts). Never what they did, which parts
+  they opened, or when in the day. The rows go with the account, move with a guest's data
+  into a new account, and are deleted after 400 days.
+- **Pages and screens opened** (`usage_views`): a count per day, hour (UTC), part of Waypoint,
+  platform, kind of visitor (guest, account, signed out), country and language — with nobody
+  attached. The page's address is reduced to the part of Waypoint it belongs to; nothing else
+  about the visit is kept. Deleted after 400 days.
+
+Nothing is counted for staff, for the console's own pages, or when the browser sends Global
+Privacy Control or Do Not Track. The counts are read in totals only: no figure describes
+fewer than five people (`MIN_GROUP`) — smaller groups are folded together or hidden, and
+filters that narrow the page further show nothing at all. Weekly groups of people who joined
+are shown only with five or more. The privacy notice says all this in plain words.
+
 ## Organisations
 
 Employers, schools, NGOs, public services and community groups can run **programmes** (a

@@ -9,6 +9,7 @@
  */
 import { scrubLogText } from '@waypoint/core/privacy';
 import { apiErrors, apiMetrics, type Database, sql } from '@waypoint/db';
+import { flushUsage } from './usage';
 
 /** Upper edges of the response-time histogram, in milliseconds; the last bin is open. */
 export const LATENCY_BINS = [50, 100, 250, 500, 1000, 2500, 5000] as const;
@@ -185,11 +186,17 @@ export async function flushMetrics(db: Database): Promise<void> {
   }
 }
 
-/** Adds the counts to the database every half minute from now on. Safe to call twice. */
+/**
+ * Adds the counts to the database every half minute from now on, with the analytics' own
+ * (lib/usage.ts). Safe to call twice.
+ */
 export function startMetricsFlush(db: Database, everyMs = 30_000): void {
   const s = state();
   if (s.timer) return;
-  s.timer = setInterval(() => void flushMetrics(db), everyMs);
+  s.timer = setInterval(() => {
+    void flushMetrics(db);
+    void flushUsage(db);
+  }, everyMs);
   s.timer.unref?.();
 }
 

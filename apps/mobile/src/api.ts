@@ -46,6 +46,8 @@ export async function apiHeaders(
     ...extra,
   };
   if (Platform.OS !== 'web') {
+    // So the analytics can tell the phone app from a browser (the browser build is the web).
+    headers['x-waypoint-client'] = 'phone';
     // The session's cookie, and any the request carries of its own (Today's "not now").
     const cookie = [await authClient.getCookie(), extra.cookie].filter(Boolean).join('; ');
     if (cookie) headers.cookie = cookie;
@@ -79,6 +81,18 @@ function withTimeout(signal: AbortSignal | undefined, ms: number) {
       signal?.removeEventListener('abort', onAbort);
     },
   };
+}
+
+/**
+ * Counts a screen opened, for Waypoint's analytics: the screen's address and nothing else
+ * (see the API's lib/usage.ts). Never fails and never waits for an answer that matters.
+ */
+export async function countScreen(path: string): Promise<void> {
+  try {
+    await api('/activity', { method: 'POST', json: { path }, timeoutMs: 10_000 });
+  } catch {
+    // Offline, or Waypoint is busy: a screen not counted is fine.
+  }
 }
 
 export async function api<T>(path: string, init: ApiInit = {}): Promise<T> {

@@ -1098,8 +1098,10 @@
   font-weight: var(--wp-weight-medium);
 }
 
-a.rowLink:hover .rowName {
-  text-decoration: underline;
+@media (hover: hover) {
+  a.rowLink:hover .rowName {
+    text-decoration: underline;
+  }
 }
 
 .tagRow {
@@ -1271,4 +1273,29 @@ li.errorRow {
 .filters a[aria-current="page"] :global(.wp-meta) {
   color: inherit;
   opacity: 0.8;
+}
+
+/* ───────────── Analytics ───────────── */
+.inlineField {
+  display: flex;
+  flex: 1 1 12rem;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+}
+
+.searchRow:has(.inlineField) {
+  align-items: flex-end;
+}
+
+.inlineField .searchInput {
+  flex: none;
+  inline-size: 100%;
+}
+
+/* A chart with nothing to show yet: its title the size a chart's own would be. */
+.emptyChart h3 {
+  font-size: var(--wp-text-body);
+  font-weight: var(--wp-weight-semibold);
 }

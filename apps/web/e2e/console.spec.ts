@@ -3,7 +3,7 @@
  * outside services with their keys and checks, and (as they are added) the rest.
  */
 import type { Browser, Page } from '@playwright/test';
-import { expect, linkFromEmail, snap, test } from './fixtures';
+import { expect, linkFromEmail, snap, startAsGuest, test } from './fixtures';
 import { STAFF } from './staff';
 
 let staffCookies: Awaited<ReturnType<import('@playwright/test').BrowserContext['cookies']>> | null =
@@ -331,4 +331,55 @@ test('the team writes back to feedback and moves it on, with a note', async ({
   } finally {
     await kofi.close();
   }
+});
+
+test('analytics show how Waypoint is used, and never a group too small to hide in', async ({
+  browser,
+  page,
+  baseURL,
+}, testInfo) => {
+  // A guest's first visit, counted like anyone's.
+  const visitor = await browser.newContext({ baseURL });
+  const guest = await visitor.newPage();
+  await startAsGuest(guest, 'Zawadi');
+  await guest.goto('/money');
+  await visitor.close();
+
+  await asAdmin(browser, page, baseURL ?? '');
+  await page.goto('/admin/analytics');
+  await expect(page.getByRole('heading', { level: 2, name: 'Analytics' })).toBeVisible();
+  const glance = page.getByRole('list', { name: 'The period at a glance' });
+  for (const tile of ['Active people', 'New people', 'Pages opened'])
+    await expect(glance.getByText(tile, { exact: true })).toBeVisible();
+  for (const chart of [
+    'People active each day',
+    'From joining to coming back',
+    'Who comes back, week by week',
+    'What people open',
+    'When people use Waypoint',
+  ])
+    await expect(page.getByRole('heading', { level: 3, name: chart })).toBeVisible();
+  // The guest's pages are counted under the part of Waypoint they belong to.
+  await page.getByRole('heading', { level: 3, name: 'What people open' }).scrollIntoViewIfNeeded();
+  await expect(
+    page
+      .getByRole('figure', { name: 'What people open' })
+      .getByRole('listitem')
+      .filter({ hasText: /^Money/ }),
+  ).toBeVisible();
+
+  await page.getByRole('link', { name: '7 days' }).click();
+  await expect(page).toHaveURL(/range=7d/);
+  await expect(page.getByRole('link', { name: '7 days' })).toHaveAttribute('aria-current', 'page');
+  await snap(page, testInfo, 'console-analytics');
+
+  // Narrowed to a country with hardly anyone, nothing is shown at all.
+  await page.goto('/admin/analytics?country=IS');
+  await expect(page.getByText('Too few people to show')).toBeVisible();
+  await expect(page.getByRole('heading', { level: 3, name: 'People active each day' })).toHaveCount(
+    0,
+  );
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+    page.viewportSize()?.width ?? 0,
+  );
 });

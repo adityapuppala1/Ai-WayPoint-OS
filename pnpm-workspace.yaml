@@ -7,6 +7,11 @@ packages:
 overrides:
   react-native-worklets: 0.10.1
   '@react-native/metro-config': 0.86.3
+  # Old copies with published advisories, replaced by versions that keep what each caller uses:
+  # Expo's iOS project writer (xcode) only calls uuid.v4(), and drizzle-kit's config loader
+  # (@esbuild-kit) only transforms code, never starts esbuild's server.
+  'xcode>uuid': ^11.1.1
+  '@esbuild-kit/core-utils>esbuild': 0.25.12
 
 # Type definitions that import React without declaring @types/react would otherwise use the
 # hoisted copy, which may be the mobile app's (React 19.2) rather than the web's (19.3).

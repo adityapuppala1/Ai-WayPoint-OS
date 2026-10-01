@@ -1,9 +1,13 @@
 name: CI
 
+# Documentation alone changes nothing CI checks (no code reads a Markdown file), so a change
+# to it alone does not run these jobs. The security workflow still scans every change.
 on:
   push:
     branches: [main]
+    paths-ignore: ['**/*.md', 'docs/**']
   pull_request:
+    paths-ignore: ['**/*.md', 'docs/**']
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -69,26 +73,33 @@ jobs:
   # page. One job per browser engine, each with its own build, server and empty database: a
   # problem in one engine never hides behind another, and no job waits for the other two.
   # WebKit is the engine of Safari and of every browser on an iPhone. It is also the slowest of
-  # the three under test (its desktop project alone took 14.5 minutes on a busy Windows
-  # machine, against 5 for both of Chrome's), so the limit leaves room for it, the build and
-  # a retry.
+  # the three under test (26 minutes on CI, against 10 for Chrome and 9 for Firefox), so its
+  # tests are split between two jobs (Playwright's --shard) that run side by side: the whole
+  # run then takes about as long as Chrome's.
   browser:
     name: Browser tests, ${{ matrix.name }}
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
         include:
           - name: Chrome (desktop and phone)
             engine: chromium
+            part: all
             projects: --project=desktop --project=phone
           - name: Firefox
             engine: firefox
+            part: all
             projects: --project=firefox
-          - name: Safari (desktop and iPhone)
+          - name: Safari (desktop and iPhone), 1 of 2
             engine: webkit
-            projects: --project=safari --project=iphone
+            part: '1'
+            projects: --project=safari --project=iphone --shard=1/2
+          - name: Safari (desktop and iPhone), 2 of 2
+            engine: webkit
+            part: '2'
+            projects: --project=safari --project=iphone --shard=2/2
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -103,14 +114,14 @@ jobs:
       - name: Install this job's browser only, with the system libraries it needs
         run: pnpm --filter @waypoint/web exec playwright install --with-deps ${{ matrix.engine }}
       - run: pnpm --filter @waypoint/web exec playwright test ${{ matrix.projects }}
+      # The HTML report carries each failure's trace and screenshots itself: test-results
+      # would only upload the same files twice.
       - name: Keep the report when a test fails
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: browser-test-report-${{ matrix.engine }}
-          path: |
-            apps/web/playwright-report
-            apps/web/test-results
+          name: browser-test-report-${{ matrix.engine }}-${{ matrix.part }}
+          path: apps/web/playwright-report
           retention-days: 7
 
   # The deployment files are checked on every change, so they never drift from the app.

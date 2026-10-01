@@ -112,6 +112,8 @@ describe('messages', () => {
       max: 4000,
       link: (chunks) => chunks.join(''),
     };
+    // Thousands of messages: problems are collected and checked once, which keeps this quick.
+    const problems: string[] = [];
     for (const l of locales) {
       const m = read(l);
       for (const k of keys(m)) {
@@ -121,14 +123,16 @@ describe('messages', () => {
             tag ? [tag, (chunks: string[]) => chunks.join('')] : [a, sample[a ?? ''] ?? 'x'],
           ),
         );
-        let out = '';
-        expect(() => {
-          out = String(new IntlMessageFormat(text, l).format(args));
-        }, `${l}: ${k} is not valid ICU`).not.toThrow();
-        expect(out, `${l}: ${k} rendered empty`).not.toBe('');
+        try {
+          const out = String(new IntlMessageFormat(text, l).format(args));
+          if (!out) problems.push(`${l}: ${k} rendered empty`);
+        } catch (err) {
+          problems.push(`${l}: ${k} is not valid ICU (${(err as Error).message})`);
+        }
       }
     }
-  });
+    expect(problems).toEqual([]);
+  }, 30_000);
 
   it('falls back to English key by key', async () => {
     const hi = await loadMessages('hi');

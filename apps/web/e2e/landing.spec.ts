@@ -120,11 +120,13 @@ test('on a wide screen in Chromium the 3D scene loads after the page, without bl
         .filter((e) => (e as PerformanceResourceTiming).initiatorType === 'script')
         .map((e) => e.name),
     );
-  // `goto` returns once the page answers to input (fixtures.ts): the words are there, and
-  // the scene has not been asked for yet.
+  // The scripts the page itself names: the scene must not be one of them. (Comparing with
+  // what had loaded at some moment would race a fast machine that fetches the scene early.)
+  const html = await (await page.request.get('/welcome')).text();
+  const named = [...html.matchAll(/<script[^>]+src="([^"]+)"/g)].map(([, src]) => src ?? '');
+  const before = { has: (url: string) => named.some((src) => url.endsWith(src)) };
   await page.goto('/welcome');
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-  const before = new Set(await scripts());
   await expect(page.locator('[data-scene]')).toHaveAttribute('data-scene', 'live', {
     timeout: 30_000,
   });

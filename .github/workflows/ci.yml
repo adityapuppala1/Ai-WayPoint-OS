@@ -134,7 +134,7 @@ jobs:
       - name: Which Playwright
         id: playwright
         run: echo "version=$(node -p "require('./apps/web/node_modules/@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@v4
+      - uses: actions/cache/restore@v4
         id: browsers
         with:
           path: ~/.cache/ms-playwright
@@ -142,6 +142,12 @@ jobs:
       - name: Install this job's browser only, with the system libraries it needs
         if: steps.browsers.outputs.cache-hit != 'true'
         run: pnpm --filter @waypoint/web exec playwright install --with-deps ${{ matrix.engine }}
+      # Saved straight away, so a failing test later in the job still leaves it for next time.
+      - uses: actions/cache/save@v4
+        if: steps.browsers.outputs.cache-hit != 'true'
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ steps.browsers.outputs.cache-primary-key }}
       - name: The cached browser's system libraries
         if: steps.browsers.outputs.cache-hit == 'true'
         run: pnpm --filter @waypoint/web exec playwright install-deps ${{ matrix.engine }}

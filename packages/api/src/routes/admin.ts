@@ -28,6 +28,13 @@ import {
   saveIntegration,
   testIntegration,
 } from '../services/integrations';
+import {
+  actOnJob,
+  actOnMessage,
+  SystemSchema,
+  systemView,
+  WorkActionSchema,
+} from '../services/system';
 import type { AppEnv } from '../types';
 
 const app = router();
@@ -42,6 +49,9 @@ for (const [path, area] of [
   ['/admin/feedback', 'feedback'],
   ['/admin/audit', 'audit'],
   ['/admin/integrations', 'integrations'],
+  ['/admin/system', 'system'],
+  ['/admin/jobs', 'system'],
+  ['/admin/outbox', 'system'],
 ] as const) {
   app.use(path, requireArea(area));
   app.use(`${path}/*`, requireArea(area));
@@ -239,5 +249,44 @@ app.openapi(
   }),
   async (c) => c.json(await testIntegration(c.get('db'), actor(c), c.req.valid('param').id), 200),
 );
+
+// ───────────────────────────── System health ─────────────────────────────
+
+app.openapi(
+  createRoute({
+    method: 'get',
+    path: '/admin/system',
+    tags: ['Admin'],
+    summary: 'The API, the database, background work and this server, at a glance',
+    responses: { 200: jsonContent(SystemSchema), 401: errors[401], 403: errors[403] },
+  }),
+  async (c) => c.json(await systemView(c.get('db')), 200),
+);
+
+for (const [path, act, what] of [
+  ['/admin/jobs/{id}', actOnJob, 'a background job'],
+  ['/admin/outbox/{id}', actOnMessage, 'a message waiting to be sent'],
+] as const)
+  app.openapi(
+    createRoute({
+      method: 'post',
+      path,
+      tags: ['Admin'],
+      summary: `Retry or cancel ${what} that failed`,
+      middleware: [limit('admin-work', 300, 3600)] as const,
+      request: { params: IdParam, ...jsonBody(WorkActionSchema) },
+      responses: {
+        200: jsonContent(OkSchema),
+        401: errors[401],
+        403: errors[403],
+        404: errors[404],
+        409: errors[409],
+      },
+    }),
+    async (c) => {
+      await act(c.get('db'), actor(c), c.req.valid('param').id, c.req.valid('json').action);
+      return c.json({ ok: true as const }, 200);
+    },
+  );
 
 export default app;

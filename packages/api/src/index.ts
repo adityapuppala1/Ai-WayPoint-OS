@@ -5,6 +5,7 @@
 export { API_VERSION, createApp, handleRequest, type WaypointApp } from './app';
 export * as channels from './channels/public';
 export * as jobs from './jobs';
+export { flushMetrics, startMetricsFlush } from './lib/metrics';
 export { ApiError } from './lib/problem';
 export { limitVisitor } from './lib/request';
 export * as admin from './services/admin';
@@ -25,5 +26,6 @@ export * as privacy from './services/privacy';
 export * as shield from './services/shield';
 export * as signals from './services/signals';
 export * as support from './services/support';
+export * as system from './services/system';
 export * as today from './services/today';
 export type { ApiUser, AppEnv, Consents } from './types';

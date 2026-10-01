@@ -338,3 +338,58 @@ export const integrationChecks = pgTable('integration_checks', {
   checkedBy: text().references(() => users.id, { onDelete: 'set null' }),
   checkedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
 });
+
+// ───────────────────────────── The API's own health ─────────────────────────────
+
+/**
+ * Requests per hour, route and kind of answer: counted in memory and added here every half
+ * minute (never a row per request). Response times are kept as a histogram, so medians and
+ * the slowest 5% can be worked out without keeping each request. Kept 90 days.
+ */
+export const apiMetrics = pgTable(
+  'api_metrics',
+  {
+    bucket: timestamp({ withTimezone: true }).notNull(),
+    method: text().notNull(),
+    /** The route as written in the code ("/api/admin/integrations/:id"), never a real path. */
+    route: text().notNull(),
+    /** 2, 3, 4 or 5: the hundreds of the status code. */
+    statusClass: smallint().notNull(),
+    n: integer().notNull().default(0),
+    sumMs: integer().notNull().default(0),
+    maxMs: integer().notNull().default(0),
+    /** How many took under 50, 100, 250, 500, 1000, 2500, 5000 ms, and longer. */
+    h0: integer().notNull().default(0),
+    h1: integer().notNull().default(0),
+    h2: integer().notNull().default(0),
+    h3: integer().notNull().default(0),
+    h4: integer().notNull().default(0),
+    h5: integer().notNull().default(0),
+    h6: integer().notNull().default(0),
+    h7: integer().notNull().default(0),
+  },
+  (t) => [
+    primaryKey({ columns: [t.bucket, t.method, t.route, t.statusClass] }),
+    index('api_metrics_bucket_idx').on(t.bucket),
+  ],
+);
+
+/**
+ * Server errors (5xx), for the console: when, where and what went wrong, in words with
+ * personal details and tokens taken out, and the request id to find it in the logs. Kept 30
+ * days.
+ */
+export const apiErrors = pgTable(
+  'api_errors',
+  {
+    id: pk(),
+    method: text().notNull(),
+    route: text().notNull(),
+    status: smallint().notNull(),
+    code: text(),
+    message: text().notNull(),
+    requestId: text(),
+    createdAt: createdAt(),
+  },
+  (t) => [index('api_errors_created_idx').on(t.createdAt)],
+);

@@ -16,8 +16,10 @@ export async function register() {
     return;
   }
   // Keys and options an admin set in the console, kept in step every half minute.
-  const { integrations } = await import('@waypoint/api');
+  const { integrations, startMetricsFlush } = await import('@waypoint/api');
   await integrations.startSettingsSync(getDb());
+  // The API's own counts (requests, response times, errors), added every half minute.
+  startMetricsFlush(getDb());
   if (env.WAYPOINT_ADMIN_EMAIL) {
     const { ensureAdmin } = await import('@waypoint/auth');
     await ensureAdmin()

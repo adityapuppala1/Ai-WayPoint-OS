@@ -337,6 +337,8 @@ export async function retention(db: Database): Promise<{
   stats: number;
   codes: number;
   safety: number;
+  /** The API's own counts (90 days) and server errors (30 days) past their time. */
+  health: number;
   /** Key rotation: what was re-wrapped this run, and what is still under an older key. */
   keys: { dataKeys: number; numbers: number; unreadable: number; remaining: number };
 }> {
@@ -407,6 +409,13 @@ export async function retention(db: Database): Promise<{
     delete from crisis_events
     where user_id is null and created_at < now() - interval '180 days'
     returning id`);
+  const healthCounts = await db.execute<{ n: number }>(sql`
+    with gone as (
+      delete from api_metrics where bucket < now() - interval '90 days' returning 1
+    ), errors as (
+      delete from api_errors where created_at < now() - interval '30 days' returning 1
+    )
+    select (select count(*) from gone)::int + (select count(*) from errors)::int as n`);
   const recounted = await db.execute<{ id: string }>(sql`
     update circles c
     set member_count = m.n
@@ -429,6 +438,7 @@ export async function retention(db: Database): Promise<{
     stats: stats.rows.length,
     codes: codes.rows.length,
     safety: safety.rows.length,
+    health: Number(healthCounts.rows[0]?.n ?? 0),
     keys: await rewrapKeys(db),
   };
 }

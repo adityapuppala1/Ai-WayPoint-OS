@@ -266,3 +266,111 @@ describe('outside services in the console', () => {
     expect(env.getEnv().AI_MODEL_OPENAI_SMALL).toBe('gpt-5.4-nano');
   });
 });
+
+describe('system health in the console', () => {
+  it('counts requests by route as written in the code, never by path', async () => {
+    const metrics = await import('../src/lib/metrics');
+    const { systemView } = await import('../src/services/system');
+    metrics.resetMetricsForTests();
+    const boss = await person('Ada', 'admin');
+    for (let i = 0; i < 3; i++) await req('/api/admin/integrations', { cookie: boss.cookie });
+    await req('/api/admin/integrations/resend/check', { method: 'POST', cookie: boss.cookie });
+    await req('/api/health');
+    await metrics.flushMetrics(db.getDb());
+    const view = await systemView(db.getDb());
+    const route = (r: string, m = 'GET') =>
+      view.api.routes.find((x) => x.route === r && x.method === m);
+    expect(route('/api/admin/integrations')?.requests).toBeGreaterThanOrEqual(3);
+    // A service that is not set up can't be checked: a 400, counted as the client's mistake.
+    expect(route('/api/admin/integrations/:id/check', 'POST')?.clientErrors).toBeGreaterThanOrEqual(
+      1,
+    );
+    expect(view.api.routes.some((r) => r.route.includes('resend'))).toBe(false);
+    // Probes are not counted.
+    expect(route('/api/health')).toBeUndefined();
+    expect(view.api.hourly).toHaveLength(48);
+    expect(view.api.day.requests).toBeGreaterThanOrEqual(4);
+  });
+
+  it('keeps server errors in words, with personal details taken out', async () => {
+    const metrics = await import('../src/lib/metrics');
+    const { systemView } = await import('../src/services/system');
+    metrics.recordError({
+      method: 'POST',
+      route: '/api/example',
+      status: 500,
+      code: 'Boom',
+      message: 'insert failed for ada@example.org\nparams: secret-value',
+      requestId: 'req-123456789',
+    });
+    await metrics.flushMetrics(db.getDb());
+    const view = await systemView(db.getDb());
+    const error = view.api.errors.find((e) => e.requestId === 'req-123456789');
+    expect(error).toMatchObject({ route: '/api/example', status: 500, code: 'Boom' });
+    expect(error!.message).not.toContain('ada@example.org');
+    expect(error!.message).not.toContain('secret-value');
+  });
+
+  it('works out medians and the slowest 5% from the histogram', async () => {
+    const { percentileOf } = await import('../src/services/system');
+    // 90 quick (< 50 ms), 8 in 250–500 ms, 2 over 5 s (the slowest took 7.2 s).
+    const h = [90, 0, 0, 8, 0, 0, 0, 2];
+    expect(percentileOf(h, 0.5, 7200)).toBe(50);
+    expect(percentileOf(h, 0.95, 7200)).toBe(500);
+    expect(percentileOf(h, 0.99, 7200)).toBe(7200);
+    expect(percentileOf([0, 0, 0, 0, 0, 0, 0, 0], 0.5, 0)).toBeNull();
+  });
+
+  it('lets an admin retry or cancel failed background work, and records it', async () => {
+    const boss = await person('Ada', 'admin');
+    const staff = await person('Sam', 'staff');
+    expect((await req('/api/admin/system', { cookie: staff.cookie })).status).toBe(403);
+    const [failed] = await db
+      .getDb()
+      .insert(db.jobs)
+      .values({ kind: 'example', status: 'failed', attempts: 5, lastError: 'gave up' })
+      .returning({ id: db.jobs.id });
+    const view = (await (await req('/api/admin/system', { cookie: boss.cookie })).json()) as {
+      jobs: { failed: Array<{ id: string }> };
+    };
+    expect(view.jobs.failed.map((j) => j.id)).toContain(failed!.id);
+    const retry = await req(`/api/admin/jobs/${failed!.id}`, {
+      method: 'POST',
+      cookie: boss.cookie,
+      json: { action: 'retry' },
+    });
+    expect(retry.status).toBe(200);
+    const [row] = await db.getDb().select().from(db.jobs).where(db.eq(db.jobs.id, failed!.id));
+    expect(row).toMatchObject({ status: 'queued', attempts: 0 });
+    // Waiting now: it can be cancelled, not retried.
+    expect(
+      (
+        await req(`/api/admin/jobs/${failed!.id}`, {
+          method: 'POST',
+          cookie: boss.cookie,
+          json: { action: 'retry' },
+        })
+      ).status,
+    ).toBe(409);
+    await req(`/api/admin/jobs/${failed!.id}`, {
+      method: 'POST',
+      cookie: boss.cookie,
+      json: { action: 'cancel' },
+    });
+    const actions = await db
+      .getDb()
+      .select({ action: db.auditLog.action })
+      .from(db.auditLog)
+      .where(db.eq(db.auditLog.targetId, failed!.id));
+    expect(actions.map((a) => a.action).sort()).toEqual(['job.cancel', 'job.retry']);
+  });
+
+  it('describes the database it runs on', async () => {
+    const { systemView } = await import('../src/services/system');
+    const view = await systemView(db.getDb());
+    expect(view.database.kind).toBe('embedded');
+    expect(view.database.schemaCurrent).toBe(true);
+    expect(view.database.migrationsApplied).toBeGreaterThan(15);
+    expect(view.server.node).toMatch(/^v\d+/);
+  });
+});

@@ -3,7 +3,7 @@
  * that scale the API separately (and for the mobile app in production).
  */
 import { serve } from '@hono/node-server';
-import { handleRequest, integrations } from '@waypoint/api';
+import { flushMetrics, handleRequest, integrations, startMetricsFlush } from '@waypoint/api';
 import { configWarnings, getEnv } from '@waypoint/core/env';
 import { closeDb, dbReady, getDb } from '@waypoint/db';
 
@@ -14,6 +14,8 @@ const hostname = process.env.HOST ?? '0.0.0.0';
 await dbReady();
 // Keys and options an admin set in the console, kept in step every half minute.
 await integrations.startSettingsSync(getDb());
+// The API's own counts (requests, response times, errors), added every half minute.
+startMetricsFlush(getDb());
 for (const warning of configWarnings(env))
   process.stderr.write(
     `${JSON.stringify({ time: new Date().toISOString(), level: 'warn', msg: warning })}\n`,
@@ -67,6 +69,8 @@ async function shutdown(signal: string) {
     new Promise<void>((resolve) => server.close(() => resolve())),
     new Promise<void>((resolve) => setTimeout(resolve, 15_000)),
   ]);
+  // The last half minute's counts, before the database goes.
+  await flushMetrics(getDb()).catch(() => undefined);
   await closeDb().catch(() => undefined);
   process.exit(0);
 }

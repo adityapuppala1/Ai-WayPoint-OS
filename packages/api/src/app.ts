@@ -24,6 +24,7 @@ import { cors } from 'hono/cors';
 import { csrf } from 'hono/csrf';
 import { HTTPException } from 'hono/http-exception';
 import { errorFields, log } from './lib/log';
+import { recordError, recordRequest } from './lib/metrics';
 import { ApiError, problemResponse } from './lib/problem';
 import { clientAddress, clientIp, ipHash, keyedHash, rateLimit, withinLimit } from './lib/request';
 import { withSession } from './middleware';
@@ -121,6 +122,19 @@ export function createApp() {
     await next();
     c.res.headers.set('X-Request-Id', id);
     const ms = Math.round(performance.now() - start);
+    // The route as written in the code: the last matched handler that is not middleware
+    // (a request no route matched is counted as one, never by its path).
+    const route =
+      [...c.req.matchedRoutes].reverse().find((r) => r.method !== 'ALL')?.path ?? '(no route)';
+    recordRequest({ method: c.req.method, route, status: c.res.status, ms });
+    if (c.res.status >= 500 && !c.get('errorKept'))
+      recordError({
+        method: c.req.method,
+        route,
+        status: c.res.status,
+        message: `Answered ${c.res.status}`,
+        requestId: id,
+      });
     if (c.res.status >= 500)
       log.error('request failed', {
         requestId: id,
@@ -454,8 +468,22 @@ export function createApp() {
 
   app.onError((err, c) => {
     const requestId = c.get('requestId');
-    if (err instanceof ApiError)
+    const route =
+      [...c.req.matchedRoutes].reverse().find((r) => r.method !== 'ALL')?.path ?? '(no route)';
+    if (err instanceof ApiError) {
+      if (err.status >= 500) {
+        recordError({
+          method: c.req.method,
+          route,
+          status: err.status,
+          code: err.code,
+          message: err.message,
+          requestId,
+        });
+        c.set('errorKept', true);
+      }
       return problemResponse(err.status, err.code, err.message, { ...err.extra, requestId });
+    }
     if (err instanceof HTTPException) {
       const status = err.status;
       return problemResponse(
@@ -466,6 +494,15 @@ export function createApp() {
       );
     }
     log.error('unhandled error', { requestId, route: c.req.routePath, ...errorFields(err) });
+    recordError({
+      method: c.req.method,
+      route,
+      status: 500,
+      code: (err as { code?: string }).code ?? err.name,
+      message: err.message,
+      requestId,
+    });
+    c.set('errorKept', true);
     return problemResponse(
       500,
       'server-error',

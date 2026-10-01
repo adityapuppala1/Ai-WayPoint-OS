@@ -100,6 +100,8 @@ const FieldSchema = z.object({
   kind: z.enum(['secret', 'text', 'url', 'number', 'choice', 'list']),
   options: z.array(z.string()).nullable(),
   placeholder: z.string().nullable(),
+  /** What is used when nothing is set. */
+  fallback: z.string().nullable(),
   /** Where the value in use comes from. A server value can only be changed on the server. */
   source: z.enum(['server', 'console', 'default']),
   /** What may be shown: a secret's last four characters, an ordinary value in full. */
@@ -168,6 +170,7 @@ const TEXT_CHANNELS: Record<string, string[]> = {
 };
 
 function fieldView(field: {
+  fallback?: string;
   key: string;
   kind: string;
   options?: readonly string[];
@@ -185,6 +188,7 @@ function fieldView(field: {
     kind: field.kind as z.infer<typeof FieldSchema>['kind'],
     options: field.options ? [...field.options] : null,
     placeholder: field.placeholder ?? null,
+    fallback: field.fallback ?? null,
     source,
     shown: value ? (field.kind === 'secret' ? secretHint(value) : value) : null,
   };
@@ -508,7 +512,10 @@ export async function saveIntegration(
   }
   for (const [key, message] of Object.entries(checkConsoleSettings(proposed)))
     if (key in next) problems[key] ??= message;
-  if (Object.keys(problems).length) throw badRequest('Some settings were not saved.', { problems });
+  if (Object.keys(problems).length)
+    throw badRequest('Some settings were not saved.', {
+      issues: Object.entries(problems).map(([path, message]) => ({ path, message })),
+    });
   if (!Object.keys(next).length) return { dropped: [] };
 
   await db.transaction(async (tx) => {
@@ -563,8 +570,7 @@ export async function testIntegration(
 ): Promise<z.infer<typeof IntegrationCheckSchema>> {
   const integration = integrationById(id);
   if (!integration?.testable) throw notFound();
-  if (!isConfigured(integration))
-    throw badRequest('Set this service up before checking it.', { problems: {} });
+  if (!isConfigured(integration)) throw badRequest('Set this service up before checking it.');
   const result = await checkIntegration(id);
   const row = {
     provider: id,

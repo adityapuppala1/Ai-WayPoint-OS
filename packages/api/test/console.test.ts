@@ -171,8 +171,8 @@ describe('outside services in the console', () => {
       json: { values: { AI_JUDGE_MODEL: 'jev-latest', AI_JUDGE_LOCALES: 'en,xx' } },
     });
     expect(bad.status).toBe(400);
-    const body = (await bad.json()) as { problems: Record<string, string> };
-    expect(Object.keys(body.problems).sort()).toEqual(['AI_JUDGE_LOCALES', 'AI_JUDGE_MODEL']);
+    const body = (await bad.json()) as { issues: Array<{ path: string; message: string }> };
+    expect(body.issues.map((i) => i.path).sort()).toEqual(['AI_JUDGE_LOCALES', 'AI_JUDGE_MODEL']);
     expect(env.getEnv().AI_JUDGE_MODEL).toBe('jev-1.13.0');
 
     // Not a setting of that service, or not the console's at all.

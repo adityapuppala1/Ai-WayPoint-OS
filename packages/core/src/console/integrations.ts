@@ -23,12 +23,16 @@ export interface IntegrationField {
   key: string;
   kind: FieldKind;
   options?: readonly string[];
-  /** An example shown in the empty field. */
+  /** An example of the format, shown in the empty field. */
   placeholder?: string;
+  /** What is used when nothing is set (the configuration's own default). */
+  fallback?: string;
 }
 
 export interface Integration {
   id: string;
+  /** The service's own name (not translated); the general settings cards have none. */
+  name: string | null;
   group: IntegrationGroup;
   /** Settings that must all be set for the service to be in use. */
   needs: readonly string[];
@@ -42,13 +46,14 @@ export interface Integration {
 const AI_PROVIDERS = ['anthropic', 'openai', 'google', 'ollama'] as const;
 
 const models = (prefix: string, small: string, large: string): IntegrationField[] => [
-  { key: `AI_MODEL_${prefix}_SMALL`, kind: 'text', placeholder: small },
-  { key: `AI_MODEL_${prefix}_LARGE`, kind: 'text', placeholder: large },
+  { key: `AI_MODEL_${prefix}_SMALL`, kind: 'text', placeholder: small, fallback: small },
+  { key: `AI_MODEL_${prefix}_LARGE`, kind: 'text', placeholder: large, fallback: large },
 ];
 
 export const INTEGRATIONS: readonly Integration[] = [
   {
     id: 'anthropic',
+    name: 'Anthropic (Claude)',
     group: 'ai',
     needs: ['ANTHROPIC_API_KEY'],
     fields: [
@@ -60,6 +65,7 @@ export const INTEGRATIONS: readonly Integration[] = [
   },
   {
     id: 'openai',
+    name: 'OpenAI',
     group: 'ai',
     needs: ['OPENAI_API_KEY'],
     fields: [
@@ -71,6 +77,7 @@ export const INTEGRATIONS: readonly Integration[] = [
   },
   {
     id: 'google',
+    name: 'Google (Gemini)',
     group: 'ai',
     needs: ['GOOGLE_GENERATIVE_AI_API_KEY'],
     fields: [
@@ -82,6 +89,7 @@ export const INTEGRATIONS: readonly Integration[] = [
   },
   {
     id: 'ollama',
+    name: 'Ollama (your own server)',
     group: 'ai',
     needs: ['OLLAMA_BASE_URL'],
     fields: [
@@ -93,15 +101,22 @@ export const INTEGRATIONS: readonly Integration[] = [
   },
   {
     id: 'ai-settings',
+    name: null,
     group: 'ai',
     needs: [],
     fields: [
-      { key: 'AI_PROVIDER_ORDER', kind: 'list', options: AI_PROVIDERS },
-      { key: 'AI_MONTHLY_BUDGET_USD', kind: 'number', placeholder: '25' },
+      {
+        key: 'AI_PROVIDER_ORDER',
+        kind: 'list',
+        options: AI_PROVIDERS,
+        fallback: 'anthropic,openai,google,ollama',
+      },
+      { key: 'AI_MONTHLY_BUDGET_USD', kind: 'number', placeholder: '25', fallback: '25' },
       {
         key: 'AI_EMBEDDING_PROVIDER',
         kind: 'choice',
         options: ['none', 'openai', 'google', 'ollama'],
+        fallback: 'none',
       },
     ],
     testable: false,
@@ -109,15 +124,17 @@ export const INTEGRATIONS: readonly Integration[] = [
   },
   {
     id: 'typesafe',
+    name: 'TypeSafe Jev',
     group: 'judge',
     needs: ['TYPESAFE_API_KEY'],
     fields: [
       { key: 'TYPESAFE_API_KEY', kind: 'secret' },
-      { key: 'AI_JUDGE_MODEL', kind: 'text', placeholder: 'jev-1.13.0' },
+      { key: 'AI_JUDGE_MODEL', kind: 'text', placeholder: 'jev-1.13.0', fallback: 'jev-1.13.0' },
       {
         key: 'AI_JUDGE_LOCALES',
         kind: 'list',
         options: ['en', 'hi', 'es', 'fr', 'pt', 'ar', 'sw'],
+        fallback: 'en',
       },
     ],
     testable: true,
@@ -125,6 +142,7 @@ export const INTEGRATIONS: readonly Integration[] = [
   },
   {
     id: 'twilio',
+    name: 'Twilio',
     group: 'texting',
     needs: ['TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN'],
     fields: [
@@ -139,6 +157,7 @@ export const INTEGRATIONS: readonly Integration[] = [
   },
   {
     id: 'whatsapp',
+    name: 'WhatsApp Cloud API (Meta)',
     group: 'texting',
     needs: ['WHATSAPP_ACCESS_TOKEN', 'WHATSAPP_PHONE_NUMBER_ID'],
     fields: [
@@ -152,6 +171,7 @@ export const INTEGRATIONS: readonly Integration[] = [
   },
   {
     id: 'africastalking',
+    name: "Africa's Talking",
     group: 'texting',
     needs: ['AFRICASTALKING_USERNAME', 'AFRICASTALKING_API_KEY'],
     fields: [
@@ -165,11 +185,22 @@ export const INTEGRATIONS: readonly Integration[] = [
   },
   {
     id: 'texting-settings',
+    name: null,
     group: 'texting',
     needs: [],
     fields: [
-      { key: 'WAYPOINT_TEXT_REPLIES_PER_HOUR', kind: 'number', placeholder: '2000' },
-      { key: 'WAYPOINT_TEXT_REPLIES_PER_DAY', kind: 'number', placeholder: '20000' },
+      {
+        key: 'WAYPOINT_TEXT_REPLIES_PER_HOUR',
+        kind: 'number',
+        placeholder: '2000',
+        fallback: '2000',
+      },
+      {
+        key: 'WAYPOINT_TEXT_REPLIES_PER_DAY',
+        kind: 'number',
+        placeholder: '20000',
+        fallback: '20000',
+      },
       { key: 'WAYPOINT_TEXT_COUNTRIES', kind: 'list', placeholder: 'KE,TZ,UG' },
       { key: 'WAYPOINT_SMS_NUMBER', kind: 'text', placeholder: '+254700000000' },
       { key: 'WAYPOINT_WHATSAPP_NUMBER', kind: 'text', placeholder: '+254700000000' },
@@ -180,6 +211,7 @@ export const INTEGRATIONS: readonly Integration[] = [
   },
   {
     id: 'resend',
+    name: 'Resend',
     group: 'email',
     needs: ['RESEND_API_KEY'],
     fields: [{ key: 'RESEND_API_KEY', kind: 'secret', placeholder: 're_…' }],
@@ -188,6 +220,7 @@ export const INTEGRATIONS: readonly Integration[] = [
   },
   {
     id: 'smtp',
+    name: 'SMTP mail server',
     group: 'email',
     needs: ['SMTP_URL'],
     // The address carries the mail server's password, so it is kept like a key.
@@ -197,6 +230,7 @@ export const INTEGRATIONS: readonly Integration[] = [
   },
   {
     id: 'email-settings',
+    name: null,
     group: 'email',
     needs: [],
     fields: [{ key: 'EMAIL_FROM', kind: 'text', placeholder: 'Waypoint <help@example.org>' }],

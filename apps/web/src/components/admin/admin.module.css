@@ -188,6 +188,9 @@
 }
 
 .tileValue {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-space-2);
   font-size: var(--wp-text-h3);
   font-weight: var(--wp-weight-semibold);
   line-height: var(--wp-leading-tight);
@@ -705,4 +708,219 @@
   flex-direction: column;
   gap: var(--wp-space-5);
   min-inline-size: 0;
+}
+
+/* ───────────── Integrations ───────────── */
+.sectionHead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+}
+
+.sectionHead h2 {
+  margin: 0;
+}
+
+.groupTitle {
+  margin: 0;
+  font-size: var(--wp-text-h4);
+}
+
+.intGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+  gap: var(--wp-space-4);
+  align-items: start;
+}
+
+.intCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-3);
+  padding: var(--wp-space-5);
+  border: 1px solid var(--wp-border-subtle);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-raised);
+  min-inline-size: 0;
+}
+
+.intCard[data-status="failing"] {
+  border-color: var(--wp-danger);
+}
+
+.intHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wp-space-2);
+}
+
+.intHead h3 {
+  margin: 0;
+  font-size: var(--wp-text-body);
+}
+
+/* Status in words with an icon: never colour alone. */
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wp-space-1);
+  padding: var(--wp-space-1) var(--wp-space-2);
+  border-radius: var(--wp-radius-round);
+  background: var(--wp-sunken);
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-meta);
+  font-weight: var(--wp-weight-medium);
+  white-space: nowrap;
+}
+
+.statusPill[data-status="ok"] {
+  background: var(--wp-safe-tint);
+  color: var(--wp-safe);
+}
+
+.statusPill[data-status="failing"] {
+  background: var(--wp-danger-tint);
+  color: var(--wp-danger);
+}
+
+.statusPill[data-status="untested"] {
+  background: var(--wp-caution-tint);
+  color: var(--wp-caution);
+}
+
+.intUsage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-3);
+}
+
+.intStats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 7.5rem), 1fr));
+  gap: var(--wp-space-3);
+  margin: 0;
+}
+
+.intStats div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.intStats dt {
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-meta);
+}
+
+.intStats dd {
+  margin: 0;
+}
+
+.intStats dd:first-of-type {
+  font-weight: var(--wp-weight-semibold);
+}
+
+.intCheck {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--wp-space-2);
+  margin: 0;
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+  overflow-wrap: anywhere;
+}
+
+.intCheck[data-ok="true"] svg {
+  color: var(--wp-safe);
+}
+
+.intCheck[data-ok="false"] svg {
+  color: var(--wp-danger);
+}
+
+.intDocs {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wp-space-1);
+  font-size: var(--wp-text-small);
+}
+
+.intForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-4);
+}
+
+.readonlyField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+}
+
+.readonlyLabel {
+  font-weight: var(--wp-weight-medium);
+}
+
+.readonlyValue {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wp-space-1);
+  color: var(--wp-text-secondary);
+  font-family: var(--wp-font-mono, ui-monospace, monospace);
+  font-size: var(--wp-text-small);
+  overflow-wrap: anywhere;
+}
+
+.orderField,
+.checkField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.orderField legend,
+.checkField legend {
+  padding: 0;
+  font-weight: var(--wp-weight-medium);
+}
+
+.orderList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.orderList li {
+  display: grid;
+  grid-template-columns: 1.5rem 1fr auto auto;
+  align-items: center;
+  gap: var(--wp-space-2);
+  padding-inline-start: var(--wp-space-2);
+  border-radius: var(--wp-radius-sm);
+  background: var(--wp-sunken);
+}
+
+/* The same chevron, turned to point up. */
+.flipUp svg {
+  rotate: 180deg;
+}
+
+.checkRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-2) var(--wp-space-4);
+}
+
+.fieldError {
+  margin: 0;
+  color: var(--wp-danger);
+  font-size: var(--wp-text-small);
 }

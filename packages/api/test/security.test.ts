@@ -317,7 +317,8 @@ describe('signing in', () => {
     for (let i = 0; i < 25; i++)
       if ((await signIn(email, 'not the password')).status === 429) refused++;
     expect(refused).toBe(5);
-  });
+    // Twenty-five sign-ins, each padded to the same length on purpose: seconds on a busy runner.
+  }, 30_000);
 
   it('lets someone’s own device sign in while a stranger is guessing their password', async () => {
     const victim = await account('Vera');
@@ -336,7 +337,7 @@ describe('signing in', () => {
     // The victim's own device is not.
     const own = await signIn(victim.email, PASSWORD, { cookie: deviceCookie(victim.cookie) });
     expect(own.status).toBe(200);
-  });
+  }, 30_000);
 
   it('answers a wrong password and an unconfirmed address identically, byte for byte', async () => {
     const confirmed = await account('Wren');

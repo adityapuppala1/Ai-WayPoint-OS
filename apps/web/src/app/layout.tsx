@@ -1,6 +1,6 @@
 import '@waypoint/ui/styles.css';
 import './app.css';
-import { SERVER_ONLY_NAMESPACES, textDirection } from '@waypoint/i18n';
+import { formattingLocale, SERVER_ONLY_NAMESPACES, textDirection } from '@waypoint/i18n';
 import { hexRoles } from '@waypoint/tokens';
 import type { Metadata, Viewport } from 'next';
 import { headers } from 'next/headers';
@@ -52,6 +52,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const messages = Object.fromEntries(
     Object.entries(await getMessages()).filter(([namespace]) => !serverOnly.includes(namespace)),
   );
+  // Interactive components are drawn here and again in the browser, so they format with their
+  // digits named (formattingLocale): engines disagree on Arabic's, and React throws away a page
+  // drawn two ways. next-intl types this as one of the languages; client components read the
+  // language with useLanguage() (src/lib/language.ts), and a test keeps it that way.
+  const clientLocale = formattingLocale(locale) as typeof locale;
   return (
     <html
       lang={locale}
@@ -80,8 +85,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <a className="wp-skip-link" href="#main">
           {t('skipToContent')}
         </a>
-        <NextIntlClientProvider messages={messages}>
-          <Providers locale={locale} closeLabel={common('close')} restore={restore}>
+        <NextIntlClientProvider locale={clientLocale} messages={messages}>
+          <Providers locale={clientLocale} closeLabel={common('close')} restore={restore}>
             {children}
           </Providers>
         </NextIntlClientProvider>

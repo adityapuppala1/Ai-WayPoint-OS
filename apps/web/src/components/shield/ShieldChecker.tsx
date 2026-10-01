@@ -13,10 +13,11 @@ import {
   TextField,
   toast,
 } from '@waypoint/ui';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { type FormEvent, type ReactNode, useEffect, useRef, useState } from 'react';
 import { ApiProblem, api } from '@/lib/api';
 import { ltr } from '@/lib/bidi';
+import { useLanguage } from '@/lib/language';
 import styles from './shield.module.css';
 
 /** The most the box takes (the same limit the field itself has). */
@@ -99,7 +100,7 @@ export function ShieldChecker({
   const levels = useTranslations('riskLevels');
   const common = useTranslations('common');
   const errors = useTranslations('errors');
-  const locale = useLocale();
+  const locale = useLanguage();
   const [text, setText] = useState('');
   const [aiConsent, setAiConsent] = useState(false);
   const [busy, setBusy] = useState(false);

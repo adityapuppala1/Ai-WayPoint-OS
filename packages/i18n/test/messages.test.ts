@@ -2,7 +2,33 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { IntlMessageFormat } from 'intl-messageformat';
 import { describe, expect, it } from 'vitest';
-import { loadMessages, locales, resolveLocale, textDirection } from '../src';
+import {
+  formattingLocale,
+  languageOf,
+  loadMessages,
+  locales,
+  resolveLocale,
+  textDirection,
+} from '../src';
+
+describe('the locale given to Intl', () => {
+  it('names Arabic digits, so every engine writes the same numbers and dates', () => {
+    expect(formattingLocale('ar')).toBe('ar-u-nu-latn');
+    expect(new Intl.NumberFormat(formattingLocale('ar')).format(1234)).toBe('1,234');
+    expect(new Intl.DateTimeFormat(formattingLocale('ar')).resolvedOptions().numberingSystem).toBe(
+      'latn',
+    );
+    expect(textDirection(languageOf(formattingLocale('ar')))).toBe('rtl');
+  });
+
+  it('leaves every other language as it is, and reads each back', () => {
+    for (const l of locales) {
+      if (l !== 'ar') expect(formattingLocale(l)).toBe(l);
+      expect(languageOf(formattingLocale(l))).toBe(l);
+    }
+    expect(languageOf('xx-u-nu-latn')).toBe('en');
+  });
+});
 
 type Json = { [k: string]: Json | string };
 const dir = join(__dirname, '..', 'messages');

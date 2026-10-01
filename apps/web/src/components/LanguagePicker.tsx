@@ -3,14 +3,15 @@
 import { isLocale, type Locale, localeNames, locales } from '@waypoint/i18n';
 import { SelectField } from '@waypoint/ui';
 import { useRouter } from 'next/navigation';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { useTransition } from 'react';
+import { useLanguage } from '@/lib/language';
 import { savePreferences } from '@/lib/preferences';
 
 /** Language picker. Names are shown in their own language so people can find theirs. */
 export function LanguagePicker({ signedIn, compact }: { signedIn: boolean; compact?: boolean }) {
   const t = useTranslations('shell');
-  const locale = useLocale();
+  const locale = useLanguage();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 

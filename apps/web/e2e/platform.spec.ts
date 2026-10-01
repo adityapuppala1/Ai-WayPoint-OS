@@ -122,6 +122,55 @@ test('a browser that knows cascade layers never shows the old-browser notice', a
   await expect(notice.locator('a')).toHaveAttribute('href', '/support');
 });
 
+/**
+ * Makes this browser write Arabic numbers in Arabic-Indic digits ("١٢") unless a page names
+ * its digits, as older ICU versions do (Linux WebKit, older iPhones and Macs). Node's own ICU
+ * writes Latin digits ("12"), so a page that left the choice to each engine was drawn one way
+ * on the server and another in such a browser, and React threw it away (error 418).
+ */
+function arabicIndicByDefault() {
+  const named = (tag: string) => /-u(?:-[a-z0-9]{2,8})*-nu-/i.test(tag);
+  const indic = (tag: unknown) =>
+    typeof tag === 'string' && /^ar(?:-|$)/i.test(tag) && !named(tag)
+      ? `${tag}${/-u-/i.test(tag) ? '' : '-u'}-nu-arab`
+      : tag;
+  for (const name of ['NumberFormat', 'DateTimeFormat', 'RelativeTimeFormat'] as const) {
+    const Original = Intl[name] as unknown as new (locales?: unknown, options?: unknown) => object;
+    // biome-ignore lint/complexity/useArrowFunction: an arrow function cannot be a constructor
+    const Indic = function (locales?: unknown, options?: unknown) {
+      const list = Array.isArray(locales) ? locales.map(indic) : indic(locales);
+      return new Original(list, options);
+    } as unknown as typeof Original & { supportedLocalesOf: unknown };
+    Indic.prototype = Original.prototype;
+    Indic.supportedLocalesOf = (Original as unknown as typeof Intl.NumberFormat).supportedLocalesOf;
+    Object.defineProperty(Intl, name, { value: Indic, configurable: true, writable: true });
+  }
+}
+
+test('Arabic pages are drawn the same by a browser whose own Arabic digits differ', async ({
+  page,
+  context,
+  baseURL,
+}) => {
+  await page.addInitScript(arabicIndicByDefault);
+  await startAsGuest(page, 'Salma');
+  expect(
+    await page.evaluate(() => [
+      new Intl.NumberFormat('ar').format(12),
+      new Intl.NumberFormat('ar-u-nu-latn').format(12),
+    ]),
+  ).toEqual(['١٢', '12']);
+  await context.addCookies([{ name: 'NEXT_LOCALE', value: 'ar', url: baseURL ?? '' }]);
+  // Pages whose own parts write numbers and dates in the browser: Today's counts, the feedback
+  // scale, reminders and forecasts. The fixture fails the test on React's error.
+  for (const path of ['/', '/settings/feedback', '/health', '/signals/forecasts']) {
+    await page.goto(path);
+    await expect(page.locator('html'), path).toHaveAttribute('dir', 'rtl');
+  }
+  await page.goto('/settings/feedback');
+  await expect(page.getByRole('radio', { name: '2', exact: true })).toHaveCount(1);
+});
+
 test('a browser too old for the stylesheet is told so, and can still read the help numbers', async ({
   page,
 }, testInfo) => {

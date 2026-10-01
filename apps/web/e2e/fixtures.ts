@@ -202,6 +202,28 @@ export { expect };
  */
 export const WITHOUT_WORKER = { serviceWorkers: 'block' } as const;
 
+/**
+ * This page's own data refresh (its server component request, as after a save), once all of it
+ * has arrived. Start waiting before the press that refreshes, and leave or reload the page only
+ * after: one cut off half-way is logged as an error in Firefox, and in WebKit ("Load failed")
+ * it even reaches the page's error boundary. Its headers come first, so waiting for those is
+ * not enough.
+ */
+export function refreshOf(page: Page): Promise<void> {
+  const path = new URL(page.url()).pathname;
+  return page
+    .waitForResponse(
+      (r) =>
+        r.request().method() === 'GET' &&
+        new URL(r.url()).pathname === path &&
+        r.url().includes('_rsc=') &&
+        !r.request().headers()['next-router-prefetch'],
+    )
+    .then(async (r) => {
+      await r.finished();
+    });
+}
+
 /** A full-page screenshot saved with the test's results, for looking over by eye. */
 export async function snap(page: Page, testInfo: TestInfo, name: string): Promise<void> {
   await page.screenshot({ path: testInfo.outputPath(`${name}.png`), fullPage: true });

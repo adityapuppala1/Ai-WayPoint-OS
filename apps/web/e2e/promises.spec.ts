@@ -8,7 +8,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
-import { expect, snap, startAsGuest, test } from './fixtures';
+import { expect, refreshOf, snap, startAsGuest, test } from './fixtures';
 
 type Messages = {
   a11y: { call: string; text: string };
@@ -104,17 +104,6 @@ test('a plan’s steps and Today’s next step only lead to pages that exist @de
   // Without a chosen role the step has wording of its own, not a sentence with a hole in it.
   expect(steps[project]!.title).toBe('Make a small project that shows what you can do');
 });
-
-/** This page's own data refresh after a save (its server component request), once answered. */
-const refreshOf = (page: Page) => {
-  const path = new URL(page.url()).pathname;
-  return page.waitForResponse(
-    (r) =>
-      r.request().method() === 'GET' &&
-      new URL(r.url()).pathname === path &&
-      r.url().includes('_rsc='),
-  );
-};
 
 test('a goal or a weekly review that suggests danger brings the support card', async ({
   page,

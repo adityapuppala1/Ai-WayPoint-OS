@@ -4,7 +4,7 @@
  * judge is tested with a stand-in, in packages/ai and packages/api: a browser test cannot play
  * the service.)
  */
-import { expect, startAsGuest, test } from './fixtures';
+import { expect, refreshOf, startAsGuest, test } from './fixtures';
 
 test('guided mode answers from keywords, and shows its menu when none matches', async ({
   page,
@@ -17,12 +17,15 @@ test('guided mode answers from keywords, and shows its menu when none matches', 
   await page
     .getByLabel('Your message')
     .fill('My landlord says I owe him for three months and I cannot cover it');
+  // Ask refreshes its page once a reply is complete; the test leaves only after that.
+  const refreshed = refreshOf(page);
   await page.getByRole('button', { name: 'Send' }).click();
   await expect(page.getByText(/^Guided mode/)).toBeVisible();
   await expect(page.getByText(/I’m in guided mode right now/)).toBeVisible();
   await expect(page.getByRole('link', { name: 'Shield: check a message for scams' })).toBeVisible();
 
   // A keyword still decides on its own.
+  await refreshed;
   await page.goto('/ask');
   await page.getByLabel('Your message').fill('I need a job, where do I start?');
   await page.getByRole('button', { name: 'Send' }).click();

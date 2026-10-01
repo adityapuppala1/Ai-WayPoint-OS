@@ -227,7 +227,11 @@ test('staff publish a forecast, people see it, staff judge it, and it goes on th
 
   // Staff record the outcome, with where anyone can check it.
   await item.getByRole('button', { name: 'Judge this forecast' }).click();
-  await item.getByRole('radio', { name: 'It happened' }).check({ force: true });
+  // The panel grows open: press the choice as a person would, once it has stopped moving (a
+  // forced press on the hidden input could land outside the panel while it was still opening).
+  const happened = item.getByRole('radio', { name: 'It happened' });
+  await item.locator('label', { has: happened }).click();
+  await expect(happened).toBeChecked();
   await item
     .getByLabel('What happened, or why it can’t be judged')
     .fill('The survey report was published on the announced day.');

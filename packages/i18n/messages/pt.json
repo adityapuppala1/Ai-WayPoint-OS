@@ -3014,5 +3014,159 @@
     "how6": "Outra pessoa da equipe confere cada resultado. Até isso acontecer, a previsão fica marcada como “ainda sem segunda conferência”.",
     "uncheckedCount": "{count, plural, one {# resultado ainda não teve} other {# resultados ainda não tiveram}} segunda conferência.",
     "historyTrend": "A chance ao longo do tempo: de {first} para {last}"
+  },
+  "landing": {
+    "hero": {
+      "title": "Quando a vida muda, saiba qual é o seu próximo passo.",
+      "lead": "O Waypoint é um companheiro gratuito para momentos difíceis e grandes mudanças: perder o emprego, uma mensagem que pode ser golpe, aperto financeiro, um país novo, um dia pesado. Um passo claro de cada vez, no seu idioma.",
+      "start": "Começar, sem cadastro",
+      "factsLabel": "O Waypoint em poucas palavras",
+      "free": "Gratuito",
+      "languages": "Em 7 idiomas",
+      "offline": "Números de ajuda funcionam offline",
+      "urgent": "Está em perigo ou precisa falar com alguém agora?"
+    },
+    "situations": {
+      "title": "Seja o que for que trouxe você até aqui",
+      "lead": "Escolha o que mais se parece com você. Cada opção começa onde mais ajuda.",
+      "job": {
+        "title": "Perdi meu emprego",
+        "body": "Comece pela lista para quem perdeu o emprego: o que pedir e o que fazer esta semana. Depois, um plano de habilidades e funções que cabe nas horas que você tem.",
+        "action": "Começar pelo trabalho"
+      },
+      "scam": {
+        "title": "Uma mensagem parece estranha",
+        "body": "Cole no Escudo contra golpes. Ele procura pressão, pedidos de pagamento e links falsos, explica o porquê e onde denunciar. Nada do que você cola é guardado."
+      },
+      "money": {
+        "title": "O dinheiro está curto",
+        "body": "Veja quanto tempo seu dinheiro dura com uma renda calculada com cautela, os poucos passos que mais ajudam e como protegê-lo de golpes.",
+        "action": "Começar pelo dinheiro"
+      },
+      "hardDay": {
+        "title": "Hoje está difícil",
+        "body": "Primeiro, linhas de apoio do seu país, conferidas em fontes oficiais. Depois, quando quiser, respiração, exercícios para se acalmar e um diário privado."
+      },
+      "moving": {
+        "title": "Vou me mudar para outro país",
+        "body": "Uma lista para mudar de país com links oficiais, o Waypoint no seu idioma e um círculo de pessoas que fizeram a mesma mudança.",
+        "action": "Começar pela mudança"
+      },
+      "caring": {
+        "title": "Cuido de alguém",
+        "body": "O Waypoint pergunta como você está em vez de empurrar um plano de carreira. Lembretes privados, uma revisão semanal e um círculo de pessoas que também cuidam de alguém.",
+        "action": "Começar pelos cuidados"
+      }
+    },
+    "how": {
+      "title": "Como funciona",
+      "lead": "Do que está acontecendo hoje a um plano que você consegue seguir.",
+      "label": "Como o Waypoint funciona, passo a passo",
+      "tell": {
+        "title": "Conte o que está acontecendo",
+        "body": "Cinco perguntas curtas, cerca de dois minutos. Você pode pular todas."
+      },
+      "next": {
+        "title": "Veja um próximo passo",
+        "body": "Todo dia você vê a única coisa que faz você avançar, por que ela vem primeiro e quanto tempo leva. Dizer “Agora não” é sempre possível."
+      },
+      "plan": {
+        "title": "Siga um plano que cabe na sua semana",
+        "body": "Planos semana a semana com habilidades reais e cursos gratuitos, do tamanho das horas que você realmente tem."
+      },
+      "help": {
+        "title": "Ajuda sempre a um toque",
+        "body": "“Pedir ajuda agora” e “Saída rápida” estão em todas as páginas e funcionam com a IA desligada."
+      },
+      "setupTitle": "O que perguntamos no começo"
+    },
+    "modules": {
+      "title": "O que você encontra",
+      "lead": "Tudo é gratuito. Algumas partes abrem na hora; o resto, depois de dois minutos para começar.",
+      "openTitle": "Aberto agora, sem conta",
+      "afterTitle": "Depois de começar",
+      "benefit": {
+        "today": "Um próximo passo por dia, e o que mudou para você.",
+        "path": "Um plano semana a semana para novas habilidades e trabalho.",
+        "shield": "Veja se uma mensagem, link ou oferta é golpe.",
+        "ask": "Converse sobre uma dúvida, com sua segurança em primeiro lugar.",
+        "signals": "Mudanças que importam para você, cada uma com sua fonte.",
+        "circles": "Um grupo pequeno passando pela mesma mudança.",
+        "money": "Quanto tempo seu dinheiro dura e o que mais ajuda.",
+        "mind": "Registros de humor, diário privado, respiração e calma.",
+        "health": "Um registro diário simples, lembretes e onde buscar atendimento.",
+        "civic": "Listas para os grandes momentos da vida, com links oficiais.",
+        "surroundings": "Tempo e qualidade do ar em conselhos simples.",
+        "goals": "Algumas metas que importam, e uma revisão semanal.",
+        "support": "Números de emergência e linhas de ajuda conferidas.",
+        "forecasts": "O que pode acontecer, com a chance e as fontes."
+      }
+    },
+    "access": {
+      "title": "Do jeito que você puder",
+      "web": {
+        "title": "Na web",
+        "body": "Qualquer navegador recente, num celular barato ou num computador compartilhado. O modo leve economiza dados em conexões lentas."
+      },
+      "app": {
+        "title": "No app do celular",
+        "body": "Para Android e iPhone. A verificação de golpes e os números de ajuda funcionam sem conexão."
+      },
+      "text": {
+        "title": "Por mensagem de texto",
+        "body": "SMS, WhatsApp e USSD para celulares simples, onde o Waypoint tem um número: linhas de ajuda, verificação de golpes e respostas curtas."
+      },
+      "offline": {
+        "title": "Sem conexão",
+        "body": "Depois da primeira visita, os números de ajuda do seu país ficam no seu aparelho e aparecem mesmo sem conexão."
+      },
+      "languages": {
+        "title": "No seu idioma",
+        "body": "O inglês está completo. Os outros seis estão em beta até serem revisados por falantes nativos."
+      },
+      "languagesLabel": "Idiomas",
+      "free": {
+        "title": "Grátis e sem cadastro para experimentar",
+        "body": "Comece como convidado. Crie uma conta depois, só se quiser seu plano em outro aparelho."
+      }
+    },
+    "safety": {
+      "title": "Segurança em primeiro lugar. Suas informações continuam suas.",
+      "lead": "O que o Waypoint sempre faz, e o que nunca faz.",
+      "crisis": {
+        "title": "Em uma crise, a ajuda vem primeiro",
+        "body": "Se algo que você escreve indicar que está em perigo, o Waypoint mostra antes de tudo as linhas de ajuda do seu país. Funciona do mesmo jeito com a IA desligada."
+      },
+      "exit": {
+        "title": "“Saída rápida” em todas as páginas",
+        "body": "Toque nele, ou aperte Esc três vezes no teclado, e a página é trocada na hora por uma previsão do tempo."
+      },
+      "encrypted": {
+        "title": "O que você escreve em particular é criptografado",
+        "body": "Diário, anotações de humor e saúde, metas, números de dinheiro e contatos de confiança são criptografados com uma chave só sua."
+      },
+      "noAds": {
+        "title": "Sem anúncios. Nada é vendido."
+      },
+      "ai": {
+        "title": "IA só quando você quiser",
+        "body": "Nada do que você escreve vai para um serviço de IA externo sem que você ative, e números de telefone, e-mails e números de cartão são removidos antes."
+      },
+      "delete": {
+        "title": "Saia quando quiser",
+        "body": "Em Configurações, baixe tudo o que o Waypoint tem sobre você, ou apague sua conta e tudo isso de uma vez."
+      }
+    },
+    "cta": {
+      "title": "Seu próximo passo pode ser pequeno.",
+      "body": "Dois minutos, sem conta, e qualquer pergunta pode ser pulada."
+    },
+    "shots": {
+      "note": "Telas reais do Waypoint, com respostas de exemplo.",
+      "today": "A página Hoje num celular, para alguém que perdeu o emprego: o próximo passo numa placa escura, pedir por escrito a decisão e os dados do último pagamento, com o motivo de aparecer e botões para começar, marcar como feito ou deixar para depois.",
+      "shield": "O Escudo contra golpes num celular depois de verificar uma mensagem que cobra uma taxa de encomenda: muito provavelmente é golpe, com os sinais de alerta, como um link que imita dhl.com.",
+      "ask": "Conversar no modo guiado num celular: a pergunta de alguém que perdeu o emprego na semana passada e não sabe por onde começar, e uma resposta que leva a fazer um plano e à lista para quem perdeu o emprego.",
+      "help": "Pedir ajuda agora num celular, para o Quênia: um botão para ligar para o 999 numa emergência e, depois, linhas de ajuda para falar com alguém."
+    }
   }
 }

@@ -9,7 +9,7 @@ test('welcome explains Waypoint and links to help, scam checks and the legal pag
 }, testInfo) => {
   await page.goto('/welcome');
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Get started' }).first()).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Start, no sign-up needed' }).first()).toBeVisible();
   await expect(page.getByRole('link', { name: /Get help now/ }).first()).toBeVisible();
   await expect(page.getByRole('link', { name: 'Privacy notice' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Terms of use' })).toBeVisible();

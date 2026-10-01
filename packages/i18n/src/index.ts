@@ -94,6 +94,8 @@ export const SERVER_ONLY_NAMESPACES = [
   'byText',
   'legal',
   'mobile',
+  // The welcome page is drawn on the server; its few client parts take their words as props.
+  'landing',
 ] as const;
 
 export type Messages = typeof en;

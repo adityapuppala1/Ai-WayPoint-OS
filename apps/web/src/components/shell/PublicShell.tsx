@@ -10,13 +10,19 @@ import { getViewer } from '@/lib/server';
 import styles from './public.module.css';
 import { QuickExit } from './QuickExit';
 
-/** Frame for pages people see before they have a session: welcome, sign-in, onboarding, legal. */
+/**
+ * Frame for pages people see before they have a session: welcome, sign-in, onboarding, legal.
+ * `bleed` drops the page gutters, for a page whose sections run edge to edge and set their
+ * own (the welcome page).
+ */
 export async function PublicShell({
   children,
   hideSignIn,
+  bleed,
 }: {
   children: ReactNode;
   hideSignIn?: boolean;
+  bleed?: boolean;
 }) {
   const t = await getTranslations('shell');
   const viewer = await getViewer();
@@ -43,7 +49,7 @@ export async function PublicShell({
           ) : null}
         </div>
       </header>
-      <main id="main" className={styles.main} tabIndex={-1}>
+      <main id="main" className={bleed ? styles.mainBleed : styles.main} tabIndex={-1}>
         {children}
       </main>
       <footer className={styles.footer}>

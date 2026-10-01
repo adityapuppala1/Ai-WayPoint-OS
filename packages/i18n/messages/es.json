@@ -3014,5 +3014,159 @@
     "how6": "Otra persona del equipo comprueba cada resultado. Hasta entonces, el pronóstico lleva la nota «aún sin segunda comprobación».",
     "uncheckedCount": "{count, plural, one {# resultado aún no tiene} other {# resultados aún no tienen}} segunda comprobación.",
     "historyTrend": "La probabilidad a lo largo del tiempo: de {first} a {last}"
+  },
+  "landing": {
+    "hero": {
+      "title": "Cuando la vida cambia, conoce tu siguiente paso.",
+      "lead": "Waypoint es un compañero gratuito para los momentos difíciles y los grandes cambios: perder el trabajo, un mensaje que podría ser una estafa, la presión del dinero, un país nuevo, un día duro. Un paso claro cada vez, en tu idioma.",
+      "start": "Empezar, sin registrarte",
+      "factsLabel": "Waypoint en pocas palabras",
+      "free": "Gratis",
+      "languages": "En 7 idiomas",
+      "offline": "Los números de ayuda funcionan sin conexión",
+      "urgent": "¿Estás en peligro o necesitas hablar con alguien ahora?"
+    },
+    "situations": {
+      "title": "Sea lo que sea que te trajo aquí",
+      "lead": "Elige lo que se parezca a tu situación. Cada opción empieza donde más ayuda.",
+      "job": {
+        "title": "Perdí mi trabajo",
+        "body": "Empieza con la lista para quien pierde el empleo: qué solicitar y qué hacer esta semana. Después, un plan de habilidades y puestos que encaje con las horas que tienes.",
+        "action": "Empezar por el trabajo"
+      },
+      "scam": {
+        "title": "Un mensaje me da mala espina",
+        "body": "Pégalo en el Escudo antiestafas. Busca presión, peticiones de pago y enlaces falsos, te explica por qué y dónde denunciarlo. No se guarda nada de lo que pegas."
+      },
+      "money": {
+        "title": "El dinero no alcanza",
+        "body": "Mira cuánto te dura el dinero con un ingreso prudente, los pocos pasos que más ayudan y cómo protegerlo de las estafas.",
+        "action": "Empezar por el dinero"
+      },
+      "hardDay": {
+        "title": "Hoy es un día difícil",
+        "body": "Primero, líneas de ayuda de tu país comprobadas en fuentes oficiales. Después, cuando quieras, respiración, ejercicios para calmarte y un diario privado."
+      },
+      "moving": {
+        "title": "Me mudo a otro país",
+        "body": "Una lista para mudarte de país con enlaces oficiales, Waypoint en tu idioma y un círculo de personas que hicieron la misma mudanza.",
+        "action": "Empezar por la mudanza"
+      },
+      "caring": {
+        "title": "Cuido de alguien",
+        "body": "Waypoint te pregunta cómo estás en lugar de empujarte a un plan de carrera. Recordatorios privados, un repaso semanal y un círculo de personas que también cuidan de alguien.",
+        "action": "Empezar por los cuidados"
+      }
+    },
+    "how": {
+      "title": "Cómo funciona",
+      "lead": "De lo que te pasa hoy a un plan que puedas seguir.",
+      "label": "Cómo funciona Waypoint, paso a paso",
+      "tell": {
+        "title": "Cuenta qué está pasando",
+        "body": "Cinco preguntas cortas, unos dos minutos. Puedes saltarte todas."
+      },
+      "next": {
+        "title": "Ve un siguiente paso",
+        "body": "Cada día ves lo único que te hace avanzar, por qué va primero y cuánto tarda. Decir «Ahora no» siempre está bien."
+      },
+      "plan": {
+        "title": "Sigue un plan que encaje en tu semana",
+        "body": "Planes semana a semana con habilidades reales y cursos gratuitos, a la medida de las horas que de verdad tienes."
+      },
+      "help": {
+        "title": "La ayuda, siempre a un toque",
+        "body": "«Pedir ayuda ahora» y «Salida rápida» están en todas las páginas, y funcionan con la IA apagada."
+      },
+      "setupTitle": "Lo que se pregunta al empezar"
+    },
+    "modules": {
+      "title": "Lo que encuentras",
+      "lead": "Todo es gratis. Algunas partes se abren al instante; el resto, tras dos minutos para empezar.",
+      "openTitle": "Abierto ya, sin cuenta",
+      "afterTitle": "Después de empezar",
+      "benefit": {
+        "today": "Un siguiente paso cada día, y lo que cambió para ti.",
+        "path": "Un plan semana a semana para nuevas habilidades y trabajo.",
+        "shield": "Revisa si un mensaje, enlace u oferta es una estafa.",
+        "ask": "Habla sobre una duda, con tu seguridad primero.",
+        "signals": "Cambios que te importan, cada uno con su fuente.",
+        "circles": "Un grupo pequeño que vive el mismo cambio.",
+        "money": "Cuánto te dura el dinero y qué ayuda más.",
+        "mind": "Registros de ánimo, un diario privado, respiración y calma.",
+        "health": "Un registro diario sencillo, recordatorios y dónde recibir atención.",
+        "civic": "Listas para momentos clave de la vida, con enlaces oficiales.",
+        "surroundings": "El tiempo y la calidad del aire, en consejos claros.",
+        "goals": "Unas pocas metas que importan, y un repaso semanal.",
+        "support": "Números de emergencia y líneas de ayuda comprobadas.",
+        "forecasts": "Lo que puede pasar, con su probabilidad y sus fuentes."
+      }
+    },
+    "access": {
+      "title": "Llega como puedas",
+      "web": {
+        "title": "En la web",
+        "body": "Cualquier navegador reciente, en un móvil económico o un ordenador compartido. El modo ligero ahorra datos con conexiones lentas."
+      },
+      "app": {
+        "title": "En la app del móvil",
+        "body": "Para Android y iPhone. La revisión de estafas y los números de ayuda funcionan sin conexión."
+      },
+      "text": {
+        "title": "Por mensaje de texto",
+        "body": "SMS, WhatsApp y USSD para teléfonos básicos, donde Waypoint tiene un número: líneas de ayuda, revisión de estafas y respuestas breves."
+      },
+      "offline": {
+        "title": "Sin conexión",
+        "body": "Después de tu primera visita, los números de ayuda de tu país quedan en tu dispositivo y se ven aunque no tengas conexión."
+      },
+      "languages": {
+        "title": "En tu idioma",
+        "body": "El inglés está completo. Los otros seis están en beta hasta que los revisen hablantes nativos."
+      },
+      "languagesLabel": "Idiomas",
+      "free": {
+        "title": "Gratis y sin registro para probar",
+        "body": "Empieza como invitado. Crea una cuenta más tarde, solo si quieres tu plan en otro dispositivo."
+      }
+    },
+    "safety": {
+      "title": "La seguridad, primero. Tu información sigue siendo tuya.",
+      "lead": "Lo que Waypoint hace siempre, y lo que nunca hace.",
+      "crisis": {
+        "title": "En una crisis, la ayuda va primero",
+        "body": "Si algo que escribes suena a que estás en peligro, Waypoint te muestra antes que nada las líneas de ayuda de tu país. Funciona igual con la IA apagada."
+      },
+      "exit": {
+        "title": "«Salida rápida» en cada página",
+        "body": "Púlsalo, o pulsa Escape tres veces en un teclado, y la página se cambia al instante por un pronóstico del tiempo."
+      },
+      "encrypted": {
+        "title": "Lo que escribes en privado está cifrado",
+        "body": "Tu diario, tus notas de ánimo y de salud, tus metas, tus cifras de dinero y tus contactos de confianza se cifran con una clave solo tuya."
+      },
+      "noAds": {
+        "title": "Sin anuncios. No vendemos nada."
+      },
+      "ai": {
+        "title": "IA solo si tú quieres",
+        "body": "Nada de lo que escribes va a un servicio de IA externo si no lo activas tú, y antes se quitan los números de teléfono, los correos y los números de tarjeta."
+      },
+      "delete": {
+        "title": "Vete cuando quieras",
+        "body": "Desde Ajustes, descarga todo lo que Waypoint tiene sobre ti, o borra tu cuenta y todo ello de una vez."
+      }
+    },
+    "cta": {
+      "title": "Tu siguiente paso puede ser pequeño.",
+      "body": "Dos minutos, sin cuenta, y puedes saltarte cualquier pregunta."
+    },
+    "shots": {
+      "note": "Pantallas reales de Waypoint, con respuestas de ejemplo.",
+      "today": "La página Hoy en un móvil, para alguien que perdió su trabajo: el siguiente paso en un cartel oscuro, pedir por escrito la decisión y los datos de la última paga, con el motivo por el que aparece y botones para empezarlo, marcarlo como hecho o dejarlo para luego.",
+      "shield": "El Escudo antiestafas en un móvil tras revisar un mensaje que pide pagar un envío: muy probablemente es una estafa, con sus señales de alerta, como un enlace que imita dhl.com.",
+      "ask": "Pregunta en modo guiado en un móvil: la pregunta de alguien que perdió su trabajo la semana pasada y no sabe por dónde empezar, y una respuesta que lleva a hacer un plan y a la lista para quien pierde el empleo.",
+      "help": "Pedir ayuda ahora en un móvil, para Kenia: un botón para llamar al 999 en una emergencia y, después, líneas de ayuda para hablar con alguien."
+    }
   }
 }

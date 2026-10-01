@@ -395,10 +395,21 @@ describe('maintenance from the console', () => {
       });
       expect(on.status).toBe(200);
 
+      const metrics = await import('../src/lib/metrics');
+      const { systemView } = await import('../src/services/system');
+      await metrics.flushMetrics(db.getDb());
+      const before = await systemView(db.getDb());
       const closed = await req('/api/today', { cookie: someone.cookie });
       expect(closed.status).toBe(503);
+      // Turned away on purpose: not a server error, and not a failure in the error list.
+      const after = await systemView(db.getDb());
+      expect(after.api.day.serverErrors).toBe(before.api.day.serverErrors);
+      expect(after.api.errors.length).toBe(before.api.errors.length);
       expect(Number(closed.headers.get('retry-after'))).toBeGreaterThan(60);
-      expect(await closed.json()).toMatchObject({ code: 'maintenance', detail: 'Back at 22:30 UTC.' });
+      expect(await closed.json()).toMatchObject({
+        code: 'maintenance',
+        detail: 'Back at 22:30 UTC.',
+      });
       // Open whatever happens.
       expect((await req('/api/support?country=GB')).status).toBe(200);
       expect((await req('/api/health')).status).toBe(200);
@@ -435,7 +446,12 @@ describe('maintenance from the console', () => {
             until: null,
             startsAt: new Date(Date.now() + 3_600_000).toISOString(),
           },
-          announcement: { on: true, message: 'Maintenance tonight from 22:00.', tone: 'caution', until: null },
+          announcement: {
+            on: true,
+            message: 'Maintenance tonight from 22:00.',
+            tone: 'caution',
+            until: null,
+          },
         },
       });
       expect((await req('/api/today', { cookie: someone.cookie })).status).toBe(200);
@@ -482,7 +498,10 @@ describe('maintenance from the console', () => {
     expect(res.status).toBe(200);
     const body = (await res.json()) as { done: { cleared: number } };
     expect(body.done.cleared).toBeGreaterThan(0);
-    const [left] = await db.getDb().select({ n: db.sql<number>`count(*)::int` }).from(db.rateLimits);
+    const [left] = await db
+      .getDb()
+      .select({ n: db.sql<number>`count(*)::int` })
+      .from(db.rateLimits);
     expect(Number(left?.n)).toBeLessThan(5);
   });
 });

@@ -129,6 +129,8 @@ export function createApp() {
     // (a request no route matched is counted as one, never by its path).
     const route =
       [...c.req.matchedRoutes].reverse().find((r) => r.method !== 'ALL')?.path ?? '(no route)';
+    // Closed for maintenance on purpose: neither traffic to measure nor a failure.
+    if (c.get('closed')) return;
     recordRequest({ method: c.req.method, route, status: c.res.status, ms });
     if (c.res.status >= 500 && !c.get('errorKept'))
       recordError({
@@ -422,6 +424,7 @@ export function createApp() {
         60,
         Math.min(3600, Math.round((until - Date.now()) / 1000) || 300),
       );
+      c.set('closed', true);
       return problemResponse(503, 'maintenance', notice.maintenance.message, {
         until: notice.maintenance.until,
         retryAfter,

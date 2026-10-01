@@ -22,6 +22,8 @@ export interface AppEnv {
     locale: Locale;
     /** Set once a server error has been kept with its own words (lib/metrics.ts). */
     errorKept?: boolean;
+    /** Turned away on purpose while closed for maintenance: not a failure. */
+    closed?: boolean;
   };
 }
 

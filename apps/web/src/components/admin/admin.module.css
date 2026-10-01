@@ -1152,3 +1152,91 @@ a.rowLink:hover .rowName {
   align-items: flex-end;
   gap: var(--wp-space-3);
 }
+
+/* ───────────── System health ───────────── */
+.refreshRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wp-space-2) var(--wp-space-4);
+}
+
+.plainList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+  margin: 0;
+  padding-inline-start: var(--wp-space-5);
+}
+
+.code {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.875em;
+  overflow-wrap: anywhere;
+}
+
+/* A sortable column's heading: the whole label is the control. */
+.sortButton {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--wp-touch-min);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--wp-border-strong);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.sortButton:focus-visible {
+  outline: 2px solid transparent;
+  box-shadow: var(--wp-focus-shadow);
+}
+
+.dataTable thead th[aria-sort="descending"] .sortButton::after {
+  content: " ↓";
+}
+
+.dataTable td:global(.wp-num),
+.dataTable th:global(.wp-num) {
+  text-align: end;
+  white-space: nowrap;
+}
+
+li.errorRow {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--wp-space-1);
+}
+
+.errorMessage {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: var(--wp-text-meta);
+  color: var(--wp-text);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.twoUp {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  gap: var(--wp-space-4);
+  align-items: start;
+}
+
+.countChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+  min-block-size: 2.25rem;
+  padding-inline: var(--wp-space-3);
+  border: 1px solid var(--wp-border-subtle);
+  border-radius: var(--wp-radius-round);
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+}

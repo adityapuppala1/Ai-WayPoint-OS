@@ -27,7 +27,7 @@ import {
   sql,
 } from '@waypoint/db';
 import { type Actor, audit } from '../lib/audit';
-import { LATENCY_BINS } from '../lib/metrics';
+import { flushMetrics, LATENCY_BINS } from '../lib/metrics';
 import { conflict, notFound } from '../lib/problem';
 
 const HOUR = 3_600_000;
@@ -462,6 +462,8 @@ function serverInfo(): System['server'] {
 }
 
 export async function systemView(db: Database, now = new Date()): Promise<System> {
+  // This server's counts since its last half-minute flush, so the page is up to the moment.
+  await flushMetrics(db);
   const [api, database, work] = await Promise.all([
     apiHealth(db, now),
     databaseHealth(db),

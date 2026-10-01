@@ -243,3 +243,41 @@ test('an admin invites someone to the staff, and they accept from the email', as
     await invitee.close();
   }
 });
+
+test('the system page shows how the platform is doing, and what needs a look', async ({
+  browser,
+  page,
+  baseURL,
+}, testInfo) => {
+  await asAdmin(browser, page, baseURL ?? '');
+  // Some traffic of its own, so the hour has requests to show.
+  for (let i = 0; i < 3; i++) await page.request.get('/api/platform');
+  await page.goto('/admin/system');
+  await expect(page.getByRole('heading', { level: 2, name: 'System health' })).toBeVisible();
+  const glance = page.getByRole('list', { name: 'The last 24 hours at a glance' });
+  for (const tile of ['Requests', 'Server errors', 'Database size', 'Jobs waiting', 'Running for'])
+    await expect(glance.getByText(tile, { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 3, name: 'Requests per hour' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 3, name: 'Slowest responses per hour' }),
+  ).toBeVisible();
+
+  // Routes sort by any number column; the table names each route by method and path.
+  const routes = page.getByRole('region', { name: 'Routes' });
+  await expect(routes.getByRole('rowheader', { name: 'GET /api/platform' })).toBeVisible();
+  await routes.getByRole('button', { name: 'Average' }).click();
+  await expect(routes.getByRole('columnheader', { name: 'Average' })).toHaveAttribute(
+    'aria-sort',
+    'descending',
+  );
+
+  const db = page.getByRole('region', { name: 'Database' });
+  await expect(db.getByText('Built-in database')).toBeVisible();
+  await expect(db.getByText('Up to date')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Background work' })).toBeVisible();
+  await snap(page, testInfo, 'console-system');
+  // Nothing on the page overflows sideways, even on a phone.
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+    page.viewportSize()?.width ?? 0,
+  );
+});

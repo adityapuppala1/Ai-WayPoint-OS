@@ -230,7 +230,8 @@ export function authEndpoint(path: string, basePath = '/api/auth'): string | nul
     .replace(/\/{2,}/g, '/')
     .toLowerCase();
   if (p.startsWith(basePath)) p = p.slice(basePath.length);
-  return `/${p.replace(/^\/+|\/+$/g, '')}`;
+  // Slashes come singly by now, so one at each end is all there is to take off.
+  return `/${p.replace(/^\/|\/$/g, '')}`;
 }
 
 /**

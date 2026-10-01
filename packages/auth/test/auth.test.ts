@@ -69,6 +69,19 @@ const userRow = async (id: string) =>
 const goalsOf = (userId: string) =>
   db.getDb().select().from(db.goals).where(db.eq(db.goals.userId, userId));
 
+describe('which endpoint a request names', () => {
+  it('ignores case, encoding and repeated or trailing slashes, and answers at once', () => {
+    const { authEndpoint } = authMod;
+    expect(authEndpoint('/api/auth//Sign-Up/email/')).toBe('/sign-up/email');
+    expect(authEndpoint('/api/auth/%2Fsign-in%2F%2Femail')).toBe('/sign-in/email');
+    expect(authEndpoint('/api/auth///')).toBe('/');
+    expect(authEndpoint('/api/auth/%E0%A4%A')).toBeNull();
+    const started = performance.now();
+    expect(authEndpoint(`/api/auth/${'/'.repeat(50_000)}x${'/'.repeat(50_000)}`)).toBe('/x');
+    expect(performance.now() - started).toBeLessThan(250);
+  });
+});
+
 describe('creating an account', () => {
   it('creates a profile with a wrapped data key', async () => {
     const auth = authMod.getAuth();

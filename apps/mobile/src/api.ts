@@ -46,7 +46,8 @@ export async function apiHeaders(
     ...extra,
   };
   if (Platform.OS !== 'web') {
-    const cookie = await authClient.getCookie();
+    // The session's cookie, and any the request carries of its own (Today's "not now").
+    const cookie = [await authClient.getCookie(), extra.cookie].filter(Boolean).join('; ');
     if (cookie) headers.cookie = cookie;
   }
   return headers;

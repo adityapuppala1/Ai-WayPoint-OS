@@ -7,16 +7,18 @@ import type { SignalView, TodayView } from '@waypoint/api/client';
 import { supportDirectory } from '@waypoint/content';
 import { ltr } from '@waypoint/core/text';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Platform, View } from 'react-native';
 import { useFormatter, useTranslations } from 'use-intl';
 import { api } from '../../src/api';
 import { authClient } from '../../src/auth';
+import { notNowCookie, notNowStorageKey, setAside } from '../../src/features/not-now';
 import { todaySign } from '../../src/features/today-sign';
 import { deviceTimeZone, useAppLocale } from '../../src/i18n';
 import { openLink, openPath, telHref } from '../../src/links';
 import { useCountry } from '../../src/place';
 import { useRemote } from '../../src/remote';
+import { readJson, writeJson } from '../../src/storage';
 import { useTheme } from '../../src/theme';
 import {
   Button,
@@ -137,10 +139,34 @@ export default function TodayScreen() {
   const { country } = useCountry();
   const session = authClient.useSession();
   const user = session.data?.user;
-  const today = useRemote<TodayView>(user ? `today:${user.id}:${locale}` : null, (signal) =>
-    api<TodayView>('/today', { signal }),
+  const userId = user?.id;
+  // "Not now": the steps set aside today, kept on this phone and sent with Today
+  // (src/features/not-now.ts). Today waits until they have been read, so a step set aside
+  // never comes back for a moment. The web build has the browser's cookie instead.
+  const native = Platform.OS !== 'web';
+  const setAsideToday = useRef<string | null>(null);
+  const [setAsideReadFor, setSetAsideReadFor] = useState<string | null>(null);
+  useEffect(() => {
+    if (!native || !userId) return;
+    let live = true;
+    void readJson<string>(notNowStorageKey(userId)).then((value) => {
+      if (!live) return;
+      setAsideToday.current = value;
+      setSetAsideReadFor(userId);
+    });
+    return () => {
+      live = false;
+    };
+  }, [native, userId]);
+  const today = useRemote<TodayView>(
+    userId && (!native || setAsideReadFor === userId) ? `today:${userId}:${locale}` : null,
+    (signal) => {
+      const cookie = native ? notNowCookie(setAsideToday.current) : undefined;
+      return api<TodayView>('/today', { signal, headers: cookie ? { cookie } : undefined });
+    },
   );
   const [marking, setMarking] = useState(false);
+  const [deferring, setDeferring] = useState(false);
 
   const zone = deviceTimeZone();
   const greeting = t(partOfDay(zone));
@@ -166,6 +192,27 @@ export default function TodayScreen() {
       toast(errors('generic'), 'danger');
     } finally {
       setMarking(false);
+    }
+  };
+
+  // Set aside for the rest of the day where the person is; Today then offers the next step.
+  const notNow = async () => {
+    const step = view?.nextStep;
+    if (!step || !userId) return;
+    setDeferring(true);
+    try {
+      if (native) {
+        const next = setAside(setAsideToday.current, step.key, new Date(), zone);
+        setAsideToday.current = next;
+        await writeJson(notNowStorageKey(userId), next);
+      } else {
+        await api('/today/not-now', { json: { key: step.key } });
+      }
+      today.reload({ quiet: true });
+    } catch {
+      toast(errors('generic'), 'danger');
+    } finally {
+      setDeferring(false);
     }
   };
 
@@ -227,7 +274,7 @@ export default function TodayScreen() {
       onRefresh={user ? () => today.reload() : undefined}
     >
       {user && !view ? (
-        today.loading ? (
+        today.loading || (native && setAsideReadFor !== userId) ? (
           <View
             style={{
               height: 220,
@@ -282,26 +329,33 @@ export default function TodayScreen() {
             ...(sign?.why ? [{ label: t('whySeeing'), value: sign.why }] : []),
           ]}
           actions={
-            step.kind === 'plan-step' ? (
-              <>
-                <Button
-                  variant="primary"
-                  size="lg"
-                  icon="check"
-                  busy={marking}
-                  onPress={() => void markDone()}
-                >
-                  {t('markDone')}
+            <>
+              {step.kind === 'plan-step' ? (
+                <>
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    icon="check"
+                    busy={marking}
+                    onPress={() => void markDone()}
+                  >
+                    {t('markDone')}
+                  </Button>
+                  <Button variant="onSign" size="lg" icon="external" onPress={() => go(step.href)}>
+                    {m('open')}
+                  </Button>
+                </>
+              ) : (
+                <Button variant="primary" size="lg" icon="forward" onPress={() => go(step.href)}>
+                  {t('startStep')}
                 </Button>
-                <Button variant="onSign" size="lg" icon="external" onPress={() => go(step.href)}>
-                  {m('open')}
+              )}
+              {step.canDefer ? (
+                <Button variant="onSign" size="lg" busy={deferring} onPress={() => void notNow()}>
+                  {common('notNow')}
                 </Button>
-              </>
-            ) : (
-              <Button variant="primary" size="lg" icon="forward" onPress={() => go(step.href)}>
-                {t('startStep')}
-              </Button>
-            )
+              ) : null}
+            </>
           }
         >
           {step.detail ? (

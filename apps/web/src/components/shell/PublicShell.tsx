@@ -3,8 +3,8 @@ import type { Route } from 'next';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
+import { Logo } from '@/components/brand/Logo';
 import { LanguagePicker } from '@/components/LanguagePicker';
-import { LogoMark } from '@/components/Logo';
 import { LegalLinks } from '@/components/legal/LegalLinks';
 import { getViewer } from '@/lib/server';
 import styles from './public.module.css';
@@ -24,8 +24,7 @@ export async function PublicShell({
     <div className={styles.frame}>
       <header className={styles.header}>
         <Link href="/" className={styles.brand} aria-label={t('home')}>
-          <LogoMark size={30} />
-          <span>Waypoint</span>
+          <Logo markSize={30} />
         </Link>
         <div className={styles.actions}>
           <div className={styles.language}>

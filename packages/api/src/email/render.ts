@@ -51,6 +51,25 @@ const typography = (s: string, locale: Locale) =>
 /** Names that are placeholders, not a person's name. */
 const PLACEHOLDER_NAMES = new Set(['guest', 'waypoint user', 'friend', 'administrator']);
 
+/**
+ * The name with the Waypoint mark beside it: the "i" with its direction sign, yellow on a
+ * slate tile, built from table cells and blocks rather than SVG or an image. Email clients
+ * drop SVG, and a picture fetched from Waypoint's server would tell it when the email was
+ * opened. Where a client ignores rounded corners (Outlook on Windows) the shapes come out
+ * square, and the name is still there. Colours and proportions follow
+ * apps/web/src/components/brand/geometry.ts at 28 px.
+ */
+function brandHeader(dir: 'ltr' | 'rtl'): string {
+  const slate = '#2b3645';
+  const signal = '#f5c533';
+  const block = (css: string) =>
+    `<div style="${css};background:${signal};font-size:0;line-height:0;">&nbsp;</div>`;
+  return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 20px;"><tr>
+<td dir="ltr" width="28" height="28" valign="top" bgcolor="${slate}" style="width:28px;height:28px;background:${slate};border-radius:7px;font-size:0;line-height:0;">${block('width:5px;height:5px;margin:3px 0 0 6px;border-radius:3px')}${block('width:14px;height:8px;margin:2px 0 0 7px;border-radius:1px 5px 5px 1px')}${block('width:3px;height:6px;margin:0 0 0 7px;border-radius:0 0 2px 2px')}</td>
+<td style="padding-${dir === 'rtl' ? 'right' : 'left'}:10px;font-size:18px;font-weight:700;letter-spacing:.2px;color:#1c2230;">Waypoint</td>
+</tr></table>`;
+}
+
 export function renderEmail(
   template: EmailTemplate,
   payload: Record<string, unknown>,
@@ -125,7 +144,7 @@ export function renderEmail(
 <tr><td align="center" style="padding:24px 12px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:12px;border:1px solid #e3ded4;">
 <tr><td style="padding:28px 28px 8px;text-align:${align};">
-<p style="margin:0 0 20px;font-size:18px;font-weight:700;letter-spacing:.2px;"><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#f2c230;margin-${dir === 'rtl' ? 'left' : 'right'}:8px;"></span>Waypoint</p>
+${brandHeader(dir)}
 <p style="margin:0 0 16px;font-size:16px;line-height:1.5;">${escapeHtml(greeting)}</p>
 <p style="margin:0 0 24px;font-size:16px;line-height:1.5;">${escapeHtml(body)}</p>
 ${

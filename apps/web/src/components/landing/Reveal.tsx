@@ -30,11 +30,17 @@ export function Reveal({
     if (!el || stillnessPreferred() || typeof IntersectionObserver === 'undefined') return;
     if (el.getBoundingClientRect().top < window.innerHeight) return;
     el.dataset.reveal = 'waiting';
-    const show = () => {
-      el.dataset.reveal = 'shown';
+    let frame = 0;
+    const stop = () => {
       seen.disconnect();
       el.removeEventListener('focusin', show);
+      window.removeEventListener('scroll', onScroll);
+      cancelAnimationFrame(frame);
     };
+    function show() {
+      el?.setAttribute('data-reveal', 'shown');
+      stop();
+    }
     const seen = new IntersectionObserver(
       (entries) => {
         if (entries.some((e) => e.isIntersecting)) show();
@@ -42,12 +48,19 @@ export function Reveal({
       { rootMargin: '0px 0px -10% 0px' },
     );
     seen.observe(el);
+    // A jump past it (End, a link further down) never crosses into view, so the observer
+    // never says; once its top is above the fold it shows, so nothing above stays hidden.
+    function onScroll() {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        if (el && el.getBoundingClientRect().top < window.innerHeight * 0.9) show();
+      });
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
     // A keyboard reaching something still waiting shows it at once.
     el.addEventListener('focusin', show);
-    return () => {
-      seen.disconnect();
-      el.removeEventListener('focusin', show);
-    };
+    return stop;
   }, []);
   return (
     <div

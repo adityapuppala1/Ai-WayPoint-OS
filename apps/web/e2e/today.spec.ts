@@ -380,7 +380,8 @@ test('the welcome page shows every module, and what it says works without an acc
   // Every module is on the page: open as it is, or through getting started.
   const open = ['/shield', '/support', '/civic', '/surroundings', '/signals/forecasts'];
   const main = page.getByRole('main');
-  for (const href of open) await expect(main.locator(`a[href="${href}"]`), href).toBeVisible();
+  for (const href of open)
+    await expect(main.locator(`a[href="${href}"]`).first(), href).toBeVisible();
   for (const href of MODULES.filter((m) => !open.includes(m))) {
     const through = href === '/' ? '/start' : `/start?next=${encodeURIComponent(href)}`;
     await expect(main.locator(`a[href="${through}"]`).first(), href).toBeVisible();

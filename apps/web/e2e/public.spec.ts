@@ -11,8 +11,10 @@ test('welcome explains Waypoint and links to help, scam checks and the legal pag
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Start, no sign-up needed' }).first()).toBeVisible();
   await expect(page.getByRole('link', { name: /Get help now/ }).first()).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Privacy notice' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Terms of use' })).toBeVisible();
+  // In the footer, as on every public page (the page itself links the notice too).
+  const footer = page.getByRole('contentinfo');
+  await expect(footer.getByRole('link', { name: 'Privacy notice' })).toBeVisible();
+  await expect(footer.getByRole('link', { name: 'Terms of use' })).toBeVisible();
   await snap(page, testInfo, 'welcome');
 });
 

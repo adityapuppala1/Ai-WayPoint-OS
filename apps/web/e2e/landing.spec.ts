@@ -77,9 +77,8 @@ for (const width of [375, 1280]) {
       );
       expect(sideways).toBe(false);
       // Get help now and the quick exit stay in the header, as on every page.
-      await expect(
-        page.getByRole('banner').getByRole('link', { name: /Get help now|Help|المساعدة/ }),
-      ).toBeVisible();
+      // (Its label is the short one on a phone, so it is found by where it goes.)
+      await expect(page.getByRole('banner').locator('a[href="/support"]')).toBeVisible();
       await expect(
         page.getByRole('banner').getByRole('button', { name: /Quick exit|خروج سريع/ }),
       ).toBeVisible();

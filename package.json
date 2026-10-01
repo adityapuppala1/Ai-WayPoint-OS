@@ -33,7 +33,7 @@
     "worker": "pnpm --filter @waypoint/worker dev",
     "api": "pnpm --filter @waypoint/api-server dev",
     "doctor": "node scripts/doctor.mjs",
-    "brand": "tsx scripts/brand/build.mts",
+    "brand": "tsx scripts/brand/build.mts && tsx scripts/brand/hero-art.mts",
     "setup": "node scripts/setup.mjs",
     "check": "biome check . && turbo run typecheck test --concurrency=4"
   },

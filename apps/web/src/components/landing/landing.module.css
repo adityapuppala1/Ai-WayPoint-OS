@@ -1,0 +1,799 @@
+/*
+ * The welcome page: the one page people see before they know what Waypoint is.
+ *
+ * It follows .ux-profile.md with two documented exceptions, both for this page only:
+ * - the hero heading is larger than the type scale's largest step (up to 3.75rem), because
+ *   it is the page's poster and the only thing on it at that size;
+ * - three things arrive as they scroll into view (Reveal.tsx), over 560ms rather than
+ *   120–240ms: a marketing page is seen once, and the route of "How it works" fills as the
+ *   product's own route does. All of it is CSS, so lite mode and "less motion" switch it off
+ *   in base.css like everything else.
+ * Everything else is tokens: colours, spacing, radii, shadows, durations.
+ */
+
+.landing {
+  --gutter: var(--wp-space-4);
+  --page-max: 72rem;
+
+  padding-block-end: var(--wp-space-16);
+}
+
+@media (min-width: 48rem) {
+  .landing {
+    --gutter: var(--wp-space-6);
+  }
+}
+
+@media (min-width: 60rem) {
+  .landing {
+    --gutter: var(--wp-space-8);
+  }
+}
+
+/* ───────────── Hero: a band the colour of the Sign, edge to edge ───────────── */
+
+.hero {
+  --hero-bg: var(--wp-sign);
+  --hero-route: var(--wp-sign-muted);
+  /* Controls on the band draw the focus ring in the band's text colour, as on the Sign. */
+  --wp-focus-shadow: var(--wp-focus-shadow-on-sign);
+
+  background: var(--hero-bg);
+  color: var(--wp-sign-text);
+}
+
+/* In the dark the band is the deepest surface, so the yellow signs carry the light. */
+:root[data-theme="dark"] .hero {
+  --hero-bg: var(--wp-sunken);
+
+  border-block-end: 1px solid var(--wp-border-subtle);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .hero {
+    --hero-bg: var(--wp-sunken);
+
+    border-block-end: 1px solid var(--wp-border-subtle);
+  }
+}
+
+.heroInner {
+  display: grid;
+  gap: var(--wp-space-8);
+  max-inline-size: var(--page-max);
+  margin-inline: auto;
+  padding-block: var(--wp-space-10) var(--wp-space-8);
+  padding-inline: var(--gutter);
+}
+
+@media (min-width: 48rem) {
+  .heroInner {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    align-items: center;
+    padding-block: var(--wp-space-16);
+  }
+}
+
+.heroText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-inline-size: 0;
+}
+
+.heroTitle {
+  max-inline-size: 15ch;
+  margin: 0;
+  color: var(--wp-sign-text);
+  font-size: clamp(2.25rem, 1.3rem + 3.2vw, 3.75rem);
+  font-weight: var(--wp-weight-semibold);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+/* Joined scripts and tall vowel marks need their letters apart and more room between lines. */
+
+.heroTitle:is(:lang(ar), :lang(hi)) {
+  letter-spacing: 0;
+  line-height: 1.3;
+}
+
+.heroLead {
+  max-inline-size: 36rem;
+  margin: var(--wp-space-5) 0 0;
+  color: var(--wp-sign-muted);
+  font-size: var(--wp-text-lead);
+  line-height: var(--wp-leading-body);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-3);
+  margin-block-start: var(--wp-space-8);
+}
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-2) var(--wp-space-6);
+  margin: var(--wp-space-6) 0 0;
+  padding: 0;
+  color: var(--wp-sign-muted);
+  font-size: var(--wp-text-small);
+  list-style: none;
+}
+
+.facts li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+}
+
+.facts svg {
+  flex: none;
+  color: var(--wp-signal);
+}
+
+.urgent {
+  margin: var(--wp-space-6) 0 0;
+  padding-block-start: var(--wp-space-4);
+  border-block-start: 1px solid var(--wp-sign-border);
+  color: var(--wp-sign-muted);
+  font-size: var(--wp-text-small);
+}
+
+.urgentLink {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--wp-touch-min);
+  color: var(--wp-sign-text);
+  font-weight: var(--wp-weight-medium);
+}
+
+/* The picture: the drawing first, the 3D scene over it once it has loaded. */
+.stage {
+  position: relative;
+  inline-size: 100%;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  /* The picture fades into the band at its edges, so it has no hard frame. */
+  mask-image: radial-gradient(closest-side, #000 58%, transparent 100%);
+}
+
+@media (min-width: 48rem) {
+  .stage {
+    aspect-ratio: 5 / 4;
+  }
+}
+
+.art,
+.canvasLayer {
+  position: absolute;
+  inset: 0;
+}
+
+.art svg,
+.canvasLayer canvas {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.canvasLayer {
+  opacity: 0;
+  transition: opacity 600ms var(--wp-ease-out);
+}
+
+.stage[data-scene="live"] .canvasLayer {
+  opacity: 1;
+}
+
+.stage[data-scene="live"] .art {
+  opacity: 0;
+  transition: opacity 600ms var(--wp-ease-out);
+}
+
+/* ───────────── Sections ───────────── */
+
+.section {
+  max-inline-size: var(--page-max);
+  margin-inline: auto;
+  padding-block-start: var(--wp-space-16);
+  padding-inline: var(--gutter);
+}
+
+@media (min-width: 60rem) {
+  .section {
+    padding-block-start: var(--wp-space-20);
+  }
+}
+
+.sectionHead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-3);
+  max-inline-size: 44rem;
+  margin-block-end: var(--wp-space-8);
+}
+
+.sectionHead h2,
+.finalInner h2 {
+  margin: 0;
+  font-size: clamp(var(--wp-text-h3), 1.25rem + 1.6vw, var(--wp-text-h2));
+  line-height: var(--wp-leading-snug);
+  text-wrap: balance;
+}
+
+.sectionLead {
+  margin: 0;
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-lead);
+  line-height: var(--wp-leading-body);
+}
+
+.itemTitle {
+  margin: 0;
+  font-size: var(--wp-text-lead);
+  font-weight: var(--wp-weight-semibold);
+  line-height: var(--wp-leading-snug);
+}
+
+.itemBody {
+  margin: 0;
+  color: var(--wp-text-secondary);
+  line-height: var(--wp-leading-body);
+}
+
+.itemLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+  min-block-size: var(--wp-touch-min);
+  font-weight: var(--wp-weight-medium);
+}
+
+/* ───────────── Whatever brought you here ───────────── */
+
+.situations {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.situations > li {
+  display: flex;
+  border-block-start: 1px solid var(--wp-border-subtle);
+}
+
+.situation {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--wp-space-3);
+  inline-size: 100%;
+  padding-block: var(--wp-space-6);
+}
+
+.situation .itemLink {
+  margin-block-start: auto;
+}
+
+@media (min-width: 40rem) {
+  .situations {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--wp-space-8);
+  }
+}
+
+@media (min-width: 64rem) {
+  .situations {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: var(--wp-space-10);
+  }
+}
+
+.situationArt {
+  display: block;
+  inline-size: 7.5rem;
+  block-size: auto;
+  color: var(--wp-text);
+}
+
+.artTile {
+  fill: var(--tint);
+  stroke: none;
+}
+
+.artLine {
+  stroke: var(--line);
+}
+
+.artFill {
+  fill: var(--line);
+  stroke: var(--line);
+}
+
+.artDot {
+  fill: var(--tint);
+  stroke: var(--line);
+}
+
+.artInk {
+  stroke: var(--tint);
+}
+
+/* ───────────── How it works: the route ───────────── */
+
+.how {
+  display: grid;
+  gap: var(--wp-space-10);
+}
+
+@media (min-width: 60rem) {
+  .how {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    align-items: start;
+  }
+}
+
+.steps {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-8);
+  margin: 0;
+  padding: 0;
+  padding-inline-start: var(--wp-space-12);
+  list-style: none;
+}
+
+/* The line between the stations, in Today's colour. */
+.steps::before {
+  position: absolute;
+  inset-block: var(--wp-space-2);
+  inset-inline-start: calc(var(--wp-space-4) - 2px);
+  inline-size: 4px;
+  border-radius: var(--wp-radius-round);
+  background: var(--wp-line-today);
+  content: "";
+  transform-origin: top;
+}
+
+.step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+}
+
+/* A station: a ring on the line, level with the step's title. */
+.step::before {
+  position: absolute;
+  inset-block-start: 0.2rem;
+  inset-inline-start: calc(-1 * var(--wp-space-12) + var(--wp-space-4) - 0.6875rem);
+  box-sizing: border-box;
+  inline-size: 1.375rem;
+  block-size: 1.375rem;
+  border: 4px solid var(--wp-line-today);
+  border-radius: 50%;
+  background: var(--wp-canvas);
+  content: "";
+}
+
+.setup {
+  margin-block-start: var(--wp-space-3);
+  padding: var(--wp-space-4) var(--wp-space-5);
+  border: 1px solid var(--wp-border-subtle);
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-raised);
+  box-shadow: var(--wp-shadow-1);
+}
+
+.setupTitle {
+  margin: 0 0 var(--wp-space-3);
+  font-size: var(--wp-text-small);
+  font-weight: var(--wp-weight-semibold);
+}
+
+/* ───────────── Devices: real screens in a plain frame ───────────── */
+
+.device {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--wp-space-3);
+  margin: 0;
+}
+
+.frame {
+  box-sizing: border-box;
+  inline-size: min(100%, 17rem);
+  padding: 0.4375rem;
+  border: 1px solid var(--wp-border-strong);
+  border-radius: 2.25rem;
+  background: oklch(20% 0.02 250);
+  box-shadow: var(--wp-shadow-2);
+}
+
+.frame img {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  border-radius: 1.8rem;
+}
+
+.shotLight {
+  display: block;
+}
+
+.shotDark {
+  display: none;
+}
+
+:root[data-theme="dark"] .shotLight {
+  display: none;
+}
+
+:root[data-theme="dark"] .shotDark {
+  display: block;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .shotLight {
+    display: none;
+  }
+
+  :root:not([data-theme="light"]) .shotDark {
+    display: block;
+  }
+}
+
+/* A desktop screen on a wide page: a plain screen frame, not a phone. */
+@media (min-width: 60rem) {
+  .deviceWide .frame {
+    inline-size: 100%;
+    padding: 0.375rem;
+    border-radius: var(--wp-radius-lg);
+  }
+
+  .deviceWide .frame img {
+    border-radius: var(--wp-radius-sm);
+  }
+}
+
+/* Lite mode shows no pictures; the caption says which screen it was. */
+:root[data-lite="true"] .frame {
+  display: none;
+}
+
+.caption {
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+  font-weight: var(--wp-weight-medium);
+}
+
+.howShot {
+  min-inline-size: 0;
+}
+
+/* ───────────── What you get ───────────── */
+
+.modules {
+  display: grid;
+  gap: var(--wp-space-10);
+}
+
+@media (min-width: 60rem) {
+  .modules {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 24rem);
+    align-items: start;
+  }
+}
+
+.directory {
+  min-inline-size: 0;
+}
+
+.groupTitle {
+  margin: 0 0 var(--wp-space-2);
+  font-size: var(--wp-text-body);
+  font-weight: var(--wp-weight-semibold);
+}
+
+.groupTitle:not(:first-child) {
+  margin-block-start: var(--wp-space-8);
+}
+
+.rows {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 40rem) {
+  .rows {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--wp-space-6);
+  }
+}
+
+.rows > li {
+  border-block-start: 1px solid var(--wp-border-subtle);
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--wp-space-3);
+  min-block-size: var(--wp-touch-min);
+  padding-block: var(--wp-space-3);
+  border-radius: var(--wp-radius-sm);
+  color: var(--wp-text);
+  text-decoration: none;
+  transition: background-color var(--wp-duration-fast) var(--wp-ease-out);
+}
+
+.row:focus-visible {
+  background: transparent;
+  color: var(--wp-text);
+  box-shadow: var(--wp-focus-shadow);
+}
+
+.row:active {
+  background: var(--wp-fill-pressed);
+}
+
+@media (hover: hover) {
+  .row:hover .rowName {
+    text-decoration-line: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.22em;
+  }
+}
+
+.rowText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+  min-inline-size: 0;
+}
+
+.rowName {
+  font-weight: var(--wp-weight-semibold);
+}
+
+.rowBenefit {
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+  line-height: var(--wp-leading-meta);
+}
+
+.screens {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--wp-space-4);
+  align-items: start;
+}
+
+/* The second phone sits lower: two screens, one after the other, not a row of tiles. */
+.screens > :nth-child(2) {
+  margin-block-start: var(--wp-space-10);
+}
+
+.note {
+  margin: var(--wp-space-6) 0 0;
+  color: var(--wp-text-muted);
+  font-size: var(--wp-text-small);
+}
+
+/* ───────────── However you reach it: one panel, like a departures board ───────────── */
+
+.board {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--wp-border-subtle);
+  border-radius: var(--wp-radius-lg);
+  background: var(--wp-border-subtle);
+  box-shadow: var(--wp-shadow-1);
+  list-style: none;
+}
+
+@media (min-width: 40rem) {
+  .board {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64rem) {
+  .board {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.boardItem {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--wp-space-2);
+  padding: var(--wp-space-6);
+  background: var(--wp-raised);
+}
+
+.boardIcon {
+  margin-block-end: var(--wp-space-1);
+  color: var(--wp-text-secondary);
+}
+
+.languages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-1) var(--wp-space-4);
+  margin: var(--wp-space-2) 0 0;
+  padding: 0;
+  font-weight: var(--wp-weight-medium);
+  list-style: none;
+}
+
+/* ───────────── Safety and privacy ───────────── */
+
+.safety {
+  display: grid;
+  gap: var(--wp-space-10);
+}
+
+@media (min-width: 60rem) {
+  .safety {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 17rem);
+    align-items: start;
+  }
+}
+
+.promises {
+  display: grid;
+  gap: var(--wp-space-6) var(--wp-space-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 40rem) {
+  .promises {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.promise {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--wp-space-4);
+}
+
+.promise > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+  min-inline-size: 0;
+}
+
+.promiseIcon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  border-radius: var(--wp-radius-md);
+  background: var(--wp-support-tint);
+  color: var(--wp-support);
+}
+
+.safetyAside {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--wp-space-4);
+  text-align: center;
+}
+
+.safetyAside > a {
+  align-self: center;
+}
+
+/* ───────────── The way in, again ───────────── */
+
+.final {
+  max-inline-size: var(--page-max);
+  margin-inline: auto;
+  padding-block-start: var(--wp-space-16);
+  padding-inline: var(--gutter);
+}
+
+.finalInner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--wp-space-3);
+  padding: var(--wp-space-8) var(--wp-space-6);
+  border: 1px solid var(--wp-border-subtle);
+  border-block-start: var(--wp-sign-edge) solid var(--wp-signal);
+  border-radius: var(--wp-radius-lg);
+  background: var(--wp-raised);
+  box-shadow: var(--wp-shadow-1);
+}
+
+@media (min-width: 48rem) {
+  .finalInner {
+    padding: var(--wp-space-10);
+  }
+}
+
+.finalActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wp-space-3);
+  margin-block-start: var(--wp-space-3);
+}
+
+.finalHelp {
+  margin: var(--wp-space-2) 0 0;
+  color: var(--wp-text-secondary);
+  font-size: var(--wp-text-small);
+}
+
+/* ───────────── Arriving as it scrolls into view (Reveal.tsx) ───────────── */
+
+.reveal[data-reveal="waiting"] {
+  opacity: 0;
+  translate: 0 1rem;
+}
+
+.reveal[data-reveal="shown"] {
+  opacity: 1;
+  translate: 0 0;
+  transition:
+    opacity 560ms var(--wp-ease-out) var(--reveal-delay, 0ms),
+    translate 560ms var(--wp-ease-out) var(--reveal-delay, 0ms);
+}
+
+/* How it works does not slide: its line fills from the first station, and each step follows. */
+.reveal.howRoute[data-reveal] {
+  opacity: 1;
+  translate: none;
+}
+
+.howRoute[data-reveal="waiting"] .steps::before {
+  scale: 1 0;
+}
+
+.howRoute[data-reveal="waiting"] .step {
+  opacity: 0;
+}
+
+.howRoute[data-reveal="shown"] .steps::before {
+  scale: 1 1;
+  transition: scale 960ms var(--wp-ease-route);
+}
+
+.howRoute[data-reveal="shown"] .step {
+  opacity: 1;
+  transition: opacity 400ms var(--wp-ease-out);
+}
+
+.howRoute[data-reveal="shown"] .step:nth-child(2) {
+  transition-delay: 220ms;
+}
+
+.howRoute[data-reveal="shown"] .step:nth-child(3) {
+  transition-delay: 440ms;
+}
+
+.howRoute[data-reveal="shown"] .step:nth-child(4) {
+  transition-delay: 660ms;
+}

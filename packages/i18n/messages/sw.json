@@ -2690,7 +2690,14 @@
       "feedbackChartLead": "Wastani wa alama za maoni kati ya 5 katika kipindi, pale ambapo angalau watu watano walikadiria.",
       "ratings": "Alama {n}",
       "nothingYet": "Bado hakuna cha kuonyesha: kila kikundi hadi sasa kina watu chini ya watano."
-    }
+    },
+    "openAnalytics": "Angalia takwimu",
+    "openAccounts": "Tafuta akaunti",
+    "openSystem": "Angalia afya ya mfumo",
+    "openFeedback": "Yasome",
+    "feedbackNew": "Mapya, bado hayajasomwa",
+    "feedbackWaiting": "Wanasubiri jibu",
+    "feedbackRating": "Wastani wa alama, siku 30 zilizopita"
   },
   "byText": {
     "title": "Waypoint kwa ujumbe",

@@ -1,5 +1,6 @@
 import { JUDGE_FEATURES } from '@waypoint/ai';
-import { admin } from '@waypoint/api';
+import { admin, feedback } from '@waypoint/api';
+import { canUse } from '@waypoint/core/console';
 import { Disclosure, Notice, Panel } from '@waypoint/ui';
 import type { Metadata, Route } from 'next';
 import Link from 'next/link';
@@ -61,10 +62,18 @@ export default async function AdminOverviewPage() {
     getFormatter(),
     getLocale(),
   ]);
-  const [o, waiting] = await Promise.all([
+  const role = viewer.user.role;
+  const [o, waiting, said] = await Promise.all([
     admin.adminOverview(viewer.db),
     admin.adminCounts(viewer.db),
+    feedback.feedbackList(viewer.db, { status: 'new', limit: 1 }),
   ]);
+  const goTo = (area: Parameters<typeof canUse>[1], href: string, label: string) =>
+    canUse(role, area) ? (
+      <Link href={href as Route} className={styles.tileLink}>
+        {label}
+      </Link>
+    ) : null;
   const n = (v: number) => format.number(v);
   const usd = (v: number) =>
     format.number(v, { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
@@ -98,7 +107,9 @@ export default async function AdminOverviewPage() {
             <ul className={styles.tiles}>
               <Tile value={n(o.people.accounts)} label={t('accounts')} />
               <Tile value={n(o.people.guests)} label={t('guests')} />
-              <Tile value={n(o.people.active7d)} label={t('active7d')} />
+              <Tile value={n(o.people.active7d)} label={t('active7d')}>
+                {goTo('analytics', '/admin/analytics', t('openAnalytics'))}
+              </Tile>
             </ul>
             <p className={styles.note}>
               {t('newThisWeek', {
@@ -106,6 +117,7 @@ export default async function AdminOverviewPage() {
                 guests: n(o.people.newGuests7d),
               })}
             </p>
+            {goTo('users', '/admin/users', t('openAccounts'))}
           </div>
         </Panel>
 
@@ -284,7 +296,33 @@ export default async function AdminOverviewPage() {
             {o.delivery.lastError ? (
               <p className={styles.note}>{t('lastError', { error: o.delivery.lastError })}</p>
             ) : null}
+            {goTo('system', '/admin/system', t('openSystem'))}
           </div>
+        </Panel>
+
+        <Panel title={t('feedbackTitle')} as="section">
+          <ul className={styles.tiles}>
+            <Tile
+              value={n(said.byStatus.new ?? 0)}
+              label={t('feedbackNew')}
+              tone={said.byStatus.new ? 'caution' : undefined}
+            >
+              {goTo('feedback', '/admin/feedback', t('openFeedback'))}
+            </Tile>
+            <Tile
+              value={n(said.month.waitingReply)}
+              label={t('feedbackWaiting')}
+              tone={said.month.waitingReply ? 'caution' : undefined}
+            />
+            <Tile
+              value={
+                said.month.avgRating === null
+                  ? '—'
+                  : format.number(said.month.avgRating, { maximumFractionDigits: 1 })
+              }
+              label={t('feedbackRating')}
+            />
+          </ul>
         </Panel>
 
         <Panel title={t('orgsTitle')} as="section">

@@ -2691,7 +2691,14 @@
       "feedbackChartLead": "متوسط تقييم الملاحظات من 5 خلال الفترة، حيث قيّم خمسة أشخاص على الأقل.",
       "ratings": "{n} تقييمات",
       "nothingYet": "لا شيء لعرضه بعد: كل مجموعة حتى الآن فيها أقل من خمسة أشخاص."
-    }
+    },
+    "openAnalytics": "اعرض التحليلات",
+    "openAccounts": "ابحث عن حساب",
+    "openSystem": "اعرض صحة النظام",
+    "openFeedback": "اقرأها",
+    "feedbackNew": "جديدة لم تُقرأ بعد",
+    "feedbackWaiting": "بانتظار الرد",
+    "feedbackRating": "متوسط التقييم، آخر 30 يومًا"
   },
   "byText": {
     "title": "Waypoint عبر الرسائل",

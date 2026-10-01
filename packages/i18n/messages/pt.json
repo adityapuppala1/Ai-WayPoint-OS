@@ -2690,7 +2690,14 @@
       "feedbackChartLead": "Nota média de 5 no período, onde pelo menos cinco pessoas avaliaram.",
       "ratings": "{n} avaliações",
       "nothingYet": "Ainda não há nada para mostrar: todos os grupos têm menos de cinco pessoas por enquanto."
-    }
+    },
+    "openAnalytics": "Ver as análises",
+    "openAccounts": "Encontrar uma conta",
+    "openSystem": "Ver a saúde do sistema",
+    "openFeedback": "Ler",
+    "feedbackNew": "Novas, ainda não lidas",
+    "feedbackWaiting": "Esperando resposta",
+    "feedbackRating": "Nota média, últimos 30 dias"
   },
   "byText": {
     "title": "Waypoint por mensagem",

@@ -2697,7 +2697,14 @@ declare const messages: {
       "feedbackChartLead": "Average feedback rating out of 5 in the period, where at least five people rated it.",
       "ratings": "{n} ratings",
       "nothingYet": "Nothing to show yet: every group so far has fewer than five people."
-    }
+    },
+    "openAnalytics": "See the analytics",
+    "openAccounts": "Find an account",
+    "openSystem": "See system health",
+    "openFeedback": "Read them",
+    "feedbackNew": "New, not yet read",
+    "feedbackWaiting": "Waiting for a reply",
+    "feedbackRating": "Average rating, last 30 days"
   },
   "byText": {
     "title": "Waypoint by text",

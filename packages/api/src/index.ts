@@ -17,6 +17,7 @@ export * as goals from './services/goals';
 export * as health from './services/health';
 export * as integrations from './services/integrations';
 export * as legal from './services/legal';
+export * as maintenance from './services/maintenance';
 export * as me from './services/me';
 export * as mind from './services/mind';
 export * as money from './services/money';

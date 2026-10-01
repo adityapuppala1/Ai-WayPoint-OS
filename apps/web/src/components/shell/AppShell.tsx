@@ -1,4 +1,6 @@
+import { maintenance as platform } from '@waypoint/api';
 import { isStaffRole } from '@waypoint/core/console';
+import { Notice } from '@waypoint/ui';
 import { getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { getViewer } from '@/lib/server';
@@ -166,6 +168,9 @@ async function goToGroups(): Promise<GoToGroup[]> {
 /** The frame around every signed-in (or guest) page: rail on wide screens, bottom bar on phones. */
 export async function AppShell({ children }: { children: ReactNode }) {
   const viewer = await getViewer();
+  // An announcement for everyone, set in the console (maintenance is handled by the root
+  // layout, which covers every page).
+  const notice = platform.platformNotice();
   const [t, common, groups, directory] = await Promise.all([
     getTranslations('shell'),
     getTranslations('common'),
@@ -193,6 +198,14 @@ export async function AppShell({ children }: { children: ReactNode }) {
           </div>
           <main id="main" className={styles.main} tabIndex={-1}>
             <OfflineNotice />
+            {notice.announcement.active ? (
+              <Notice
+                tone={notice.announcement.tone}
+                title={notice.announcement.message}
+                role="note"
+                className={styles.announcement}
+              />
+            ) : null}
             <PageFrame label={common('loading')}>{children}</PageFrame>
           </main>
         </div>

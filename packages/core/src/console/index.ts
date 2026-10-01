@@ -75,3 +75,4 @@ export function consoleFor(
 }
 
 export * from './integrations';
+export * from './maintenance';

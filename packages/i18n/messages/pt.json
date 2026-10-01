@@ -160,7 +160,10 @@
     "goToPlaces": "Mais lugares",
     "goToNoMatch": "Nada no Waypoint corresponde a isso.",
     "goToAsk": "Conversar: “{query}”",
-    "goToCount": "{count, plural, one {# resultado} other {# resultados}}"
+    "goToCount": "{count, plural, one {# resultado} other {# resultados}}",
+    "maintenanceTitle": "O Waypoint está fechado para manutenção",
+    "maintenanceUntil": "Regresso previsto {until}.",
+    "maintenanceHelp": "A ajuda continua aqui: Obter ajuda agora e os números de ajuda funcionam como sempre, tal como as mensagens para o Waypoint."
   },
   "welcome": {
     "title": "Veja o que vem aí. Saiba seu próximo passo. Nunca siga sozinho.",
@@ -2188,6 +2191,72 @@
         "secret": "Segredo"
       },
       "judgeNote": "Um serviço externo nos Estados Unidos que não indica por quanto tempo guarda os dados: o aviso de privacidade nomeia-o assim que há uma chave. Acrescente um idioma só depois de o medir."
+    },
+    "maint": {
+      "title": "Manutenção",
+      "lead": "Feche o Waypoint para manutenção, avise todos de algo, guarde cópias de segurança e faça limpezas agora. A ajuda numa crise nunca fecha.",
+      "maintenanceTitle": "Modo de manutenção",
+      "maintenanceLead": "Todos menos a equipa veem uma página de manutenção com a sua mensagem. Obter ajuda agora, os números de ajuda, as mensagens para o Waypoint, o início de sessão e o aviso de privacidade continuam abertos.",
+      "maintenanceSwitch": "Fechado para manutenção",
+      "stateOn": "Fechado agora",
+      "stateOff": "Aberto",
+      "stateScheduled": "Fecha {from}",
+      "message": "O que as pessoas veem",
+      "messageHint": "Mostrado tal como o escrever, num só idioma: diga porquê e quando volta.",
+      "startsAt": "Começa (vazio para já)",
+      "until": "Termina (opcional)",
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "confirmTitle": "Fechar o Waypoint para manutenção?",
+      "confirmBody": "Todos menos a equipa verão a sua mensagem em vez das páginas, dentro de meio minuto em cada servidor. A ajuda numa crise continua aberta.",
+      "confirmButton": "Fechar para manutenção",
+      "savedOn": "Manutenção guardada. Todos os servidores a aplicam dentro de meio minuto.",
+      "savedOff": "O Waypoint voltou a abrir.",
+      "announcementTitle": "Anúncio",
+      "announcementLead": "Uma linha por cima de cada página, para todos: manutenção prevista, uma mudança, algo a saber.",
+      "announcementSwitch": "Mostrar o anúncio",
+      "shown": "Visível",
+      "notShown": "Oculto",
+      "tone": "Tipo",
+      "toneInfo": "Informação",
+      "toneCaution": "Atenção",
+      "preview": "Como vai ficar",
+      "savedAnnouncement": "Anúncio guardado.",
+      "backupTitle": "Cópias de segurança",
+      "backupNever": "Nenhuma cópia registada",
+      "backupNoted": "Última cópia {when}",
+      "backupEmbedded": "Este Waypoint guarda os dados na sua própria pasta. Descarregue uma cópia e guarde-a num local seguro e separado.",
+      "backupPostgres": "Este Waypoint usa um servidor Postgres: faça cópias com as ferramentas dele (pg_dump, ou as cópias diárias do seu fornecedor) e registe cada cópia aqui.",
+      "backupSensitive": "Uma cópia contém tudo o que o Waypoint guarda sobre as pessoas. Guarde-a com o mesmo cuidado que o servidor; as notas cifradas só se leem com a chave do servidor.",
+      "download": "Descarregar uma cópia",
+      "backupRecord": "Registar uma cópia",
+      "backupAt": "Quando foi feita",
+      "backupNote": "Onde está guardada",
+      "backupNotePlaceholder": "Cópia do fornecedor, disco externo…",
+      "backupSave": "Registar",
+      "backupSaved": "Cópia registada.",
+      "houseTitle": "Limpeza",
+      "limitsNow": "{counted} limites contados agora, {hour} usados na última hora.",
+      "tasks": {
+        "retention": {
+          "title": "Limpar agora",
+          "lead": "Remove o que passou o prazo de conservação (conversas antigas, convidados inativos, códigos expirados, contagens antigas), como a tarefa diária.",
+          "run": "Limpar",
+          "done": "Limpeza feita: {n} removidos ou atualizados."
+        },
+        "rate-limits": {
+          "title": "Limpar os limites de pedidos",
+          "lead": "Deixa voltar a tentar de imediato quem foi travado por limites de início de sessão ou de pedidos: após um erro, ou quando um ataque passa.",
+          "run": "Limpar limites",
+          "done": "Limites limpos: {n}."
+        },
+        "keys": {
+          "title": "Voltar a selar com a chave nova",
+          "lead": "Depois de mudar a chave do servidor, passa já para a nova tudo o que ainda está selado com a antiga, em vez de um pouco por dia.",
+          "run": "Selar agora",
+          "done": "Selados de novo: {n}."
+        }
+      }
     }
   },
   "byText": {

@@ -374,3 +374,115 @@ describe('system health in the console', () => {
     expect(view.server.node).toMatch(/^v\d+/);
   });
 });
+
+describe('maintenance from the console', () => {
+  const off = {
+    maintenance: { on: false, message: '', until: null, startsAt: null },
+    announcement: { on: false, message: '', tone: 'info', until: null },
+  };
+
+  it('closes the platform to people, but never help, sign-in, texts or staff', async () => {
+    const boss = await person('Ada', 'admin');
+    const someone = await person('Pat');
+    const until = new Date(Date.now() + 20 * 60_000).toISOString();
+    try {
+      const on = await req('/api/admin/maintenance', {
+        method: 'PUT',
+        cookie: boss.cookie,
+        json: {
+          maintenance: { on: true, message: 'Back at 22:30 UTC.', until, startsAt: null },
+        },
+      });
+      expect(on.status).toBe(200);
+
+      const closed = await req('/api/today', { cookie: someone.cookie });
+      expect(closed.status).toBe(503);
+      expect(Number(closed.headers.get('retry-after'))).toBeGreaterThan(60);
+      expect(await closed.json()).toMatchObject({ code: 'maintenance', detail: 'Back at 22:30 UTC.' });
+      // Open whatever happens.
+      expect((await req('/api/support?country=GB')).status).toBe(200);
+      expect((await req('/api/health')).status).toBe(200);
+      const notice = (await (await req('/api/platform')).json()) as {
+        maintenance: { active: boolean; until: string };
+      };
+      expect(notice.maintenance).toMatchObject({ active: true, until });
+      // Staff still work.
+      expect((await req('/api/admin/maintenance', { cookie: boss.cookie })).status).toBe(200);
+      expect((await req('/api/today', { cookie: boss.cookie })).status).not.toBe(503);
+    } finally {
+      await req('/api/admin/maintenance', { method: 'PUT', cookie: boss.cookie, json: off });
+    }
+    expect((await req('/api/today', { cookie: someone.cookie })).status).toBe(200);
+  });
+
+  it('starts a scheduled window on time, and needs words for people', async () => {
+    const boss = await person('Ada', 'admin');
+    const someone = await person('Pat');
+    const silent = await req('/api/admin/maintenance', {
+      method: 'PUT',
+      cookie: boss.cookie,
+      json: { maintenance: { on: true, message: '', until: null, startsAt: null } },
+    });
+    expect(silent.status).toBe(400);
+    try {
+      await req('/api/admin/maintenance', {
+        method: 'PUT',
+        cookie: boss.cookie,
+        json: {
+          maintenance: {
+            on: true,
+            message: 'Tonight from 22:00.',
+            until: null,
+            startsAt: new Date(Date.now() + 3_600_000).toISOString(),
+          },
+          announcement: { on: true, message: 'Maintenance tonight from 22:00.', tone: 'caution', until: null },
+        },
+      });
+      expect((await req('/api/today', { cookie: someone.cookie })).status).toBe(200);
+      const notice = (await (await req('/api/platform')).json()) as {
+        maintenance: { active: boolean };
+        announcement: { active: boolean; message: string; tone: string };
+      };
+      expect(notice.maintenance.active).toBe(false);
+      expect(notice.announcement).toEqual({
+        active: true,
+        message: 'Maintenance tonight from 22:00.',
+        tone: 'caution',
+      });
+    } finally {
+      await req('/api/admin/maintenance', { method: 'PUT', cookie: boss.cookie, json: off });
+    }
+  });
+
+  it('hands an admin a backup of the embedded database, and records that', async () => {
+    const boss = await person('Ada', 'admin');
+    const res = await req('/api/admin/maintenance/backup', { cookie: boss.cookie });
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toBe('application/gzip');
+    expect(res.headers.get('content-disposition')).toMatch(/waypoint-backup-.+\.tar\.gz/);
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    expect([bytes[0], bytes[1]]).toEqual([0x1f, 0x8b]);
+    const [entry] = await db
+      .getDb()
+      .select()
+      .from(db.auditLog)
+      .where(db.eq(db.auditLog.action, 'platform.backup-download'));
+    expect(entry?.actorUserId).toBe(boss.id);
+    const staff = await person('Sam', 'staff');
+    expect((await req('/api/admin/maintenance/backup', { cookie: staff.cookie })).status).toBe(403);
+  });
+
+  it('clears request limits when an admin asks', async () => {
+    const boss = await person('Ada', 'admin');
+    const res = await req('/api/admin/maintenance/housekeeping', {
+      method: 'POST',
+      cookie: boss.cookie,
+      json: { task: 'rate-limits' },
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { done: { cleared: number } };
+    expect(body.done.cleared).toBeGreaterThan(0);
+    const [left] = await db.getDb().select({ n: db.sql<number>`count(*)::int` }).from(db.rateLimits);
+    expect(Number(left?.n)).toBeLessThan(5);
+  });
+});

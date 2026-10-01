@@ -167,7 +167,10 @@ declare const messages: {
     "goToPlaces": "More places",
     "goToNoMatch": "Nothing in Waypoint matches that.",
     "goToAsk": "Talk it through: “{query}”",
-    "goToCount": "{count, plural, one {# result} other {# results}}"
+    "goToCount": "{count, plural, one {# result} other {# results}}",
+    "maintenanceTitle": "Waypoint is closed for maintenance",
+    "maintenanceUntil": "Expected back {until}.",
+    "maintenanceHelp": "Help is still here: Get help now and the help numbers work as usual, and so do texts to Waypoint."
   },
   "welcome": {
     "title": "See what’s coming. Know your next step. Never take it alone.",
@@ -2195,6 +2198,72 @@ declare const messages: {
         "secret": "Secret"
       },
       "judgeNote": "An outside service in the United States that states no retention period: the privacy notice names it once a key is set. Add a language only after it has been measured."
+    },
+    "maint": {
+      "title": "Maintenance",
+      "lead": "Close Waypoint for maintenance, tell everyone something, keep backups, and run housekeeping now. Help in a crisis is never closed.",
+      "maintenanceTitle": "Maintenance mode",
+      "maintenanceLead": "Everyone but staff sees a maintenance page with your message. Get help now, the help numbers, texts to Waypoint, signing in and the privacy notice stay open.",
+      "maintenanceSwitch": "Closed for maintenance",
+      "stateOn": "Closed now",
+      "stateOff": "Open",
+      "stateScheduled": "Closes {from}",
+      "message": "What people see",
+      "messageHint": "Shown as you write it, in one language: say why, and when it will be back.",
+      "startsAt": "Starts (empty for now)",
+      "until": "Ends (optional)",
+      "save": "Save",
+      "cancel": "Cancel",
+      "confirmTitle": "Close Waypoint for maintenance?",
+      "confirmBody": "Everyone but staff will see your message instead of their pages, within half a minute on every server. Help in a crisis stays open.",
+      "confirmButton": "Close for maintenance",
+      "savedOn": "Maintenance saved. Every server follows within half a minute.",
+      "savedOff": "Waypoint is open again.",
+      "announcementTitle": "Announcement",
+      "announcementLead": "A line above every page, for everyone: planned maintenance, a change, something to know.",
+      "announcementSwitch": "Show the announcement",
+      "shown": "Shown",
+      "notShown": "Not shown",
+      "tone": "Kind",
+      "toneInfo": "Information",
+      "toneCaution": "Caution",
+      "preview": "How it will look",
+      "savedAnnouncement": "Announcement saved.",
+      "backupTitle": "Backups",
+      "backupNever": "No backup recorded",
+      "backupNoted": "Last backup {when}",
+      "backupEmbedded": "This Waypoint keeps its data in its own folder. Download a copy, and keep it somewhere safe and separate.",
+      "backupPostgres": "This Waypoint uses a Postgres server: back it up with its own tools (pg_dump, or your provider's daily snapshots), and note each backup here.",
+      "backupSensitive": "A backup holds everything Waypoint holds about people. Keep it as carefully as the server itself; encrypted notes can only be read with the server's key.",
+      "download": "Download a backup",
+      "backupRecord": "Note a backup",
+      "backupAt": "When it was made",
+      "backupNote": "Where it is kept",
+      "backupNotePlaceholder": "Provider snapshot, offsite disk…",
+      "backupSave": "Note it",
+      "backupSaved": "Backup noted.",
+      "houseTitle": "Housekeeping",
+      "limitsNow": "{counted} limits counted now, {hour} used in the last hour.",
+      "tasks": {
+        "retention": {
+          "title": "Clean up now",
+          "lead": "Removes what is past its keeping time (old conversations, idle guests, expired codes, old counts), as the daily run does.",
+          "run": "Clean up",
+          "done": "Cleaned up: {n} removed or updated."
+        },
+        "rate-limits": {
+          "title": "Clear request limits",
+          "lead": "Lets everyone held back by sign-in or request limits try again at once: after a mistake, or once an attack has passed.",
+          "run": "Clear limits",
+          "done": "Limits cleared: {n}."
+        },
+        "keys": {
+          "title": "Re-seal with the new key",
+          "lead": "After the server's key was changed, moves everything still sealed with the old one to the new one now, instead of a little each day.",
+          "run": "Re-seal now",
+          "done": "Re-sealed: {n}."
+        }
+      }
     }
   },
   "byText": {

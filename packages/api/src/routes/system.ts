@@ -5,7 +5,23 @@ import { dbReady, feedback, schemaCurrent, sql } from '@waypoint/db';
 import { errors, jsonBody, jsonContent, router } from '../lib/openapi';
 import { limit } from '../middleware';
 
+import { PlatformNoticeSchema, platformNotice } from '../services/maintenance';
+
 const app = router();
+
+app.openapi(
+  createRoute({
+    method: 'get',
+    path: '/platform',
+    tags: ['System'],
+    summary: 'Whether Waypoint is in maintenance, and any announcement for everyone',
+    responses: { 200: jsonContent(PlatformNoticeSchema) },
+  }),
+  (c) => {
+    c.header('Cache-Control', 'public, max-age=30');
+    return c.json(platformNotice(), 200);
+  },
+);
 
 const started = Date.now();
 

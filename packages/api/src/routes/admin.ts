@@ -29,6 +29,16 @@ import {
   testIntegration,
 } from '../services/integrations';
 import {
+  downloadBackup,
+  HousekeepingResultSchema,
+  HousekeepingSchema,
+  housekeeping,
+  MaintenanceUpdateSchema,
+  MaintenanceViewSchema,
+  maintenanceView,
+  saveMaintenance,
+} from '../services/maintenance';
+import {
   actOnJob,
   actOnMessage,
   SystemSchema,
@@ -52,6 +62,7 @@ for (const [path, area] of [
   ['/admin/system', 'system'],
   ['/admin/jobs', 'system'],
   ['/admin/outbox', 'system'],
+  ['/admin/maintenance', 'maintenance'],
 ] as const) {
   app.use(path, requireArea(area));
   app.use(`${path}/*`, requireArea(area));
@@ -288,5 +299,81 @@ for (const [path, act, what] of [
       return c.json({ ok: true as const }, 200);
     },
   );
+
+// ───────────────────────────── Maintenance ─────────────────────────────
+
+app.openapi(
+  createRoute({
+    method: 'get',
+    path: '/admin/maintenance',
+    tags: ['Admin'],
+    summary: 'Maintenance, the announcement, backups and housekeeping',
+    responses: { 200: jsonContent(MaintenanceViewSchema), 401: errors[401], 403: errors[403] },
+  }),
+  async (c) => c.json(await maintenanceView(c.get('db')), 200),
+);
+
+app.openapi(
+  createRoute({
+    method: 'put',
+    path: '/admin/maintenance',
+    tags: ['Admin'],
+    summary: 'Switch maintenance or the announcement on or off, or note the last backup',
+    middleware: [limit('admin-maintenance', 120, 3600)] as const,
+    request: jsonBody(MaintenanceUpdateSchema),
+    responses: { 200: jsonContent(OkSchema), 400: errors[400], 401: errors[401], 403: errors[403] },
+  }),
+  async (c) => {
+    await saveMaintenance(c.get('db'), actor(c), c.req.valid('json'));
+    return c.json({ ok: true as const }, 200);
+  },
+);
+
+app.openapi(
+  createRoute({
+    method: 'get',
+    path: '/admin/maintenance/backup',
+    tags: ['Admin'],
+    summary: 'Download a backup of the embedded database (.tar.gz); not available with Postgres',
+    middleware: [limit('admin-backup', 12, 3600)] as const,
+    responses: {
+      200: {
+        description: 'The data folder, compressed',
+        content: { 'application/gzip': { schema: z.string() } },
+      },
+      401: errors[401],
+      403: errors[403],
+      404: errors[404],
+    },
+  }),
+  // biome-ignore lint/suspicious/noExplicitAny: a file, not JSON
+  (async (c: any) => {
+    const blob = await downloadBackup(c.get('db'), actor(c));
+    if (!blob)
+      return c.json({ code: 'not-found', detail: 'Back up Postgres with its own tools.' }, 404);
+    const name = `waypoint-backup-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}.tar.gz`;
+    return new Response(blob.stream(), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/gzip',
+        'Content-Disposition': `attachment; filename="${name}"`,
+        'Cache-Control': 'no-store',
+      },
+    });
+  }) as never,
+);
+
+app.openapi(
+  createRoute({
+    method: 'post',
+    path: '/admin/maintenance/housekeeping',
+    tags: ['Admin'],
+    summary: 'Run housekeeping now: clean-up, clearing request limits, or re-sealing keys',
+    middleware: [limit('admin-housekeeping', 30, 3600)] as const,
+    request: jsonBody(HousekeepingSchema),
+    responses: { 200: jsonContent(HousekeepingResultSchema), 401: errors[401], 403: errors[403] },
+  }),
+  async (c) => c.json(await housekeeping(c.get('db'), actor(c), c.req.valid('json').task), 200),
+);
 
 export default app;

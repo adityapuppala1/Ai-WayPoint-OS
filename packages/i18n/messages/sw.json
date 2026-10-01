@@ -160,7 +160,10 @@
     "goToPlaces": "Mahali pengine",
     "goToNoMatch": "Hakuna kitu katika Waypoint kinacholingana na hilo.",
     "goToAsk": "Zungumza kuhusu jambo: “{query}”",
-    "goToCount": "{count, plural, one {tokeo #} other {matokeo #}}"
+    "goToCount": "{count, plural, one {tokeo #} other {matokeo #}}",
+    "maintenanceTitle": "Waypoint imefungwa kwa matengenezo",
+    "maintenanceUntil": "Inatarajiwa kurudi {until}.",
+    "maintenanceHelp": "Msaada bado upo: Pata msaada sasa na namba za msaada zinafanya kazi kama kawaida, pamoja na ujumbe kwa Waypoint."
   },
   "welcome": {
     "title": "Ona kinachokuja. Jua hatua yako inayofuata. Hutaipiga peke yako.",
@@ -2188,6 +2191,72 @@
         "secret": "Siri"
       },
       "judgeNote": "Huduma ya nje nchini Marekani isiyotaja muda wa kuhifadhi data: ilani ya faragha huitaja mara ufunguo unapowekwa. Ongeza lugha baada ya kuipima tu."
+    },
+    "maint": {
+      "title": "Matengenezo",
+      "lead": "Funga Waypoint kwa matengenezo, waambie wote jambo, weka nakala rudufu, na endesha usafi sasa. Msaada wakati wa dharura haufungwi kamwe.",
+      "maintenanceTitle": "Hali ya matengenezo",
+      "maintenanceLead": "Kila mtu isipokuwa wafanyakazi ataona ukurasa wa matengenezo wenye ujumbe wako. Pata msaada sasa, namba za msaada, ujumbe kwa Waypoint, kuingia na ilani ya faragha vinabaki wazi.",
+      "maintenanceSwitch": "Imefungwa kwa matengenezo",
+      "stateOn": "Imefungwa sasa",
+      "stateOff": "Wazi",
+      "stateScheduled": "Itafungwa {from}",
+      "message": "Watu wataona nini",
+      "messageHint": "Huonyeshwa jinsi unavyoandika, kwa lugha moja: sema kwa nini, na lini itarudi.",
+      "startsAt": "Inaanza (wazi kwa sasa)",
+      "until": "Inaisha (hiari)",
+      "save": "Hifadhi",
+      "cancel": "Ghairi",
+      "confirmTitle": "Funga Waypoint kwa matengenezo?",
+      "confirmBody": "Kila mtu isipokuwa wafanyakazi ataona ujumbe wako badala ya kurasa zao, ndani ya nusu dakika kwenye kila seva. Msaada wakati wa dharura unabaki wazi.",
+      "confirmButton": "Funga kwa matengenezo",
+      "savedOn": "Matengenezo yamehifadhiwa. Kila seva itafuata ndani ya nusu dakika.",
+      "savedOff": "Waypoint iko wazi tena.",
+      "announcementTitle": "Tangazo",
+      "announcementLead": "Mstari juu ya kila ukurasa, kwa wote: matengenezo yaliyopangwa, mabadiliko, jambo la kujua.",
+      "announcementSwitch": "Onyesha tangazo",
+      "shown": "Inaonyeshwa",
+      "notShown": "Haionyeshwi",
+      "tone": "Aina",
+      "toneInfo": "Taarifa",
+      "toneCaution": "Tahadhari",
+      "preview": "Itakavyoonekana",
+      "savedAnnouncement": "Tangazo limehifadhiwa.",
+      "backupTitle": "Nakala rudufu",
+      "backupNever": "Hakuna nakala iliyorekodiwa",
+      "backupNoted": "Nakala ya mwisho {when}",
+      "backupEmbedded": "Waypoint hii huhifadhi data yake kwenye folda yake. Pakua nakala, na uiweke mahali salama na tofauti.",
+      "backupPostgres": "Waypoint hii inatumia seva ya Postgres: tengeneza nakala kwa zana zake (pg_dump, au picha za kila siku za mtoa huduma wako), na rekodi kila nakala hapa.",
+      "backupSensitive": "Nakala rudufu ina kila kitu ambacho Waypoint huhifadhi kuhusu watu. Itunze kwa uangalifu kama seva yenyewe; maandishi yaliyosimbwa husomwa kwa ufunguo wa seva tu.",
+      "download": "Pakua nakala rudufu",
+      "backupRecord": "Rekodi nakala",
+      "backupAt": "Ilipotengenezwa",
+      "backupNote": "Inapohifadhiwa",
+      "backupNotePlaceholder": "Picha ya mtoa huduma, diski ya nje…",
+      "backupSave": "Rekodi",
+      "backupSaved": "Nakala imerekodiwa.",
+      "houseTitle": "Usafi",
+      "limitsNow": "Vikomo {counted} vinahesabiwa sasa, {hour} vimetumika saa iliyopita.",
+      "tasks": {
+        "retention": {
+          "title": "Safisha sasa",
+          "lead": "Huondoa vilivyopita muda wa kuhifadhiwa (mazungumzo ya zamani, wageni wasiotumika, misimbo iliyokwisha, hesabu za zamani), kama kazi ya kila siku.",
+          "run": "Safisha",
+          "done": "Imesafishwa: {n} vimeondolewa au kusasishwa."
+        },
+        "rate-limits": {
+          "title": "Futa vikomo vya maombi",
+          "lead": "Huwaruhusu wote waliozuiwa na vikomo vya kuingia au maombi kujaribu tena mara moja: baada ya kosa, au shambulio likiisha.",
+          "run": "Futa vikomo",
+          "done": "Vikomo vimefutwa: {n}."
+        },
+        "keys": {
+          "title": "Funga upya kwa ufunguo mpya",
+          "lead": "Baada ya ufunguo wa seva kubadilishwa, huhamisha sasa kila kilichobaki kimefungwa kwa wa zamani kwenda mpya, badala ya kidogo kila siku.",
+          "run": "Funga sasa",
+          "done": "Imefungwa upya: {n}."
+        }
+      }
     }
   },
   "byText": {

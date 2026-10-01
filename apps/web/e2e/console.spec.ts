@@ -92,3 +92,52 @@ test('someone signed out never reaches the console', async ({ page, request }) =
   await page.goto('/admin/integrations');
   await expect(page).toHaveURL(/\/welcome\?next=/);
 });
+
+test('an admin closes Waypoint for maintenance, and help stays open', async ({
+  browser,
+  page,
+  baseURL,
+}, testInfo) => {
+  test.skip(test.info().project.name !== 'desktop', 'one browser is enough for the round trip');
+  await asAdmin(browser, page, baseURL ?? '');
+  await page.goto('/admin/maintenance');
+  const card = page.getByRole('region', { name: 'Maintenance mode' });
+  await expect(card.getByText('Open', { exact: true })).toBeVisible();
+  await card.getByRole('switch', { name: 'Closed for maintenance' }).click({ force: true });
+  await card
+    .getByLabel('What people see')
+    .fill('We are upgrading the database. Back by 22:30 UTC.');
+  await card.getByRole('button', { name: 'Save' }).click();
+  // Closing is asked about first.
+  const dialog = page.getByRole('alertdialog', { name: 'Close Waypoint for maintenance?' });
+  await dialog.getByRole('button', { name: 'Close for maintenance' }).click();
+  try {
+    await expect(card.getByText('Closed now')).toBeVisible();
+    await snap(page, testInfo, 'console-maintenance');
+
+    const visitor = await browser.newContext({ baseURL });
+    const guest = await visitor.newPage();
+    // Signed out, so Today sends them to the welcome page: closed too.
+    await guest.goto('/');
+    await expect(
+      guest.getByRole('heading', { level: 1, name: 'Waypoint is closed for maintenance' }),
+    ).toBeVisible();
+    await expect(
+      guest.getByText('We are upgrading the database. Back by 22:30 UTC.'),
+    ).toBeVisible();
+    await guest.getByRole('main').getByRole('link', { name: 'Get help now' }).click();
+    await expect(guest).toHaveURL(/\/support/);
+    await expect(
+      guest.getByRole('heading', { level: 1, name: 'Waypoint is closed for maintenance' }),
+    ).toHaveCount(0);
+    expect((await guest.request.get('/api/today')).status()).toBe(503);
+    await visitor.close();
+  } finally {
+    await page.request.put('/api/admin/maintenance', {
+      data: { maintenance: { on: false, message: '', until: null, startsAt: null } },
+      headers: { origin: baseURL ?? '' },
+    });
+  }
+  await page.reload();
+  await expect(card.getByText('Open', { exact: true })).toBeVisible();
+});

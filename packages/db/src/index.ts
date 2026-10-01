@@ -1,4 +1,5 @@
 export {
+  backupEmbedded,
   closeDb,
   type Database,
   dbKind,

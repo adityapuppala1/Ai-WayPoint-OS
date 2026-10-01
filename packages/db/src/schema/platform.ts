@@ -393,3 +393,15 @@ export const apiErrors = pgTable(
   },
   (t) => [index('api_errors_created_idx').on(t.createdAt)],
 );
+
+/**
+ * The platform's own switches, set by an admin in the console: maintenance (with its message
+ * and window), an announcement shown on every page, and the last backup someone recorded.
+ * One row per switch; every change is audited.
+ */
+export const platformState = pgTable('platform_state', {
+  key: text().primaryKey(),
+  value: jsonb().$type<Record<string, unknown>>().notNull(),
+  updatedBy: text().references(() => users.id, { onDelete: 'set null' }),
+  updatedAt: updatedAt(),
+});

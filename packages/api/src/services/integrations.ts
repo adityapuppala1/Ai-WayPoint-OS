@@ -30,11 +30,13 @@ import {
   integrationChecks,
   integrationSettings,
   outbox,
+  platformState,
   sql,
 } from '@waypoint/db';
 import { type Actor, audit } from '../lib/audit';
 import { badRequest, notFound } from '../lib/problem';
 import { CHECKABLE, checkIntegration } from './integration-checks';
+import { loadPlatformState } from './maintenance';
 
 const PURPOSE = 'integration';
 const DAY = 86_400_000;
@@ -60,8 +62,9 @@ export async function loadConsoleSettings(db: Database): Promise<string[]> {
 const SYNC_KEY = Symbol.for('waypoint.consoleSettingsSync');
 
 /**
- * Loads the console's settings now, then looks for changes every half minute, so every web
- * server and worker uses a change within that time. Safe to call more than once.
+ * Loads the console's settings and the platform's switches (maintenance, announcement) now,
+ * then looks for changes every half minute, so every web server and worker uses a change
+ * within that time. Safe to call more than once.
  */
 export async function startSettingsSync(db: Database, everyMs = 30_000): Promise<void> {
   const g = globalThis as { [SYNC_KEY]?: { timer: ReturnType<typeof setInterval> } };
@@ -74,13 +77,21 @@ export async function startSettingsSync(db: Database, everyMs = 30_000): Promise
         at: sql<string>`coalesce(max(${integrationSettings.updatedAt})::text, '')`,
       })
       .from(integrationSettings);
-    return `${num(row?.n)}|${row?.at ?? ''}`;
+    const [state] = await db
+      .select({
+        n: sql<number>`count(*)::int`,
+        at: sql<string>`coalesce(max(${platformState.updatedAt})::text, '')`,
+      })
+      .from(platformState);
+    return `${num(row?.n)}|${row?.at ?? ''}|${num(state?.n)}|${state?.at ?? ''}`;
   };
   const sync = async () => {
     try {
       const now = await signature();
       if (now !== seen) {
         await loadConsoleSettings(db);
+        // Maintenance, the announcement and the backup note, kept in step the same way.
+        await loadPlatformState(db);
         seen = now;
       }
     } catch {

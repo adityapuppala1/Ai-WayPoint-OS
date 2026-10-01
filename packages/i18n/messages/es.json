@@ -160,7 +160,10 @@
     "goToPlaces": "Más lugares",
     "goToNoMatch": "Nada en Waypoint coincide con eso.",
     "goToAsk": "Hablarlo: «{query}»",
-    "goToCount": "{count, plural, one {# resultado} other {# resultados}}"
+    "goToCount": "{count, plural, one {# resultado} other {# resultados}}",
+    "maintenanceTitle": "Waypoint está cerrado por mantenimiento",
+    "maintenanceUntil": "Volverá previsiblemente {until}.",
+    "maintenanceHelp": "La ayuda sigue aquí: Obtener ayuda ahora y los números de ayuda funcionan como siempre, y también los mensajes a Waypoint."
   },
   "welcome": {
     "title": "Mira lo que viene. Conoce tu próximo paso. Nunca lo des solo.",
@@ -2188,6 +2191,72 @@
         "secret": "Secreto"
       },
       "judgeNote": "Un servicio externo en Estados Unidos que no indica cuánto tiempo conserva los datos: el aviso de privacidad lo nombra en cuanto hay una clave. Añada un idioma solo después de medirlo."
+    },
+    "maint": {
+      "title": "Mantenimiento",
+      "lead": "Cierre Waypoint por mantenimiento, avise a todos de algo, guarde copias de seguridad y haga tareas de limpieza ahora. La ayuda en una crisis nunca se cierra.",
+      "maintenanceTitle": "Modo de mantenimiento",
+      "maintenanceLead": "Todos menos el equipo ven una página de mantenimiento con su mensaje. Obtener ayuda ahora, los números de ayuda, los mensajes a Waypoint, el inicio de sesión y el aviso de privacidad siguen abiertos.",
+      "maintenanceSwitch": "Cerrado por mantenimiento",
+      "stateOn": "Cerrado ahora",
+      "stateOff": "Abierto",
+      "stateScheduled": "Cierra {from}",
+      "message": "Lo que ve la gente",
+      "messageHint": "Se muestra tal como lo escriba, en un idioma: diga por qué y cuándo volverá.",
+      "startsAt": "Empieza (vacío para ahora)",
+      "until": "Termina (opcional)",
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "confirmTitle": "¿Cerrar Waypoint por mantenimiento?",
+      "confirmBody": "Todos menos el equipo verán su mensaje en lugar de sus páginas, en medio minuto en cada servidor. La ayuda en una crisis sigue abierta.",
+      "confirmButton": "Cerrar por mantenimiento",
+      "savedOn": "Mantenimiento guardado. Todos los servidores lo aplican en medio minuto.",
+      "savedOff": "Waypoint vuelve a estar abierto.",
+      "announcementTitle": "Anuncio",
+      "announcementLead": "Una línea encima de cada página, para todos: mantenimiento previsto, un cambio, algo que saber.",
+      "announcementSwitch": "Mostrar el anuncio",
+      "shown": "Visible",
+      "notShown": "Oculto",
+      "tone": "Tipo",
+      "toneInfo": "Información",
+      "toneCaution": "Precaución",
+      "preview": "Cómo se verá",
+      "savedAnnouncement": "Anuncio guardado.",
+      "backupTitle": "Copias de seguridad",
+      "backupNever": "Ninguna copia registrada",
+      "backupNoted": "Última copia {when}",
+      "backupEmbedded": "Este Waypoint guarda sus datos en su propia carpeta. Descargue una copia y guárdela en un lugar seguro y aparte.",
+      "backupPostgres": "Este Waypoint usa un servidor Postgres: haga copias con sus propias herramientas (pg_dump o las instantáneas diarias de su proveedor) y anote cada copia aquí.",
+      "backupSensitive": "Una copia contiene todo lo que Waypoint guarda sobre las personas. Protéjala tanto como el propio servidor; las notas cifradas solo se leen con la clave del servidor.",
+      "download": "Descargar una copia",
+      "backupRecord": "Anotar una copia",
+      "backupAt": "Cuándo se hizo",
+      "backupNote": "Dónde se guarda",
+      "backupNotePlaceholder": "Instantánea del proveedor, disco externo…",
+      "backupSave": "Anotar",
+      "backupSaved": "Copia anotada.",
+      "houseTitle": "Limpieza",
+      "limitsNow": "{counted} límites contados ahora, {hour} usados en la última hora.",
+      "tasks": {
+        "retention": {
+          "title": "Limpiar ahora",
+          "lead": "Quita lo que ha superado su tiempo de conservación (conversaciones antiguas, invitados inactivos, códigos caducados, recuentos antiguos), como hace la tarea diaria.",
+          "run": "Limpiar",
+          "done": "Limpieza hecha: {n} eliminados o actualizados."
+        },
+        "rate-limits": {
+          "title": "Borrar los límites de solicitudes",
+          "lead": "Permite que todos los frenados por límites de inicio de sesión o de solicitudes lo intenten de nuevo: tras un error, o cuando pasa un ataque.",
+          "run": "Borrar límites",
+          "done": "Límites borrados: {n}."
+        },
+        "keys": {
+          "title": "Volver a sellar con la clave nueva",
+          "lead": "Tras cambiar la clave del servidor, pasa ahora a la nueva todo lo que sigue sellado con la antigua, en lugar de un poco cada día.",
+          "run": "Sellar ahora",
+          "done": "Sellados de nuevo: {n}."
+        }
+      }
     }
   },
   "byText": {

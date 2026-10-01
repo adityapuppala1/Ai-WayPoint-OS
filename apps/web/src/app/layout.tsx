@@ -1,5 +1,7 @@
 import '@waypoint/ui/styles.css';
 import './app.css';
+import { maintenance as platform } from '@waypoint/api';
+import { isStaffRole, pageOpenDuringMaintenance } from '@waypoint/core/console';
 import { formattingLocale, SERVER_ONLY_NAMESPACES, textDirection } from '@waypoint/i18n';
 import { hexRoles } from '@waypoint/tokens';
 import type { Metadata, Viewport } from 'next';
@@ -8,8 +10,10 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages, getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { ServiceWorker } from '@/components/ServiceWorker';
+import { MaintenanceScreen } from '@/components/shell/Maintenance';
 import { EARLY_INPUT_SCRIPT } from '@/lib/early-input';
 import { savedPreferences } from '@/lib/saved-preferences';
+import { getViewer } from '@/lib/server';
 import { Providers } from './providers';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -57,6 +61,16 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   // drawn two ways. next-intl types this as one of the languages; client components read the
   // language with useLanguage() (src/lib/language.ts), and a test keeps it that way.
   const clientLocale = formattingLocale(locale) as typeof locale;
+  // Maintenance: every page but help, sign-in and the legal pages is closed to anyone not on
+  // the staff. A prefetch skips the proxy and comes without a path: treated as open, so a
+  // prefetched Get help now never shows the notice (the API refuses what is closed anyway).
+  const notice = platform.platformNotice();
+  const path = (await headers()).get('x-wp-path');
+  const closed =
+    notice.maintenance.active &&
+    path !== null &&
+    !pageOpenDuringMaintenance(path) &&
+    !isStaffRole((await getViewer())?.user.role);
   return (
     <html
       lang={locale}
@@ -87,7 +101,14 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         </a>
         <NextIntlClientProvider locale={clientLocale} messages={messages}>
           <Providers locale={clientLocale} closeLabel={common('close')} restore={restore}>
-            {children}
+            {closed ? (
+              <MaintenanceScreen
+                message={notice.maintenance.message}
+                until={notice.maintenance.until}
+              />
+            ) : (
+              children
+            )}
           </Providers>
         </NextIntlClientProvider>
         <ServiceWorker />

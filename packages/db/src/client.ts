@@ -51,6 +51,8 @@ interface DbState {
    */
   readonly ready: Promise<void>;
   close: () => Promise<void>;
+  /** The embedded database's whole data folder, compressed (a backup); none for Postgres. */
+  dump?: () => Promise<Blob>;
 }
 
 const GLOBAL_KEY = Symbol.for('waypoint.db');
@@ -136,6 +138,7 @@ function createEmbedded(): DbState {
     kind: 'embedded',
     db,
     ready,
+    dump: () => client.dumpDataDir('gzip'),
     close: async () => {
       await client.close();
       release();
@@ -201,6 +204,16 @@ export function getDb(): Database {
 /** Await before the first query in a process (cheap afterwards). */
 export function dbReady(): Promise<void> {
   return state().ready;
+}
+
+/**
+ * A backup of the embedded database: its whole data folder as a .tar.gz, taken while it runs.
+ * Null with Postgres, whose backups are made by its own tools (pg_dump, the provider's).
+ */
+export async function backupEmbedded(): Promise<Blob | null> {
+  const s = state();
+  await s.ready;
+  return s.dump ? s.dump() : null;
 }
 
 export function dbKind(): 'embedded' | 'postgres' {

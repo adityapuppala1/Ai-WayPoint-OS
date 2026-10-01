@@ -160,7 +160,10 @@
     "goToPlaces": "Autres pages",
     "goToNoMatch": "Rien dans Waypoint ne correspond.",
     "goToAsk": "En parler : « {query} »",
-    "goToCount": "{count, plural, one {# résultat} other {# résultats}}"
+    "goToCount": "{count, plural, one {# résultat} other {# résultats}}",
+    "maintenanceTitle": "Waypoint est fermé pour maintenance",
+    "maintenanceUntil": "Retour prévu {until}.",
+    "maintenanceHelp": "L’aide reste là : Obtenir de l’aide et les numéros d’aide fonctionnent comme d’habitude, tout comme les messages envoyés à Waypoint."
   },
   "welcome": {
     "title": "Voyez ce qui arrive. Connaissez votre prochaine étape. Ne soyez jamais seul.",
@@ -2188,6 +2191,72 @@
         "secret": "Secret"
       },
       "judgeNote": "Un service extérieur aux États-Unis qui n’indique aucune durée de conservation : la notice de confidentialité le nomme dès qu’une clé est réglée. N’ajoutez une langue qu’après l’avoir mesurée."
+    },
+    "maint": {
+      "title": "Maintenance",
+      "lead": "Fermez Waypoint pour maintenance, prévenez tout le monde, gardez des sauvegardes et lancez l’entretien maintenant. L’aide en cas de crise n’est jamais fermée.",
+      "maintenanceTitle": "Mode maintenance",
+      "maintenanceLead": "Tout le monde sauf l’équipe voit une page de maintenance avec votre message. Obtenir de l’aide, les numéros d’aide, les messages à Waypoint, la connexion et la notice de confidentialité restent ouverts.",
+      "maintenanceSwitch": "Fermé pour maintenance",
+      "stateOn": "Fermé maintenant",
+      "stateOff": "Ouvert",
+      "stateScheduled": "Fermeture {from}",
+      "message": "Ce que les gens voient",
+      "messageHint": "Affiché tel que vous l’écrivez, dans une langue : dites pourquoi et quand ce sera de retour.",
+      "startsAt": "Début (vide pour maintenant)",
+      "until": "Fin (facultatif)",
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "confirmTitle": "Fermer Waypoint pour maintenance ?",
+      "confirmBody": "Tout le monde sauf l’équipe verra votre message à la place de ses pages, d’ici une demi-minute sur chaque serveur. L’aide en cas de crise reste ouverte.",
+      "confirmButton": "Fermer pour maintenance",
+      "savedOn": "Maintenance enregistrée. Chaque serveur suit d’ici une demi-minute.",
+      "savedOff": "Waypoint est de nouveau ouvert.",
+      "announcementTitle": "Annonce",
+      "announcementLead": "Une ligne au-dessus de chaque page, pour tous : maintenance prévue, un changement, une chose à savoir.",
+      "announcementSwitch": "Afficher l’annonce",
+      "shown": "Affichée",
+      "notShown": "Non affichée",
+      "tone": "Type",
+      "toneInfo": "Information",
+      "toneCaution": "Attention",
+      "preview": "Aperçu",
+      "savedAnnouncement": "Annonce enregistrée.",
+      "backupTitle": "Sauvegardes",
+      "backupNever": "Aucune sauvegarde notée",
+      "backupNoted": "Dernière sauvegarde {when}",
+      "backupEmbedded": "Ce Waypoint garde ses données dans son propre dossier. Téléchargez une copie et gardez-la en lieu sûr, à part.",
+      "backupPostgres": "Ce Waypoint utilise un serveur Postgres : sauvegardez-le avec ses propres outils (pg_dump, ou les instantanés quotidiens de votre hébergeur) et notez chaque sauvegarde ici.",
+      "backupSensitive": "Une sauvegarde contient tout ce que Waypoint garde sur les personnes. Protégez-la autant que le serveur ; les notes chiffrées ne se lisent qu’avec la clé du serveur.",
+      "download": "Télécharger une sauvegarde",
+      "backupRecord": "Noter une sauvegarde",
+      "backupAt": "Quand elle a été faite",
+      "backupNote": "Où elle est gardée",
+      "backupNotePlaceholder": "Instantané de l’hébergeur, disque externe…",
+      "backupSave": "Noter",
+      "backupSaved": "Sauvegarde notée.",
+      "houseTitle": "Entretien",
+      "limitsNow": "{counted} limites comptées, {hour} utilisées dans la dernière heure.",
+      "tasks": {
+        "retention": {
+          "title": "Nettoyer maintenant",
+          "lead": "Supprime ce qui a dépassé sa durée de conservation (anciennes conversations, invités inactifs, codes expirés, anciens comptages), comme la tâche quotidienne.",
+          "run": "Nettoyer",
+          "done": "Nettoyé : {n} supprimés ou mis à jour."
+        },
+        "rate-limits": {
+          "title": "Effacer les limites de requêtes",
+          "lead": "Laisse réessayer tout de suite ceux qu’une limite de connexion ou de requêtes retenait : après une erreur, ou une fois une attaque passée.",
+          "run": "Effacer",
+          "done": "Limites effacées : {n}."
+        },
+        "keys": {
+          "title": "Resceller avec la nouvelle clé",
+          "lead": "Après un changement de clé du serveur, passe maintenant à la nouvelle tout ce qui est encore scellé avec l’ancienne, au lieu d’un peu chaque jour.",
+          "run": "Resceller",
+          "done": "Rescellés : {n}."
+        }
+      }
     }
   },
   "byText": {

@@ -683,3 +683,35 @@
     display: none;
   }
 }
+
+/* An announcement for everyone, set in the console: above the page, never over it. */
+.announcement {
+  margin-block-end: var(--wp-space-4);
+}
+
+/* The maintenance screen: the page alone, centred, with its way to help. */
+.maintenance {
+  display: grid;
+  min-block-size: 100dvh;
+  place-items: center;
+  padding: var(--wp-space-5);
+}
+
+.helpLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+  min-block-size: var(--wp-touch-min);
+  padding-inline: var(--wp-space-5);
+  border-radius: var(--wp-radius-sm);
+  border: 1px solid var(--wp-signal-hover);
+  background: var(--wp-signal);
+  color: var(--wp-signal-ink);
+  font-weight: var(--wp-weight-semibold);
+  text-decoration: none;
+}
+
+.helpLink:focus-visible {
+  outline: 2px solid transparent;
+  box-shadow: var(--wp-focus-shadow);
+}

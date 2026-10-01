@@ -14,6 +14,7 @@ import {
   KEEP_GUEST_HEADER,
 } from '@waypoint/auth';
 import { countryOfNumber, toE164 } from '@waypoint/core/channels';
+import { apiOpenDuringMaintenance, isStaffRole } from '@waypoint/core/console';
 import { getEnv } from '@waypoint/core/env';
 import { isInternalPath } from '@waypoint/core/paths';
 import { dbReady, getDb, sql } from '@waypoint/db';
@@ -47,6 +48,7 @@ import signals from './routes/signals';
 import support from './routes/support';
 import system from './routes/system';
 import today from './routes/today';
+import { platformNotice } from './services/maintenance';
 import type { AppEnv } from './types';
 
 export const API_VERSION = '0.1.0';
@@ -403,6 +405,29 @@ export function createApp() {
   app.use('*', async (c, next) => {
     if (c.req.path.startsWith('/api/auth/')) return next();
     return withSession(c, next);
+  });
+
+  // Maintenance: the platform's admin closed it for a while. Staff still get in; help in a
+  // crisis, texts to Waypoint's numbers, signing in and the health checks are never closed.
+  app.use('*', async (c, next) => {
+    const notice = platformNotice();
+    if (
+      notice.maintenance.active &&
+      !apiOpenDuringMaintenance(c.req.path) &&
+      !isStaffRole(c.get('user')?.role)
+    ) {
+      const until = notice.maintenance.until ? new Date(notice.maintenance.until).getTime() : 0;
+      const retryAfter = Math.max(
+        60,
+        Math.min(3600, Math.round((until - Date.now()) / 1000) || 300),
+      );
+      return problemResponse(503, 'maintenance', notice.maintenance.message, {
+        until: notice.maintenance.until,
+        retryAfter,
+        requestId: c.get('requestId'),
+      });
+    }
+    return next();
   });
 
   app.route('/', system);

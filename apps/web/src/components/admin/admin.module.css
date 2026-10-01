@@ -924,3 +924,62 @@
   color: var(--wp-danger);
   font-size: var(--wp-text-small);
 }
+
+/* ───────────── Maintenance ───────────── */
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-2);
+}
+
+.downloadLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wp-space-2);
+  min-block-size: var(--wp-touch-min);
+  padding-inline: var(--wp-space-4);
+  border: 1px solid var(--wp-border-strong);
+  border-radius: var(--wp-radius-sm);
+  color: var(--wp-text);
+  font-weight: var(--wp-weight-medium);
+  text-decoration: none;
+}
+
+@media (hover: hover) {
+  .downloadLink:hover {
+    background: var(--wp-fill-hover);
+  }
+}
+
+.downloadLink:focus-visible {
+  outline: 2px solid transparent;
+  box-shadow: var(--wp-focus-shadow);
+}
+
+.tasks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wp-space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tasks li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wp-space-3);
+}
+
+.tasks li > div {
+  display: flex;
+  flex: 1 1 18rem;
+  flex-direction: column;
+  gap: var(--wp-space-1);
+}
+
+.tasks p {
+  margin: 0;
+}

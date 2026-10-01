@@ -35,6 +35,9 @@ export function proxy(request: NextRequest) {
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-nonce', nonce);
+  // Which page this is, for the layout (maintenance closes some pages and not others).
+  // Always set here, so a visitor can never send their own.
+  requestHeaders.set('x-wp-path', request.nextUrl.pathname);
   // Next reads the nonce from the request CSP header and applies it to its own scripts.
   requestHeaders.set('Content-Security-Policy', csp);
 

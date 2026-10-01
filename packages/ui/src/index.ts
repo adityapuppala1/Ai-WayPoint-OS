@@ -33,6 +33,46 @@ export {
   type CommandSection,
   useCommandShortcut,
 } from './components/CommandPalette';
+export {
+  BarList,
+  type BarListItem,
+  type BarListLabels,
+  type BarListProps,
+} from './components/charts/BarList';
+export {
+  type ChartCommonProps,
+  ChartFrame,
+  type ChartFrameProps,
+  type ChartTable,
+  type ChartViewLabels,
+  type LegendEntry,
+} from './components/charts/ChartFrame';
+export {
+  Funnel,
+  type FunnelLabels,
+  type FunnelProps,
+  type FunnelStep,
+} from './components/charts/Funnel';
+export { Heatmap, type HeatmapLabels, type HeatmapProps } from './components/charts/Heatmap';
+export {
+  type BarSeries,
+  StackedBarChart,
+  type StackedBarChartProps,
+  type StackedBarLabels,
+} from './components/charts/StackedBarChart';
+export { type StatDelta, StatTile, type StatTileProps } from './components/charts/StatTile';
+export {
+  foldIntoOther,
+  MAX_SERIES,
+  SERIES_ORDER,
+  type SeriesSlot,
+} from './components/charts/scale';
+export {
+  type TimeSeries,
+  TimeSeriesChart,
+  type TimeSeriesChartProps,
+  type TimeSeriesLabels,
+} from './components/charts/TimeSeriesChart';
 export { Disclosure } from './components/Disclosure';
 export {
   Avatar,

@@ -3,6 +3,7 @@
 import {
   AnimatedNumber,
   Avatar,
+  BarList,
   Button,
   Checkbox,
   CommandPalette,
@@ -11,6 +12,8 @@ import {
   Dialog,
   Disclosure,
   EmptyState,
+  Funnel,
+  Heatmap,
   Icon,
   IconButton,
   LinkButton,
@@ -40,9 +43,11 @@ import {
   SliderField,
   Sparkline,
   Spinner,
+  StackedBarChart,
   Stat,
   type Station,
   StatStrip,
+  StatTile,
   Stepper,
   Switch,
   Tab,
@@ -50,6 +55,7 @@ import {
   TabPanel,
   Tabs,
   TextField,
+  TimeSeriesChart,
   Tooltip,
   toast,
   useCommandShortcut,
@@ -111,6 +117,7 @@ const ON_THIS_PAGE: Array<{ id: string; label: string }> = [
   { id: 'forms', label: 'Forms' },
   { id: 'feedback', label: 'Status and honesty' },
   { id: 'figures', label: 'Figures' },
+  { id: 'charts', label: 'Charts' },
   { id: 'lists', label: 'Lists and panels' },
   { id: 'loading', label: 'Loading' },
 ];
@@ -779,6 +786,8 @@ export function DesignShowcase() {
         </StatStrip>
       </section>
 
+      <ChartShowcase />
+
       <section className={styles.section} aria-labelledby="lists">
         <h2 id="lists">Lists and panels</h2>
         <Panel title="Signals for you" description="Based on your city, role and plan." flush>
@@ -961,5 +970,238 @@ export function DesignShowcase() {
         </p>
       </ConfirmDialog>
     </>
+  );
+}
+
+// ───────────────────────────── Charts (made-up numbers) ─────────────────────────────
+
+const CHART_VIEW = { chart: 'Chart', table: 'Table', view: 'Show as' };
+const CHART_KEYS =
+  'Use the left and right arrow keys to move between points, Home and End to jump.';
+const HOURS = Array.from({ length: 24 }, (_, i) => `2026-09-30T${String(i).padStart(2, '0')}:00`);
+const DAYS = Array.from({ length: 14 }, (_, i) => `2026-09-${String(i + 17).padStart(2, '0')}`);
+/** A smooth made-up day of traffic: quiet at night, busy in the afternoon. */
+const day = (base: number, swing: number, shift: number) =>
+  HOURS.map((_, i) => Math.round(base + swing * Math.sin((i - 8 + shift) / 3.8)));
+const atHour = (x: string) => `30 September, ${x.slice(11, 16)}`;
+const hourTick = (x: string) => x.slice(11, 13);
+const onDay = (d: string) => `${Number(d.slice(8))} September`;
+const dayTick = (d: string) => String(Number(d.slice(8)));
+const percent = (n: number) => `${Math.round(n * 100)}%`;
+const share = (n: number) => `${(n * 100).toFixed(1)}%`;
+
+const REQUESTS = [
+  { id: 'ok', label: 'Succeeded', values: day(1300, 600, 0) },
+  { id: '4xx', label: 'Client errors', values: day(240, 90, 2) },
+  {
+    id: '5xx',
+    label: 'Server errors',
+    // An hour the log did not record: a gap in the line, "No data" in the table.
+    values: day(50, 30, 4).map((v, i) => (i === 9 ? null : v)),
+  },
+];
+const ERROR_RATE = day(30, 14, 1).map((v) => v / 1000);
+const LATENCY = [
+  { id: 'p50', label: 'p50', values: day(110, 25, 0) },
+  { id: 'p95', label: 'p95', values: day(430, 120, 1) },
+  { id: 'p99', label: 'p99', values: day(860, 220, 2) },
+];
+const SIGN_UPS = [
+  { id: 'web', label: 'Web', values: DAYS.map((_, i) => 38 + ((i * 17) % 29)) },
+  { id: 'ios', label: 'iPhone', values: DAYS.map((_, i) => 18 + ((i * 7) % 15)) },
+  { id: 'android', label: 'Android', values: DAYS.map((_, i) => 14 + ((i * 11) % 19)) },
+];
+const COHORTS = ['1 Sept', '8 Sept', '15 Sept', '22 Sept', '29 Sept'];
+const RETENTION = [
+  [1, 0.47, 0.39, 0.34, 0.31],
+  [1, 0.52, 0.42, 0.37, null],
+  [1, 0.5, 0.4, null, null],
+  [1, 0.55, null, null, null],
+  [1, null, null, null, null],
+];
+const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const ACTIVITY = WEEKDAYS.map((_, d) =>
+  HOURS.map((_, h) =>
+    Math.max(0, Math.round((d < 5 ? 60 : 35) * Math.sin(((h - 6) * Math.PI) / 16) + d * 2)),
+  ),
+);
+
+/** The admin console's charts, with made-up numbers. */
+function ChartShowcase() {
+  const [pending, setPending] = useState(false);
+  const reload = () => {
+    setPending(true);
+    window.setTimeout(() => setPending(false), 1200);
+  };
+  return (
+    <section className={styles.section} aria-labelledby="charts">
+      <h2 id="charts">Charts</h2>
+      <p className="wp-secondary wp-measure">
+        For the console: numbers over time, parts of a whole, rankings, grids and funnels. Thin
+        marks on hairline grids, one colour per series in a fixed order (blue, orange, violet,
+        olive), a legend whenever there are two series or more, and a table with the same numbers
+        behind every chart. Hover or focus a chart and use the arrow keys for the exact values. Time
+        runs left to right in every language.
+      </p>
+      <StatStrip label="Today at a glance">
+        <StatTile
+          label="Daily active people"
+          value="12,904"
+          delta={{ text: '+8.2%', period: 'vs last week', direction: 'up' }}
+          trend={{
+            values: [10.2, 11.1, 10.6, 11.9, 12.1, 12.9],
+            label: 'Daily active people over six weeks: from 10,200 to 12,904',
+          }}
+        />
+        <StatTile
+          label="Error rate"
+          value="3.1%"
+          delta={{ text: '+0.4 pts', period: 'vs yesterday', direction: 'up', good: 'down' }}
+        />
+        <StatTile
+          label="New sign-ups"
+          value="1,086"
+          delta={{ text: '0%', period: 'vs last week', direction: 'flat' }}
+        />
+      </StatStrip>
+      <Panel>
+        <div className="wp-stack">
+          <TimeSeriesChart
+            title="API requests per hour"
+            description="The last 24 hours, every route"
+            x={HOURS}
+            series={REQUESTS}
+            formatX={atHour}
+            formatTick={hourTick}
+            formatValue={inEnglish}
+            pending={pending}
+            caption="Made-up numbers"
+            labels={{ ...CHART_VIEW, x: 'Hour', noData: 'No data', keys: CHART_KEYS }}
+          />
+          <div>
+            <Button variant="secondary" size="sm" onPress={reload}>
+              Refresh (keeps the chart while it loads)
+            </Button>
+          </div>
+        </div>
+      </Panel>
+      <div className={styles.swatchGroups}>
+        <Panel>
+          <TimeSeriesChart
+            title="Error rate"
+            description="Share of requests that failed"
+            x={HOURS}
+            series={[{ id: 'rate', label: 'Error rate', values: ERROR_RATE }]}
+            variant="area"
+            formatX={atHour}
+            formatTick={hourTick}
+            formatValue={share}
+            labels={{ ...CHART_VIEW, x: 'Hour', keys: CHART_KEYS }}
+          />
+        </Panel>
+        <Panel>
+          <TimeSeriesChart
+            title="Response time"
+            description="p95 against p50 and p99"
+            x={HOURS}
+            series={LATENCY}
+            emphasis="p95"
+            formatX={atHour}
+            formatTick={hourTick}
+            formatValue={(n) => `${inEnglish(n)} ms`}
+            labels={{ ...CHART_VIEW, x: 'Hour', keys: CHART_KEYS }}
+          />
+        </Panel>
+      </div>
+      <Panel>
+        <StackedBarChart
+          title="New sign-ups per day"
+          description="The last two weeks, by where people signed up"
+          x={DAYS}
+          series={SIGN_UPS}
+          formatX={onDay}
+          formatTick={dayTick}
+          formatValue={inEnglish}
+          labels={{ ...CHART_VIEW, x: 'Day', total: 'Total', keys: CHART_KEYS }}
+        />
+      </Panel>
+      <div className={styles.swatchGroups}>
+        <Panel>
+          <BarList
+            title="Busiest routes"
+            description="Requests in the last 24 hours"
+            items={[
+              { id: 'plans', label: 'GET /v1/plans', value: 54210, note: 'p95 140 ms' },
+              { id: 'ask', label: 'POST /v1/ask', value: 27880, note: 'p95 2.1 s' },
+              { id: 'signals', label: 'GET /v1/signals', value: 12004 },
+              { id: 'me', label: 'GET /v1/me', value: 9870 },
+              { id: 'circles', label: 'GET /v1/circles', value: 4310 },
+            ]}
+            formatValue={inEnglish}
+            labels={{ ...CHART_VIEW, category: 'Route', value: 'Requests' }}
+          />
+        </Panel>
+        <Panel>
+          <Funnel
+            title="From sign-up to a first plan"
+            description="People who signed up in September"
+            steps={[
+              { id: 'signed-up', label: 'Signed up', value: 4200 },
+              { id: 'onboarded', label: 'Finished setting up', value: 3150 },
+              { id: 'planned', label: 'Made a plan', value: 1890 },
+              { id: 'returned', label: 'Came back in week two', value: 1020 },
+            ]}
+            formatValue={inEnglish}
+            formatShare={percent}
+            labels={{
+              ...CHART_VIEW,
+              step: 'Step',
+              value: 'People',
+              fromPrevious: 'Of the step before',
+              fromFirst: 'Of everyone',
+            }}
+          />
+        </Panel>
+      </div>
+      <div className={styles.swatchGroups}>
+        <Panel>
+          <Heatmap
+            title="Retention by weekly cohort"
+            description="Share of each week's sign-ups still active, week by week"
+            rows={COHORTS}
+            cols={['0', '1', '2', '3', '4']}
+            values={RETENTION}
+            showValues
+            formatValue={percent}
+            formatCol={(c) => `Week ${c}`}
+            labels={{
+              ...CHART_VIEW,
+              rows: 'Cohort',
+              scale: 'Still active',
+              noData: 'Not yet',
+              keys: 'Use the arrow keys to move between cells.',
+            }}
+          />
+        </Panel>
+        <Panel>
+          <Heatmap
+            title="When people use Waypoint"
+            description="People active, by day and hour (UTC)"
+            rows={WEEKDAYS}
+            cols={HOURS.map(hourTick)}
+            values={ACTIVITY}
+            cellHeight={22}
+            formatValue={inEnglish}
+            formatCol={(c) => `${c}:00`}
+            labels={{
+              ...CHART_VIEW,
+              rows: 'Day',
+              scale: 'People active',
+              keys: 'Use the arrow keys to move between cells.',
+            }}
+          />
+        </Panel>
+      </div>
+    </section>
   );
 }

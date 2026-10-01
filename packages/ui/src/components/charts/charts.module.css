@@ -1,0 +1,703 @@
+@layer components {
+  /*
+   * The frame of every chart. `--chart-surface` is the colour the chart sits on (a panel by
+   * default): the shades of a heatmap are mixed towards it and the rings round dots are
+   * drawn in it. Set it on the frame when a chart sits straight on the page.
+   */
+  .frame {
+    --chart-surface: var(--wp-raised);
+    /* Context lines beside the one that matters: quieter than any series colour. */
+    --chart-muted: var(--wp-border-strong);
+
+    display: grid;
+    gap: var(--wp-space-3);
+    min-inline-size: 0;
+    margin: 0;
+  }
+
+  .head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--wp-space-2) var(--wp-space-4);
+  }
+
+  .heading {
+    display: grid;
+    gap: var(--wp-space-1);
+    min-inline-size: 0;
+    flex: 1 1 12rem;
+  }
+
+  .title {
+    font-size: var(--wp-text-body);
+    line-height: var(--wp-leading-snug);
+  }
+
+  .description {
+    font-size: var(--wp-text-small);
+    color: var(--wp-text-secondary);
+  }
+
+  .caption {
+    font-size: var(--wp-text-meta);
+    line-height: var(--wp-leading-meta);
+    color: var(--wp-text-muted);
+  }
+
+  /* While new numbers load, the old ones stay, faded: no empty flash, no jump. */
+  .body {
+    min-inline-size: 0;
+    transition: opacity var(--wp-duration-base) var(--wp-ease-out);
+  }
+
+  .body[data-pending] {
+    opacity: 0.5;
+  }
+
+  /* The legend follows the page's direction; each key is drawn like its marks. */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--wp-space-1) var(--wp-space-4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--wp-text-small);
+    color: var(--wp-text-secondary);
+  }
+
+  .legendItem {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--wp-space-2);
+  }
+
+  .keyLine {
+    flex: none;
+    inline-size: 1rem;
+    block-size: 2px;
+    border-radius: 1px;
+    background: var(--key);
+  }
+
+  .keyRect {
+    flex: none;
+    inline-size: 0.75rem;
+    block-size: 0.75rem;
+    border-radius: 2px;
+    background: var(--key);
+  }
+
+  /* ── The drawing ─────────────────────────────────────────────────────────── */
+
+  .plotWrap {
+    position: relative;
+    min-inline-size: 0;
+  }
+
+  .plot {
+    position: relative;
+    border-radius: var(--wp-radius-xs);
+    /* A finger dragging sideways moves the crosshair; dragging up and down still scrolls. */
+    touch-action: pan-y;
+  }
+
+  .plot:focus-visible {
+    box-shadow: var(--wp-focus-shadow);
+  }
+
+  .svg {
+    display: block;
+    inline-size: 100%;
+    overflow: hidden;
+    font-family: inherit;
+  }
+
+  /* Gridlines: hairlines one step off the surface, solid, behind everything. */
+  .grid {
+    stroke: var(--wp-border-subtle);
+    stroke-width: 1;
+    shape-rendering: crispEdges;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .baseline {
+    stroke: var(--wp-border-strong);
+    stroke-width: 1;
+    shape-rendering: crispEdges;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .tick {
+    font-size: var(--wp-text-meta);
+    font-variant-numeric: tabular-nums;
+    fill: var(--wp-text-muted);
+  }
+
+  .line {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+  }
+
+  /* A wash under a single line, never a solid block. */
+  .area {
+    fill: currentColor;
+    fill-opacity: 0.1;
+    stroke: none;
+  }
+
+  /* Dots carry a ring of the surface, so they stay clear where they cross a line. */
+  .dot {
+    fill: currentColor;
+    stroke: var(--chart-surface);
+    stroke-width: 2;
+    paint-order: stroke;
+  }
+
+  .crosshair {
+    stroke: var(--wp-text-muted);
+    stroke-width: 1;
+    shape-rendering: crispEdges;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .endLabel {
+    font-size: var(--wp-text-meta);
+    fill: var(--wp-text-secondary);
+  }
+
+  .capLabel {
+    font-size: var(--wp-text-meta);
+    font-weight: var(--wp-weight-semibold);
+    font-variant-numeric: tabular-nums;
+    fill: var(--wp-text);
+  }
+
+  .bar {
+    fill: currentColor;
+  }
+
+  /* The column under the pointer or the keyboard: a faint band behind it, no outline. */
+  .bandActive {
+    fill: var(--wp-fill-hover);
+  }
+
+  /* The tooltip, kept apart from the drawing so its words follow the page's direction. */
+  .live {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .readout {
+    position: absolute;
+    z-index: 1;
+    min-inline-size: 8rem;
+    max-inline-size: min(16rem, 70%);
+    padding: var(--wp-space-2) var(--wp-space-3);
+    border: 1px solid var(--wp-border-subtle);
+    border-radius: var(--wp-radius-sm);
+    background: var(--wp-overlay);
+    color: var(--wp-text);
+    font-size: var(--wp-text-small);
+    line-height: var(--wp-leading-meta);
+    box-shadow: var(--wp-shadow-overlay);
+    /* Just past the point, but never past the plot's edges: on a phone it would widen the page. */
+    transform: translateX(clamp(0px, calc(var(--x) + 0.75rem), calc(var(--plot) - 100%)));
+  }
+
+  .readoutFlip {
+    transform: translateX(clamp(0px, calc(var(--x) - 100% - 0.75rem), calc(var(--plot) - 100%)));
+  }
+
+  .readoutAbove {
+    translate: 0 -100%;
+  }
+
+  .readoutTitle {
+    margin-block-end: var(--wp-space-1);
+    font-size: var(--wp-text-meta);
+    color: var(--wp-text-secondary);
+  }
+
+  .readoutRows {
+    display: grid;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .readoutRow {
+    display: flex;
+    align-items: baseline;
+    gap: var(--wp-space-2);
+  }
+
+  /* A short stroke of the series colour: at this size a filled box would shout. */
+  .readoutKey,
+  .readoutKeySpace {
+    flex: none;
+    align-self: center;
+    inline-size: 0.75rem;
+    block-size: 2px;
+    border-radius: 1px;
+  }
+
+  .readoutKey {
+    background: var(--key);
+  }
+
+  .readoutValue {
+    font-weight: var(--wp-weight-semibold);
+    font-variant-numeric: tabular-nums;
+    color: var(--wp-text);
+  }
+
+  .readoutLabel {
+    min-inline-size: 0;
+    color: var(--wp-text-secondary);
+    overflow-wrap: anywhere;
+  }
+
+  /* ── The table view ──────────────────────────────────────────────────────── */
+
+  .tableWrap {
+    max-inline-size: 100%;
+    overflow-x: auto;
+    border-radius: var(--wp-radius-xs);
+  }
+
+  .tableWrap:focus-visible {
+    box-shadow: var(--wp-focus-shadow);
+  }
+
+  .table {
+    inline-size: 100%;
+    border-collapse: collapse;
+    font-size: var(--wp-text-small);
+  }
+
+  .table th,
+  .table td {
+    padding: var(--wp-space-1) var(--wp-space-3);
+    border-block-end: 1px solid var(--wp-border-subtle);
+    text-align: start;
+    vertical-align: baseline;
+    white-space: nowrap;
+  }
+
+  .table thead th {
+    font-weight: var(--wp-weight-semibold);
+    color: var(--wp-text-secondary);
+    border-block-end-color: var(--wp-border-strong);
+  }
+
+  .table tbody th {
+    font-weight: var(--wp-weight-regular);
+  }
+
+  /* Numbers line up under each other at their ends. */
+  .table .numeric {
+    text-align: end;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Ranked bars ─────────────────────────────────────────────────────────── */
+
+  .barList {
+    display: grid;
+    gap: var(--wp-space-1);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .barListRow,
+  .barListButton {
+    display: grid;
+    gap: var(--wp-space-1);
+    inline-size: 100%;
+    padding: var(--wp-space-1) 0;
+    border-radius: var(--wp-radius-xs);
+  }
+
+  .barListButton {
+    padding-inline: var(--wp-space-2);
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+    transition: background-color var(--wp-duration-fast) var(--wp-ease-out);
+  }
+
+  @media (hover: hover) {
+    .barListButton:hover {
+      background: var(--wp-fill-hover);
+    }
+  }
+
+  .barListButton:active {
+    background: var(--wp-fill-pressed);
+  }
+
+  .barListButton:focus-visible {
+    box-shadow: var(--wp-focus-shadow);
+  }
+
+  .barListLabel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 var(--wp-space-2);
+    min-inline-size: 0;
+    font-size: var(--wp-text-small);
+    overflow-wrap: anywhere;
+  }
+
+  .barListNote {
+    font-size: var(--wp-text-meta);
+    color: var(--wp-text-muted);
+  }
+
+  /* The bar and its value share a line; the value sits just past the bar's end. */
+  .barListTrack {
+    --value-room: 5.5rem;
+
+    display: flex;
+    align-items: center;
+    gap: var(--wp-space-2);
+    min-inline-size: 0;
+  }
+
+  /* Thin, square where it starts and rounded where its value is. */
+  .barListFill {
+    flex: none;
+    inline-size: calc(var(--share) * (100% - var(--value-room)));
+    min-inline-size: 2px;
+    block-size: 0.75rem;
+    border-start-end-radius: 4px;
+    border-end-end-radius: 4px;
+    background: var(--wp-series-1);
+  }
+
+  .barListFill[data-empty] {
+    min-inline-size: 0;
+  }
+
+  .barListValue {
+    flex: none;
+    font-size: var(--wp-text-small);
+    font-variant-numeric: tabular-nums;
+    color: var(--wp-text);
+  }
+
+  /* ── Funnel ──────────────────────────────────────────────────────────────── */
+
+  .funnel {
+    display: grid;
+    gap: var(--wp-space-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .funnelStep {
+    display: grid;
+    gap: var(--wp-space-1);
+  }
+
+  .funnelHead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0 var(--wp-space-3);
+    font-size: var(--wp-text-small);
+  }
+
+  .funnelLabel {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .funnelValue {
+    font-weight: var(--wp-weight-semibold);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .funnelTrack {
+    display: block;
+  }
+
+  .funnelBar {
+    display: block;
+    inline-size: calc(var(--share) * 100%);
+    min-inline-size: 2px;
+    block-size: 1rem;
+    border-start-end-radius: 4px;
+    border-end-end-radius: 4px;
+  }
+
+  .funnelBar[data-empty] {
+    min-inline-size: 0;
+  }
+
+  .funnelShares {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--wp-space-4);
+    font-size: var(--wp-text-meta);
+    color: var(--wp-text-secondary);
+  }
+
+  .funnelShares b {
+    font-weight: var(--wp-weight-semibold);
+    font-variant-numeric: tabular-nums;
+    color: var(--wp-text);
+  }
+
+  /*
+   * The funnel's shades: one colour, lighter at each step. Without color-mix() the colour
+   * is thinned out instead, which looks the same on the surface.
+   */
+  .shade0 {
+    background: var(--wp-series-1);
+  }
+
+  .shade1 {
+    background: var(--wp-series-1);
+    opacity: 0.84;
+  }
+
+  .shade2 {
+    background: var(--wp-series-1);
+    opacity: 0.68;
+  }
+
+  .shade3 {
+    background: var(--wp-series-1);
+    opacity: 0.52;
+  }
+
+  /* ── Heatmap ─────────────────────────────────────────────────────────────── */
+
+  /*
+   * Six shades of one colour, from barely off the surface to the full colour. On a dark page
+   * the surface is dark, so the scale runs dark to light there: more always stands out more.
+   * Without color-mix() the colour is thinned out instead, which looks the same. The mixes
+   * are in OKLab, not OKLCH: white has a hue of 0 in OKLCH, and mixing towards it there
+   * would swing the blue through violet to pink.
+   */
+  .step0 {
+    fill: var(--wp-series-1);
+    fill-opacity: 0.1;
+  }
+
+  .step1 {
+    fill: var(--wp-series-1);
+    fill-opacity: 0.24;
+  }
+
+  .step2 {
+    fill: var(--wp-series-1);
+    fill-opacity: 0.38;
+  }
+
+  .step3 {
+    fill: var(--wp-series-1);
+    fill-opacity: 0.52;
+  }
+
+  .step4 {
+    fill: var(--wp-series-1);
+    fill-opacity: 0.76;
+  }
+
+  .step5 {
+    fill: var(--wp-series-1);
+    fill-opacity: 1;
+  }
+
+  /* A cell with no data: an outline of where it would be, nothing inside. */
+  .cellEmpty {
+    fill: none;
+    stroke: var(--wp-border-subtle);
+    stroke-width: 1;
+  }
+
+  /* The cell under the pointer or the keyboard. */
+  .cellActive {
+    stroke: var(--wp-text);
+    stroke-width: 2;
+  }
+
+  .cellValue {
+    font-size: 0.6875rem;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+  }
+
+  .scale {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--wp-space-2);
+    margin-block-start: var(--wp-space-2);
+    font-size: var(--wp-text-meta);
+    color: var(--wp-text-secondary);
+  }
+
+  .scaleLabel {
+    margin-inline-end: var(--wp-space-1);
+  }
+
+  .scaleEnd {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .scaleSwatches {
+    display: block;
+    flex: none;
+  }
+
+  @supports (color: color-mix(in oklch, red, blue)) {
+    .frame {
+      --chart-muted: color-mix(in oklab, var(--wp-text-muted) 50%, var(--chart-surface));
+    }
+
+    .shade1 {
+      background: color-mix(in oklab, var(--wp-series-1) 84%, var(--chart-surface));
+      opacity: 1;
+    }
+
+    .shade2 {
+      background: color-mix(in oklab, var(--wp-series-1) 68%, var(--chart-surface));
+      opacity: 1;
+    }
+
+    .shade3 {
+      background: color-mix(in oklab, var(--wp-series-1) 52%, var(--chart-surface));
+      opacity: 1;
+    }
+
+    .step0 {
+      fill: color-mix(in oklab, var(--wp-series-1) 10%, var(--chart-surface));
+      fill-opacity: 1;
+    }
+
+    .step1 {
+      fill: color-mix(in oklab, var(--wp-series-1) 24%, var(--chart-surface));
+      fill-opacity: 1;
+    }
+
+    .step2 {
+      fill: color-mix(in oklab, var(--wp-series-1) 38%, var(--chart-surface));
+      fill-opacity: 1;
+    }
+
+    .step3 {
+      fill: color-mix(in oklab, var(--wp-series-1) 52%, var(--chart-surface));
+      fill-opacity: 1;
+    }
+
+    .step4 {
+      fill: color-mix(in oklab, var(--wp-series-1) 76%, var(--chart-surface));
+      fill-opacity: 1;
+    }
+  }
+
+  /* ── Stat tile ───────────────────────────────────────────────────────────── */
+
+  .statTile {
+    display: grid;
+    gap: var(--wp-space-1);
+    min-inline-size: 0;
+  }
+
+  .statTileLabel {
+    font-size: var(--wp-text-small);
+    color: var(--wp-text-secondary);
+  }
+
+  .statTileFigure {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--wp-space-2) var(--wp-space-3);
+  }
+
+  /* A large number on its own keeps the face's own figures: equal-width digits look loose. */
+  .statTileValue {
+    font-size: var(--wp-text-h3);
+    font-weight: var(--wp-weight-semibold);
+    line-height: 1;
+  }
+
+  /* The trend is context for the number, so it is drawn quietly. */
+  .statTileTrend {
+    display: inline-flex;
+    color: var(--wp-text-muted);
+  }
+
+  .delta {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 var(--wp-space-1);
+    font-size: var(--wp-text-small);
+    color: var(--wp-text-secondary);
+  }
+
+  .delta[data-tone="good"] .deltaArrow,
+  .delta[data-tone="good"] .deltaText {
+    color: var(--wp-safe);
+  }
+
+  .delta[data-tone="bad"] .deltaArrow,
+  .delta[data-tone="bad"] .deltaText {
+    color: var(--wp-danger);
+  }
+
+  .deltaArrow {
+    flex: none;
+    inline-size: 0.75rem;
+    block-size: 0.75rem;
+  }
+
+  .deltaText {
+    font-weight: var(--wp-weight-semibold);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .deltaPeriod {
+    color: var(--wp-text-muted);
+  }
+
+  .statTileNote {
+    font-size: var(--wp-text-meta);
+    color: var(--wp-text-muted);
+  }
+
+  /*
+   * Where colours are forced, backgrounds are dropped and the bars drawn with them would
+   * vanish: draw them in the text colour. (SVG marks keep their colours.)
+   */
+  @media (forced-colors: active) {
+    .barListFill,
+    .funnelBar,
+    .keyLine,
+    .keyRect,
+    .readoutKey {
+      background: CanvasText;
+    }
+  }
+}

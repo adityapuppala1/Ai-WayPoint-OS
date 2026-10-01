@@ -40,9 +40,14 @@ use in every language, filled in from each installation's own configuration.
    codes, links, QR codes and printable posters, k-anonymous insights (rounded, noisy, small
    groups suppressed), audit log. **Admin console** — done: moderation queue for Circles, scam
    report review that feeds Shield, AI spend, delivery and lifeline freshness, signals, and
-   the feedback people send from Settings ("Tell us what worked, or what didn't"). Still to
-   do: billing for paid plans, CSV export of totals, and single sign-on for large
-   organisations.
+   the feedback people send from Settings ("Tell us what worked, or what didn't") — worked
+   through by state, with team notes and email replies. The platform side is done too:
+   accounts (find, hold back, sign out, change role, delete), staff invitations, outside
+   services' keys set from the console, system health (traffic, errors, speed, database,
+   background work), maintenance windows, announcements and backups, and analytics that count
+   with care (days of use, anonymous page counts, no group under five). Still to do: billing
+   for paid plans, CSV export of totals, single sign-on for large organisations, and a map
+   view in the analytics.
 9. **Proof of work** — projects, peer review and verifiable credentials (signing is built).
    Until the pages exist, plans promise no credential and link to no proof page; a test checks
    every link a plan can carry against the pages the app really has.

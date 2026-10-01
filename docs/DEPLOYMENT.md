@@ -26,6 +26,13 @@ Nothing else is needed. AI, email and texting are optional and switched on by se
 Every setting is an environment variable; `.env.example` lists them all with explanations.
 These are the ones a production installation must get right.
 
+Outside services — AI providers, the second opinion, texting and email — can instead be set up
+by an admin in the console (**Admin → Integrations**): keys are sealed with `WAYPOINT_KEK` in
+the database, every server picks them up within half a minute, and each can be checked with one
+harmless call. A value in the environment always wins over one saved there. Database, address
+and secret settings (`DATABASE_URL`, `WAYPOINT_URL`, `BETTER_AUTH_SECRET`, `WAYPOINT_KEK`) are
+environment-only.
+
 | Setting | What it is | Notes |
 | --- | --- | --- |
 | `WAYPOINT_URL` | The public address, e.g. `https://waypoint.example.org` | Must be `https://`. A production server refuses anything else (except `localhost`). |
@@ -229,7 +236,7 @@ Work through this list. Each line is something only the operator can do.
 **People**
 
 - [ ] Help lines for your countries were checked with the services themselves (SAFETY.md).
-- [ ] Someone reads the admin console (moderation, scam reports) every day.
+- [ ] Someone reads the admin console (moderation, scam reports, new feedback) every day.
 - [ ] Someone receives mail sent to the security contact.
 
 ## Looking after it
@@ -237,7 +244,11 @@ Work through this list. Each line is something only the operator can do.
 **Is it healthy?** Watch `/api/ready` from outside (it answers 503 when the database does not,
 or is behind the code), the web and worker logs for lines with `"level":"error"`, and the
 admin overview (`/admin`) for messages that could not be sent and AI spend against the
-budget. With Compose, `docker compose ps` shows the web and worker containers as unhealthy
+budget. **Admin → System health** (`/admin/system`) puts what needs a look first — server
+errors over 2%, failed background work or messages, work waiting too long, a database behind
+the code — above the hour-by-hour detail, and failed work can be tried again from there.
+**Admin → Maintenance** closes Waypoint for an upgrade (help, sign-in, texts and staff stay
+open) and, with the built-in database, downloads a backup. With Compose, `docker compose ps` shows the web and worker containers as unhealthy
 when they are; Compose does not restart an unhealthy container by itself, so look at it.
 
 **HTTPS is remembered for two years, for subdomains too** (`Strict-Transport-Security` with

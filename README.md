@@ -87,7 +87,7 @@ read [docs/AI.md](docs/AI.md#typed-decisions-jev) before switching it on.
 | **Health** — a quick daily log (sleep, movement, water, private note) with a calm weekly view, private reminders (encrypted) that appear on Today, and where to get care: emergency signs (stroke, heart attack, severe allergy, heatstroke) and checked non-emergency lines. Never diagnoses | ✅ |
 | **Surroundings** — weather, air quality and UV where you are, turned into plain advice (heat, cold, storms, wind, sun, air); fetched by your device, so your location never reaches Waypoint; works offline from the last forecast | ✅ |
 | **Organisations** — employers, schools, NGOs and public services run programmes with a join code, link, QR code and printable poster; people join in a minute (guests too) and choose, per programme, whether to be counted; the console shows only weekly, rounded, slightly noisy totals for groups of 50+ who chose it — never a person, never Mind, Health, Money, Circles, Ask or Shield. Teams with owner, admin and member roles (invitations need a confirmed email); every action audited | ✅ |
-| **Admin console** — moderation queue for Circles (safety holds are only counted, never shown; writers are told what happened), scam-report review that warns people in Shield, forecasts (publish, edit, judge, second check), sourced signals (add, withdraw), feedback people sent, AI spend against the budget, message delivery, and when each crisis line and emergency number was last checked | ✅ |
+| **Admin console** — moderation queue for Circles (safety holds are only counted, never shown; writers are told what happened), scam-report review that warns people in Shield, forecasts (publish, edit, judge, second check), sourced signals (add, withdraw), feedback worked through and answered, AI spend against the budget, message delivery, when each crisis line and emergency number was last checked — plus accounts and staff invitations, outside services' keys set from the console, system health, maintenance and backups, and privacy-first analytics | ✅ |
 | **Texting** — SMS, WhatsApp and USSD for basic phones: help lines, scam checks in every language, short answers (AI only with consent), STOP respected; numbers sealed, nothing anyone writes kept ([setup](docs/CHANNELS.md)) | ✅ |
 | **Email** — confirmation links, password resets and invitations in the reader's language, through Resend or any SMTP server | ✅ |
 | **Phone app** (iOS and Android, Expo) — Today, Scam Shield that checks on the phone in every language, Ask with the support card, help lines that work offline, and settings; guest first, session in the phone's secure keystore ([details](docs/MOBILE.md)) | ✅ |
@@ -187,8 +187,31 @@ More: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/SAFETY.md](docs/SAFE
 - **Admin** — put `WAYPOINT_ADMIN_EMAIL` and `WAYPOINT_ADMIN_PASSWORD` (10+ characters) in
   `.env.local` before starting; that account is created on start (an existing account with that
   address is only promoted once its email is confirmed). Sign in with it and open **Admin** from
-  the account menu (`/admin`) for moderation, scam reports, forecasts, signals, feedback, AI
-  spend, message delivery and the activity log. Everyone else gets a plain "not found" there.
+  the account menu (`/admin`). The console is grouped by what each part is for — People
+  (accounts, staff), Safety (moderation, scam reports), Content (forecasts, signals, feedback),
+  Insights (analytics) and Platform (integrations, system health, maintenance, activity log).
+  Admins see all of it; staff see the overview, safety, content and analytics. Everyone else
+  gets a plain "not found" there.
+- **Integrations** — `/admin/integrations` lists every outside service (AI models, the second
+  opinion, texting, email) with its state, and takes its keys and options right there: saved
+  sealed in the database, used at once, kept until an admin changes them, and shown again only
+  as their last four characters. A value in the server's environment always wins. Each service
+  can be checked with one harmless call. Database, URL and auth secrets stay in the environment.
+- **System health** — `/admin/system`: what needs a look first, the API's requests, errors and
+  speed hour by hour, every route, recent server errors, the database and its largest tables,
+  background work and messages (failed ones can be tried again or cancelled) and the server.
+- **Maintenance** — `/admin/maintenance`: close Waypoint for a while (now or at a set time, with
+  words for people; help, sign-in, texts and staff stay open), an announcement for everyone,
+  a backup of the built-in database, and housekeeping.
+- **Accounts and staff** — `/admin/users` finds any account by name, address or number, and
+  holds one back (with a reason and an optional end), lets it back in, signs it out everywhere,
+  changes its role or deletes it — each asked about first and recorded. `/admin/staff` invites
+  people to the staff by email; they accept signed in with that address.
+- **Analytics** — `/admin/analytics`: active people, new people, a funnel from joining to coming
+  back, weekly cohorts, what people open and when, platforms, countries, languages and
+  situations, filtered by period, platform, who, country and language. Counted with care: only
+  that someone used Waypoint on a day, pages opened with nobody attached, no group under five
+  people ever shown ([what is counted](docs/PRIVACY.md#the-consoles-analytics)).
 - **Forecasts** — staff publish them at `/admin/forecasts`: a yes-or-no question, the chance
   (1 to 99%), why, at least one source, what people can do, and the day it will be judged.
   The question, how it is judged and the date cannot change afterwards; the chance can, and
@@ -205,8 +228,9 @@ More: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/SAFETY.md](docs/SAFE
   source, and nothing writes one for staff. It is shown straight away to the people it is
   about; **Withdraw** takes it down for everyone. Nothing fetches signals automatically yet.
 - **Feedback** — people send it from Settings → "Tell us what worked, or what didn't"; staff
-  read it at `/admin/feedback`. Personal details are removed before it is stored, and nobody
-  is named unless they asked for a reply.
+  work through it at `/admin/feedback`: new, planned, done or won't do, with a note for the
+  team, and a reply by email to anyone who asked for one. Personal details are removed before
+  it is stored, and nobody is named unless they asked for a reply.
 - **Confirming email addresses** — needed to invite colleagues and to answer an invitation.
   Set `EMAIL_FROM` and either `RESEND_API_KEY` or `SMTP_URL` to send real email. Without them,
   development prints the confirmation link (like password-reset links) in the terminal running

@@ -20,11 +20,11 @@
     "@waypoint/core": "workspace:*",
     "@waypoint/db": "workspace:*",
     "@waypoint/i18n": "workspace:*",
-    "ai": "7.0.122",
-    "drizzle-orm": "0.45.3",
+    "ai": "7.0.137",
+    "drizzle-orm": "0.45.4",
     "fast-xml-parser": "5.11.2",
-    "hono": "4.13.11",
-    "nodemailer": "10.0.12",
+    "hono": "4.13.13",
+    "nodemailer": "10.1.0",
     "zod": "4.6.5"
   }
 }

@@ -20,12 +20,12 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@electric-sql/pglite": "0.5.8",
+    "@electric-sql/pglite": "0.5.10",
     "@waypoint/content": "workspace:*",
     "@waypoint/core": "workspace:*",
-    "drizzle-orm": "0.45.3",
-    "pg": "8.23.0",
-    "@electric-sql/pglite-pgvector": "0.0.9"
+    "drizzle-orm": "0.45.4",
+    "pg": "8.23.1",
+    "@electric-sql/pglite-pgvector": "0.0.11"
   },
   "devDependencies": {
     "@types/pg": "8.23.1",

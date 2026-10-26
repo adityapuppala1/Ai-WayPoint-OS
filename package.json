@@ -38,11 +38,11 @@
     "check": "biome check . && turbo run typecheck test --concurrency=4"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.14",
-    "turbo": "2.11.5",
+    "@biomejs/biome": "2.6.2",
+    "turbo": "2.11.10",
     "typescript": "6.0.3",
-    "vitest": "5.0.2",
-    "@types/node": "22.20.4",
+    "vitest": "5.0.5",
+    "@types/node": "22.20.5",
     "tsx": "4.23.15"
   }
 }

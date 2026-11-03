@@ -19,7 +19,7 @@
     "@better-auth/utils": "0.4.2",
     "@waypoint/core": "workspace:*",
     "@waypoint/db": "workspace:*",
-    "better-auth": "1.7.6",
+    "better-auth": "1.7.7",
     "drizzle-orm": "0.45.3"
   }
 }
